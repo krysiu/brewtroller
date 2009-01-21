@@ -3,7 +3,7 @@ void dispMenu(char sTitle[], char sOpt1[], void (*fOpt1)(), char sOpt2[], void (
 void menuMain()
 {
   dispMenu(
-    "Main Menu 1/2",
+    "BrewTroller      1/2",
     "Auto Brew", &doAutoBrew,
     "Monitor Mode", &doMon,
     "Fermentation", &doFerm,
@@ -15,7 +15,7 @@ void menuMain()
 void menuMain2()
 {
   dispMenu(
-    "Main Menu 2/2",
+    "BrewTroller      2/2",
     "System Setup", &menuSetup,
     NULL, NULL,
     NULL, NULL,
