@@ -19,13 +19,6 @@ void preheat(int iTemp)
 
 void mashStep(char sTitle[ ], int iTemp, int iMins)
 {
-  hltInput = analogRead(0);
-  hltSetpoint = 100;
-  mtInput = analogRead(1);
-  mtSetpoint = 100;
 
-  //turn the PID on
-  hltPID.SetMode(AUTO);
-  mtPID.SetMode(AUTO);
   
 }
