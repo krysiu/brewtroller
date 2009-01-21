@@ -4,7 +4,7 @@ void menuMain()
 {
   dispMenu(
     "Main Menu 1/2",
-    "Auto Brew", &doAuto,
+    "Auto Brew", &doAutoBrew,
     "Monitor Mode", &doMon,
     "Fermentation", &doFerm,
     &menuMain2,
