@@ -21,3 +21,36 @@ lcd.print(sText); // Print Data from Variable
 void clearLCD(){
 lcd.clear();
 }
+
+void lcdPrintFloat( float val, byte precision, int iRow, int iCol){
+  // prints val on a ver 0012 text lcd with number of decimal places determine by precision
+  // precision is a number from 0 to 6 indicating the desired decimial places
+  // example: lcdPrintFloat( 3.1415, 2); // prints 3.14 (two decimal places)
+  lcd.setCursor(iCol,iRow); // Set Cursor to Location
+  if(val < 0.0){
+    lcd.print('-');
+    val = -val;
+  }
+
+  lcd.print ((long)val);  //prints the integral part
+    if( precision > 0) {
+    lcd.print("."); // print the decimal point
+    unsigned long frac;
+    unsigned long mult = 1;
+    byte padding = precision -1;
+    while(precision--)
+	mult *=10;
+
+    if(val >= 0)
+	frac = (val - int(val)) * mult;
+    else
+	frac = (int(val)- val ) * mult;
+    unsigned long frac1 = frac;
+    while( frac1 /= 10 )
+	padding--;
+    while(  padding--)
+	lcd.print("0");
+    lcd.print(frac,DEC) ;
+  }
+}
+ 
