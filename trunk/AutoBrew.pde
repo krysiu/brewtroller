@@ -19,6 +19,6 @@ void preheat(int iTemp)
 
 void mashStep(char sTitle[ ], int iTemp, int iMins)
 {
-
+Serial.println(sTitle);
   
 }
