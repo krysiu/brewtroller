@@ -50,8 +50,10 @@ void menuSetup2()
 
 void dispMenu(char sTitle[], char sOpt1[], void (*fOpt1)(), char sOpt2[], void (*fOpt2)(), char sOpt3[], void (*fOpt3)(), void (*fNext)(), void (*fPrev)())
 {
-  int curPos;
   int curMax = 0;
+  
+  encMin = 0;
+  encMax = 4;
   
   clearLCD();
   
@@ -73,25 +75,29 @@ void dispMenu(char sTitle[], char sOpt1[], void (*fOpt1)(), char sOpt2[], void (
   }
 
   //Put cursor at first option
-  curPos = 1;
-  menuSetCursor(curPos);
+  encCount = 1;
+  lastCount = 1;
+  menuSetCursor(encCount);
+
 
   do {
-    //If rotory +/-: Update cursor position
-    if (0) {
-      if (curPos < 1) 
+    if (encCount != lastCount) {
+      if (encCount < 1) 
         if (fPrev != NULL) fPrev(); 
-          else curPos = 1;
-      else if (curPos > curMax)
+          else encCount = 1;
+      else if (encCount > curMax)
         if(fNext != NULL) fNext();
-          else curPos = curMax;
-      else menuSetCursor(curPos);
+          else encCount = curMax;
+      else menuSetCursor(encCount);
+      lastCount = encCount;
     }
     
     //If Enter
-    if (0) {
-      switch (curPos) {
-        case 1: 
+    if (enterStatus == 1) {
+        enterStatus = 0;
+        
+        switch (encCount) {
+        case 1:
           fOpt1();
           return;
         case 2:
@@ -100,11 +106,13 @@ void dispMenu(char sTitle[], char sOpt1[], void (*fOpt1)(), char sOpt2[], void (
         case 3:
           fOpt3();
           return;
-      }
+        }
+        
     }
     
     //If Cancel (Hold Enter)
-    if (0) {
+    if (enterStatus == 2) {
+      enterStatus = 0;
       return;
     }
   } while (1);
