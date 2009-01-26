@@ -19,6 +19,7 @@ void preheat(int iTemp)
 
 void mashStep(char sTitle[ ], int iTemp, int iMins)
 {
-Serial.println(sTitle);
-  
+  clearLCD();
+  printLCD(0,0,sTitle);
+  delay(5000);
 }
