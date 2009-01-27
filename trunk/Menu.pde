@@ -1,125 +1,93 @@
-void dispMenu(char sTitle[], char sOpt1[], void (*fOpt1)(), char sOpt2[], void (*fOpt2)(), char sOpt3[], void (*fOpt3)(), void (*fNext)(), void (*fPrev)());
+typedef void (*pt2Func)();
+
+struct menuItem {
+  char title[19];
+  pt2Func execFunc;
+};
 
 void menuMain()
 {
-  dispMenu(
-    "BrewTroller      1/2",
-    "Auto Brew", &doAutoBrew,
-    "Monitor Mode", &doMon,
-    "Fermentation", &doFerm,
-    &menuMain2,
-    NULL
-  );
-}
-
-void menuMain2()
-{
-  dispMenu(
-    "BrewTroller      2/2",
-    "System Setup", &menuSetup,
-    NULL, NULL,
-    NULL, NULL,
-    NULL,
-    &menuMain
-  );
+  struct menuItem mainMenu[4];
+  strcpy(mainMenu[0].title, "AutoBrew          ");
+  mainMenu[0].execFunc = &doAutoBrew;
+  strcpy(mainMenu[1].title, "Brew Monitor      ");
+  mainMenu[1].execFunc = &doMon;
+  strcpy(mainMenu[2].title, "Fermentation      ");
+  mainMenu[2].execFunc = &doFerm;
+  strcpy(mainMenu[3].title, "System Setup      ");
+  mainMenu[3].execFunc = &menuSetup;
+  scrollMenu("BrewTroller         ", mainMenu, 4);
 }
 
 void menuSetup()
 {
-  dispMenu(
-    "System Setup (1/2)",
-    "Hot Liquor Tank", &hltSetup,
-    "Mash Tun", &mtSetup,
-    "Fermentation", &fermSetup,
-    &menuSetup2,
-    NULL
-  );
+  struct menuItem setupMenu[6];
+  strcpy(setupMenu[0].title, "Hot Liquor Tank  ");
+  setupMenu[0].execFunc = &hltSetup;
+  strcpy(setupMenu[1].title, "Mash Tun         ");
+  setupMenu[1].execFunc = &mtSetup;
+  strcpy(setupMenu[2].title, "Fermentation     ");
+  setupMenu[2].execFunc = &fermSetup;
+  strcpy(setupMenu[3].title, "Save Settings    ");
+  setupMenu[3].execFunc = &saveSetup;
+  strcpy(setupMenu[4].title, "Load Settings    ");
+  setupMenu[4].execFunc = &loadSetup;
+  strcpy(setupMenu[5].title, "Exit Setup       ");
+  setupMenu[5].execFunc = NULL;
+  scrollMenu("System Setup        ", setupMenu, 6);
 }
 
-void menuSetup2()
-{
-  dispMenu(
-    "System Setup (2/2)",
-    "Save Settings", &saveSetup,
-    "Load Settings", &loadSetup,
-    NULL, NULL,
-    NULL,
-    &menuSetup
-  );
-}
+//NOTE Make struct array a pointer pass
 
-void dispMenu(char sTitle[], char sOpt1[], void (*fOpt1)(), char sOpt2[], void (*fOpt2)(), char sOpt3[], void (*fOpt3)(), void (*fNext)(), void (*fPrev)())
-{
-  int curMax = 0;
-  
-  encMin = 0;
-  encMax = 4;
-  
-  clearLCD();
-  
-  if (sTitle != NULL) printLCD(0, 0, sTitle);
-  
-  if (sOpt1 != NULL) {
-    printLCD(1, 1, sOpt1);
-    curMax = 1;
-  }
-  
-  if (sOpt2 != NULL) {
-    printLCD(2, 1, sOpt2);
-    curMax = 2;
-  }
-  
-  if (sOpt3 != NULL) {
-    printLCD(3, 1, sOpt3);
-    curMax = 3;
-  }
+void scrollMenu(char sTitle[], struct menuItem menuItems[], int numOpts) {
+  while(1) {
+    clearLCD();
+    if (sTitle != NULL) printLCD(0, 0, sTitle);
 
-  //Put cursor at first option
-  encCount = 1;
-  lastCount = 1;
-  menuSetCursor(encCount);
+    encMin = 0;
+    encMax = numOpts-1;
+  
+    encCount = 0;
+    lastCount = 1;
+    unsigned int topItem = 1;
 
-
-  do {
-    if (encCount != lastCount) {
-      if (encCount < 1) 
-        if (fPrev != NULL) fPrev(); 
-          else encCount = 1;
-      else if (encCount > curMax)
-        if(fNext != NULL) fNext();
-          else encCount = curMax;
-      else menuSetCursor(encCount);
-      lastCount = encCount;
-    }
-    
-    //If Enter
-    if (enterStatus == 1) {
-        enterStatus = 0;
-        
-        switch (encCount) {
-        case 1:
-          fOpt1();
-          return;
-        case 2:
-          fOpt2();
-          return;
-        case 3:
-          fOpt3();
-          return;
+    unsigned int inLoop = 1;
+    while(inLoop) {
+      if (encCount != lastCount) {
+        if (encCount < topItem) {
+          topItem = encCount;
+          drawItems(menuItems, numOpts, topItem);
+        } else if (encCount > topItem + 2) {
+          topItem = encCount - 2;
+          drawItems(menuItems, numOpts, topItem);
         }
-        
-    }
+        menuSetCursor(encCount-topItem+1);
+        lastCount = encCount;
+      }
     
-    //If Cancel (Hold Enter)
-    if (enterStatus == 2) {
-      enterStatus = 0;
-      return;
+      //If Enter
+      if (enterStatus == 1) {
+          enterStatus = 0;
+          if (menuItems[encCount].execFunc != NULL) {
+            (*menuItems[encCount].execFunc)();
+            inLoop = 0;
+          } else return;
+      } else if (enterStatus == 2) {
+        enterStatus = 0;
+        return;
+      }
     }
-  } while (1);
+  }
 }
 
 void menuSetCursor(int iPos) {
   for (int i=1; i<=3; i++) {
-    if (iPos == i) { printLCD(i, 0, ">"); } else { printLCD(i, 0, " "); }
+    if (i == iPos) printLCD(i, 0, ">"); else printLCD(i, 0, " ");
   }
+}
+
+void drawItems(struct menuItem menuItems[], int numOpts, int topItem) {
+  int maxOpt = topItem + 2;
+  if (maxOpt > numOpts) maxOpt = numOpts;
+  for (int i = topItem; i <= maxOpt; i++) printLCD(i-topItem+1, 1, menuItems[i].title);
 }
