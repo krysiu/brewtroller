@@ -1,7 +1,9 @@
 unsigned int encBounceDelay = 50;
+unsigned int enterBounceDelay = 25;
 volatile unsigned long lastEncUpd = millis();
 unsigned long enterStart;
-  
+
+
 void doEncoderA() {
   if (millis() - lastEncUpd < encBounceDelay) return;
   if (digitalRead(encBPin) == LOW) encCount++; else encCount--;
@@ -14,9 +16,9 @@ void doEnter() {
     enterStart = millis();
   } else {
     if (millis() - enterStart > 1000) {
-    enterStatus = 2;
-    } else {
-    enterStatus = 1;
+      enterStatus = 2;
+    } else if (millis() - enterStart > enterBounceDelay) {
+      enterStatus = 1;
     }
   }
 }

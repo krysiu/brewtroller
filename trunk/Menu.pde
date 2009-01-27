@@ -1,7 +1,7 @@
 typedef void (*pt2Func)();
 
 struct menuItem {
-  char title[19];
+  char title[20];
   pt2Func execFunc;
 };
 
@@ -21,20 +21,16 @@ void menuMain()
 
 void menuSetup()
 {
-  struct menuItem setupMenu[6];
-  strcpy(setupMenu[0].title, "Hot Liquor Tank  ");
-  setupMenu[0].execFunc = &hltSetup;
-  strcpy(setupMenu[1].title, "Mash Tun         ");
-  setupMenu[1].execFunc = &mtSetup;
-  strcpy(setupMenu[2].title, "Fermentation     ");
-  setupMenu[2].execFunc = &fermSetup;
-  strcpy(setupMenu[3].title, "Save Settings    ");
-  setupMenu[3].execFunc = &saveSetup;
-  strcpy(setupMenu[4].title, "Load Settings    ");
-  setupMenu[4].execFunc = &loadSetup;
-  strcpy(setupMenu[5].title, "Exit Setup       ");
-  setupMenu[5].execFunc = NULL;
-  scrollMenu("System Setup        ", setupMenu, 6);
+  struct menuItem setupMenu[4];
+  strcpy(setupMenu[0].title, "Assign Temp Sensor ");
+  setupMenu[0].execFunc = &assignSensor;
+  strcpy(setupMenu[1].title, "Save Settings      ");
+  setupMenu[1].execFunc = &saveSetup;
+  strcpy(setupMenu[2].title, "Load Settings      ");
+  setupMenu[2].execFunc = &loadSetup;
+  strcpy(setupMenu[3].title, "Exit Setup         ");
+  setupMenu[3].execFunc = NULL;
+  scrollMenu("System Setup        ", setupMenu, 4);
 }
 
 //NOTE Make struct array a pointer pass
@@ -90,4 +86,35 @@ void drawItems(struct menuItem menuItems[], int numOpts, int topItem) {
   int maxOpt = topItem + 2;
   if (maxOpt > numOpts) maxOpt = numOpts;
   for (int i = topItem; i <= maxOpt; i++) printLCD(i-topItem+1, 1, menuItems[i].title);
+}
+
+int getChoice(char choices[][19], int numChoices, int iRow) {
+  printLCD(iRow, 0, ">                  <");
+
+  encMin = 0;
+  encMax = numChoices-1;
+ 
+  encCount = 0;
+  lastCount = 1;
+
+  while(1) {
+    if (encCount != lastCount) {
+      printLCD(iRow, 1, choices[encCount]);
+      lastCount = encCount;
+    }
+    
+    //If Enter
+    if (enterStatus == 1) {
+      enterStatus = 0;
+      printLCD(iRow, 0, " ");
+      printLCD(iRow, 19, " ");
+      return encCount;
+    } else if (enterStatus == 2) {
+      enterStatus = 0;
+      printLCD(iRow, 0, " ");
+      printLCD(iRow, 19, " ");
+      return NULL;
+    }
+  }
+
 }
