@@ -1,6 +1,6 @@
 #include <OneWire.h>
 
-OneWire ds(tempPin); // Current pin that DS18's are located at
+OneWire ds(tempPin);
 
 int get_temp(int unit, byte* addr) //Unit 1 for F and 2 for C
 {
@@ -11,7 +11,7 @@ int get_temp(int unit, byte* addr) //Unit 1 for F and 2 for C
   ds.reset();
   ds.select(addr);
   ds.write(0x44,1);         // start conversion, with parasite power on at the end
-  delay(750);     // wait 750ms
+  delay(1000);     // maybe 750ms is enough, maybe not
    present = ds.reset();
   ds.select(addr);   
   ds.write(0xBE);         // Read Scratchpad
@@ -42,13 +42,30 @@ if (unit == 2) rtemp = ctemp;
 return rtemp;
 }
 
-void getDSAddr(byte addrRet[8]){  // search for new attached DS18 sensor
-byte i;
-byte addr[8];
+//This section still needs work
+  void findDS(void){
+  byte i;
+  byte present = 0;
+  byte data[12];
+  byte addr[8];
 
-  if ( !ds.search(addr)) {  // Lets check the bus to see if anything new is out there
-  ds.reset_search();  // Nothing found lets reset and try again
-  for( i = 0; i < 8; i++) 
- addrRet[i] = addr[i]; // Load found sensor ID into the return variable
- }
+  ds.reset();
+  ds.select(addr);
+  ds.write(0x44,1);         // start conversion, with parasite power on at the end
+
+  delay(1000);     // maybe 750ms is enough, maybe not
+
+  present = ds.reset();
+  ds.select(addr);    
+  ds.write(0xBE);         // Read Scratchpad
+
+  for ( i = 0; i < 9; i++) {           // we need 9 bytes
+    data[i] = ds.read();
+  //  deviceid[i] = data[i];
+  }
+}
+
+void getDSAddr(byte addrRet[8]){
+  ds.reset_search();
+  ds.search(addrRet);
 }
