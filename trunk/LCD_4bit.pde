@@ -25,7 +25,15 @@ void printLCD(int iRow, int iCol, char sText[]){
  }
 } 
 
-
+void printLCDBytes(int iRow, int iCol, byte sByte[], int numBytes){
+ lcd.setCursor(iCol, iRow);
+ delayMicroseconds(LCD_DELAY_CURSOR);
+ for (int i = 0; i < numBytes; i++) {
+   if (sByte[i] < 0x10) lcd.print(0, HEX);
+   lcd.print(sByte[i], HEX);
+   delayMicroseconds(LCD_DELAY_CHAR);
+ }
+} 
 
 void clearLCD(){
 lcd.clear();

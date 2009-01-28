@@ -1,3 +1,5 @@
+#include <EEPROM.h>
+
 //Declare Globals
 #define encAPin 2
 #define encBPin 4
@@ -12,9 +14,7 @@ unsigned int encMin;
 unsigned int encMax;
 volatile unsigned int enterStatus = 0;
 
-byte tsensor1[8]  = {0x10, 0x04, 0x64, 0x37, 0x01, 0x08, 0x0, 0x3A};
-byte tsensor2[8] = {0x10, 0xC0, 0x08, 0x64, 0x00, 0x08, 0x00, 0xB2};
-byte tsensor3[8] = {0x10, 0xC0, 0x08, 0x64, 0x00, 0x08, 0x00, 0xB2};
+byte tsHLT[8], tsMash[8], tsKettle[8], tsCFCH2OIn[8], tsCFCH2OOut[8], tsCFCBeerOut[8];
 
 void setup()
 {
