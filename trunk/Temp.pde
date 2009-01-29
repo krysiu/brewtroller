@@ -42,29 +42,6 @@ if (unit == 2) rtemp = ctemp;
 return rtemp;
 }
 
-//This section still needs work
-  void findDS(void){
-  byte i;
-  byte present = 0;
-  byte data[12];
-  byte addr[8];
-
-  ds.reset();
-  ds.select(addr);
-  ds.write(0x44,1);         // start conversion, with parasite power on at the end
-
-  delay(1000);     // maybe 750ms is enough, maybe not
-
-  present = ds.reset();
-  ds.select(addr);    
-  ds.write(0xBE);         // Read Scratchpad
-
-  for ( i = 0; i < 9; i++) {           // we need 9 bytes
-    data[i] = ds.read();
-  //  deviceid[i] = data[i];
-  }
-}
-
 void getDSAddr(byte addrRet[8]){
   ds.reset_search();
   ds.search(addrRet);
