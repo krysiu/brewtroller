@@ -10,7 +10,14 @@
 // d4, d5, d6, d7 on pins 20, 21, 22, 23  (LCD pins 11-14)
 LiquidCrystal lcd(17, 18, 19, 20, 21, 22, 23);
 
-void initLCD(){
+void initLCD(){  
+byte i;
+printLCD(0,4,"BrewTroller");
+for ( i = 0; i < 20; i++) {
+  printLCD(3,i,">");
+delay(75);
+}
+delay(1000);
 }
 
 
