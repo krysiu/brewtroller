@@ -12,12 +12,14 @@ LiquidCrystal lcd(17, 18, 19, 20, 21, 22, 23);
 
 void initLCD(){  
 byte i;
+clearLCD;
 printLCD(0,4,"BrewTroller");
 for ( i = 0; i < 20; i++) {
   printLCD(3,i,">");
 delay(75);
 }
 delay(1000);
+clearLCD();
 }
 
 
