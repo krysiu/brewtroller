@@ -20,7 +20,8 @@ void setup()
 {
   loadSetup();
   initLCD();
-
+  setDS9bit();
+  
   pinMode(encAPin, INPUT);
   pinMode(encBPin, INPUT);
   pinMode(enterPin, INPUT);
@@ -31,8 +32,11 @@ void setup()
 
 void loop()
 {  
-  //lcdPrintFloat(get_temp(1,tsensor1),0,0,0); // for testing purposes only
-  menuMain();
+//printLCD(0,0,"HLT = ");
+//lcdPrintFloat(get_temp(1,tsHLT),1,0,6); // for testing purposes only
+//printLCD(1,0,"MLT = ");
+//lcdPrintFloat(get_temp(1,tsMash),1,1,6); // for testing purposes only
+menuMain();
 }
 
 
