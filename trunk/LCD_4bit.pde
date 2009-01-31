@@ -25,17 +25,6 @@ void printLCD(int iRow, int iCol, char sText[]){
  }
 } 
 
-//This function still has issues as multiple digits can be set without a delay between when byte value is double digit (40us timing issue)
-void printLCDBytes(int iRow, int iCol, byte sByte[], int numBytes){
- lcd.setCursor(iCol, iRow);
- delayMicroseconds(LCD_DELAY_CURSOR);
- for (int i = 0; i < numBytes; i++) {
-   if (sByte[i] < 0x10) lcd.print(0, HEX);
-   lcd.print(sByte[i], HEX);
-   delayMicroseconds(LCD_DELAY_CHAR);
- }
-} 
-
 void clearLCD(){
 lcd.clear();
 }
@@ -73,11 +62,11 @@ void lcdPrintFloat( float val, byte precision, int iRow, int iCol){
   }
 } */
 
-char printLCDPad(int iRow, int iCol, char sText[], int length) {
+char printLCDPad(int iRow, int iCol, char sText[], int length, char pad) {
  lcd.setCursor(iCol, iRow);
  delayMicroseconds(LCD_DELAY_CURSOR);
  for (int i=0; i < length-strlen(sText) ; i++) {
-   lcd.print(" ");
+   lcd.print(pad);
    delayMicroseconds(LCD_DELAY_CHAR);
  }
  int i = 0;

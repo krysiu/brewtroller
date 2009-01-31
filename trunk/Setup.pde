@@ -39,7 +39,8 @@ void assignSensor() {
     default:
       return;    
   }
-  printLCDBytes(2,2,addr, 8);
+  char buf[3];
+  for (int i=0; i<8; i++) printLCDPad(2,i*2+2,itoa(addr[i], buf, 16), 2, '0');
   
   char choices[2][19] = {
     "     Scan Bus     ",
@@ -59,7 +60,7 @@ void assignSensor() {
       printLCD(0,0,"Assign: ");
       printLCD(0,8, dispTitle);
       printLCD(1,0,"Found address:");
-      printLCDBytes(2,2,addr, 8);
+      for (int i=0; i<8; i++) printLCDPad(2,i*2+2,itoa(addr[i], buf, 16), 2, '0');
       printLCD(3,0,">       Exit       <");
       while (enterStatus == 0) {
         delay(500);

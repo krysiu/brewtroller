@@ -19,8 +19,8 @@ void doMon()
     tempHLT = get_temp(tempUnit, tsHLT);
     tempMash = get_temp(tempUnit, tsMash);
     tempKettle = get_temp(tempUnit, tsKettle);
-    printLCDPad(1,8,itoa(tempHLT, buf, 10), 3);
-    printLCDPad(2,8,itoa(tempMash, buf, 10), 3);
-    printLCDPad(3,8,itoa(tempKettle, buf, 10), 3);
+    printLCDPad(1,8,itoa(tempHLT, buf, 10), 3, ' ');
+    printLCDPad(2,8,itoa(tempMash, buf, 10), 3, ' ');
+    printLCDPad(3,8,itoa(tempKettle, buf, 10), 3, ' ');
   }
 }
