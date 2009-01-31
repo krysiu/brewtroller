@@ -29,7 +29,6 @@ void clearLCD(){
 lcd.clear();
 }
 
-/* mattreba: the following function is not currently being used. itoa/ftoa is being used instead.
 void lcdPrintFloat( float val, byte precision, int iRow, int iCol){
   // prints val on a ver 0012 text lcd with number of decimal places determine by precision
   // precision is a number from 0 to 6 indicating the desired decimial places
@@ -60,7 +59,7 @@ void lcdPrintFloat( float val, byte precision, int iRow, int iCol){
 	lcd.print("0");
     lcd.print(frac,DEC) ;
   }
-} */
+}
 
 char printLCDPad(int iRow, int iCol, char sText[], int length, char pad) {
  lcd.setCursor(iCol, iRow);
