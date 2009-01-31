@@ -9,7 +9,7 @@ void saveSetup() {
   //Set Option Array  
   byte options[1] = {B00000000};
   if (tempUnit == TEMPF) options[0] |= B00000001;
-  PROMwriteBytes(options, 41, 1);
+  PROMwriteBytes(options, 48, 1);
   
 }
 
@@ -23,7 +23,7 @@ void loadSetup() {
   
   //Read Option Array  
   byte options[1];
-  PROMreadBytes(options, 41, 1);
+  PROMreadBytes(options, 48, 1);
   
   if (options[0] & B00000001 != 0) tempUnit == TEMPF;
 }
