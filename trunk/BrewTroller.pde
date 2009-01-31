@@ -18,7 +18,7 @@ byte tsHLT[8], tsMash[8], tsKettle[8], tsCFCH2OIn[8], tsCFCH2OOut[8], tsCFCBeerO
 
 #define TEMPF 1
 #define TEMPC 0
-int tempUnit = TEMPF;
+volatile int tempUnit = TEMPC;
 
 void setup()
 {

@@ -7,10 +7,9 @@ void saveSetup() {
   PROMwriteBytes(tsCFCBeerOut, 40, 8);
 
   //Set Option Array  
-  byte options[1] = {B00000000};
-  if (tempUnit == TEMPF) options[0] |= B00000001;
-  PROMwriteBytes(options, 48, 1);
-  
+  byte options = B00000000;
+  if (tempUnit == TEMPF) options |= B00000001;
+  EEPROM.write(48, options);
 }
 
 void loadSetup() {
@@ -22,10 +21,9 @@ void loadSetup() {
   PROMreadBytes(tsCFCBeerOut, 40, 8);
   
   //Read Option Array  
-  byte options[1];
-  PROMreadBytes(options, 48, 1);
+  byte options = EEPROM.read(48);
   
-  if (options[0] & B00000001 != 0) tempUnit == TEMPF;
+  if (options & 1) tempUnit = TEMPF;
 }
 
 void PROMwriteBytes(byte bytes[], int addr, int numBytes) {
