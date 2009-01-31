@@ -5,6 +5,12 @@ void saveSetup() {
   PROMwriteBytes(tsCFCH2OIn, 24, 8);
   PROMwriteBytes(tsCFCH2OOut, 32, 8);
   PROMwriteBytes(tsCFCBeerOut, 40, 8);
+
+  //Set Option Array  
+  byte options[1] = {B00000000};
+  if (tempUnit == TEMPF) options[0] |= B00000001;
+  PROMwriteBytes(options, 41, 1);
+  
 }
 
 void loadSetup() {
@@ -14,6 +20,12 @@ void loadSetup() {
   PROMreadBytes(tsCFCH2OIn, 24, 8);
   PROMreadBytes(tsCFCH2OOut, 32, 8);
   PROMreadBytes(tsCFCBeerOut, 40, 8);
+  
+  //Read Option Array  
+  byte options[1];
+  PROMreadBytes(options, 41, 1);
+  
+  if (options[0] & B00000001 != 0) tempUnit == TEMPF;
 }
 
 void PROMwriteBytes(byte bytes[], int addr, int numBytes) {

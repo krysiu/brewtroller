@@ -16,8 +16,13 @@ volatile unsigned int enterStatus = 0;
 
 byte tsHLT[8], tsMash[8], tsKettle[8], tsCFCH2OIn[8], tsCFCH2OOut[8], tsCFCBeerOut[8];
 
+#define TEMPF 1
+#define TEMPC 0
+int tempUnit = TEMPF;
+
 void setup()
 {
+  //setDS9bit();
   loadSetup();
   initLCD();
   setDS9bit();
@@ -32,11 +37,11 @@ void setup()
 
 void loop()
 {  
-//printLCD(0,0,"HLT = ");
-//lcdPrintFloat(get_temp(1,tsHLT),1,0,6); // for testing purposes only
-//printLCD(1,0,"MLT = ");
-//lcdPrintFloat(get_temp(1,tsMash),1,1,6); // for testing purposes only
-menuMain();
+  //printLCD(0,0,"HLT = ");
+  //lcdPrintFloat(get_temp(1,tsHLT),1,0,6); // for testing purposes only
+  //printLCD(1,0,"MLT = ");
+  //lcdPrintFloat(get_temp(1,tsMash),1,1,6); // for testing purposes only
+  menuMain();
 }
 
 

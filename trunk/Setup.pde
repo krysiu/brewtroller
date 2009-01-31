@@ -56,3 +56,12 @@ void assignSensor() {
     if (getChoice(conExit, 2, 3) == 0) getDSAddr(addr);
   }
 }
+
+void setTempUnit() {
+  clearLCD();
+  printLCD(0, 0, "Set Temperature Unit");
+  char tempUnits[2][19] = {
+    "     Celcius      ",
+    "    Fahrenheit    "};
+  if (getChoice(tempUnits, 2, 1)==0) tempUnit = TEMPC; else tempUnit = TEMPF;
+}

@@ -21,16 +21,18 @@ void menuMain()
 
 void menuSetup()
 {
-  struct menuItem setupMenu[4];
+  struct menuItem setupMenu[5];
   strcpy(setupMenu[0].title, "Assign Temp Sensor ");
   setupMenu[0].execFunc = &assignSensor;
-  strcpy(setupMenu[1].title, "Save Settings      ");
-  setupMenu[1].execFunc = &saveSetup;
-  strcpy(setupMenu[2].title, "Load Settings      ");
-  setupMenu[2].execFunc = &loadSetup;
-  strcpy(setupMenu[3].title, "Exit Setup         ");
-  setupMenu[3].execFunc = NULL;
-  scrollMenu("System Setup        ", setupMenu, 4);
+  strcpy(setupMenu[1].title, "Set Temp Unit (C/F)");
+  setupMenu[1].execFunc = &setTempUnit;
+  strcpy(setupMenu[2].title, "Save Settings      ");
+  setupMenu[2].execFunc = &saveSetup;
+  strcpy(setupMenu[3].title, "Load Settings      ");
+  setupMenu[3].execFunc = &loadSetup;
+  strcpy(setupMenu[4].title, "Exit Setup         ");
+  setupMenu[4].execFunc = NULL;
+  scrollMenu("System Setup        ", setupMenu, 5);
 }
 
 //NOTE Make struct array a pointer pass
