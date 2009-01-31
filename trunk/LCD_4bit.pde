@@ -10,16 +10,7 @@
 // d4, d5, d6, d7 on pins 20, 21, 22, 23  (LCD pins 11-14)
 LiquidCrystal lcd(17, 18, 19, 20, 21, 22, 23);
 
-void initLCD(){  
-byte i;
-clearLCD;
-printLCD(0,4,"BrewTroller");
-for ( i = 0; i < 20; i++) {
-  printLCD(3,i,">");
-delay(75);
-}
-delay(1000);
-clearLCD();
+void initLCD(){
 }
 
 
@@ -34,6 +25,7 @@ void printLCD(int iRow, int iCol, char sText[]){
  }
 } 
 
+//This function still has issues as multiple digits can be set without a delay between when byte value is double digit (40us timing issue)
 void printLCDBytes(int iRow, int iCol, byte sByte[], int numBytes){
  lcd.setCursor(iCol, iRow);
  delayMicroseconds(LCD_DELAY_CURSOR);

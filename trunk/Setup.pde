@@ -53,7 +53,20 @@ void assignSensor() {
     char conExit[2][19] = {
       "     Continue     ",
       "       Exit       "};
-    if (getChoice(conExit, 2, 3) == 0) getDSAddr(addr);
+    if (getChoice(conExit, 2, 3) == 0) {
+      clearLCD();
+      getDSAddr(addr);
+      printLCD(0,0,"Assign: ");
+      printLCD(0,8, dispTitle);
+      printLCD(1,0,"Found address:");
+      printLCDBytes(2,2,addr, 8);
+      printLCD(3,0,">       Exit       <");
+      while (enterStatus == 0) {
+        delay(500);
+      }
+      enterStatus = 0;
+    }
+    
   }
 }
 
@@ -63,5 +76,5 @@ void setTempUnit() {
   char tempUnits[2][19] = {
     "     Celcius      ",
     "    Fahrenheit    "};
-  if (getChoice(tempUnits, 2, 1)==0) tempUnit = TEMPC; else tempUnit = TEMPF;
+  if (getChoice(tempUnits, 2, 1, tempUnit)==0) tempUnit = TEMPC; else tempUnit = TEMPF;
 }

@@ -90,14 +90,14 @@ void drawItems(struct menuItem menuItems[], int numOpts, int topItem) {
   for (int i = topItem; i <= maxOpt; i++) printLCD(i-topItem+1, 1, menuItems[i].title);
 }
 
-int getChoice(char choices[][19], int numChoices, int iRow) {
+int getChoice(char choices[][19], int numChoices, int iRow, int defValue = 0) {
   printLCD(iRow, 0, ">                  <");
 
   encMin = 0;
   encMax = numChoices-1;
  
-  encCount = 0;
-  lastCount = 1;
+  encCount = defValue;
+  lastCount = encCount+1;
 
   while(1) {
     if (encCount != lastCount) {
