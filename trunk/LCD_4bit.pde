@@ -75,3 +75,16 @@ char printLCDPad(int iRow, int iCol, char sText[], int length, char pad) {
    delayMicroseconds(LCD_DELAY_CHAR);
  }
 }  
+
+void ftoa(float val, char retStr[], int precision) {
+  itoa(val, retStr, 10);  
+  if(val < 0) val = -val;
+  if( precision > 0) {
+    strcat(retStr, ".");
+    unsigned int mult = 1;
+    while(precision--) mult *=10;
+    unsigned int frac = (val - int(val)) * mult;
+    char buf[6];
+    strcat(retStr, itoa(frac, buf, 10));
+  }
+}
