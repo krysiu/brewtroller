@@ -48,3 +48,33 @@ void setDS9bit(void){
   //ds.write(0x3F);    // 10-bit
   ds.write(0x1F);    // 9-bit
 }
+
+void convertAll()
+{
+  ds.reset();
+  ds.skip();
+  ds.write(0x44,1);         // start conversion, with parasite power on at the end
+}
+
+float read_temp(int unit, byte* addr) //Unit 1 for F and 0 for C
+{
+  byte i;
+  byte data[12];
+  ds.reset();
+  ds.select(addr);   
+  ds.write(0xBE);         // Read Scratchpad
+  for ( i = 0; i < 9; i++) { // we need 9 bytes
+    data[i] = ds.read();
+  }
+  if ( addr[0] != 0x28) {
+  rawtemp = (data[1] << 8) + data[0];
+  temp = (float)rawtemp * 0.5;
+  if (unit == 1) temp= (temp * 1.8) + 32.0;
+  return temp;
+ } else {
+  rawtemp = (data[1] << 8) + data[0]; 
+  temp = (float)rawtemp * 0.0625;
+  if (unit == 1) temp= (temp * 1.8) + 32.0;
+  return temp;
+  }
+}

@@ -9,7 +9,6 @@
 #define tempPin 31
   
 unsigned int encCount;
-unsigned int lastCount;
 unsigned int encMin;
 unsigned int encMax;
 volatile unsigned int enterStatus = 0;
@@ -22,10 +21,8 @@ volatile int tempUnit = TEMPC;
 
 void setup()
 {
-  //setDS9bit();
   loadSetup();
   initLCD();
-  setDS9bit();
   
   pinMode(encAPin, INPUT);
   pinMode(encBPin, INPUT);
@@ -37,10 +34,6 @@ void setup()
 
 void loop()
 {  
-  //printLCD(0,0,"HLT = ");
-  //lcdPrintFloat(get_temp(1,tsHLT),1,0,6); // for testing purposes only
-  //printLCD(1,0,"MLT = ");
-  //lcdPrintFloat(get_temp(1,tsMash),1,1,6); // for testing purposes only
   menuMain();
 }
 

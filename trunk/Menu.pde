@@ -46,7 +46,7 @@ void scrollMenu(char sTitle[], struct menuItem menuItems[], int numOpts) {
     encMax = numOpts-1;
   
     encCount = 0;
-    lastCount = 1;
+    int lastCount = 1;
     unsigned int topItem = 1;
 
     unsigned int inLoop = 1;
@@ -97,7 +97,7 @@ int getChoice(char choices[][19], int numChoices, int iRow, int defValue = 0) {
   encMax = numChoices-1;
  
   encCount = defValue;
-  lastCount = encCount+1;
+  int lastCount = encCount+1;
 
   while(1) {
     if (encCount != lastCount) {
