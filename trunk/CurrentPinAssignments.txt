@@ -24,7 +24,7 @@ Digital 20	LCD D5
 Digital 21	LCD D6
 Digital 22	LCD D7
 Digital 23	LCD D8
-Digital 24/Analog 7 Open
+Digital 24/Analog 7 Output 14
 Digital 25/Analog 6 Open
 Digital 26/Analog 5 Open
 Digital 27/Analog 4 Open
