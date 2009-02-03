@@ -17,49 +17,94 @@ void doMon() {
 
   while (1) {
     if (enterStatus == 2) {
+        //Exit Brew Monitor
         enterStatus = 0;
         return;
+    }
+    if (enterStatus == 1) {
+      //Pop-Up Menu
+      enterStatus = 0;
+      char monMenu[7][20] = {
+        "Set HLT Temp       ",
+        "Set Mash Temp      ",
+        "Start Timer        ",
+        "Pause Timer        ",
+        "Clear Timer        ",
+        "Close Menu         ",
+        "Quit Brew Monitor  "
+      };
+      boolean inMenu = 1;
+      while(inMenu) {
+        switch (scrollMenu("Brew Monitor Menu   ", monMenu, 7)) {
+          case 0:
+            setHLTTemp();
+            break;
+          case 1:
+            setMashTemp();
+            break;
+          case 2:
+            startTimer();
+            break;
+          case 3:
+            pauseTimer();
+            break;
+          case 4:
+            clearTimer();
+            break;
+          case 6:
+            //Confirm dialog
+            //Clear timer
+            //Clear Outputs
+            return;
+          default:
+            inMenu = 0;
+            break;
+        }
+      }
+      encCount = lastCount;
+      lastCount += 1;
     }
     switch (encCount) {
       case 0:
         if (encCount != lastCount) {
           clearLCD();
           printLCD(0,0,"Brew Monitor  (Mash)");
-          printLCD(3,0,"HLT:       Mash:    ");
-          printLCD(3, 7, sTempUnit);
+          printLCD(2,0,"           HLT:     ");
+          printLCD(3,0,"          Mash:     ");
+          printLCD(2, 19, sTempUnit);
           printLCD(3, 19, sTempUnit);
           lastCount = encCount;
         }
-        printLCDPad(3, 4, itoa(tempHLT, buf, 10), 3, ' ');
+        printLCDPad(2, 16, itoa(tempHLT, buf, 10), 3, ' ');
         printLCDPad(3, 16, itoa(tempMash, buf, 10), 3, ' ');
         break;
       case 1:
         if (encCount != lastCount) {
           clearLCD();
           printLCD(0,0,"Brew Monitor  (Boil)");
-          printLCD(3,0,"Kettle:             ");
-          printLCD(3, 10, sTempUnit);
+          printLCD(3,0,"         Kettle:    ");
+          printLCD(3, 19, sTempUnit);
           lastCount = encCount;
         }
-        printLCDPad(3, 7, itoa(tempKettle, buf, 10), 3, ' ');
+        printLCDPad(3, 16, itoa(tempKettle, buf, 10), 3, ' ');
         break;
       case 2:
         if (encCount != lastCount) {
           clearLCD();
           printLCD(0,0,"Brew Monitor (Chill)");
-          printLCD(1,0,"       In    Out    ");
-          printLCD(2,0,"Beer:               ");
-          printLCD(3,0," H2O:               ");
-          printLCD(2, 9, sTempUnit);
-          printLCD(2, 15, sTempUnit);
-          printLCD(3, 9, sTempUnit);
-          printLCD(3, 15, sTempUnit);
+          printLCD(1,0,"            In   Out");
+          printLCD(2,0,"     Beer:          ");
+          printLCD(3,0,"      H2O:          ");
+          printLCD(2, 14, sTempUnit);
+          printLCD(2, 19, sTempUnit);
+          printLCD(3, 14, sTempUnit);
+          printLCD(3, 19, sTempUnit);
           lastCount = encCount;
         }
-        printLCDPad(2, 6, itoa(tempKettle, buf, 10), 3, ' ');
-        printLCDPad(2, 12, itoa(tempCFCBeerOut, buf, 10), 3, ' ');
-        printLCDPad(3, 6, itoa(tempCFCH2OIn, buf, 10), 3, ' ');
-        printLCDPad(3, 12, itoa(tempCFCH2OOut, buf, 10), 3, ' ');
+        printLCDPad(2, 11, itoa(tempKettle, buf, 10), 3, ' ');
+        printLCDPad(2, 16, itoa(tempCFCBeerOut, buf, 10), 3, ' ');
+        printLCDPad(3, 11, itoa(tempCFCH2OIn, buf, 10), 3, ' ');
+        printLCDPad(3, 16, itoa(tempCFCH2OOut, buf, 10), 3, ' ');
         break;
       }
 
@@ -77,3 +122,6 @@ void doMon() {
       }
     }
   }
+
+
+  

@@ -1,4 +1,4 @@
-#include <EEPROM.h>
+#include <PID.h>
 
 //Declare Globals
 #define encAPin 2
@@ -19,10 +19,19 @@ byte tsHLT[8], tsMash[8], tsKettle[8], tsCFCH2OIn[8], tsCFCH2OOut[8], tsCFCBeerO
 #define TEMPC 0
 volatile int tempUnit = TEMPC;
 
+boolean hltPIDEnabled = 0;
+boolean mashPIDEnabled = 0;
+boolean kettlePIDEnabled = 0;
+double hltPIDInput, hltPIDOutput, hltPIDSetpoint, mashPIDInput, mashPIDOutput, mashPIDSetpoint, kettlePIDInput, kettlePIDOutput, kettlePIDSetpoint;
+PID hltPID(&hltPIDInput, &hltPIDOutput, &hltPIDSetpoint, -3,4,1);
+PID mashPID(&mashPIDInput, &mashPIDOutput, &mashPIDSetpoint, -3,4,1);
+PID kettlePID(&kettlePIDInput, &kettlePIDOutput, &kettlePIDSetpoint, -3,4,1);
+
 void setup()
 {
   loadSetup();
   initLCD();
+  initPID();
   
   pinMode(encAPin, INPUT);
   pinMode(encBPin, INPUT);

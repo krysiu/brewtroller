@@ -37,7 +37,7 @@ void getDSAddr(byte addrRet[8]){
   ds.search(addrRet);
 }
 
-void setDS9bit(void){
+void setDS9bit(void) {
   ds.reset();
   ds.skip();    
   ds.write(0x4E);  
@@ -49,8 +49,7 @@ void setDS9bit(void){
   ds.write(0x1F);    // 9-bit
 }
 
-void convertAll()
-{
+void convertAll() {
   ds.reset();
   ds.skip();
   ds.write(0x44,1);         // start conversion, with parasite power on at the end

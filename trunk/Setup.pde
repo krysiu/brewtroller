@@ -10,7 +10,8 @@ void assignSensor() {
     "  Chiller H2O In  ",
     "  Chiller H2O Out ",
     " Chiller Beer Out ",
-    "       Exit       "};
+    "       Exit       "
+  };
   switch (getChoice(sensors, 7, 1)) {
     case 0:
       addr = tsHLT;
@@ -78,4 +79,26 @@ void setTempUnit() {
     "     Celcius      ",
     "    Fahrenheit    "};
   if (getChoice(tempUnits, 2, 1, tempUnit)==0) tempUnit = TEMPC; else tempUnit = TEMPF;
+}
+
+void setPID() {
+  char pidMenu[4][20] = { "", "", "", "Exit               " };
+  while(1) {
+    if (hltPIDEnabled) strcpy(pidMenu[0],    "HLT: PID           "); else strcpy(pidMenu[0], "HLT: On/Off        ");
+    if (mashPIDEnabled) strcpy(pidMenu[1],   "Mash: PID          "); else strcpy(pidMenu[1], "Mash: On/Off       ");
+    if (kettlePIDEnabled) strcpy(pidMenu[2], "Kettle: PID        "); else strcpy(pidMenu[2], "Kettle: On/Off     ");
+    switch(scrollMenu("Set Output Type", pidMenu, 4)) {
+      case 0:
+        hltPIDEnabled = ~hltPIDEnabled;
+        break;
+      case 1:
+        mashPIDEnabled = ~mashPIDEnabled;
+        break;
+      case 2:
+        kettlePIDEnabled = ~kettlePIDEnabled;
+        break;
+      default:
+        return;
+    }
+  }
 }

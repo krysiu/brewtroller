@@ -1,3 +1,5 @@
+#include <EEPROM.h>
+
 void saveSetup() {
   PROMwriteBytes(tsHLT, 0, 8);
   PROMwriteBytes(tsMash, 8, 8);
@@ -8,7 +10,11 @@ void saveSetup() {
 
   //Set Option Array  
   byte options = B00000000;
-  if (tempUnit == TEMPF) options |= B00000001;
+  if (tempUnit == TEMPF) options |= 1;
+  if (hltPIDEnabled == 1) options |= 2;
+  if (mashPIDEnabled == 1) options |= 4;
+  if (kettlePIDEnabled == 1) options |= 8;
+
   EEPROM.write(48, options);
 }
 
@@ -24,6 +30,9 @@ void loadSetup() {
   byte options = EEPROM.read(48);
   
   if (options & 1) tempUnit = TEMPF;
+  if (options & 2) hltPIDEnabled = 1;
+  if (options & 4) mashPIDEnabled = 1;
+  if (options & 8) kettlePIDEnabled = 1;
 }
 
 void PROMwriteBytes(byte bytes[], int addr, int numBytes) {
