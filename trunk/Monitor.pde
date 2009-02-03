@@ -1,8 +1,8 @@
 void doMon() {
   char buf[6];
-  int tempHLT = 0;
-  int tempMash = 0;
-  int tempKettle = 0;
+  float tempHLT = 0;
+  float tempMash = 0;
+  float tempKettle = 0;
   int tempCFCH2OIn = 0;
   int tempCFCH2OOut = 0;
   int tempCFCBeerOut = 0;
@@ -64,29 +64,34 @@ void doMon() {
       encCount = lastCount;
       lastCount += 1;
     }
+    char buf[6];
     switch (encCount) {
       case 0:
         if (encCount != lastCount) {
           clearLCD();
           printLCD(0,0,"Brew Monitor  (Mash)");
-          printLCD(2,0,"           HLT:     ");
-          printLCD(3,0,"          Mash:     ");
+          printLCD(2,0,"         HLT:       ");
+          printLCD(3,0,"        Mash:       ");
           printLCD(2, 19, sTempUnit);
           printLCD(3, 19, sTempUnit);
           lastCount = encCount;
         }
-        printLCDPad(2, 16, itoa(tempHLT, buf, 10), 3, ' ');
-        printLCDPad(3, 16, itoa(tempMash, buf, 10), 3, ' ');
+        
+        ftoa(tempHLT, buf, 1);
+        printLCDPad(2, 14, buf, 5, ' ');
+        ftoa(tempMash, buf, 1);
+        printLCDPad(3, 14, buf, 5, ' ');
         break;
       case 1:
         if (encCount != lastCount) {
           clearLCD();
           printLCD(0,0,"Brew Monitor  (Boil)");
-          printLCD(3,0,"         Kettle:    ");
+          printLCD(3,0,"       Kettle:      ");
           printLCD(3, 19, sTempUnit);
           lastCount = encCount;
         }
-        printLCDPad(3, 16, itoa(tempKettle, buf, 10), 3, ' ');
+        ftoa(tempKettle, buf, 1);
+        printLCDPad(3, 14, buf, 5, ' ');
         break;
       case 2:
         if (encCount != lastCount) {

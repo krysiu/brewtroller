@@ -11,6 +11,8 @@
 LiquidCrystal lcd(17, 18, 19, 20, 21, 22, 23);
 
 void initLCD(){
+  //Tryiing a delay here to see if it fixes an intermittant no display on power on issue
+  delay(1000);
 }
 
 

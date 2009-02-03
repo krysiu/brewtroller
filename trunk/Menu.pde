@@ -1,13 +1,12 @@
 void menuMain()
 {
-  char mainMenu[4][20] = {
+  char mainMenu[3][20] = {
     "AutoBrew          ",
     "Brew Monitor      ",
-    "Fermentation      ",
     "System Setup      "
   };
   while(1) {
-    switch (scrollMenu("BrewTroller         ", mainMenu, 4)) {
+    switch (scrollMenu("BrewTroller         ", mainMenu, 3)) {
       case 0:
         doAutoBrew();
         break;
@@ -15,9 +14,6 @@ void menuMain()
         doMon();
         break;
       case 2:
-        doFerm();
-        break;
-      case 3:
         menuSetup();
         break;
       default:
