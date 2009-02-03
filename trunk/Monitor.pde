@@ -15,6 +15,10 @@ void doMon() {
   encCount = 0;
   int lastCount = 1;
 
+  unsigned long timerValue = 0;
+  unsigned long lastTime = 0;
+  boolean timerStatus = 0;
+
   while (1) {
     if (enterStatus == 2) {
         //Exit Brew Monitor
@@ -43,13 +47,20 @@ void doMon() {
             setMashTemp();
             break;
           case 2:
-            startTimer();
+            //Prompt for value
+            timerValue = 3602000;
+            lastTime = millis();
+            timerStatus = 1;
+            inMenu = 0;
             break;
           case 3:
-            pauseTimer();
+            timerStatus = ~timerStatus;
+            inMenu = 0;
             break;
           case 4:
-            clearTimer();
+            timerValue = 0;
+            timerStatus = 0;
+            inMenu = 0;
             break;
           case 6:
             //Confirm dialog
@@ -111,6 +122,27 @@ void doMon() {
         printLCDPad(3, 11, itoa(tempCFCH2OIn, buf, 10), 3, ' ');
         printLCDPad(3, 16, itoa(tempCFCH2OOut, buf, 10), 3, ' ');
         break;
+      }
+      Serial.print("timerValue: ");
+      Serial.println(timerValue, DEC);
+      if (timerStatus) {
+        unsigned long now = millis();
+        timerValue -= now - lastTime;
+        lastTime = now;
+      }
+
+      int timerHours = timerValue / 3600000;
+      int timerMins = (timerValue - timerHours * 3600000) / 60000;
+      int timerSecs = (timerValue - timerHours * 3600000 - timerMins * 60000) / 1000;
+
+      if (timerHours > 0) {
+        printLCDPad(1, 0, itoa(timerHours, buf, 10), 2, '0');
+        printLCD(1,2,":");
+        printLCDPad(1, 3, itoa(timerMins, buf, 10), 2, '0');
+      } else {
+        printLCDPad(1, 0, itoa(timerMins, buf, 10), 2, '0');
+        printLCD(1,2,":");
+        printLCDPad(1, 3, itoa(timerSecs, buf, 10), 2, '0');
       }
 
       if (convStart == 0) {

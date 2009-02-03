@@ -29,6 +29,7 @@ PID kettlePID(&kettlePIDInput, &kettlePIDOutput, &kettlePIDSetpoint, -3,4,1);
 
 void setup()
 {
+  //Serial.begin(9600);
   loadSetup();
   initLCD();
   initPID();
