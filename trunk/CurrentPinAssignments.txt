@@ -18,7 +18,7 @@ Digital 14	Output 11
 Digital 15	Buzzer
 Digital 16	Output 12
 Digital 17	LCD RS
-Digital 18	LCD R/W
+Digital 18	Output 13
 Digital 19	LCD E
 Digital 20	LCD D5
 Digital 21	LCD D6
