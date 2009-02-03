@@ -54,7 +54,7 @@ void doMon() {
             inMenu = 0;
             break;
           case 3:
-            timerStatus = ~timerStatus;
+            timerStatus = timerStatus ^ 1;
             inMenu = 0;
             break;
           case 4:
