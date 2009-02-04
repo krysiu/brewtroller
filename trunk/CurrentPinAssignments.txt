@@ -10,8 +10,8 @@ Digital 6	Output 4
 Digital 7	Output 5
 Digital 8	Output 6
 Digital 9	Output 7
-Digital 10	Encoder Enter Pin
-Digital 11	Output 8
+Digital 10	Output 8
+Digital 11	Encoder Enter Pin
 Digital 12	Output 9
 Digital 13	Output 10
 Digital 14	Output 11
