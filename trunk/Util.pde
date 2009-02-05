@@ -33,3 +33,7 @@ void pauseTimer() {
 }
 void clearTimer() {
 }
+
+void resetOutputs() {
+  digitalWrite(ALARM_PIN, LOW);
+}

@@ -24,6 +24,7 @@ void doMon() {
     if (enterStatus == 2) {
         //Exit Brew Monitor
         enterStatus = 0;
+        resetOutputs();
         return;
     }
     if (enterStatus == 1) {
@@ -74,7 +75,7 @@ void doMon() {
               break;
             case 6:
               //Confirm dialog
-              //Reset Outputs
+              resetOutputs();
               return;
             default:
               inMenu = 0;
