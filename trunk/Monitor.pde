@@ -19,7 +19,8 @@ void doMon() {
   unsigned long lastTime = 0;
   boolean timerStatus = 0;
   boolean alarmStatus = 0;
-
+  unsigned long timerLastWrite = 0;
+  
   while (1) {
     if (enterStatus == 2) {
         //Exit Brew Monitor
@@ -32,7 +33,7 @@ void doMon() {
       if (alarmStatus) {
         alarmStatus = 0;
         digitalWrite(ALARM_PIN, LOW);
-        printLCD(1, 5, " ");
+        printLCD(1, 0, "       ");
       } else {
         //Pop-Up Menu
         char monMenu[7][20] = {
@@ -65,7 +66,15 @@ void doMon() {
               }
               break;
             case 3:
-              timerStatus = timerStatus ^ 1;
+              if (timerStatus) {
+                //Pause
+                timerStatus = 0;
+              } else {
+                //Unpause
+                timerStatus = 1;
+                lastTime = millis();
+                timerLastWrite = 0;
+              }
               inMenu = 0;
               break;
             case 4:
@@ -98,6 +107,7 @@ void doMon() {
           printLCD(2, 19, sTempUnit);
           printLCD(3, 19, sTempUnit);
           lastCount = encCount;
+          timerLastWrite = 0;
         }
         
         ftoa(tempHLT, buf, 1);
@@ -112,6 +122,7 @@ void doMon() {
           printLCD(3,0,"       Kettle:      ");
           printLCD(3, 19, sTempUnit);
           lastCount = encCount;
+          timerLastWrite = 0;
         }
         ftoa(tempKettle, buf, 1);
         printLCDPad(3, 14, buf, 5, ' ');
@@ -128,6 +139,7 @@ void doMon() {
           printLCD(3, 14, sTempUnit);
           printLCD(3, 19, sTempUnit);
           lastCount = encCount;
+          timerLastWrite = 0;
         }
         printLCDPad(2, 11, itoa(tempKettle, buf, 10), 3, ' ');
         printLCDPad(2, 16, itoa(tempCFCBeerOut, buf, 10), 3, ' ');
@@ -135,34 +147,37 @@ void doMon() {
         printLCDPad(3, 16, itoa(tempCFCH2OOut, buf, 10), 3, ' ');
         break;
       }
-      if (timerStatus) {
-        unsigned long now = millis();
-        if (timerValue > now - lastTime) {
-          timerValue -= now - lastTime;
-        } else {
-          timerValue = 0;
-          timerStatus = 0;
-          alarmStatus = 1;
-          digitalWrite(ALARM_PIN, HIGH);
-          printLCD(1, 5, "!");
+      if (alarmStatus || timerValue > 0) {
+        if (timerStatus) {
+          unsigned long now = millis();
+          if (timerValue > now - lastTime) {
+            timerValue -= now - lastTime;
+          } else {
+            timerValue = 0;
+            timerStatus = 0;
+            alarmStatus = 1;
+            digitalWrite(ALARM_PIN, HIGH);
+            printLCD(1, 5, "!");
+          }
+          lastTime = now;
+        } else if (!alarmStatus) printLCD(1, 0, "[PAUSE]");
+
+        int timerHours = timerValue / 3600000;
+        int timerMins = (timerValue - timerHours * 3600000) / 60000;
+        int timerSecs = (timerValue - timerHours * 3600000 - timerMins * 60000) / 1000;
+
+        if (timerLastWrite != timerValue/1000) {
+          printLCD(1, 0, "  :    ");
+          if (timerHours > 0) {
+            printLCDPad(1, 0, itoa(timerHours, buf, 10), 2, '0');
+            printLCDPad(1, 3, itoa(timerMins, buf, 10), 2, '0');
+          } else {
+            printLCDPad(1, 0, itoa(timerMins, buf, 10), 2, '0');
+            printLCDPad(1, 3, itoa(timerSecs, buf, 10), 2, '0');
+          }
+          timerLastWrite = timerValue/1000;
         }
-        lastTime = now;
       }
-
-      int timerHours = timerValue / 3600000;
-      int timerMins = (timerValue - timerHours * 3600000) / 60000;
-      int timerSecs = (timerValue - timerHours * 3600000 - timerMins * 60000) / 1000;
-
-      if (timerHours > 0) {
-        printLCDPad(1, 0, itoa(timerHours, buf, 10), 2, '0');
-        printLCD(1,2,":");
-        printLCDPad(1, 3, itoa(timerMins, buf, 10), 2, '0');
-      } else {
-        printLCDPad(1, 0, itoa(timerMins, buf, 10), 2, '0');
-        printLCD(1,2,":");
-        printLCDPad(1, 3, itoa(timerSecs, buf, 10), 2, '0');
-      }
-      
       if (convStart == 0) {
         convertAll();
         convStart = millis();
