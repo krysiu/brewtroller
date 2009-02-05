@@ -18,6 +18,7 @@ void doMon() {
   unsigned long timerValue = 0;
   unsigned long lastTime = 0;
   boolean timerStatus = 0;
+  boolean alarmStatus = 0;
 
   while (1) {
     if (enterStatus == 2) {
@@ -26,54 +27,64 @@ void doMon() {
         return;
     }
     if (enterStatus == 1) {
-      //Pop-Up Menu
       enterStatus = 0;
-      char monMenu[7][20] = {
-        "Set HLT Temp       ",
-        "Set Mash Temp      ",
-        "Start Timer        ",
-        "Pause Timer        ",
-        "Clear Timer        ",
-        "Close Menu         ",
-        "Quit Brew Monitor  "
-      };
-      boolean inMenu = 1;
-      while(inMenu) {
-        switch (scrollMenu("Brew Monitor Menu   ", monMenu, 7)) {
-          case 0:
-            setHLTTemp();
-            break;
-          case 1:
-            setMashTemp();
-            break;
-          case 2:
-            //Prompt for value
-            timerValue = 3602000;
-            lastTime = millis();
-            timerStatus = 1;
-            inMenu = 0;
-            break;
-          case 3:
-            timerStatus = timerStatus ^ 1;
-            inMenu = 0;
-            break;
-          case 4:
-            timerValue = 0;
-            timerStatus = 0;
-            inMenu = 0;
-            break;
-          case 6:
-            //Confirm dialog
-            //Clear timer
-            //Clear Outputs
-            return;
-          default:
-            inMenu = 0;
-            break;
+      if (alarmStatus) {
+        alarmStatus = 0;
+        digitalWrite(ALARM_PIN, LOW);
+        printLCD(1, 5, " ");
+      } else {
+        //Pop-Up Menu
+        char monMenu[7][20] = {
+          "Set HLT Temp       ",
+          "Set Mash Temp      ",
+          "Set Timer          ",
+          "Pause Timer        ",
+          "Clear Timer        ",
+          "Close Menu         ",
+          "Quit Brew Monitor  "
+        };
+        boolean inMenu = 1;
+        while(inMenu) {
+          switch (scrollMenu("Brew Monitor Menu   ", monMenu, 7)) {
+            case 0:
+              setHLTTemp();
+              break;
+            case 1:
+              setMashTemp();
+              break;
+            case 2:
+              //Prompt for value
+              int newMins;
+              newMins = getTimerValue("Enter Timer Value:", timerValue/60000);
+              if (newMins > 0) {
+                timerValue = newMins * 60000;
+                lastTime = millis();
+                timerStatus = 1;
+                inMenu = 0;
+              }
+              break;
+            case 3:
+              timerStatus = timerStatus ^ 1;
+              inMenu = 0;
+              break;
+            case 4:
+              timerValue = 0;
+              timerStatus = 0;
+              inMenu = 0;
+              break;
+            case 6:
+              //Confirm dialog
+              //Reset Outputs
+              return;
+            default:
+              inMenu = 0;
+              break;
+          }
         }
+      
+        encCount = lastCount;
+        lastCount += 1;
       }
-      encCount = lastCount;
-      lastCount += 1;
     }
     char buf[6];
     switch (encCount) {
@@ -123,11 +134,17 @@ void doMon() {
         printLCDPad(3, 16, itoa(tempCFCH2OOut, buf, 10), 3, ' ');
         break;
       }
-      Serial.print("timerValue: ");
-      Serial.println(timerValue, DEC);
       if (timerStatus) {
         unsigned long now = millis();
-        timerValue -= now - lastTime;
+        if (timerValue > now - lastTime) {
+          timerValue -= now - lastTime;
+        } else {
+          timerValue = 0;
+          timerStatus = 0;
+          alarmStatus = 1;
+          digitalWrite(ALARM_PIN, HIGH);
+          printLCD(1, 5, "!");
+        }
         lastTime = now;
       }
 
@@ -144,7 +161,7 @@ void doMon() {
         printLCD(1,2,":");
         printLCDPad(1, 3, itoa(timerSecs, buf, 10), 2, '0');
       }
-
+      
       if (convStart == 0) {
         convertAll();
         convStart = millis();

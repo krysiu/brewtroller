@@ -1,5 +1,5 @@
 #include <OneWire.h>
-OneWire ds(tempPin);
+OneWire ds(TEMP_PIN);
 
 float temp;
 int rawtemp;

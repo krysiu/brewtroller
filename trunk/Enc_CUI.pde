@@ -6,13 +6,13 @@ unsigned long enterStart;
 
 void doEncoderA() {
   if (millis() - lastEncUpd < encBounceDelay) return;
-  if (digitalRead(encBPin) == LOW) encCount++; else encCount--;
+  if (digitalRead(ENCB_PIN) == LOW) encCount++; else encCount--;
   if (encCount == -1) encCount = 0; else if (encCount < encMin) { encCount = encMin; } else if (encCount > encMax) { encCount = encMax; }
   lastEncUpd = millis();
 } 
 
 void doEnter() {
-  if (digitalRead(enterPin) == HIGH) {
+  if (digitalRead(ENTER_PIN) == HIGH) {
     enterStart = millis();
   } else {
     if (millis() - enterStart > 1000) {

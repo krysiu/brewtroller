@@ -1,12 +1,13 @@
 #include <PID.h>
 
 //Declare Globals
-#define encAPin 2
-#define encBPin 4
-#define encAInt 2
-#define enterPin 11
-#define enterInt 1
-#define tempPin 31
+#define ENCA_PIN 2
+#define ENCB_PIN 4
+#define TEMP_PIN 5
+#define ENTER_PIN 11
+#define ALARM_PIN 15
+#define ENTER_INT 1
+#define ENCA_INT 2
   
 unsigned int encCount;
 unsigned int encMin;
@@ -34,12 +35,14 @@ void setup()
   initLCD();
   initPID();
   
-  pinMode(encAPin, INPUT);
-  pinMode(encBPin, INPUT);
-  pinMode(enterPin, INPUT);
+  pinMode(ENCA_PIN, INPUT);
+  pinMode(ENCB_PIN, INPUT);
+  pinMode(ENTER_PIN, INPUT);
+  pinMode(ALARM_PIN, OUTPUT);
+  digitalWrite(ALARM_PIN, LOW);
   
-  attachInterrupt(2, doEncoderA, RISING);
-  attachInterrupt(1, doEnter, CHANGE);
+  attachInterrupt(ENCA_INT, doEncoderA, RISING);
+  attachInterrupt(ENTER_INT, doEnter, CHANGE);
 }
 
 void loop()
