@@ -1,4 +1,4 @@
-#Pin assignments for the Sanguino
+# Pin assignments for the Sanguino
 
 = Introduction =
 The following is the current pin assignments being used. These assignments are subject to change.
