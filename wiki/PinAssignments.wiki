@@ -2,7 +2,7 @@
 = Pin assignments for the Sanguino =
 The following is the current pin assignments being used. These assignments are subject to change.
 
-||Sanguino Pin||BrewTroller Function||
+|| *Sanguino Pin* ||BrewTroller Function||
 ||Digital 0||Output 1||
 ||Digital 1||Output 2||
 ||Digital 2||Encoder A||
