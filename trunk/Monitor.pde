@@ -14,12 +14,6 @@ void doMon() {
   encMax = 2;
   encCount = 0;
   int lastCount = 1;
-
-  unsigned long timerValue = 0;
-  unsigned long lastTime = 0;
-  boolean timerStatus = 0;
-  boolean alarmStatus = 0;
-  unsigned long timerLastWrite = 0;
   
   while (1) {
     if (enterStatus == 2) {
@@ -31,9 +25,7 @@ void doMon() {
     if (enterStatus == 1) {
       enterStatus = 0;
       if (alarmStatus) {
-        alarmStatus = 0;
-        digitalWrite(ALARM_PIN, LOW);
-        printLCD(1, 0, "       ");
+        setAlarm(0);
       } else {
         //Pop-Up Menu
         char monMenu[7][20] = {
@@ -49,37 +41,26 @@ void doMon() {
         while(inMenu) {
           switch (scrollMenu("Brew Monitor Menu   ", monMenu, 7)) {
             case 0:
-              setHLTTemp();
+              
               break;
             case 1:
-              setMashTemp();
+              
               break;
             case 2:
               //Prompt for value
               int newMins;
               newMins = getTimerValue("Enter Timer Value:", timerValue/60000);
               if (newMins > 0) {
-                timerValue = newMins * 60000;
-                lastTime = millis();
-                timerStatus = 1;
+                setTimer(newMins);
                 inMenu = 0;
               }
               break;
             case 3:
-              if (timerStatus) {
-                //Pause
-                timerStatus = 0;
-              } else {
-                //Unpause
-                timerStatus = 1;
-                lastTime = millis();
-                timerLastWrite = 0;
-              }
+              pauseTimer();
               inMenu = 0;
               break;
             case 4:
-              timerValue = 0;
-              timerStatus = 0;
+              clearTimer();
               inMenu = 0;
               break;
             case 6:
@@ -91,7 +72,6 @@ void doMon() {
               break;
           }
         }
-      
         encCount = lastCount;
         lastCount += 1;
       }
@@ -147,37 +127,8 @@ void doMon() {
         printLCDPad(3, 16, itoa(tempCFCH2OOut, buf, 10), 3, ' ');
         break;
       }
-      if (alarmStatus || timerValue > 0) {
-        if (timerStatus) {
-          unsigned long now = millis();
-          if (timerValue > now - lastTime) {
-            timerValue -= now - lastTime;
-          } else {
-            timerValue = 0;
-            timerStatus = 0;
-            alarmStatus = 1;
-            digitalWrite(ALARM_PIN, HIGH);
-            printLCD(1, 5, "!");
-          }
-          lastTime = now;
-        } else if (!alarmStatus) printLCD(1, 0, "[PAUSE]");
+      printTimer(1,0);
 
-        int timerHours = timerValue / 3600000;
-        int timerMins = (timerValue - timerHours * 3600000) / 60000;
-        int timerSecs = (timerValue - timerHours * 3600000 - timerMins * 60000) / 1000;
-
-        if (timerLastWrite != timerValue/1000) {
-          printLCD(1, 0, "  :    ");
-          if (timerHours > 0) {
-            printLCDPad(1, 0, itoa(timerHours, buf, 10), 2, '0');
-            printLCDPad(1, 3, itoa(timerMins, buf, 10), 2, '0');
-          } else {
-            printLCDPad(1, 0, itoa(timerMins, buf, 10), 2, '0');
-            printLCDPad(1, 3, itoa(timerSecs, buf, 10), 2, '0');
-          }
-          timerLastWrite = timerValue/1000;
-        }
-      }
       if (convStart == 0) {
         convertAll();
         convStart = millis();
