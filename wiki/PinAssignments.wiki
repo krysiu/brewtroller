@@ -19,7 +19,7 @@ The following is the current pin assignments being used. These assignments are s
 ||Digital 13||Pump/Valve 7||
 ||Digital 14||Pump/Valve 8||
 ||Digital 15||Buzzer||
-||Digital 16||Pump/Valve 9||
+||Digital 16||Pump/Valve 11||
 ||Digital 17||LCD RS||
 ||Digital 18||Pump/Valve 10||
 ||Digital 19||LCD Enable||
@@ -27,7 +27,7 @@ The following is the current pin assignments being used. These assignments are s
 ||Digital 21||LCD Data 6||
 ||Digital 22||LCD Data 7||
 ||Digital 23||LCD Data 8||
-||Digital 24/Analog 7||Pump/Valve 11||
+||Digital 24/Analog 7||Pump/Valve 9||
 ||Digital 25/Analog 6||Open||
 ||Digital 26/Analog 5||Open||
 ||Digital 27/Analog 4||Open||
