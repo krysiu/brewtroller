@@ -21,5 +21,5 @@ void mashStep(char sTitle[ ], int iTemp, int iMins)
 {
   clearLCD();
   printLCD(0,0,sTitle);
-  delay(5000);
+  delay(3000);
 }

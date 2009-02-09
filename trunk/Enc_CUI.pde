@@ -1,5 +1,5 @@
 unsigned int encBounceDelay = 50;
-unsigned int enterBounceDelay = 25;
+unsigned int enterBounceDelay = 35;
 volatile unsigned long lastEncUpd = millis();
 unsigned long enterStart;
 

@@ -198,6 +198,84 @@ unsigned int getTimerValue(char sTitle[], unsigned int defMins = 0) {
       return NULL;
     }
   }
+}
 
+int getTempValue(char sTitle[], int defTemp, boolean defUnit, boolean dispOff = 0) {
+  if (defUnit == TEMPC && tempUnit == TEMPF) defTemp = defTemp * 9 / 5 + 32;
+  if (defUnit == TEMPF && tempUnit == TEMPC) defTemp = (defTemp - 32) * 5 / 9;
   
+  byte cursorPos = 0; //0 = Temp, 1 = Turn Off, 2 = OK
+  boolean cursorState = 0; //0 = Unselected, 1 = Selected
+  encMin = 0;
+  encMax = 2;
+  encCount = 0;
+  int lastCount = 1;
+  char buf[4];
+  
+  clearLCD();
+  printLCD(0,0,sTitle);
+  if (tempUnit == TEMPF) printLCD(1, 11, "F"); else printLCD(1, 11, "C");
+  if (dispOff) printLCD(2, 6, "Turn Off");
+  printLCD(3, 8, "OK");
+  
+  while(1) {
+    if (encCount != lastCount) {
+      if (cursorState) {
+        if (cursorPos == 0) defTemp = encCount;
+      } else {
+        cursorPos = encCount;
+        switch (cursorPos) {
+          case 0:
+            printLCD(1, 7, ">");
+            printLCD(2, 5, " ");
+            printLCD(2, 14, " ");
+            printLCD(3, 7, " ");
+            printLCD(3, 10, " ");
+            break;
+          case 1:
+            if (dispOff) {
+              printLCD(1, 7, " ");
+              printLCD(2, 5, ">");
+              printLCD(2, 14, "<");
+              printLCD(3, 7, " ");
+              printLCD(3, 10, " ");
+              break;
+            }
+          case 2:
+            printLCD(1, 7, " ");
+            printLCD(2, 5, " ");
+            printLCD(2, 14, " ");
+            printLCD(3, 7, ">");
+            printLCD(3, 10, "<");
+            break;
+        }
+      }
+      printLCDPad(1, 8, itoa(defTemp, buf, 10), 3, ' ');
+      lastCount = encCount;
+    }
+    if (enterStatus == 1) {
+      enterStatus = 0;
+      switch (cursorPos) {
+        case 0:
+          cursorState = cursorState ^ 1;
+          if (cursorState) {
+            encMin = 0;
+            encMax = 250;
+            encCount = defTemp;
+          } else {
+            encMin = 0;
+            encMax = 2;
+            encCount = cursorPos;
+          }
+          break;
+        case 1:
+          if (dispOff) return 0;
+        case 2:
+          return defTemp;
+      }
+    } else if (enterStatus == 2) {
+      //Ignore Cancel
+      enterStatus = 0;
+    }
+  }
 }

@@ -35,16 +35,16 @@ unsigned int enterStatus = 0;
 
 //TSensor Globals
 byte tsHLT[8], tsMash[8], tsKettle[8], tsCFCH2OIn[8], tsCFCH2OOut[8], tsCFCBeerOut[8];
-int tempUnit = TEMPC;
+boolean tempUnit = TEMPC;
 
 //PID Globals
 boolean hltPIDEnabled = 0;
 boolean mashPIDEnabled = 0;
 boolean kettlePIDEnabled = 0;
-double hltPIDInput, hltPIDOutput, hltPIDSetpoint, mashPIDInput, mashPIDOutput, mashPIDSetpoint, kettlePIDInput, kettlePIDOutput, kettlePIDSetpoint;
-PID hltPID(&hltPIDInput, &hltPIDOutput, &hltPIDSetpoint, 3,4,1);
-PID mashPID(&mashPIDInput, &mashPIDOutput, &mashPIDSetpoint, 3,4,1);
-PID kettlePID(&kettlePIDInput, &kettlePIDOutput, &kettlePIDSetpoint, 3,4,1);
+double hltPIDInput, hltPIDOutput, hltSetpoint, mashPIDInput, mashPIDOutput, mashSetpoint, kettlePIDInput, kettlePIDOutput, kettleSetpoint;
+PID hltPID(&hltPIDInput, &hltPIDOutput, &hltSetpoint, 3,4,1);
+PID mashPID(&mashPIDInput, &mashPIDOutput, &mashSetpoint, 3,4,1);
+PID kettlePID(&kettlePIDInput, &kettlePIDOutput, &kettleSetpoint, 3,4,1);
 
 //Timer Globals
 unsigned long timerValue = 0;
@@ -53,12 +53,9 @@ unsigned long timerLastWrite = 0;
 boolean timerStatus = 0;
 boolean alarmStatus = 0;
   
-void setup()
-{
-  //Serial.begin(9600);
+void setup() {
   loadSetup();
   initLCD();
-  initPID();
   
   pinMode(ENCA_PIN, INPUT);
   pinMode(ENCB_PIN, INPUT);
@@ -84,8 +81,7 @@ void setup()
   attachInterrupt(ENTER_INT, doEnter, CHANGE);
 }
 
-void loop()
-{  
+void loop() {  
   menuMain();
 }
 

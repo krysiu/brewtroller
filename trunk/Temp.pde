@@ -4,7 +4,7 @@ OneWire ds(TEMP_PIN);
 float temp;
 int rawtemp;
 
-float get_temp(int unit, byte* addr) //Unit 1 for F and 0 for C
+float get_temp(boolean unit, byte* addr) //Unit 1 for F and 0 for C
 {
   byte present = 0;
   byte i;

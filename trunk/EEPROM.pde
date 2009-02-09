@@ -11,10 +11,9 @@ void saveSetup() {
   //Set Option Array  
   byte options = B00000000;
   if (tempUnit == TEMPF) options |= 1;
-  if (hltPIDEnabled == 1) options |= 2;
-  if (mashPIDEnabled == 1) options |= 4;
-  if (kettlePIDEnabled == 1) options |= 8;
-
+  if (hltPIDEnabled) options |= 2;
+  if (mashPIDEnabled) options |= 4;
+  if (kettlePIDEnabled) options |= 8;
   EEPROM.write(48, options);
 }
 

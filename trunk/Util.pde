@@ -28,6 +28,9 @@ int memoryTest() {
 }
 
 void resetOutputs() {
+  hltSetpoint = 0;
+  mashSetpoint = 0;
+  kettleSetpoint = 0;
   digitalWrite(ALARM_PIN, LOW);
   digitalWrite(HLTHEAT_PIN, LOW);
   digitalWrite(MASHHEAT_PIN, LOW);
@@ -43,6 +46,9 @@ void resetOutputs() {
   digitalWrite(VALVE9_PIN, LOW);
   digitalWrite(VALVE10_PIN, LOW);
   digitalWrite(VALVE11_PIN, LOW);
+  if (hltPIDEnabled) hltPID.SetMode(MANUAL);
+  if (mashPIDEnabled) mashPID.SetMode(MANUAL);
+  if (kettlePIDEnabled) kettlePID.SetMode(MANUAL);
 }
 
 void setTimer(int minutes) {

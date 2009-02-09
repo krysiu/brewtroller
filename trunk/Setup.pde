@@ -89,13 +89,13 @@ void setPID() {
     if (kettlePIDEnabled) strcpy(pidMenu[2], "Kettle: PID        "); else strcpy(pidMenu[2], "Kettle: On/Off     ");
     switch(scrollMenu("Set Output Type", pidMenu, 4)) {
       case 0:
-        hltPIDEnabled = ~hltPIDEnabled;
+        hltPIDEnabled = hltPIDEnabled ^ 1;
         break;
       case 1:
-        mashPIDEnabled = ~mashPIDEnabled;
+        mashPIDEnabled = mashPIDEnabled ^ 1;
         break;
       case 2:
-        kettlePIDEnabled = ~kettlePIDEnabled;
+        kettlePIDEnabled = kettlePIDEnabled ^ 1;
         break;
       default:
         return;
