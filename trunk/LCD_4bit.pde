@@ -8,7 +8,7 @@
 // rw on pin 18	  (LCD pin 5)
 // enable on pin 19 (LCD pin 6)
 // d4, d5, d6, d7 on pins 20, 21, 22, 23  (LCD pins 11-14)
-LiquidCrystal lcd(17, 18, 19, 20, 21, 22, 23);
+LiquidCrystal lcd(17, -1, 19, 20, 21, 22, 23);
 
 void initLCD(){
   //Tryiing a delay here to see if it fixes an intermittant no display on power on issue
