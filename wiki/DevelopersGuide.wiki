@@ -1,0 +1,47 @@
+#summary List of Hardware in Development
+#labels Featured,Phase-Implementation
+= Introduction =
+This document describes the hardware and software needed to perform development or testing for preproduction BrewTroller code. A word of warning: This project is still in development and testing could result in platform changes that could result in additional costs to early adopters. We will make every effort to minimize these changes.
+
+=Platform=
+BrewTroller is developed for the Sanguino platform. The current compiled program size is over 20KB which eliminates the Arduino platform. You can get an unassembled Sanguino kit for $30 including shipping from Wulfden. Assembly of the kit is pretty straight forward and should take less than an hour. It's all through-hole soldering (no Surface Mount).
+
+[url]http://www.wulfden.org/TheShoppe/freeduino/sanguino.shtml[/url]
+
+You will need something to interface the board to your PC to program it. We recommend the USB BUB from the same site ($18 shipped).
+
+The completed Sanguino plugs into the BrewTroller shield which provides the necessary input and output terminations for the sensors, outputs, LCD and encoder. The circuit board layout is available in downloads if you have the ability to etch your own boards. Alternatively, boards will be available for sale on the brewTroller website.
+
+=User Interface=
+The user interface hardware for BrewTroller consists of a rotary encoder with an integrated switch and a 20x4 charactor LCD display. An encoder is like a rotary switch that outputs values that we use to determine clockwise and counter-clockwise rotation. Pushing down on the encoder triggers the momentary switch that we use as an enter button. The following product has been tested with the BrewTroller code:
+
+Digi-key Part Number 102-1767-ND
+[url]http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=102-1767-ND[/url]
+
+Any HD44780 Compatible 20x4 charactor LCD should work for this project. We like the following LCD from 411 Technologies ($12):
+[url]http://www.411techsystems.com/html/dm2004abb6ntdw.html[/url]
+
+=Inputs=
+The temperature sensors we use are Maxim/Dallas DS18B20 TO-92 "One-Wire" Temp Sensor. (Digikey Part Number: DS18B20+-ND) We have found them inexpensively on eBay.
+
+[url]http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=DS18B20%2B-ND[/url]
+[url]http://cgi.ebay.com/ws/eBayISAPI.dll?ViewItem&ssPageName=STRK:MEWNX:IT&item=200298883590[/url]
+
+We are experimenting with the MPX5010 as a volume sensor by measuring pressure in a sight tube.  The Digi-Key part number is MPX5010GP-ND.
+[url]http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=MPX5010GP-ND[/url]
+
+
+=Outputs=
+The outputs of the BrewTroller will need to be connected to relays to turn control power to various loads. We have located some inexpensive zero-crossing solid state relays that look promising for use with PID control but have not yet tested them.  These Optek relays are rated for loads up to 250V and are capable of supporting up to 25A.
+Digikey Part Number: 365-1486-ND
+[url]http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=365-1486-ND[/url]
+
+For on/off outputs, mechanical relays should work just fine and cost much less. The relay must support a coil voltage of 5V. The BrewTroller shield includes Darlington Transistor Arrays to support coil loads of up to 500mA each. However, we recommend using relays with the smallest possible coil load as the 5v regulator on the Sanguino will only support a total draw of 1A. We recommend a relay with a coil current of 10mA and contact rating of 1A@120VAC to support pumps and valves. The following part from DigiKey ($5) is recommended but has not yet been tested:
+
+Digi-Key Part Number: Z533-ND 
+[url]http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=Z533-ND[/url]
+
+=Software=
+To program the chip you will need the Arduino software loaded on your PC and a small set of updates for the Sanguino. This page has the step by step for installation for Windows:
+
+[url]http://sanguino.cc/softwareforwindows[/url]
