@@ -1,5 +1,10 @@
 void doAutoBrew()
 {
+  clearLCD();
+  printLCD(1,0,"   Not Implemented  ");
+  delay(2000);
+  return;
+  
   //To do: Prompt for values
   delayStart(60);
   preheat(104);
