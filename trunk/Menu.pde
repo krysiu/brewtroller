@@ -279,3 +279,15 @@ int getTempValue(char sTitle[], int defTemp, boolean defUnit, boolean dispOff = 
     }
   }
 }
+
+int confirmExit() {
+  clearLCD();
+  printLCD(0, 0, "Exiting will reset");
+  printLCD(1, 0, "outputs, setpoints");
+  printLCD(2, 0, "and timers.");
+  
+  char choices[2][19] = {
+    "      Return      ",
+    "   Exit Program   "};
+  return getChoice(choices, 2, 3);;
+}

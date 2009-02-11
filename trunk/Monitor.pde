@@ -34,10 +34,14 @@ void doMon() {
   
   while (1) {
     if (enterStatus == 2) {
-        //Exit Brew Monitor
-        enterStatus = 0;
-        resetOutputs();
-        return;
+      enterStatus = 0;
+      if (confirmExit()) {
+          resetOutputs();
+          return;
+      } else {
+        encCount = lastCount;
+        lastCount += 1;
+      }
     }
     if (enterStatus == 1) {
       enterStatus = 0;
@@ -85,9 +89,10 @@ void doMon() {
               inMenu = 0;
               break;
             case 6:
-              //Confirm dialog
-              resetOutputs();
-              return;
+              if (confirmExit()) {
+                resetOutputs();
+                return;
+              } else break;
             default:
               inMenu = 0;
               break;
