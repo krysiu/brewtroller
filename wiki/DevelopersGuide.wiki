@@ -25,7 +25,7 @@ We are experimenting with the MPX5010 as a volume sensor by measuring pressure i
 The outputs of the BrewTroller will need to be connected to relays to turn control power to various loads. We have located some inexpensive zero-crossing solid state relays that look promising for use with PID control but have not yet tested them.  These Optek relays are rated for loads up to 250V and are capable of supporting up to 25A.
 [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=365-1486-ND Digikey Part Number: 365-1486-ND]
 
-For on/off outputs, mechanical relays should work just fine and cost much less. The relay needs to support a coil voltage of 12V. The BrewTroller shield includes Darlington Transistor Arrays to support coil loads of up to 500mA each. However, we recommend using relays with the smallest possible coil load.
+For on/off outputs, mechanical relays should work just fine and cost much less. The relay needs to support a coil voltage of 12V. The BrewTroller shield includes Darlington Transistor Arrays to support coil loads of up to 500mA each. However, we recommend using relays with the smallest possible coil load. A EMF blocking diode is not needed due to fact the Darlington array has them built-in.
 
 =Software=
 To program the chip you will need the Arduino software loaded on your PC and a small set of updates for the Sanguino. [http://sanguino.cc/softwareforwindows This page] has the step by step for installation for Windows.
