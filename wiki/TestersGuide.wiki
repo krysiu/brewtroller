@@ -7,6 +7,9 @@ This document will provide a detailed parts list along with pricing and sources 
   *Ability to solder single-sided through-hole circuit board kits
   *Basic electrical knowledge to select relays and connect power loads
 
+= Assumptions =
+In addition to the parts listed below, it assumed that you have a brewing setup that is ready to be controlled. For instance, a HLT with an electric heater element and a pump configured to transfer mash liquor through a HERMS coil are well suited for control by BrewTroller. Alternatively, a direct-fired HLT and Mash tun could be supported provided the burners are connected to solenoid valves and the burners are outfitted with igniters so that BrewTroller can light and operate the burner.
+
 = Core Components =
 || *Qty* || *Item* || *Description* || *Cost* || *Source(s)* ||
 || 1 || Sanguino Kit || The microprocessor that BrewTroller is built on. Requires through hole soldering of kit parts. || $27 || [http://www.wulfden.org/TheShoppe/freeduino/sanguino.shtml Wulfden] ||
