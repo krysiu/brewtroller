@@ -23,6 +23,6 @@ You will need a minimum of two relays to control the HLT and Mash heat outputs. 
 
 || *Output Type* || *Notes* || *Relay* || *Cost* || *Source* ||
 || Electric Heater Element || Supports PID output (0-100% of 4s cycle duration); Recommended relay supports loads up to 25A@250VAC || Zero-Crossing Solid State Relay || $13 || [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=365-1486-ND DigiKey] ||
-|| Pump for HERMS coil || Currently requires using Mash Heat output on On/Off mode. A future release will implement valve/pump control. Recommended relay supports loads up to 3A@120VAC || Mechanical Relay || $2 || [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=PB371-ND DigiKey] ||
+|| Pump for HERMS coil || Currently requires using Mash Heat output on On/Off mode. A future release will implement valve/pump control. Recommended relay supports loads up to 3A@120VAC. (800 Series March Pump uses .5A@120VAC.) || Mechanical Relay || $2 || [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=PB371-ND DigiKey] ||
 || Solenoid valve and igniter for gas burner || Use HLT and/or Mash heat outputs in On/Off mode. Recommend the use of 120VAC solenoid valves. || Mechanical Relay || $2 || [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=PB371-ND DigiKey] ||
 || Solenoid valves for use with liquid transfer || Recommend direct-acting 120VAC solenoid valves || Mechanical Relay || $2 || [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=PB371-ND DigiKey] ||
