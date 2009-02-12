@@ -12,7 +12,6 @@ The completed Sanguino plugs into the BrewTroller shield which provides the nece
 
 =User Interface=
 The user interface hardware for BrewTroller consists of a rotary encoder with an integrated switch and a 20x4 charactor LCD display. An encoder is like a rotary switch that outputs values that we use to determine clockwise and counter-clockwise rotation. Pushing down on the encoder triggers the momentary switch that we use as an enter button. The following product has been tested with the BrewTroller code:
-
 [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=102-1767-ND Digi-key Part Number 102-1767-ND]
 
 Any HD44780 Compatible 20x4 charactor LCD should work for this project. We like [http://www.411techsystems.com/html/dm2004abb6ntdw.html this LCD] from 411 Technologies ($12):
@@ -27,7 +26,6 @@ The outputs of the BrewTroller will need to be connected to relays to turn contr
 [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=365-1486-ND Digikey Part Number: 365-1486-ND]
 
 For on/off outputs, mechanical relays should work just fine and cost much less. The relay must support a coil voltage of 5V. The BrewTroller shield includes Darlington Transistor Arrays to support coil loads of up to 500mA each. However, we recommend using relays with the smallest possible coil load as the 5v regulator on the Sanguino will only support a total draw of 1A. We recommend a relay with a coil current of 10mA and contact rating of 1A@120VAC to support pumps and valves. The following part from DigiKey ($5) is recommended but has not yet been tested:
-
 [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=Z533-ND Digi-Key Part Number: Z533-ND]
 
 =Software=
