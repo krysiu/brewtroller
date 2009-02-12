@@ -1,0 +1,18 @@
+#summary Equipment list and cost for testing of first development release
+#labels Featured
+= Introduction =
+This document will provide a detailed parts list along with pricing and sources for those who are interested in testing the first BrewTroller development release.
+
+= Core Components =
+|| *Qty* || *Item* || *Description* || *Cost* || *Source(s)* ||
+|| 1 || Sanguino Kit || The microprocessor that BrewTroller is built on. Requires through hole soldering of kit parts. || $27 || [http://www.wulfden.org/TheShoppe/freeduino/sanguino.shtml Wulfden] ||
+|| 1 || USB BUB || USB to TTL Cable to Upload BrewTroller code to Sanguino || $15 || [http://www.wulfden.org/TheShoppe/pa/index.shtml#BUB Wulfden] ||
+|| 1 || BrewTroller Shield Kit || Interfaces the Sanguino with sensors, Outputs, LCD and Encoder. Requires through hole soldering of kit parts. || $35 || BrewTroller Team (Contact jcdillin) ||
+|| 1 || LCD || 20x4 Character LCD Display || $12 || [http://www.411techsystems.com/html/dm2004abb6ntdw.html 411 Technology Systems] ||
+|| 2-6 || Temperature Sensors || DS18B20 Programmable Resolution 1-Wire Digital Thermometer. Minimum 2 (HLT and Mash). Maximum 6 (+Kettle, CFC H2O In, CFC H2O Out, CFC Beer Out) || $3.75-5 /ea || [http://cgi.ebay.com/ws/eBayISAPI.dll?ViewItem&ssPageName=STRK:MEWNX:IT&item=200298883590 eBay], [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=DS18B20%2B-ND DigiKey] ||
+|| 2-6 || Thermowells || Thermowells for temperature sensors. Can be made from copper tubing || TBD || [http://groups.homebrewtalk.com/index.php?do=messagelist&threadid=775&groupid=106 jcdillin's Probe Build] ||
+|| 1 || Enclosure || Something to mount the project in || TBD || N/A ||
+|| 1 || Power Supply || 12VDC Wall Transformer 1A/1000mA Recommended || TBD || N/A ||
+
+= Output Relays =
+You will need a minimum of two relays to control the HLT heat output and Mash heat output. 
