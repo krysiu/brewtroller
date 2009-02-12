@@ -3,6 +3,10 @@
 = Introduction =
 This document will provide a detailed parts list along with pricing and sources for those who are interested in testing the first BrewTroller development release.
 
+= Required Skills =
+  *Ability to solder single-sided through-hole circuit board kits
+  *Basic electrical knowledge to select relays and connect power loads
+
 = Core Components =
 || *Qty* || *Item* || *Description* || *Cost* || *Source(s)* ||
 || 1 || Sanguino Kit || The microprocessor that BrewTroller is built on. Requires through hole soldering of kit parts. || $27 || [http://www.wulfden.org/TheShoppe/freeduino/sanguino.shtml Wulfden] ||
@@ -15,4 +19,10 @@ This document will provide a detailed parts list along with pricing and sources 
 || 1 || Power Supply || 12VDC Wall Transformer 1A/1000mA Recommended || TBD || N/A ||
 
 = Output Relays =
-You will need a minimum of two relays to control the HLT heat output and Mash heat output. 
+You will need a minimum of two relays to control the HLT and Mash heat outputs. Future releases will also support kettle heat output and 10+ valve/pump outputs. The following table will help identify the type of relay to use for the various output configurations:
+
+|| *Output Type* || *Notes* || *Relay* || *Cost* || *Source* ||
+|| Electric Heater Element || Supports PID output (0-100% of 4s cycle duration); Recommended relay supports loads up to 25A@250VAC || Zero-Crossing Solid State Relay || $13 || [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=365-1486-ND DigiKey] ||
+|| Pump for HERMS coil || Currently requires using Mash Heat output on On/Off mode. A future release will implement valve/pump control. Recommended relay supports loads up to 3A@120VAC || Mechanical Relay || $2 || [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=PB371-ND DigiKey] ||
+|| Solenoid valve and igniter for gas burner || Use HLT and/or Mash heat outputs in On/Off mode. Recommend the use of 120VAC solenoid valves. || Mechanical Relay || $2 || [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=PB371-ND DigiKey] ||
+|| Solenoid valves for use with liquid transfer || Recommend direct-acting 120VAC solenoid valves || Mechanical Relay || $2 || [http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&name=PB371-ND DigiKey] ||
