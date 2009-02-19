@@ -1,9 +1,7 @@
 #include <OneWire.h>
 OneWire ds(TEMP_PIN);
 
-float temp;
-int rawtemp;
-
+/* The following function is currently not in use:
 float get_temp(boolean unit, byte* addr) //Unit 1 for F and 0 for C
 {
   byte present = 0;
@@ -31,12 +29,14 @@ float get_temp(boolean unit, byte* addr) //Unit 1 for F and 0 for C
   return temp;
   }
 }
+*/
 
 void getDSAddr(byte addrRet[8]){
   ds.reset_search();
   ds.search(addrRet);
 }
 
+/* This function is currently not in use:
 void setDS9bit(void) {
   ds.reset();
   ds.skip();    
@@ -48,6 +48,7 @@ void setDS9bit(void) {
   //ds.write(0x3F);    // 10-bit
   ds.write(0x1F);    // 9-bit
 }
+*/
 
 void convertAll() {
   ds.reset();
@@ -55,25 +56,20 @@ void convertAll() {
   ds.write(0x44,1);         // start conversion, with parasite power on at the end
 }
 
-float read_temp(int unit, byte* addr) //Unit 1 for F and 0 for C
-{
+float read_temp(int unit, byte* addr) { //Unit 1 for F and 0 for C
+  float temp;
+  int rawtemp;
   byte i;
   byte data[12];
   ds.reset();
   ds.select(addr);   
   ds.write(0xBE);         // Read Scratchpad
-  for ( i = 0; i < 9; i++) { // we need 9 bytes
-    data[i] = ds.read();
-  }
-  if ( addr[0] != 0x28) {
+  for ( i = 0; i < 9; i++) data[i] = ds.read();
+  if ( OneWire::crc8( data, 8) != data[8]) return -1;
+  
   rawtemp = (data[1] << 8) + data[0];
-  temp = (float)rawtemp * 0.5;
-  if (unit == 1) temp= (temp * 1.8) + 32.0;
+  if ( addr[0] != 0x28) temp = (float)rawtemp * 0.5; else temp = (float)rawtemp * 0.0625;
+  if (unit) temp = (temp * 1.8) + 32.0;
   return temp;
- } else {
-  rawtemp = (data[1] << 8) + data[0]; 
-  temp = (float)rawtemp * 0.0625;
-  if (unit == 1) temp= (temp * 1.8) + 32.0;
-  return temp;
-  }
+
 }

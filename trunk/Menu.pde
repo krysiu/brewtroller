@@ -7,17 +7,10 @@ void menuMain()
   };
   while(1) {
     switch (scrollMenu("BrewTroller         ", mainMenu, 3)) {
-      case 0:
-        doAutoBrew();
-        break;
-      case 1:
-        doMon();
-        break;
-      case 2:
-        menuSetup();
-        break;
-      default:
-        return;
+      case 0: doAutoBrew(); break;
+      case 1: doMon(); break;
+      case 2: menuSetup(); break;
+      default: return;
     }
   }
 }
@@ -27,30 +20,19 @@ void menuSetup()
   char setupMenu[6][20] = {
     "Assign Temp Sensor ",
     "Set Temp Unit (C/F)",
-    "Set Output Type    ",
+    "Configure Outputs  ",
     "Save Settings      ",
     "Load Settings      ",
     "Exit Setup         "
   };
   while(1) {
     switch(scrollMenu("System Setup        ", setupMenu, 6)) {
-      case 0:
-        assignSensor();
-        break;
-      case 1:
-        setTempUnit();
-        break;
-      case 2:
-        setPID();
-        break;
-      case 3:
-        saveSetup();
-        break;
-      case 4:
-        loadSetup();
-        break;
-      default:
-        return;
+      case 0: assignSensor(); break;
+      case 1: setTempUnit(); break;
+      case 2: cfgOutputs(); break;
+      case 3: saveSetup(); break;
+      case 4: loadSetup(); break;
+      default: return;
     }
   }
 }
@@ -127,7 +109,7 @@ int getChoice(char choices[][19], int numChoices, int iRow, int defValue = 0) {
       enterStatus = 0;
       printLCD(iRow, 0, " ");
       printLCD(iRow, 19, " ");
-      return NULL;
+      return numChoices;
     }
   }
 }
@@ -200,57 +182,41 @@ unsigned int getTimerValue(char sTitle[], unsigned int defMins = 0) {
   }
 }
 
-int getTempValue(char sTitle[], int defTemp, boolean defUnit, boolean dispOff = 0) {
-  if (defUnit == TEMPC && tempUnit == TEMPF) defTemp = defTemp * 9 / 5 + 32;
-  if (defUnit == TEMPF && tempUnit == TEMPC) defTemp = (defTemp - 32) * 5 / 9;
-  
-  byte cursorPos = 0; //0 = Temp, 1 = Turn Off, 2 = OK
+byte getValue(char sTitle[], byte defValue, byte minValue, byte maxValue, char unit[]) {
+  byte retVal = defValue;
+  byte cursorPos = 0; //0 = Input Box, 1 = OK
   boolean cursorState = 0; //0 = Unselected, 1 = Selected
   encMin = 0;
-  encMax = 2;
+  encMax = 1;
   encCount = 0;
   int lastCount = 1;
   char buf[4];
   
   clearLCD();
   printLCD(0,0,sTitle);
-  if (tempUnit == TEMPF) printLCD(1, 11, "F"); else printLCD(1, 11, "C");
-  if (dispOff) printLCD(2, 6, "Turn Off");
+  printLCD(1, 11, unit);
   printLCD(3, 8, "OK");
   
   while(1) {
     if (encCount != lastCount) {
       if (cursorState) {
-        if (cursorPos == 0) defTemp = encCount;
+        retVal = encCount;
       } else {
         cursorPos = encCount;
         switch (cursorPos) {
           case 0:
             printLCD(1, 7, ">");
-            printLCD(2, 5, " ");
-            printLCD(2, 14, " ");
             printLCD(3, 7, " ");
             printLCD(3, 10, " ");
             break;
           case 1:
-            if (dispOff) {
-              printLCD(1, 7, " ");
-              printLCD(2, 5, ">");
-              printLCD(2, 14, "<");
-              printLCD(3, 7, " ");
-              printLCD(3, 10, " ");
-              break;
-            }
-          case 2:
             printLCD(1, 7, " ");
-            printLCD(2, 5, " ");
-            printLCD(2, 14, " ");
             printLCD(3, 7, ">");
             printLCD(3, 10, "<");
             break;
         }
       }
-      printLCDPad(1, 8, itoa(defTemp, buf, 10), 3, ' ');
+      printLCDPad(1, 8, itoa(retVal, buf, 10), 3, ' ');
       lastCount = encCount;
     }
     if (enterStatus == 1) {
@@ -259,23 +225,84 @@ int getTempValue(char sTitle[], int defTemp, boolean defUnit, boolean dispOff = 
         case 0:
           cursorState = cursorState ^ 1;
           if (cursorState) {
-            encMin = 0;
-            encMax = 250;
-            encCount = defTemp;
+            encMin = minValue;
+            encMax = maxValue;
+            encCount = retVal;
           } else {
             encMin = 0;
-            encMax = 2;
+            encMax = 1;
             encCount = cursorPos;
           }
           break;
         case 1:
-          if (dispOff) return 0;
-        case 2:
-          return defTemp;
+          return retVal;
       }
     } else if (enterStatus == 2) {
-      //Ignore Cancel
       enterStatus = 0;
+      return defValue;
+    }
+  }
+}
+
+byte getValueTenths(char sTitle[], byte defValue, byte minValue, byte maxValue, char unit[]) {
+  byte retVal = defValue;
+  byte cursorPos = 0; //0 = Input Box, 1 = OK
+  boolean cursorState = 0; //0 = Unselected, 1 = Selected
+  encMin = 0;
+  encMax = 1;
+  encCount = 0;
+  int lastCount = 1;
+  char buf[4];
+  
+  clearLCD();
+  printLCD(0,0,sTitle);
+  printLCD(1, 12, unit);
+  printLCD(3, 8, "OK");
+  
+  while(1) {
+    if (encCount != lastCount) {
+      if (cursorState) {
+        retVal = encCount;
+      } else {
+        cursorPos = encCount;
+        switch (cursorPos) {
+          case 0:
+            printLCD(1, 7, ">");
+            printLCD(3, 7, " ");
+            printLCD(3, 10, " ");
+            break;
+          case 1:
+            printLCD(1, 7, " ");
+            printLCD(3, 7, ">");
+            printLCD(3, 10, "<");
+            break;
+        }
+      }
+      ftoa((float) retVal / 10, buf, 1);
+      printLCDPad(1, 8, buf, 4, ' ');
+      lastCount = encCount;
+    }
+    if (enterStatus == 1) {
+      enterStatus = 0;
+      switch (cursorPos) {
+        case 0:
+          cursorState = cursorState ^ 1;
+          if (cursorState) {
+            encMin = minValue;
+            encMax = maxValue;
+            encCount = retVal;
+          } else {
+            encMin = 0;
+            encMax = 1;
+            encCount = cursorPos;
+          }
+          break;
+        case 1:
+          return retVal;
+      }
+    } else if (enterStatus == 2) {
+      enterStatus = 0;
+      return defValue;
     }
   }
 }

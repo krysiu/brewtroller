@@ -37,11 +37,16 @@ unsigned int enterStatus = 0;
 byte tsHLT[8], tsMash[8], tsKettle[8], tsCFCH2OIn[8], tsCFCH2OOut[8], tsCFCBeerOut[8];
 boolean tempUnit = TEMPC;
 
-//PID Globals
+//Output Globals
 boolean hltPIDEnabled = 0;
 boolean mashPIDEnabled = 0;
 boolean kettlePIDEnabled = 0;
-double hltPIDInput, hltPIDOutput, hltSetpoint, mashPIDInput, mashPIDOutput, mashSetpoint, kettlePIDInput, kettlePIDOutput, kettleSetpoint;
+double hltPIDInput, hltPIDOutput, hltSetpoint;
+double mashPIDInput, mashPIDOutput, mashSetpoint;
+double kettlePIDInput, kettlePIDOutput, kettleSetpoint;
+byte hltPIDp, hltPIDi, hltPIDd, hltPIDCycle, hltHysteresis;
+byte mashPIDp, mashPIDi, mashPIDd, mashPIDCycle, mashHysteresis;
+byte kettlePIDp, kettlePIDi, kettlePIDd, kettlePIDCycle, kettleHysteresis;
 PID hltPID(&hltPIDInput, &hltPIDOutput, &hltSetpoint, 3,4,1);
 PID mashPID(&mashPIDInput, &mashPIDOutput, &mashSetpoint, 3,4,1);
 PID kettlePID(&kettlePIDInput, &kettlePIDOutput, &kettleSetpoint, 3,4,1);
@@ -54,6 +59,7 @@ boolean timerStatus = 0;
 boolean alarmStatus = 0;
   
 void setup() {
+  checkConfig();
   loadSetup();
   initLCD();
   

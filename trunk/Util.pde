@@ -11,6 +11,7 @@ void ftoa(float val, char retStr[], int precision) {
   }
 }
 
+/* The following function is currently not being used: 
 int memoryTest() {
   int byteCounter = 0; // initialize a counter
   byte *byteArray; // create a pointer to a byte array
@@ -26,6 +27,7 @@ int memoryTest() {
   free(byteArray); // also free memory after the function finishes
   return byteCounter; // send back the highest number of bytes successfully allocated
 }
+*/
 
 void resetOutputs() {
   hltSetpoint = 0;
