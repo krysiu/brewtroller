@@ -139,15 +139,15 @@ void cfgOutputs() {
       case 3: mashPIDEnabled = mashPIDEnabled ^ 1; break;
       case 6: kettlePIDEnabled = kettlePIDEnabled ^ 1; break;
       case 1:
-        if (hltPIDEnabled) hltPIDCycle = getValue("HLT Cycle Time", hltPIDCycle, 0, 255, "s");
+        if (hltPIDEnabled) hltPIDCycle = getValue("HLT Cycle Time", hltPIDCycle, 1, 255, "s");
         else hltHysteresis = getValueTenths("HLT Hysteresis", hltHysteresis, 0, 255, unit);
         break;
       case 4:
-        if (mashPIDEnabled) hltPIDCycle = getValue("Mash Cycle Time", mashPIDCycle, 0, 255, "s");
+        if (mashPIDEnabled) hltPIDCycle = getValue("Mash Cycle Time", mashPIDCycle, 1, 255, "s");
         else mashHysteresis = getValueTenths("Mash Hysteresis", mashHysteresis, 0, 255, unit);
         break;
       case 7:
-        if (kettlePIDEnabled) hltPIDCycle = getValue("Kettle Cycle Time", kettlePIDCycle, 0, 255, "s");
+        if (kettlePIDEnabled) hltPIDCycle = getValue("Kettle Cycle Time", kettlePIDCycle, 1, 255, "s");
         else kettleHysteresis = getValueTenths("Kettle Hysteresis", kettleHysteresis, 0, 255, unit);
         break;
       case 2: setPIDGain("HLT PID Gain", &hltPIDp, &hltPIDi, &hltPIDd); break;
