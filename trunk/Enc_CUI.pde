@@ -1,8 +1,7 @@
-unsigned int encBounceDelay = 50;
-unsigned int enterBounceDelay = 50;
+const int encBounceDelay = 50;
+const int enterBounceDelay = 50;
 volatile unsigned long lastEncUpd = millis();
 unsigned long enterStart;
-
 
 void doEncoderA() {
   if (millis() - lastEncUpd < encBounceDelay) return;

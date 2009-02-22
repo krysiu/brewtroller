@@ -3,43 +3,23 @@ void assignSensor() {
   encMax = 5;
   encCount = 0;
   int lastCount = 1;
-  byte *addr;
-  char dispTitle[21];
+  char dispTitle[6][21] = {
+    "   Hot Liquor Tank  ",
+    "      Mash Tun      ",
+    "     Brew Kettle    ",
+    "       H2O In       ",
+    "       H2O Out      ",
+    "      Beer Out      "
+  };
   char buf[3];
   
   while (1) {
     if (encCount != lastCount) {
       lastCount = encCount;
-      switch (encCount) {
-        case 0:
-          addr = tsHLT;
-          strcpy(dispTitle, "   Hot Liquor Tank  ");
-          break;
-        case 1:
-          addr = tsMash;
-          strcpy(dispTitle, "      Mash Tun      ");
-          break;
-        case 2:
-          addr = tsKettle;
-          strcpy(dispTitle, "     Brew Kettle    ");
-          break;
-        case 3:
-          addr = tsCFCH2OIn;
-          strcpy(dispTitle, "   Chiller H2O In   ");
-          break;
-        case 4:
-          addr = tsCFCH2OOut;
-          strcpy(dispTitle, "   Chiller H2O Out  ");
-          break;    
-        case 5:
-          addr = tsCFCBeerOut;
-          strcpy(dispTitle, "  Chiller Beer Out  ");
-          break;
-      }
       clearLCD();
       printLCD(0, 0, "Assign Temp Sensor");
-      printLCD(1, 0, dispTitle);
-      for (int i=0; i<8; i++) printLCDPad(2,i*2+2,itoa(addr[i], buf, 16), 2, '0');  
+      printLCD(1, 0, dispTitle[lastCount]);
+      for (int i=0; i<8; i++) printLCDPad(2,i*2+2,itoa(tSensor[lastCount][i], buf, 16), 2, '0');  
     }
     if (enterStatus == 2) {
       enterStatus = 0;
@@ -53,17 +33,17 @@ void assignSensor() {
         "Close Menu         ",
         "Exit               "
       };
-      switch (scrollMenu(dispTitle, subMenu, 3)) {
+      switch (scrollMenu(dispTitle[lastCount], subMenu, 3)) {
         case 0:
           clearLCD();
-          printLCD(0,0, dispTitle);
+          printLCD(0,0, dispTitle[lastCount]);
           printLCD(1,0,"Disconnect all other");
           printLCD(2,0,"  temp sensors now  ");
           {
             char conExit[2][19] = {
               "     Continue     ",
               "      Cancel      "};
-            if (getChoice(conExit, 2, 3) == 0) getDSAddr(addr);
+            if (getChoice(conExit, 2, 3) == 0) getDSAddr(tSensor[lastCount]);
           }
           break;
         case 1: break;
@@ -88,13 +68,9 @@ void setTempUnit() {
   if (tempUnit != newUnit) {
     tempUnit = newUnit;
     if (tempUnit) {
-      hltHysteresis = hltHysteresis * 9 / 5;
-      mashHysteresis = mashHysteresis * 9 / 5;
-      kettleHysteresis = kettleHysteresis * 9 / 5;
+      for (int i = HLT; i <= KETTLE; i++) hysteresis[i] = hysteresis[i] * 9 / 5;
     } else {
-      hltHysteresis = hltHysteresis * 5 / 9;
-      mashHysteresis = mashHysteresis * 5 / 9;
-      kettleHysteresis = kettleHysteresis * 5 / 9;
+      for (int i = HLT; i <= KETTLE; i++) hysteresis[i] = hysteresis[i] * 5 / 9;
     }
   }
 }
@@ -103,7 +79,7 @@ void cfgOutputs() {
   char pidMenu[16][20];
   while(1) {
     byte nextElement = 0;
-    if (hltPIDEnabled) {
+    if (PIDEnabled[HLT]) {
       strcpy(pidMenu[nextElement++], "HLT Mode: PID      ");
       strcpy(pidMenu[nextElement++], "HLT PID Cycle      ");
       strcpy(pidMenu[nextElement++], "HLT PID Gain       ");
@@ -111,7 +87,7 @@ void cfgOutputs() {
       strcpy(pidMenu[nextElement++], "HLT Mode: On/Off   ");
       strcpy(pidMenu[nextElement++], "HLT Hysteresis     ");
     }
-    if (mashPIDEnabled) {
+    if (PIDEnabled[MASH]) {
       strcpy(pidMenu[nextElement++], "Mash Mode: PID     ");
       strcpy(pidMenu[nextElement++], "Mash PID Cycle     ");
       strcpy(pidMenu[nextElement++], "Mash PID Gain      ");
@@ -119,7 +95,7 @@ void cfgOutputs() {
       strcpy(pidMenu[nextElement++], "Mash Mode: On/Off  ");
       strcpy(pidMenu[nextElement++], "Mash Hysteresis    ");
     }
-    if (kettlePIDEnabled) {
+    if (PIDEnabled[KETTLE]) {
       strcpy(pidMenu[nextElement++], "Kettle Mode: PID   ");
       strcpy(pidMenu[nextElement++], "Kettle PID Cycle   ");
       strcpy(pidMenu[nextElement++], "Kettle PID Gain    ");
@@ -131,28 +107,28 @@ void cfgOutputs() {
     byte selected = scrollMenu("Configure Outputs", pidMenu, nextElement);
     char unit[2] = "C";
     if (tempUnit) strcpy(unit, "F");
-    if (selected > 1 && !hltPIDEnabled) selected++;
-    if (selected > 4 && !mashPIDEnabled) selected++;
-    if (selected > 7 && !kettlePIDEnabled) selected++;
+    if (selected > 1 && !PIDEnabled[HLT]) selected++;
+    if (selected > 4 && !PIDEnabled[MASH]) selected++;
+    if (selected > 7 && !PIDEnabled[KETTLE]) selected++;
     switch(selected) {
-      case 0: hltPIDEnabled = hltPIDEnabled ^ 1; break;
-      case 3: mashPIDEnabled = mashPIDEnabled ^ 1; break;
-      case 6: kettlePIDEnabled = kettlePIDEnabled ^ 1; break;
+      case 0: PIDEnabled[HLT] = PIDEnabled[HLT] ^ 1; break;
+      case 3: PIDEnabled[MASH] = PIDEnabled[MASH] ^ 1; break;
+      case 6: PIDEnabled[KETTLE] = PIDEnabled[KETTLE] ^ 1; break;
       case 1:
-        if (hltPIDEnabled) hltPIDCycle = getValue("HLT Cycle Time", hltPIDCycle, 1, 255, "s");
-        else hltHysteresis = getValueTenths("HLT Hysteresis", hltHysteresis, 0, 255, unit);
+        if (PIDEnabled[HLT]) PIDCycle[HLT] = getValue("HLT Cycle Time", PIDCycle[HLT], 1, 255, "s");
+        else hysteresis[HLT] = getValueTenths("HLT Hysteresis", hysteresis[HLT], 0, 255, unit);
         break;
       case 4:
-        if (mashPIDEnabled) hltPIDCycle = getValue("Mash Cycle Time", mashPIDCycle, 1, 255, "s");
-        else mashHysteresis = getValueTenths("Mash Hysteresis", mashHysteresis, 0, 255, unit);
+        if (PIDEnabled[MASH]) PIDCycle[MASH] = getValue("Mash Cycle Time", PIDCycle[MASH], 1, 255, "s");
+        else hysteresis[MASH] = getValueTenths("Mash Hysteresis", hysteresis[MASH], 0, 255, unit);
         break;
       case 7:
-        if (kettlePIDEnabled) hltPIDCycle = getValue("Kettle Cycle Time", kettlePIDCycle, 1, 255, "s");
-        else kettleHysteresis = getValueTenths("Kettle Hysteresis", kettleHysteresis, 0, 255, unit);
+        if (PIDEnabled[KETTLE]) PIDCycle[KETTLE] = getValue("Kettle Cycle Time", PIDCycle[KETTLE], 1, 255, "s");
+        else hysteresis[KETTLE] = getValueTenths("Kettle Hysteresis", hysteresis[KETTLE], 0, 255, unit);
         break;
-      case 2: setPIDGain("HLT PID Gain", &hltPIDp, &hltPIDi, &hltPIDd); break;
-      case 5: setPIDGain("Mash PID Gain", &mashPIDp, &mashPIDi, &mashPIDd); break;
-      case 8: setPIDGain("Kettle PID Gain", &kettlePIDp, &kettlePIDi, &kettlePIDd); break;
+      case 2: setPIDGain("HLT PID Gain", &PIDp[HLT], &PIDi[HLT], &PIDd[HLT]); break;
+      case 5: setPIDGain("Mash PID Gain", &PIDp[MASH], &PIDi[MASH], &PIDd[MASH]); break;
+      case 8: setPIDGain("Kettle PID Gain", &PIDp[KETTLE], &PIDi[KETTLE], &PIDd[KETTLE]); break;
       default: return;
     }
   } 

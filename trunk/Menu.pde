@@ -80,7 +80,7 @@ void menuSetCursor(int iPos) {
 
 void drawItems(char menuItems[][20], int numOpts, int topItem) {
   int maxOpt = topItem + 2;
-  if (maxOpt > numOpts) maxOpt = numOpts;
+  if (maxOpt > numOpts - 1) maxOpt = numOpts - 1;
   for (int i = topItem; i <= maxOpt; i++) printLCD(i-topItem+1, 1, menuItems[i]);
 }
 

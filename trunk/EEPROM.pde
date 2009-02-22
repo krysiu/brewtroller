@@ -1,73 +1,45 @@
 #include <EEPROM.h>
 
 void saveSetup() {
-  PROMwriteBytes(tsHLT, 0, 8);
-  PROMwriteBytes(tsMash, 8, 8);
-  PROMwriteBytes(tsKettle, 16, 8);
-  PROMwriteBytes(tsCFCH2OIn, 24, 8);
-  PROMwriteBytes(tsCFCH2OOut, 32, 8);
-  PROMwriteBytes(tsCFCBeerOut, 40, 8);
+  for (int i = HLT; i <= BEEROUT; i++) PROMwriteBytes(tSensor[i], i * 8, 8);
 
   //Set Option Array  
   byte options = B00000000;
   if (tempUnit == TEMPF) options |= 1;
-  if (hltPIDEnabled) options |= 2;
-  if (mashPIDEnabled) options |= 4;
-  if (kettlePIDEnabled) options |= 8;
+  if (PIDEnabled[HLT]) options |= 2;
+  if (PIDEnabled[MASH]) options |= 4;
+  if (PIDEnabled[KETTLE]) options |= 8;
   EEPROM.write(48, options);
   
-  EEPROM.write(49, hltPIDp);
-  EEPROM.write(50, hltPIDi);
-  EEPROM.write(51, hltPIDd);
-  EEPROM.write(52, hltPIDCycle);
-  EEPROM.write(53, hltHysteresis);
-
-  EEPROM.write(54, mashPIDp);
-  EEPROM.write(55, mashPIDi);
-  EEPROM.write(56, mashPIDd);
-  EEPROM.write(57, mashPIDCycle);
-  EEPROM.write(58, mashHysteresis);
-
-  EEPROM.write(59, kettlePIDp);
-  EEPROM.write(60, kettlePIDi);
-  EEPROM.write(61, kettlePIDd);
-  EEPROM.write(62, kettlePIDCycle);
-  EEPROM.write(63, kettleHysteresis);
+  //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
+  for (int i = HLT; i <= KETTLE; i++) {
+    EEPROM.write(i * 5 + 49, PIDp[i]);
+    EEPROM.write(i * 5 + 50, PIDi[i]);
+    EEPROM.write(i * 5 + 51, PIDd[i]);
+    EEPROM.write(i * 5 + 52, PIDCycle[i]);
+    EEPROM.write(i * 5 + 53, hysteresis[i]);
+  }
 }
 
 void loadSetup() {
-  PROMreadBytes(tsHLT, 0, 8);
-  PROMreadBytes(tsMash, 8, 8);
-  PROMreadBytes(tsKettle, 16, 8);
-  PROMreadBytes(tsCFCH2OIn, 24, 8);
-  PROMreadBytes(tsCFCH2OOut, 32, 8);
-  PROMreadBytes(tsCFCBeerOut, 40, 8);
-  
+  for (int i = HLT; i <= BEEROUT; i++) PROMreadBytes(tSensor[i], i * 8, 8);
+ 
   //Read Option Array  
   byte options = EEPROM.read(48);
   
   if (options & 1) tempUnit = TEMPF;
-  if (options & 2) hltPIDEnabled = 1;
-  if (options & 4) mashPIDEnabled = 1;
-  if (options & 8) kettlePIDEnabled = 1;
-  
-  hltPIDp = EEPROM.read(49);
-  hltPIDi = EEPROM.read(50);
-  hltPIDd = EEPROM.read(51);
-  hltPIDCycle = EEPROM.read(52);
-  hltHysteresis = EEPROM.read(53);
-  
-  mashPIDp = EEPROM.read(54);
-  mashPIDi = EEPROM.read(55);
-  mashPIDd = EEPROM.read(56);
-  mashPIDCycle = EEPROM.read(57);
-  mashHysteresis = EEPROM.read(58);
-  
-  kettlePIDp = EEPROM.read(59);
-  kettlePIDi = EEPROM.read(60);
-  kettlePIDd = EEPROM.read(61);
-  kettlePIDCycle = EEPROM.read(62);
-  kettleHysteresis = EEPROM.read(63);
+  if (options & 2) PIDEnabled[HLT] = 1;
+  if (options & 4) PIDEnabled[MASH] = 1;
+  if (options & 8) PIDEnabled[KETTLE] = 1;
+
+  //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
+  for (int i = HLT; i <= KETTLE; i++) {
+    PIDp[i] = EEPROM.read(i * 5 + 49);
+    PIDi[i] = EEPROM.read(i * 5 + 50);
+    PIDd[i] = EEPROM.read(i * 5 + 51);
+    PIDCycle[i] = EEPROM.read(i * 5 + 52);
+    hysteresis[i] = EEPROM.read(i * 5 + 53);
+  }
 }
 
 void PROMwriteBytes(byte bytes[], int addr, int numBytes) {

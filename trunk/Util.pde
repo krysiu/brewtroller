@@ -30,13 +30,12 @@ int memoryTest() {
 */
 
 void resetOutputs() {
-  hltSetpoint = 0;
-  mashSetpoint = 0;
-  kettleSetpoint = 0;
+  for (int i = HLT; i <= KETTLE; i++) {
+    setpoint[i] = 0;
+    digitalWrite(OUTPUT_PIN[i], LOW);
+    if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
+  }
   digitalWrite(ALARM_PIN, LOW);
-  digitalWrite(HLTHEAT_PIN, LOW);
-  digitalWrite(MASHHEAT_PIN, LOW);
-  digitalWrite(KETTLEHEAT_PIN, LOW);
   digitalWrite(VALVE1_PIN, LOW);
   digitalWrite(VALVE2_PIN, LOW);
   digitalWrite(VALVE3_PIN, LOW);
@@ -48,9 +47,6 @@ void resetOutputs() {
   digitalWrite(VALVE9_PIN, LOW);
   digitalWrite(VALVE10_PIN, LOW);
   digitalWrite(VALVE11_PIN, LOW);
-  if (hltPIDEnabled) hltPID.SetMode(MANUAL);
-  if (mashPIDEnabled) mashPID.SetMode(MANUAL);
-  if (kettlePIDEnabled) kettlePID.SetMode(MANUAL);
 }
 
 void setTimer(int minutes) {
@@ -90,14 +86,14 @@ void printTimer(int iRow, int iCol) {
         printLCD(iRow, iCol + 5, "!");
       }
       lastTime = now;
-    } else if (!alarmStatus) printLCD(iRow, iCol, "[PAUSE]");
+    } else if (!alarmStatus) printLCD(iRow, iCol, "PAUSED");
 
     int timerHours = timerValue / 3600000;
     int timerMins = (timerValue - timerHours * 3600000) / 60000;
     int timerSecs = (timerValue - timerHours * 3600000 - timerMins * 60000) / 1000;
 
     if (timerLastWrite != timerValue/1000) {
-      printLCD(iRow, iCol, "  :    ");
+      printLCD(iRow, iCol, "  :   ");
       if (timerHours > 0) {
         printLCDPad(iRow, iCol, itoa(timerHours, buf, 10), 2, '0');
         printLCDPad(iRow, iCol + 3, itoa(timerMins, buf, 10), 2, '0');
@@ -107,7 +103,7 @@ void printTimer(int iRow, int iCol) {
       }
       timerLastWrite = timerValue/1000;
     }
-  } else printLCD(iRow, iCol, "       ");
+  } else printLCD(iRow, iCol, "      ");
 }
 
 void setAlarm(boolean value) {

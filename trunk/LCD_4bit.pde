@@ -1,7 +1,7 @@
 #include <LiquidCrystal.h>
 
-#define LCD_DELAY_CURSOR 40
-#define LCD_DELAY_CHAR 40
+const byte LCD_DELAY_CURSOR = 40;
+const byte LCD_DELAY_CHAR = 40;
 
 // LiquidCrystal display with:
 // rs on pin 17	  (LCD pin 4 ) aka DI
