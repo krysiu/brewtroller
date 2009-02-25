@@ -2,7 +2,8 @@
 #include <EEPROM.h>
 
 void saveSetup() {
-  //TSensors HLT (0-7), MASH (8-15), KETTLE (16-23), H2OIN (24-31), H2OOUT (32-39), BEEROUT (40-47)
+  //Walk through the 6 tSensor elements and store 8-byte address of each
+  //HLT (0-7), MASH (8-15), KETTLE (16-23), H2OIN (24-31), H2OOUT (32-39), BEEROUT (40-47)
   for (int i = HLT; i <= BEEROUT; i++) PROMwriteBytes(tSensor[i], i * 8, 8);
 
   //Option Array (48)
@@ -30,7 +31,8 @@ void saveSetup() {
 }
 
 void loadSetup() {
-  //TSensors HLT (0-7), MASH (8-15), KETTLE (16-23), H2OIN (24-31), H2OOUT (32-39), BEEROUT (40-47)
+  //Walk through the 6 tSensor elements and load 8-byte address of each
+  //HLT (0-7), MASH (8-15), KETTLE (16-23), H2OIN (24-31), H2OOUT (32-39), BEEROUT (40-47)
   for (int i = HLT; i <= BEEROUT; i++) PROMreadBytes(tSensor[i], i * 8, 8);
  
   //Option Array (48)

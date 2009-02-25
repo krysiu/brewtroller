@@ -37,7 +37,7 @@ unsigned int encMin;
 unsigned int encMax;
 unsigned int enterStatus = 0;
 
-//TSensor Globals
+//8-byte Temperature Sensor Address x6 Sensors
 byte tSensor[6][8];
 
 //Unit Definitions
@@ -98,7 +98,11 @@ void setup() {
 
   initLCD();
   splashScreen();
+  
+  //Check for cfgVersion variable and format EEPROM if necessary
   checkConfig();
+  
+  //Load global variable values stored in EEPROM
   loadSetup();
 }
 
