@@ -75,10 +75,6 @@ boolean timerStatus = 0;
 boolean alarmStatus = 0;
   
 void setup() {
-  checkConfig();
-  loadSetup();
-  initLCD();
-  for (int i = HLT; i <= KETTLE; i++) pinMode(OUTPUT_PIN[i], OUTPUT);
   pinMode(ENCA_PIN, INPUT);
   pinMode(ENCB_PIN, INPUT);
   pinMode(ENTER_PIN, INPUT);
@@ -94,10 +90,16 @@ void setup() {
   pinMode(VALVE9_PIN, OUTPUT);
   pinMode(VALVE10_PIN, OUTPUT);
   pinMode(VALVE11_PIN, OUTPUT);
+  for (int i = HLT; i <= KETTLE; i++) pinMode(OUTPUT_PIN[i], OUTPUT);
   resetOutputs();
-  
+
   attachInterrupt(ENCA_INT, doEncoderA, RISING);
   attachInterrupt(ENTER_INT, doEnter, CHANGE);
+
+  initLCD();
+  splashScreen();
+  checkConfig();
+  loadSetup();
 }
 
 void loop() {  
@@ -115,6 +117,123 @@ void loop() {
   }
 }
 
-
-
-
+void splashScreen() {
+  clearLCD();
+  { 
+    byte bmpByte[] = {
+      B00000,
+      B00001,
+      B00001, 
+      B00001, 
+      B00011, 
+      B00011, 
+      B00011, 
+      B00111
+    }; 
+    lcdSetCustChar(0, bmpByte);
+    lcdWriteCustChar(0, 0, 0);
+  }
+  { 
+    byte bmpByte[] = {
+      B11100, 
+      B11100, 
+      B01010, 
+      B11110, 
+      B00011, 
+      B10011, 
+      B11111, 
+      B11111
+    };
+    lcdSetCustChar(1, bmpByte);
+    lcdWriteCustChar(0, 1, 1);
+  }
+  { 
+    byte bmpByte[] = {
+      B00000, 
+      B00000, 
+      B00000, 
+      B11000, 
+      B11100, 
+      B11110, 
+      B11111, 
+      B11111
+    }; 
+    lcdSetCustChar(2, bmpByte); 
+    lcdWriteCustChar(0, 2, 2); 
+  }
+  { 
+    byte bmpByte[] = {
+      B11111, 
+      B11111, 
+      B11111, 
+      B11111, 
+      B01111, 
+      B01111, 
+      B11110, 
+      B11110
+    }; 
+    lcdSetCustChar(3, bmpByte); 
+    lcdWriteCustChar(1, 0, 3); 
+  }
+  { 
+    byte bmpByte[] = {
+      B11111, 
+      B11111, 
+      B11111, 
+      B11111, 
+      B11100, 
+      B11011, 
+      B11011, 
+      B01101
+    }; 
+    lcdSetCustChar(4, bmpByte); 
+    lcdWriteCustChar(1, 1, 4); 
+  }
+  { 
+    byte bmpByte[] = {
+      B10111, 
+      B11011, 
+      B00111, 
+      B11111, 
+      B11110, 
+      B11100, 
+      B11000, 
+      B00000
+    }; 
+    lcdSetCustChar(5, bmpByte); 
+    lcdWriteCustChar(1, 2, 5); 
+  }
+  { 
+    byte bmpByte[] = {
+      B11110, 
+      B11110, 
+      B11111, 
+      B01111, 
+      B01111, 
+      B01100, 
+      B01101, 
+      B00111
+    }; 
+    lcdSetCustChar(6, bmpByte); 
+    lcdWriteCustChar(2, 0, 6); 
+  }
+  { 
+    byte bmpByte[] = {
+      B01111, 
+      B01111, 
+      B11111, 
+      B11110, 
+      B11110, 
+      B11111, 
+      B01111, 
+      B01111
+    }; 
+    lcdSetCustChar(7, bmpByte); 
+    lcdWriteCustChar(2, 1, 7); 
+  }
+  printLCD(0, 5, "BrewTroller 1.0");
+  printLCD(1, 14, "Beta 1");
+  printLCD(3, 1, "www.brewtroller.com");
+  while(!enterStatus) delay(250);
+  enterStatus = 0;
+}
