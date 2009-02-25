@@ -2,7 +2,7 @@
 OneWire ds(TEMP_PIN);
 
 /* The following function is currently not in use:
-float get_temp(boolean unit, byte* addr) //Unit 1 for F and 0 for C
+float get_temp(boolean tUnit, byte* addr) //Unit 1 for F and 0 for C
 {
   byte present = 0;
   byte i;
@@ -20,12 +20,12 @@ float get_temp(boolean unit, byte* addr) //Unit 1 for F and 0 for C
   if ( addr[0] != 0x28) {
   rawtemp = (data[1] << 8) + data[0];
   temp = (float)rawtemp * 0.5;
-  if (unit == 1) temp= (temp * 1.8) + 32.0;
+  if (tUnit == 1) temp= (temp * 1.8) + 32.0;
   return temp;
  } else {
   rawtemp = (data[1] << 8) + data[0]; 
   temp = (float)rawtemp * 0.0625;
-  if (unit == 1) temp= (temp * 1.8) + 32.0;
+  if (tUnit == 1) temp= (temp * 1.8) + 32.0;
   return temp;
   }
 }
@@ -56,7 +56,7 @@ void convertAll() {
   ds.write(0x44,1);         // start conversion, with parasite power on at the end
 }
 
-float read_temp(int unit, byte* addr) { //Unit 1 for F and 0 for C
+float read_temp(int tUnit, byte* addr) { //Unit 1 for F and 0 for C
   float temp;
   int rawtemp;
   byte i;
@@ -69,7 +69,7 @@ float read_temp(int unit, byte* addr) { //Unit 1 for F and 0 for C
   
   rawtemp = (data[1] << 8) + data[0];
   if ( addr[0] != 0x28) temp = (float)rawtemp * 0.5; else temp = (float)rawtemp * 0.0625;
-  if (unit) temp = (temp * 1.8) + 32.0;
+  if (tUnit) temp = (temp * 1.8) + 32.0;
   return temp;
 
 }

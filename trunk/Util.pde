@@ -4,14 +4,17 @@ void ftoa(float val, char retStr[], int precision) {
   if( precision > 0) {
     strcat(retStr, ".");
     unsigned int mult = 1;
-    while(precision--) mult *=10;
+    for(int i = 0; i< precision; i++) mult *=10;
     unsigned int frac = (val - int(val)) * mult;
     char buf[6];
-    strcat(retStr, itoa(frac, buf, 10));
+    itoa(frac, buf, 10);
+    for(int i = 0; i < precision - (int)strlen(buf); i++) strcat(retStr, "0");
+    strcat(retStr, buf);
   }
 }
 
-/* The following function is currently not being used: 
+// The following function is currently not being used: 
+/*
 int memoryTest() {
   int byteCounter = 0; // initialize a counter
   byte *byteArray; // create a pointer to a byte array

@@ -14,7 +14,7 @@ void doMon() {
     }
   }
   
-  if (tempUnit == TEMPF) strcpy(sTempUnit, "F");
+  if (unit) strcpy(sTempUnit, "F");
   encMin = 0;
   encMax = 2;
   encCount = 0;
@@ -52,14 +52,14 @@ void doMon() {
         };
         boolean inMenu = 1;
         while(inMenu) {
-          char unit[2] = "C"; if (tempUnit) strcpy(unit, "F");
+          char dispUnit[2] = "C"; if (unit) strcpy(dispUnit, "F");
           switch (scrollMenu("Brew Monitor Menu   ", monMenu, 11)) {
             case 0:
               {
                 byte defHLTTemp = 180;
-                if (!tempUnit) defHLTTemp = defHLTTemp * 5 / 9 + 32;
-                if (setpoint[HLT] > 0) setpoint[HLT] = getValue("Enter HLT Temp:", setpoint[HLT], 0, 255, unit);
-                else setpoint[HLT] = getValue("Enter HLT Temp:", defHLTTemp, 0, 255, unit);
+                if (!unit) defHLTTemp = defHLTTemp * 5 / 9 + 32;
+                if (setpoint[HLT] > 0) setpoint[HLT] = getValue("Enter HLT Temp:", setpoint[HLT], 3, 0, 255, dispUnit);
+                else setpoint[HLT] = getValue("Enter HLT Temp:", defHLTTemp, 3, 0, 255, dispUnit);
               }
               inMenu = 0;
               break;
@@ -67,9 +67,9 @@ void doMon() {
             case 2:
               {
                 byte defMashTemp = 152;
-                if (!tempUnit) defMashTemp = defMashTemp * 5 / 9 + 32;
-                if (setpoint[MASH] > 0) setpoint[MASH] = getValue("Enter Mash Temp:", setpoint[MASH], 0, 255, unit);
-                else setpoint[MASH] = getValue("Enter Mash Temp:", defMashTemp, 0, 255, unit);
+                if (!unit) defMashTemp = defMashTemp * 5 / 9 + 32;
+                if (setpoint[MASH] > 0) setpoint[MASH] = getValue("Enter Mash Temp:", setpoint[MASH], 3, 0, 255, dispUnit);
+                else setpoint[MASH] = getValue("Enter Mash Temp:", defMashTemp, 3, 0, 255, dispUnit);
               }
               inMenu = 0;
               break;
@@ -77,9 +77,9 @@ void doMon() {
             case 4:
               {
                 byte defKettleTemp = 212;
-                if (!tempUnit) defKettleTemp = defKettleTemp * 5 / 9 + 32;
-                if (setpoint[KETTLE] > 0) setpoint[KETTLE] = getValue("Enter Kettle Temp:", setpoint[KETTLE], 0, 255, unit);
-                else setpoint[KETTLE] = getValue("Enter Kettle Temp:", defKettleTemp, 0, 255, unit);
+                if (!unit) defKettleTemp = defKettleTemp * 5 / 9 + 32;
+                if (setpoint[KETTLE] > 0) setpoint[KETTLE] = getValue("Enter Kettle Temp:", setpoint[KETTLE], 3, 0, 255, dispUnit);
+                else setpoint[KETTLE] = getValue("Enter Kettle Temp:", defKettleTemp, 3, 0, 255, dispUnit);
               }
               inMenu = 0;
               break;
@@ -202,7 +202,7 @@ void doMon() {
       convertAll();
       convStart = millis();
     } else if (millis() - convStart >= 750) {
-      for (int i = HLT; i <= BEEROUT; i++) temp[i] = read_temp(tempUnit, tSensor[i]);
+      for (int i = HLT; i <= BEEROUT; i++) temp[i] = read_temp(unit, tSensor[i]);
       convStart = 0;
     }
     for (int i = HLT; i <= KETTLE; i++) {

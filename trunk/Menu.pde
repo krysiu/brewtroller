@@ -1,42 +1,3 @@
-void menuMain()
-{
-  char mainMenu[3][20] = {
-    "AutoBrew          ",
-    "Brew Monitor      ",
-    "System Setup      "
-  };
-  while(1) {
-    switch (scrollMenu("BrewTroller         ", mainMenu, 3)) {
-      case 0: doAutoBrew(); break;
-      case 1: doMon(); break;
-      case 2: menuSetup(); break;
-      default: return;
-    }
-  }
-}
-
-void menuSetup()
-{
-  char setupMenu[6][20] = {
-    "Assign Temp Sensor ",
-    "Set Temp Unit (C/F)",
-    "Configure Outputs  ",
-    "Save Settings      ",
-    "Load Settings      ",
-    "Exit Setup         "
-  };
-  while(1) {
-    switch(scrollMenu("System Setup        ", setupMenu, 6)) {
-      case 0: assignSensor(); break;
-      case 1: setTempUnit(); break;
-      case 2: cfgOutputs(); break;
-      case 3: saveSetup(); break;
-      case 4: loadSetup(); break;
-      default: return;
-    }
-  }
-}
-
 int scrollMenu(char sTitle[], char menuItems[][20], int numOpts) {
   clearLCD();
   if (sTitle != NULL) printLCD(0, 0, sTitle);
@@ -182,131 +143,6 @@ unsigned int getTimerValue(char sTitle[], unsigned int defMins = 0) {
   }
 }
 
-byte getValue(char sTitle[], byte defValue, byte minValue, byte maxValue, char unit[]) {
-  byte retVal = defValue;
-  byte cursorPos = 0; //0 = Input Box, 1 = OK
-  boolean cursorState = 0; //0 = Unselected, 1 = Selected
-  encMin = 0;
-  encMax = 1;
-  encCount = 0;
-  int lastCount = 1;
-  char buf[4];
-  
-  clearLCD();
-  printLCD(0,0,sTitle);
-  printLCD(1, 11, unit);
-  printLCD(3, 8, "OK");
-  
-  while(1) {
-    if (encCount != lastCount) {
-      if (cursorState) {
-        retVal = encCount;
-      } else {
-        cursorPos = encCount;
-        switch (cursorPos) {
-          case 0:
-            printLCD(1, 7, ">");
-            printLCD(3, 7, " ");
-            printLCD(3, 10, " ");
-            break;
-          case 1:
-            printLCD(1, 7, " ");
-            printLCD(3, 7, ">");
-            printLCD(3, 10, "<");
-            break;
-        }
-      }
-      printLCDPad(1, 8, itoa(retVal, buf, 10), 3, ' ');
-      lastCount = encCount;
-    }
-    if (enterStatus == 1) {
-      enterStatus = 0;
-      switch (cursorPos) {
-        case 0:
-          cursorState = cursorState ^ 1;
-          if (cursorState) {
-            encMin = minValue;
-            encMax = maxValue;
-            encCount = retVal;
-          } else {
-            encMin = 0;
-            encMax = 1;
-            encCount = cursorPos;
-          }
-          break;
-        case 1:
-          return retVal;
-      }
-    } else if (enterStatus == 2) {
-      enterStatus = 0;
-      return defValue;
-    }
-  }
-}
-
-byte getValueTenths(char sTitle[], byte defValue, byte minValue, byte maxValue, char unit[]) {
-  byte retVal = defValue;
-  byte cursorPos = 0; //0 = Input Box, 1 = OK
-  boolean cursorState = 0; //0 = Unselected, 1 = Selected
-  encMin = 0;
-  encMax = 1;
-  encCount = 0;
-  int lastCount = 1;
-  char buf[4];
-  
-  clearLCD();
-  printLCD(0,0,sTitle);
-  printLCD(1, 12, unit);
-  printLCD(3, 8, "OK");
-  
-  while(1) {
-    if (encCount != lastCount) {
-      if (cursorState) {
-        retVal = encCount;
-      } else {
-        cursorPos = encCount;
-        switch (cursorPos) {
-          case 0:
-            printLCD(1, 7, ">");
-            printLCD(3, 7, " ");
-            printLCD(3, 10, " ");
-            break;
-          case 1:
-            printLCD(1, 7, " ");
-            printLCD(3, 7, ">");
-            printLCD(3, 10, "<");
-            break;
-        }
-      }
-      ftoa((float) retVal / 10, buf, 1);
-      printLCDPad(1, 8, buf, 4, ' ');
-      lastCount = encCount;
-    }
-    if (enterStatus == 1) {
-      enterStatus = 0;
-      switch (cursorPos) {
-        case 0:
-          cursorState = cursorState ^ 1;
-          if (cursorState) {
-            encMin = minValue;
-            encMax = maxValue;
-            encCount = retVal;
-          } else {
-            encMin = 0;
-            encMax = 1;
-            encCount = cursorPos;
-          }
-          break;
-        case 1:
-          return retVal;
-      }
-    } else if (enterStatus == 2) {
-      enterStatus = 0;
-      return defValue;
-    }
-  }
-}
-
 int confirmExit() {
   clearLCD();
   printLCD(0, 0, "Exiting will reset");
@@ -317,4 +153,89 @@ int confirmExit() {
     "      Return      ",
     "   Exit Program   "};
   return getChoice(choices, 2, 3);;
+}
+
+long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision, long maxValue, char dispUnit[]) {
+  unsigned long retValue = defValue;
+  byte cursorPos = 0; 
+  boolean cursorState = 0; //0 = Unselected, 1 = Selected
+
+  encMin = 0;
+  encMax = digits;
+  encCount = 0;
+  int lastCount = 1;
+  char buf[11];
+
+  {
+    byte charByte[] = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};
+    lcdSetCustChar(0, charByte);
+  }
+  {
+    byte charByte[] = {B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
+    lcdSetCustChar(1, charByte);
+  }
+  
+  clearLCD();
+  printLCD(0,0,sTitle);
+  printLCD(1, (20 - digits + 1) / 2 + digits + 1, dispUnit);
+  printLCD(3, 9, "OK");
+  unsigned long whole, frac;
+  
+  while(1) {
+    if (encCount != lastCount) {
+      if (cursorState) {
+        unsigned long factor = 1;
+        for (int i = 0; i < digits - cursorPos - 1; i++) factor *= 10;
+        if (encCount > lastCount) retValue += (encCount-lastCount) * factor; else retValue -= (lastCount-encCount) * factor;
+        if (retValue > maxValue) retValue = maxValue;
+      } else {
+        cursorPos = encCount;
+        for (int i = (20 - digits + 1) / 2 - 1; i < (20 - digits + 1) / 2 - 1 + digits - precision; i++) lcdWriteCustChar(2, i, 0);
+        if (precision) for (int i = (20 - digits + 1) / 2 + digits - precision; i < (20 - digits + 1) / 2 + digits; i++) lcdWriteCustChar(2, i, 0);
+        printLCD(3, 8, " ");
+        printLCD(3, 11, " ");
+        if (cursorPos == digits) {
+          printLCD(3, 8, ">");
+          printLCD(3, 11, "<");
+        } else {
+          if (cursorPos < digits - precision) lcdWriteCustChar(2, (20 - digits + 1) / 2 + encCount - 1, 1);
+          else lcdWriteCustChar(2, (20 - digits + 1) / 2 + encCount, 1);
+        }
+      }
+      lastCount = encCount;
+      whole = retValue / pow(10, precision);
+      frac = retValue - (whole * pow(10, precision)) ;
+      printLCDPad(1, (20 - digits + 1) / 2 - 1, ltoa(whole, buf, 10), digits - precision, ' ');
+      if (precision) {
+        printLCD(1, (20 - digits + 1) / 2 + digits - precision - 1, ".");
+        printLCDPad(1, (20 - digits + 1) / 2 + digits - precision, ltoa(frac, buf, 10), precision, '0');
+      }
+    }
+    if (enterStatus == 1) {
+      enterStatus = 0;
+      if (cursorPos == digits) return retValue;
+      else {
+        cursorState = cursorState ^ 1;
+        if (cursorState) {
+          encMin = 0;
+          encMax = 9;
+          if (cursorPos < digits - precision) {
+            ltoa(whole, buf, 10);
+            if (cursorPos < digits - precision - strlen(buf)) encCount = 0; else  encCount = buf[cursorPos - (digits - precision - strlen(buf))] - '0';
+          } else {
+            ltoa(frac, buf, 10);
+            if (cursorPos < digits - strlen(buf)) encCount = 0; else  encCount = buf[cursorPos - (digits - strlen(buf))] - '0';
+          }
+        } else {
+          encMin = 0;
+          encMax = digits;
+          encCount = cursorPos;
+        }
+        lastCount = encCount;
+      }
+    } else if (enterStatus == 2) {
+      enterStatus = 0;
+      return defValue;
+    }
+  }
 }

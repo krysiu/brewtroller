@@ -1,45 +1,59 @@
+#include <avr/EEPROM.h>
 #include <EEPROM.h>
 
 void saveSetup() {
+  //TSensors HLT (0-7), MASH (8-15), KETTLE (16-23), H2OIN (24-31), H2OOUT (32-39), BEEROUT (40-47)
   for (int i = HLT; i <= BEEROUT; i++) PROMwriteBytes(tSensor[i], i * 8, 8);
 
-  //Set Option Array  
+  //Option Array (48)
   byte options = B00000000;
-  if (tempUnit == TEMPF) options |= 1;
+  if (unit) options |= 1;
   if (PIDEnabled[HLT]) options |= 2;
   if (PIDEnabled[MASH]) options |= 4;
   if (PIDEnabled[KETTLE]) options |= 8;
   EEPROM.write(48, options);
   
   //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
+  //Volume Settings for HLT (64-71), MASH (72 - 79) and KETTLE (80 - 87)
   for (int i = HLT; i <= KETTLE; i++) {
     EEPROM.write(i * 5 + 49, PIDp[i]);
     EEPROM.write(i * 5 + 50, PIDi[i]);
     EEPROM.write(i * 5 + 51, PIDd[i]);
     EEPROM.write(i * 5 + 52, PIDCycle[i]);
     EEPROM.write(i * 5 + 53, hysteresis[i]);
+    PROMwriteLong(capacity[i], i * 8 + 64);
+    PROMwriteLong(volLoss[i], i * 8 + 68);
   }
+  //Default Batch size (88-91)
+  PROMwriteLong(defBatchVol, 88);
+  EEPROM.write(92, evapRate);
 }
 
 void loadSetup() {
+  //TSensors HLT (0-7), MASH (8-15), KETTLE (16-23), H2OIN (24-31), H2OOUT (32-39), BEEROUT (40-47)
   for (int i = HLT; i <= BEEROUT; i++) PROMreadBytes(tSensor[i], i * 8, 8);
  
-  //Read Option Array  
+  //Option Array (48)
   byte options = EEPROM.read(48);
-  
-  if (options & 1) tempUnit = TEMPF;
+  if (options & 1) unit = 1;
   if (options & 2) PIDEnabled[HLT] = 1;
   if (options & 4) PIDEnabled[MASH] = 1;
   if (options & 8) PIDEnabled[KETTLE] = 1;
 
   //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
+  //Volume Settings for HLT (64-71), MASH (72 - 79) and KETTLE (80 - 87)
   for (int i = HLT; i <= KETTLE; i++) {
     PIDp[i] = EEPROM.read(i * 5 + 49);
     PIDi[i] = EEPROM.read(i * 5 + 50);
     PIDd[i] = EEPROM.read(i * 5 + 51);
     PIDCycle[i] = EEPROM.read(i * 5 + 52);
     hysteresis[i] = EEPROM.read(i * 5 + 53);
+    capacity[i] = PROMreadLong(i * 8 + 64);
+    volLoss[i] = PROMreadLong(i * 8 + 68);
   }
+  //Default Batch size (88-91)
+  defBatchVol = PROMreadLong(88);
+  evapRate = EEPROM.read(92);
 }
 
 void PROMwriteBytes(byte bytes[], int addr, int numBytes) {
@@ -77,4 +91,14 @@ void checkConfig() {
       //No EEPROM Upgrade Required
       return;
   }
+}
+
+long PROMreadLong(int address) {
+  long out;
+  eeprom_read_block((void *) &out, (unsigned char *) address, 4);
+  return out;
+}
+
+void PROMwriteLong(long value, int address) {
+  eeprom_write_block((void *) &value, (unsigned char *) address, 4);
 }

@@ -1,3 +1,48 @@
+void menuSetup()
+{
+  char setupMenu[7][20] = {
+    "",
+    "Assign Temp Sensor ",
+    "Configure Outputs  ",
+    "Configure Volumes  ",
+    "Save Settings      ",
+    "Load Settings      ",
+    "Exit Setup         "
+  };
+  while(1) {
+    if (unit) strcpy(setupMenu[0], "Unit: US           "); else strcpy(setupMenu[0], "Unit: Metric       ");
+    switch(scrollMenu("System Setup        ", setupMenu, 6)) {
+      case 0:
+        unit = unit ^ 1;
+        if (unit) {
+          //Convert Setup params
+          for (int i = HLT; i <= KETTLE; i++) {
+            hysteresis[i] = hysteresis[i] * 9 / 5;
+            capacity[i] = capacity[i] * 0.26417;
+            volume[i] = volume[i] * 0.26417;
+            volLoss[i] = volLoss[i] * 0.26417;
+          }
+          defBatchVol = defBatchVol * 0.26417;
+        } else {
+          for (int i = HLT; i <= KETTLE; i++) {
+            hysteresis[i] = hysteresis[i] * 5 / 9;
+            capacity[i] = capacity[i] / 0.26417;
+            volume[i] = volume[i] / 0.26417;
+            volLoss[i] = volLoss[i] / 0.26417;
+          }
+          defBatchVol = defBatchVol / 0.26417;
+        }
+        break;
+      case 1: assignSensor(); break;
+      case 2: cfgOutputs(); break;
+      case 3: cfgVolumes(); break;
+      case 4: saveSetup(); break;
+      case 5: loadSetup(); break;
+      default: return;
+    }
+  }
+}
+
 void assignSensor() {
   encMin = 0;
   encMax = 5;
@@ -57,24 +102,6 @@ void assignSensor() {
   }
 }
 
-void setTempUnit() {
-  clearLCD();
-  printLCD(0, 0, "Set Temperature Unit");
-  char tempUnits[2][19] = {
-    "     Celcius      ",
-    "    Fahrenheit    "};
-  byte newUnit = getChoice(tempUnits, 2, 1, tempUnit);
-  if (newUnit > 1) return;
-  if (tempUnit != newUnit) {
-    tempUnit = newUnit;
-    if (tempUnit) {
-      for (int i = HLT; i <= KETTLE; i++) hysteresis[i] = hysteresis[i] * 9 / 5;
-    } else {
-      for (int i = HLT; i <= KETTLE; i++) hysteresis[i] = hysteresis[i] * 5 / 9;
-    }
-  }
-}
-
 void cfgOutputs() {
   char pidMenu[16][20];
   while(1) {
@@ -105,8 +132,8 @@ void cfgOutputs() {
     }
     strcpy(pidMenu[nextElement++],   "Exit               ");
     byte selected = scrollMenu("Configure Outputs", pidMenu, nextElement);
-    char unit[2] = "C";
-    if (tempUnit) strcpy(unit, "F");
+    char dispUnit[2] = "C";
+    if (unit) strcpy(dispUnit, "F");
     if (selected > 1 && !PIDEnabled[HLT]) selected++;
     if (selected > 4 && !PIDEnabled[MASH]) selected++;
     if (selected > 7 && !PIDEnabled[KETTLE]) selected++;
@@ -115,16 +142,16 @@ void cfgOutputs() {
       case 3: PIDEnabled[MASH] = PIDEnabled[MASH] ^ 1; break;
       case 6: PIDEnabled[KETTLE] = PIDEnabled[KETTLE] ^ 1; break;
       case 1:
-        if (PIDEnabled[HLT]) PIDCycle[HLT] = getValue("HLT Cycle Time", PIDCycle[HLT], 1, 255, "s");
-        else hysteresis[HLT] = getValueTenths("HLT Hysteresis", hysteresis[HLT], 0, 255, unit);
+        if (PIDEnabled[HLT]) PIDCycle[HLT] = getValue("HLT Cycle Time", PIDCycle[HLT], 3, 0, 255, "s");
+        else hysteresis[HLT] = getValue("HLT Hysteresis", hysteresis[HLT], 3, 1, 255, dispUnit);
         break;
       case 4:
-        if (PIDEnabled[MASH]) PIDCycle[MASH] = getValue("Mash Cycle Time", PIDCycle[MASH], 1, 255, "s");
-        else hysteresis[MASH] = getValueTenths("Mash Hysteresis", hysteresis[MASH], 0, 255, unit);
+        if (PIDEnabled[MASH]) PIDCycle[MASH] = getValue("Mash Cycle Time", PIDCycle[MASH], 3, 0, 255, "s");
+        else hysteresis[MASH] = getValue("Mash Hysteresis", hysteresis[MASH], 3, 1, 255, dispUnit);
         break;
       case 7:
-        if (PIDEnabled[KETTLE]) PIDCycle[KETTLE] = getValue("Kettle Cycle Time", PIDCycle[KETTLE], 1, 255, "s");
-        else hysteresis[KETTLE] = getValueTenths("Kettle Hysteresis", hysteresis[KETTLE], 0, 255, unit);
+        if (PIDEnabled[KETTLE]) PIDCycle[KETTLE] = getValue("Kettle Cycle Time", PIDCycle[KETTLE], 3, 0, 255, "s");
+        else hysteresis[KETTLE] = getValue("Kettle Hysteresis", hysteresis[KETTLE], 3, 1, 255, dispUnit);
         break;
       case 2: setPIDGain("HLT PID Gain", &PIDp[HLT], &PIDi[HLT], &PIDd[HLT]); break;
       case 5: setPIDGain("Mash PID Gain", &PIDp[MASH], &PIDi[MASH], &PIDd[MASH]); break;
@@ -224,4 +251,33 @@ void setPIDGain(char sTitle[], byte* p, byte* i, byte* d) {
       return;
     }
   }
+}
+
+void cfgVolumes() {
+  char volMenu[9][20] = {
+    "HLT Volume         ",
+    "HLT Loss           ",
+    "Mash Volume        ",
+    "Mash Loss          ",
+    "Kettle Volume      ",
+    "Kettle Loss        ",
+    "Batch Size         ",
+    "Evaporation Rate   ",
+    "Exit               "
+  };
+  while(1) {
+    char volUnit[5] = "L";
+    if (unit) strcpy(volUnit, "Gal");
+    switch(scrollMenu("Configure Volumes", volMenu, 9)) {
+      case 0: capacity[HLT] = getValue("HLT Volume", capacity[HLT], 7, 3, 9999999, volUnit); break;
+      case 1: volLoss[HLT] = getValue("HLT Volume Loss", volLoss[HLT], 5, 3, 65535, volUnit); break;
+      case 2: capacity[MASH] = getValue("Mash Volume", capacity[MASH], 7, 3, 9999999, volUnit); break;
+      case 3: volLoss[MASH] = getValue("Mash Volume Loss", volLoss[MASH], 5, 3, 65535, volUnit); break;
+      case 4: capacity[KETTLE] = getValue("Kettle Volume", capacity[KETTLE], 7, 3, 9999999, volUnit); break;
+      case 5: volLoss[KETTLE] = getValue("Kettle Volume Loss", volLoss[KETTLE], 5, 3, 65535, volUnit); break;
+      case 6: defBatchVol = getValue("Batch Size", defBatchVol, 7, 3, 9999999, volUnit); break;
+      case 7: evapRate = getValue("Evaporation Rate", evapRate, 3, 0, 100, "%/hr");
+      default: return;
+    }
+  } 
 }

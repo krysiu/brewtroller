@@ -17,7 +17,7 @@ void initLCD(){
 }
 
 
-void printLCD(int iRow, int iCol, char sText[]){
+void printLCD(byte iRow, byte iCol, char sText[]){
  lcd.setCursor(iCol, iRow);
  delayMicroseconds(LCD_DELAY_CURSOR);
  int i = 0;
@@ -32,7 +32,7 @@ void clearLCD(){
 lcd.clear();
 }
 
-char printLCDPad(int iRow, int iCol, char sText[], int length, char pad) {
+char printLCDPad(byte iRow, byte iCol, char sText[], byte length, char pad) {
  lcd.setCursor(iCol, iRow);
  delayMicroseconds(LCD_DELAY_CURSOR);
  for (int i=0; i < length-strlen(sText) ; i++) {
@@ -46,3 +46,19 @@ char printLCDPad(int iRow, int iCol, char sText[], int length, char pad) {
    delayMicroseconds(LCD_DELAY_CHAR);
  }
 }  
+
+void lcdSetCustChar(byte slot, byte charDef[8]) {
+  lcd.command(64 | (slot << 3));
+  for(byte i = 0; i < 8; i++) {
+    lcd.write(charDef[i]);
+    delayMicroseconds(LCD_DELAY_CHAR);
+  }
+  lcd.command(B10000000);
+}
+
+void lcdWriteCustChar(byte iRow, byte iCol, byte slot) {
+  lcd.setCursor(iCol, iRow);
+  delayMicroseconds(LCD_DELAY_CURSOR);
+  lcd.write(slot);
+  delayMicroseconds(LCD_DELAY_CHAR);
+}

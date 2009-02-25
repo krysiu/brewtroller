@@ -28,10 +28,6 @@ const byte H2OIN = 3;
 const byte H2OOUT = 4;
 const byte BEEROUT = 5;
 
-//Temperature Unit Definitions
-const boolean TEMPF = 1;
-const boolean TEMPC = 0;
-
 //Loop-friendly Output Consts
 const byte OUTPUT_PIN[3] = { 0, 1, 3 };
 
@@ -43,7 +39,21 @@ unsigned int enterStatus = 0;
 
 //TSensor Globals
 byte tSensor[6][8];
-boolean tempUnit = TEMPC;
+
+//Unit Definitions
+//International: Celcius, Liter, Kilogram
+//US: Fahrenheit, Gallon, US Pound
+const byte INTL = 0;
+const byte US = 1;
+
+//Unit Globals (Volume in thousandths)
+boolean unit;
+unsigned long capacity[3];
+unsigned long volume[3];
+unsigned int volLoss[3];
+unsigned long defBatchVol;
+//Rate of Evaporation (Percent per hour)
+byte evapRate;
 
 //Output Globals
 boolean PIDEnabled[3] = { 0, 0, 0 };
@@ -91,7 +101,18 @@ void setup() {
 }
 
 void loop() {  
-  menuMain();
+  char mainMenu[3][20] = {
+    "AutoBrew          ",
+    "Brew Monitor      ",
+    "System Setup      "
+  };
+  while(1) {
+    switch (scrollMenu("BrewTroller         ", mainMenu, 3)) {
+      case 0: doAutoBrew(); break;
+      case 1: doMon(); break;
+      case 2: menuSetup(); break;
+    }
+  }
 }
 
 

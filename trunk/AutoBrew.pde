@@ -2,11 +2,13 @@ const boolean PROMPT = -1;
 
 void doAutoBrew() {
   int delayMins;
+  byte stepTemp[4], stepMins[4];
+  unsigned long batchVol = defBatchVol;
+  unsigned long grainWeight;
   const byte DOUGHIN = 0;
   const byte PROTEIN = 1;
   const byte SACCH = 2;
   const byte MASHOUT = 3;
-  byte stepTemp[4], stepMins[4];
   char titles[4][15] = {
     "Dough In",
     "Protein Rest",
@@ -44,7 +46,7 @@ void doAutoBrew() {
     default: return;
   }
 
-  if (!tempUnit) {
+  if (!unit) {
     //Convert default values from F to C
     setpoint[HLT] = (setpoint[HLT] - 32) * 5 / 9;
     for (int i = DOUGHIN; i <= MASHOUT; i++) if (stepTemp[i]) stepTemp[i] = (stepTemp[i] - 32) * 5 / 9;
@@ -61,6 +63,8 @@ void doAutoBrew() {
     while (setpoint[MASH] == 0 && i <= MASHOUT) setpoint[MASH] = stepTemp[i++];
   }
 
+//Convert Temp to Strike Temp
+  
   mashStep("Preheat", 0);
   if (enterStatus == 2) { enterStatus = 0; resetOutputs(); return; }
   mashStep("Add Grain", PROMPT);  
@@ -122,7 +126,7 @@ void mashStep(char sTitle[ ], int iMins) {
     }
   }
   
-  if (tempUnit == TEMPF) strcpy(sTempUnit, "F");
+  if (unit) strcpy(sTempUnit, "F");
 
   while(1) {
     boolean redraw = 0;
@@ -167,7 +171,7 @@ void mashStep(char sTitle[ ], int iMins) {
         convertAll();
         convStart = millis();
       } else if (millis() - convStart >= 750) {
-        for (int i = HLT; i <= MASH; i++) temp[i] = read_temp(tempUnit, tSensor[i]);
+        for (int i = HLT; i <= MASH; i++) temp[i] = read_temp(unit, tSensor[i]);
         convStart = 0;
       }
 
