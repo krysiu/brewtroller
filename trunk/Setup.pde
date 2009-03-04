@@ -2,16 +2,16 @@ void menuSetup()
 {
   char setupMenu[7][20] = {
     "",
-    "Assign Temp Sensor ",
-    "Configure Outputs  ",
-    "Configure Volumes  ",
-    "Save Settings      ",
-    "Load Settings      ",
-    "Exit Setup         "
+    "Assign Temp Sensor",
+    "Configure Outputs",
+    "Volume/Capacity",
+    "Save Settings",
+    "Load Settings",
+    "Exit Setup"
   };
   while(1) {
-    if (unit) strcpy(setupMenu[0], "Unit: US           "); else strcpy(setupMenu[0], "Unit: Metric       ");
-    switch(scrollMenu("System Setup        ", setupMenu, 6)) {
+    if (unit) strcpy(setupMenu[0], "Unit: US"); else strcpy(setupMenu[0], "Unit: Metric");
+    switch(scrollMenu("System Setup", setupMenu, 7)) {
       case 0:
         unit = unit ^ 1;
         if (unit) {
@@ -74,9 +74,9 @@ void assignSensor() {
       enterStatus = 0;
       //Pop-Up Menu
       char subMenu[3][20] = {
-        "Scan Bus           ",
-        "Close Menu         ",
-        "Exit               "
+        "Scan Bus",
+        "Close Menu",
+        "Exit"
       };
       switch (scrollMenu(dispTitle[lastCount], subMenu, 3)) {
         case 0:
@@ -107,30 +107,30 @@ void cfgOutputs() {
   while(1) {
     byte nextElement = 0;
     if (PIDEnabled[HLT]) {
-      strcpy(pidMenu[nextElement++], "HLT Mode: PID      ");
-      strcpy(pidMenu[nextElement++], "HLT PID Cycle      ");
-      strcpy(pidMenu[nextElement++], "HLT PID Gain       ");
+      strcpy(pidMenu[nextElement++], "HLT Mode: PID");
+      strcpy(pidMenu[nextElement++], "HLT PID Cycle");
+      strcpy(pidMenu[nextElement++], "HLT PID Gain");
     } else {
-      strcpy(pidMenu[nextElement++], "HLT Mode: On/Off   ");
-      strcpy(pidMenu[nextElement++], "HLT Hysteresis     ");
+      strcpy(pidMenu[nextElement++], "HLT Mode: On/Off");
+      strcpy(pidMenu[nextElement++], "HLT Hysteresis");
     }
     if (PIDEnabled[MASH]) {
-      strcpy(pidMenu[nextElement++], "Mash Mode: PID     ");
-      strcpy(pidMenu[nextElement++], "Mash PID Cycle     ");
-      strcpy(pidMenu[nextElement++], "Mash PID Gain      ");
+      strcpy(pidMenu[nextElement++], "Mash Mode: PID");
+      strcpy(pidMenu[nextElement++], "Mash PID Cycle");
+      strcpy(pidMenu[nextElement++], "Mash PID Gain");
     } else {
-      strcpy(pidMenu[nextElement++], "Mash Mode: On/Off  ");
-      strcpy(pidMenu[nextElement++], "Mash Hysteresis    ");
+      strcpy(pidMenu[nextElement++], "Mash Mode: On/Off");
+      strcpy(pidMenu[nextElement++], "Mash Hysteresis");
     }
     if (PIDEnabled[KETTLE]) {
-      strcpy(pidMenu[nextElement++], "Kettle Mode: PID   ");
-      strcpy(pidMenu[nextElement++], "Kettle PID Cycle   ");
-      strcpy(pidMenu[nextElement++], "Kettle PID Gain    ");
+      strcpy(pidMenu[nextElement++], "Kettle Mode: PID");
+      strcpy(pidMenu[nextElement++], "Kettle PID Cycle");
+      strcpy(pidMenu[nextElement++], "Kettle PID Gain");
     } else {
       strcpy(pidMenu[nextElement++], "Kettle Mode: On/Off");
-      strcpy(pidMenu[nextElement++], "Kettle Hysteresis  ");
+      strcpy(pidMenu[nextElement++], "Kettle Hysteresis");
     }
-    strcpy(pidMenu[nextElement++],   "Exit               ");
+    strcpy(pidMenu[nextElement++],   "Exit");
     byte selected = scrollMenu("Configure Outputs", pidMenu, nextElement);
     char dispUnit[2] = "C";
     if (unit) strcpy(dispUnit, "F");
@@ -255,12 +255,12 @@ void setPIDGain(char sTitle[], byte* p, byte* i, byte* d) {
 
 void cfgVolumes() {
   char volMenu[9][20] = {
-    "HLT Volume         ",
-    "HLT Loss           ",
-    "Mash Volume        ",
-    "Mash Loss          ",
-    "Kettle Volume      ",
-    "Kettle Loss        ",
+    "HLT Capacity       ",
+    "HLT Dead Space     ",
+    "Mash Capacity      ",
+    "Mash Dead Space    ",
+    "Kettle Capacity    ",
+    "Kettle Dead Space  ",
     "Batch Size         ",
     "Evaporation Rate   ",
     "Exit               "
@@ -268,13 +268,13 @@ void cfgVolumes() {
   while(1) {
     char volUnit[5] = "L";
     if (unit) strcpy(volUnit, "Gal");
-    switch(scrollMenu("Configure Volumes", volMenu, 9)) {
-      case 0: capacity[HLT] = getValue("HLT Volume", capacity[HLT], 7, 3, 9999999, volUnit); break;
-      case 1: volLoss[HLT] = getValue("HLT Volume Loss", volLoss[HLT], 5, 3, 65535, volUnit); break;
-      case 2: capacity[MASH] = getValue("Mash Volume", capacity[MASH], 7, 3, 9999999, volUnit); break;
-      case 3: volLoss[MASH] = getValue("Mash Volume Loss", volLoss[MASH], 5, 3, 65535, volUnit); break;
-      case 4: capacity[KETTLE] = getValue("Kettle Volume", capacity[KETTLE], 7, 3, 9999999, volUnit); break;
-      case 5: volLoss[KETTLE] = getValue("Kettle Volume Loss", volLoss[KETTLE], 5, 3, 65535, volUnit); break;
+    switch(scrollMenu("Volume/Capacity", volMenu, 9)) {
+      case 0: capacity[HLT] = getValue("HLT Capacity", capacity[HLT], 7, 3, 9999999, volUnit); break;
+      case 1: volLoss[HLT] = getValue("HLT Dead Space", volLoss[HLT], 5, 3, 65535, volUnit); break;
+      case 2: capacity[MASH] = getValue("Mash Capacity", capacity[MASH], 7, 3, 9999999, volUnit); break;
+      case 3: volLoss[MASH] = getValue("Mash Dead Spac", volLoss[MASH], 5, 3, 65535, volUnit); break;
+      case 4: capacity[KETTLE] = getValue("Kettle Capacity", capacity[KETTLE], 7, 3, 9999999, volUnit); break;
+      case 5: volLoss[KETTLE] = getValue("Kettle Dead Spac", volLoss[KETTLE], 5, 3, 65535, volUnit); break;
       case 6: defBatchVol = getValue("Batch Size", defBatchVol, 7, 3, 9999999, volUnit); break;
       case 7: evapRate = getValue("Evaporation Rate", evapRate, 3, 0, 100, "%/hr");
       default: return;

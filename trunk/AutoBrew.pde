@@ -1,14 +1,17 @@
 const boolean PROMPT = -1;
 
 void doAutoBrew() {
-  int delayMins;
+  int delayMins = 0;
   byte stepTemp[4], stepMins[4];
-  unsigned long batchVol = defBatchVol;
-  unsigned long grainWeight;
+  unsigned long tgtVol[3] = { 0, 0, defBatchVol };
+  unsigned long grainWeight = 0;
+  unsigned int boilMins = 60;
+  unsigned int mashRatio = 133;
   const byte DOUGHIN = 0;
   const byte PROTEIN = 1;
   const byte SACCH = 2;
   const byte MASHOUT = 3;
+  char buf[9];
   char titles[4][15] = {
     "Dough In",
     "Protein Rest",
@@ -16,55 +19,213 @@ void doAutoBrew() {
     "Mash Out"
   };
 
-  char profileMenu[2][20] = {
-    "Single Infusion    ",
-    "Multi-Rest         "
-  };
-  switch (scrollMenu("AutoBrew Program", profileMenu, 2)) {
-    case 0:
-      setpoint[HLT] = 180;
-      stepTemp[DOUGHIN] = 0;
-      stepMins[DOUGHIN] = 0;
-      stepTemp[PROTEIN] = 0;
-      stepMins[PROTEIN] = 0;
-      stepTemp[SACCH] = 153;
-      stepMins[SACCH] = 60;
-      stepTemp[MASHOUT] = 170;
-      stepMins[MASHOUT] = 0;
-      break;
-    case 1:
-      setpoint[HLT] = 180;
-      stepTemp[DOUGHIN] = 104;
-      stepMins[DOUGHIN] = 20;
-      stepTemp[PROTEIN] = 122;
-      stepMins[PROTEIN] = 20;
-      stepTemp[SACCH] = 153;
-      stepMins[SACCH] = 60;
-      stepTemp[MASHOUT] = 170;
-      stepMins[MASHOUT] = 0;
-      break;
-    default: return;
+  {
+    char profileMenu[2][20] = {
+      "Single Infusion",
+      "Multi-Rest"
+    };
+    switch (scrollMenu("AutoBrew Program", profileMenu, 2)) {
+      case 0:
+        setpoint[HLT] = 180;
+        stepTemp[DOUGHIN] = 0;
+        stepMins[DOUGHIN] = 0;
+        stepTemp[PROTEIN] = 0;
+        stepMins[PROTEIN] = 0;
+        stepTemp[SACCH] = 153;
+        stepMins[SACCH] = 60;
+        stepTemp[MASHOUT] = 170;
+        stepMins[MASHOUT] = 0;
+        break;
+      case 1:
+        setpoint[HLT] = 180;
+        stepTemp[DOUGHIN] = 104;
+        stepMins[DOUGHIN] = 20;
+        stepTemp[PROTEIN] = 122;
+        stepMins[PROTEIN] = 20;
+        stepTemp[SACCH] = 153;
+        stepMins[SACCH] = 60;
+        stepTemp[MASHOUT] = 170;
+        stepMins[MASHOUT] = 0;
+        break;
+      default: return;
+    }
   }
-
   if (!unit) {
     //Convert default values from F to C
     setpoint[HLT] = (setpoint[HLT] - 32) * 5 / 9;
     for (int i = DOUGHIN; i <= MASHOUT; i++) if (stepTemp[i]) stepTemp[i] = (stepTemp[i] - 32) * 5 / 9;
+    //Convert mashRatio from qts/lb to l/kg
+    mashRatio *= 2.0863514;
+  }
+  
+  boolean inMenu = 1;
+  while (inMenu) {
+    char volUnit[5] = " l";
+    char wtUnit[4] = " kg";
+    char tempUnit[2] = "C";
+    if (unit) {
+      strcpy(volUnit, " gal");
+      strcpy(wtUnit, " lb");
+      strcpy (tempUnit, "F");
+    }
+    
+    char paramMenu[15][20] = {
+      "Batch Vol:",
+      "Grain Wt:",
+      "Boil Length:",
+      "Mash Ratio:",
+      "Delay Start:",
+      "Dough In:",
+      "Dough In:",
+      "Protein Rest:",
+      "Protein Rest:",
+      "Sacch Rest:",
+      "Sacch Rest:",
+      "Mash Out:",
+      "Mash Out:",
+      "Start Program",
+      "Exit"
+    };
+    ftoa((float)tgtVol[KETTLE]/1000, buf, 2);
+    strncat(paramMenu[0], buf, 5);
+    strcat(paramMenu[0], volUnit);
+
+    ftoa((float)grainWeight/1000, buf, 3);
+    strncat(paramMenu[1], buf, 7);
+    strcat(paramMenu[1], wtUnit);
+
+    strncat(paramMenu[2], itoa(boilMins, buf, 10), 3);
+    strcat(paramMenu[2], " min");
+
+    ftoa((float)mashRatio/100, buf, 2);
+    strncat(paramMenu[3], buf, 4);
+    strcat(paramMenu[3], ":1");
+
+    strncat(paramMenu[4], itoa(delayMins/60, buf, 10), 4);
+    strcat(paramMenu[4], " hr");
+
+    strncat(paramMenu[5], itoa(stepMins[DOUGHIN], buf, 10), 2);
+    strcat(paramMenu[5], " min");
+
+    strncat(paramMenu[6], itoa(stepTemp[DOUGHIN], buf, 10), 3);
+    strcat(paramMenu[6], tempUnit);
+    
+    strncat(paramMenu[7], itoa(stepMins[PROTEIN], buf, 10), 2);
+    strcat(paramMenu[7], " min");
+
+    strncat(paramMenu[8], itoa(stepTemp[PROTEIN], buf, 10), 3);
+    strcat(paramMenu[8], tempUnit);
+    
+    strncat(paramMenu[9], itoa(stepMins[SACCH], buf, 10), 2);
+    strcat(paramMenu[9], " min");
+
+    strncat(paramMenu[10], itoa(stepTemp[SACCH], buf, 10), 3);
+    strcat(paramMenu[10], tempUnit);
+    
+    strncat(paramMenu[11], itoa(stepMins[MASHOUT], buf, 10), 2);
+    strcat(paramMenu[11], " min");
+
+    strncat(paramMenu[12], itoa(stepTemp[MASHOUT], buf, 10), 3);
+    strcat(paramMenu[12], tempUnit);
+    
+    switch(scrollMenu("AutoBrew Parameters", paramMenu, 15)) {
+      case 0:
+        tgtVol[KETTLE] = getValue("Batch Volume", tgtVol[KETTLE], 7, 3, 9999999, volUnit);
+        break;
+      case 1:
+        grainWeight = getValue("Grain Weight", grainWeight, 7, 3, 9999999, wtUnit);
+        break;
+      case 2:
+        boilMins = getTimerValue("Boil Length", boilMins);
+        break;
+      case 3:
+        if (unit) mashRatio = getValue("Mash Ratio", mashRatio, 3, 2, 999, " qts/lb"); else mashRatio = getValue("Mash Ratio", mashRatio, 3, 2, 999, " l/kg");
+        break;
+      case 4:
+        delayMins = getTimerValue("Delay Start", delayMins);
+        break;
+      case 5:
+        stepMins[DOUGHIN] = getTimerValue("Dough In", stepMins[DOUGHIN]);
+        break;
+      case 6:
+        stepTemp[DOUGHIN] = getValue("Dough In", stepTemp[DOUGHIN], 3, 0, 255, tempUnit);
+        break;
+      case 7:
+        stepMins[PROTEIN] = getTimerValue("Protein Rest", stepMins[PROTEIN]);
+        break;
+      case 8:
+        stepTemp[PROTEIN] = getValue("Protein Rest", stepTemp[PROTEIN], 3, 0, 255, tempUnit);
+        break;
+      case 9:
+        stepMins[SACCH] = getTimerValue("Sacch Rest", stepMins[SACCH]);
+        break;
+      case 10:
+        stepTemp[SACCH] = getValue("Sacch Rest", stepTemp[SACCH], 3, 0, 255, tempUnit);
+        break;
+      case 11:
+        stepMins[MASHOUT] = getTimerValue("Mash Out", stepMins[MASHOUT]);
+        break;
+      case 12:
+        stepTemp[MASHOUT] = getValue("Mash Out", stepTemp[MASHOUT], 3, 0, 255, tempUnit);
+        break;
+      case 13:
+        inMenu = 0;
+        break;
+      default:
+        return;
+    }
+    //Detrmine Total Water Needed (Evap + Deadspaces)
+    tgtVol[HLT] = tgtVol[KETTLE] / (1 - evapRate / 100 * boilMins / 60) + volLoss[HLT] + volLoss[MASH];
+    //Add Water Lost in Spent Grain
+    if (unit) tgtVol[HLT] += grainWeight * .2143; else tgtVol[HLT] += grainWeight * 1.7884;
+    //Calculate mash volume
+    tgtVol[MASH] = grainWeight * mashRatio / 100;
+    //Convert qts to gal for US
+    if (unit) tgtVol[MASH] /= 4;
+    tgtVol[HLT] -= tgtVol[MASH];
+
+    {
+      //Grain-to-volume factor for mash tun capacity (1 lb = .15 gal)
+      float grain2Vol;
+      if (unit) grain2Vol = .15; else grain2Vol = 1.25;
+
+      //Check for capacity overages
+      if (tgtVol[HLT] > capacity[HLT]) {
+        clearLCD();
+        printLCD(0, 0, "HLT too small for");
+        printLCD(1, 0, "sparge. Increase");
+        printLCD(2, 0, "mash ratio or");
+        printLCD(3, 0, "decrease batch size.");
+        while (!enterStatus) delay(500);
+        enterStatus = 0;
+      }
+      if (tgtVol[MASH] + grainWeight * grain2Vol > capacity[MASH]) {
+        clearLCD();
+        printLCD(0, 0, "Mash tun too small.");
+        printLCD(1, 0, "Decrease mash ratio");
+        printLCD(2, 0, "or grain weight.");
+        while (!enterStatus) delay(500);
+        enterStatus = 0;
+      } 
+    }
   }
 
+  fillStage(tgtVol[HLT], tgtVol[MASH]);
+  if (enterStatus == 2) { enterStatus = 0; resetOutputs(); return; }
   
-
   if(delayMins) delayStart(delayMins);
   if (enterStatus == 2) { enterStatus = 0; resetOutputs(); return; }
 
+
   {
+    //Find first temp and adjust for strike temp
+    byte strikeTemp = 0;
     int i = 0;
-    setpoint[MASH] = 0;
-    while (setpoint[MASH] == 0 && i <= MASHOUT) setpoint[MASH] = stepTemp[i++];
+    while (strikeTemp == 0 && i <= MASHOUT) strikeTemp = stepTemp[i++];
+    if (unit) strikeTemp = .2 / (mashRatio / 100.0) * (strikeTemp - 60) + strikeTemp; else strikeTemp = .41 / (mashRatio / 100.0) * (strikeTemp - 16) + strikeTemp;
+    setpoint[MASH] = strikeTemp;
   }
 
-//Convert Temp to Strike Temp
-  
   mashStep("Preheat", 0);
   if (enterStatus == 2) { enterStatus = 0; resetOutputs(); return; }
   mashStep("Add Grain", PROMPT);  
@@ -83,6 +244,28 @@ void doAutoBrew() {
   printLCD(2, 0, "Press Enter to Continue");
   while(enterStatus == 0) delay(500);
   enterStatus = 0;
+}
+
+void fillStage(unsigned long hltVol, unsigned long mashVol) {
+  char buf[5];
+  clearLCD();
+  printLCD(0, 0, "Add Brewing Liquor");
+  unsigned long whole = hltVol / 1000;
+  unsigned long frac = hltVol - (whole * 1000) ;
+  printLCD(1, 0, " HLT:");
+  printLCDPad(1, 6, ltoa(whole, buf, 10), 4, ' ');
+  printLCD(1, 10, ".");
+  printLCDPad(1, 11, ltoa(frac, buf, 10), 3, '0');
+  whole = mashVol / 1000;
+  frac = mashVol - (whole * 1000) ;
+  printLCD(2, 0, "Mash:");
+  printLCDPad(2, 6, ltoa(whole, buf, 10), 4, ' ');
+  printLCD(2, 10, ".");
+  printLCDPad(2, 11, ltoa(frac, buf, 10), 3, '0');
+  char conExit[2][19] = {
+    "     Continue     ",
+    "       Abort      "};
+  if (getChoice(conExit, 2, 3) != 0) enterStatus = 2;
 }
 
 void delayStart(int iMins) {

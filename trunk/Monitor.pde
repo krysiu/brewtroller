@@ -38,17 +38,17 @@ void doMon() {
       } else {
         //Pop-Up Menu
         char monMenu[11][20] = {
-          "Set HLT Temp       ",
-          "Clear HLT Temp     ",
-          "Set Mash Temp      ",
-          "Clear Mash Temp    ",
-          "Set Kettle Temp    ",
-          "Clear Kettle Temp  ",
-          "Set Timer          ",
-          "Pause Timer        ",
-          "Clear Timer        ",
-          "Close Menu         ",
-          "Quit Brew Monitor  "
+          "Set HLT Temp",
+          "Clear HLT Temp",
+          "Set Mash Temp",
+          "Clear Mash Temp",
+          "Set Kettle Temp",
+          "Clear Kettle Temp",
+          "Set Timer",
+          "Pause Timer",
+          "Clear Timer",
+          "Close Menu",
+          "Quit Brew Monitor"
         };
         boolean inMenu = 1;
         while(inMenu) {
@@ -85,7 +85,7 @@ void doMon() {
               break;
             case 5: setpoint[KETTLE] = 0; inMenu = 0; break; 
             case 6:
-              int newMins;
+              unsigned int newMins;
               newMins = getTimerValue("Enter Timer Value:", timerValue/60000);
               if (newMins > 0) {
                 setTimer(newMins);

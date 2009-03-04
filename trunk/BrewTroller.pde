@@ -108,12 +108,12 @@ void setup() {
 
 void loop() {  
   char mainMenu[3][20] = {
-    "AutoBrew          ",
-    "Brew Monitor      ",
-    "System Setup      "
+    "AutoBrew",
+    "Brew Monitor",
+    "System Setup"
   };
   while(1) {
-    switch (scrollMenu("BrewTroller         ", mainMenu, 3)) {
+    switch (scrollMenu("BrewTroller", mainMenu, 3)) {
       case 0: doAutoBrew(); break;
       case 1: doMon(); break;
       case 2: menuSetup(); break;
