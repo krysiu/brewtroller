@@ -57,18 +57,18 @@ void doAutoBrew() {
     //Convert mashRatio from qts/lb to l/kg
     mashRatio *= 2.0863514;
   }
+
+  char volUnit[5] = " l";
+  char wtUnit[4] = " kg";
+  char tempUnit[2] = "C";
+  if (unit) {
+    strcpy(volUnit, " gal");
+    strcpy(wtUnit, " lb");
+    strcpy (tempUnit, "F");
+  }
   
   boolean inMenu = 1;
   while (inMenu) {
-    char volUnit[5] = " l";
-    char wtUnit[4] = " kg";
-    char tempUnit[2] = "C";
-    if (unit) {
-      strcpy(volUnit, " gal");
-      strcpy(wtUnit, " lb");
-      strcpy (tempUnit, "F");
-    }
-    
     char paramMenu[16][20] = {
       "Batch Vol:",
       "Grain Wt:",
@@ -217,7 +217,7 @@ void doAutoBrew() {
     }
   }
 
-  fillStage(tgtVol[HLT], tgtVol[MASH]);
+  fillStage(tgtVol[HLT], tgtVol[MASH], volUnit);
   if (enterStatus == 2) { enterStatus = 0; resetOutputs(); return; }
   
   if(delayMins) delayStart(delayMins);
@@ -253,7 +253,7 @@ void doAutoBrew() {
   enterStatus = 0;
 }
 
-void fillStage(unsigned long hltVol, unsigned long mashVol) {
+void fillStage(unsigned long hltVol, unsigned long mashVol, char volUnit[]) {
   char buf[5];
   clearLCD();
   printLCD(0, 0, "Add Brewing Liquor");
@@ -263,12 +263,14 @@ void fillStage(unsigned long hltVol, unsigned long mashVol) {
   printLCDPad(1, 6, ltoa(whole, buf, 10), 4, ' ');
   printLCD(1, 10, ".");
   printLCDPad(1, 11, ltoa(frac, buf, 10), 3, '0');
+  printLCD(1, 14, volUnit);
   whole = mashVol / 1000;
   frac = mashVol - (whole * 1000) ;
   printLCD(2, 0, "Mash:");
   printLCDPad(2, 6, ltoa(whole, buf, 10), 4, ' ');
   printLCD(2, 10, ".");
   printLCDPad(2, 11, ltoa(frac, buf, 10), 3, '0');
+  printLCD(2, 14, volUnit);
   char conExit[2][19] = {
     "     Continue     ",
     "       Abort      "};
