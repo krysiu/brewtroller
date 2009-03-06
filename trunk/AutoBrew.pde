@@ -218,10 +218,10 @@ void doAutoBrew() {
   }
 
   fillStage(tgtVol[HLT], tgtVol[MASH], volUnit);
-  if (enterStatus == 2) { enterStatus = 0; resetOutputs(); return; }
+  if (enterStatus == 2) { enterStatus = 0; return; }
   
   if(delayMins) delayStart(delayMins);
-  if (enterStatus == 2) { enterStatus = 0; resetOutputs(); return; }
+  if (enterStatus == 2) { enterStatus = 0; return; }
 
 
   {
@@ -233,23 +233,33 @@ void doAutoBrew() {
     setpoint[MASH] = strikeTemp;
   }
 
-  mashStep("Preheat", 0);
-  if (enterStatus == 2) { enterStatus = 0; resetOutputs(); return; }
-  mashStep("Add Grain", PROMPT);  
-  if (enterStatus == 2) { enterStatus = 0; resetOutputs(); return; }
-
+  mashStep("Preheat", PROMPT);  
+  if (enterStatus == 2) { enterStatus = 0; return; }
+  
+  inMenu = 1;
+  while(inMenu) {
+    clearLCD();
+    printLCD(1, 5, "Add Grain");
+    printLCD(2, 0, "Press Enter to Start");
+    while(enterStatus == 0) delay(500);
+    if (enterStatus == 1) {
+      enterStatus = 0;
+      inMenu = 0;
+    } else {
+      enterStatus = 0;
+      if (confirmExit() == 1) return;
+    }
+  }
+  
   for (int i = DOUGHIN; i <= MASHOUT; i++) {
     if (stepTemp[i]) {
       setpoint[MASH] = stepTemp[i];
       mashStep(titles[i], stepMins[i]);
     }
-    if (enterStatus == 2) { enterStatus = 0; resetOutputs(); return; }
+    if (enterStatus == 2) { enterStatus = 0; return; }
   }
-  resetOutputs();
-  clearLCD();
-  printLCD(1, 1, "AutoBrew Complete");
-  printLCD(2, 0, "Press Enter to Continue");
-  while(enterStatus == 0) delay(500);
+  //Hold last mash temp until user exits
+  mashStep("Mash Complete", PROMPT);
   enterStatus = 0;
 }
 
@@ -341,7 +351,7 @@ void mashStep(char sTitle[ ], int iMins) {
       if (!preheated && temp[MASH] >= setpoint[MASH]) {
         preheated = 1;
         printLCD(0,14,"      ");
-        if(doPrompt) printLCD(1, 0, "Press Enter to Start"); else setTimer(iMins);
+        if(doPrompt) printLCD(1, 0, "    > Continue <    "); else setTimer(iMins);
       }
 
       for (int i = HLT; i <= MASH; i++) {
@@ -394,15 +404,21 @@ void mashStep(char sTitle[ ], int iMins) {
           }
         }
       }
-      if (doPrompt && preheated && enterStatus == 1) { enterStatus = 0; return; }
+      if (doPrompt && preheated && enterStatus == 1) { enterStatus = 0; break; }
       if (enterStatus == 2) {
         enterStatus = 0;
-        if (confirmExit() == 1) {
-          enterStatus = 2;
-          return;
-        } else redraw = 1; break;
+        if (confirmExit() == 1) enterStatus = 2; else redraw = 1;
+        break;
       }
     }
-    if (!redraw) return;
+    if (!redraw) {
+       //Turn off HLT and MASH outputs
+       for (int i = HLT; i <= MASH; i++) {
+        if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
+        digitalWrite(OUTPUT_PIN[i], LOW);
+       }
+       //Exit
+      return;
+    }
   }
 }
