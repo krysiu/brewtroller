@@ -69,12 +69,13 @@ void doAutoBrew() {
       strcpy (tempUnit, "F");
     }
     
-    char paramMenu[15][20] = {
+    char paramMenu[16][20] = {
       "Batch Vol:",
       "Grain Wt:",
       "Boil Length:",
       "Mash Ratio:",
       "Delay Start:",
+      "HLT Setpoint:",
       "Dough In:",
       "Dough In:",
       "Protein Rest:",
@@ -103,32 +104,35 @@ void doAutoBrew() {
 
     strncat(paramMenu[4], itoa(delayMins/60, buf, 10), 4);
     strcat(paramMenu[4], " hr");
-
-    strncat(paramMenu[5], itoa(stepMins[DOUGHIN], buf, 10), 2);
-    strcat(paramMenu[5], " min");
-
-    strncat(paramMenu[6], itoa(stepTemp[DOUGHIN], buf, 10), 3);
-    strcat(paramMenu[6], tempUnit);
     
-    strncat(paramMenu[7], itoa(stepMins[PROTEIN], buf, 10), 2);
-    strcat(paramMenu[7], " min");
+    strncat(paramMenu[5], itoa(setpoint[HLT], buf, 10), 3);
+    strcat(paramMenu[5], tempUnit);
 
-    strncat(paramMenu[8], itoa(stepTemp[PROTEIN], buf, 10), 3);
-    strcat(paramMenu[8], tempUnit);
-    
-    strncat(paramMenu[9], itoa(stepMins[SACCH], buf, 10), 2);
-    strcat(paramMenu[9], " min");
+    strncat(paramMenu[6], itoa(stepMins[DOUGHIN], buf, 10), 2);
+    strcat(paramMenu[6], " min");
 
-    strncat(paramMenu[10], itoa(stepTemp[SACCH], buf, 10), 3);
-    strcat(paramMenu[10], tempUnit);
+    strncat(paramMenu[7], itoa(stepTemp[DOUGHIN], buf, 10), 3);
+    strcat(paramMenu[7], tempUnit);
     
-    strncat(paramMenu[11], itoa(stepMins[MASHOUT], buf, 10), 2);
-    strcat(paramMenu[11], " min");
+    strncat(paramMenu[8], itoa(stepMins[PROTEIN], buf, 10), 2);
+    strcat(paramMenu[8], " min");
 
-    strncat(paramMenu[12], itoa(stepTemp[MASHOUT], buf, 10), 3);
-    strcat(paramMenu[12], tempUnit);
+    strncat(paramMenu[9], itoa(stepTemp[PROTEIN], buf, 10), 3);
+    strcat(paramMenu[9], tempUnit);
     
-    switch(scrollMenu("AutoBrew Parameters", paramMenu, 15)) {
+    strncat(paramMenu[10], itoa(stepMins[SACCH], buf, 10), 2);
+    strcat(paramMenu[10], " min");
+
+    strncat(paramMenu[11], itoa(stepTemp[SACCH], buf, 10), 3);
+    strcat(paramMenu[11], tempUnit);
+    
+    strncat(paramMenu[12], itoa(stepMins[MASHOUT], buf, 10), 2);
+    strcat(paramMenu[12], " min");
+
+    strncat(paramMenu[13], itoa(stepTemp[MASHOUT], buf, 10), 3);
+    strcat(paramMenu[13], tempUnit);
+    
+    switch(scrollMenu("AutoBrew Parameters", paramMenu, 16)) {
       case 0:
         tgtVol[KETTLE] = getValue("Batch Volume", tgtVol[KETTLE], 7, 3, 9999999, volUnit);
         break;
@@ -145,30 +149,33 @@ void doAutoBrew() {
         delayMins = getTimerValue("Delay Start", delayMins);
         break;
       case 5:
-        stepMins[DOUGHIN] = getTimerValue("Dough In", stepMins[DOUGHIN]);
+        setpoint[HLT] = getValue("HLT Setpoint", setpoint[HLT], 3, 0, 255, tempUnit);
         break;
       case 6:
-        stepTemp[DOUGHIN] = getValue("Dough In", stepTemp[DOUGHIN], 3, 0, 255, tempUnit);
+        stepMins[DOUGHIN] = getTimerValue("Dough In", stepMins[DOUGHIN]);
         break;
       case 7:
-        stepMins[PROTEIN] = getTimerValue("Protein Rest", stepMins[PROTEIN]);
+        stepTemp[DOUGHIN] = getValue("Dough In", stepTemp[DOUGHIN], 3, 0, 255, tempUnit);
         break;
       case 8:
-        stepTemp[PROTEIN] = getValue("Protein Rest", stepTemp[PROTEIN], 3, 0, 255, tempUnit);
+        stepMins[PROTEIN] = getTimerValue("Protein Rest", stepMins[PROTEIN]);
         break;
       case 9:
-        stepMins[SACCH] = getTimerValue("Sacch Rest", stepMins[SACCH]);
+        stepTemp[PROTEIN] = getValue("Protein Rest", stepTemp[PROTEIN], 3, 0, 255, tempUnit);
         break;
       case 10:
-        stepTemp[SACCH] = getValue("Sacch Rest", stepTemp[SACCH], 3, 0, 255, tempUnit);
+        stepMins[SACCH] = getTimerValue("Sacch Rest", stepMins[SACCH]);
         break;
       case 11:
-        stepMins[MASHOUT] = getTimerValue("Mash Out", stepMins[MASHOUT]);
+        stepTemp[SACCH] = getValue("Sacch Rest", stepTemp[SACCH], 3, 0, 255, tempUnit);
         break;
       case 12:
-        stepTemp[MASHOUT] = getValue("Mash Out", stepTemp[MASHOUT], 3, 0, 255, tempUnit);
+        stepMins[MASHOUT] = getTimerValue("Mash Out", stepMins[MASHOUT]);
         break;
       case 13:
+        stepTemp[MASHOUT] = getValue("Mash Out", stepTemp[MASHOUT], 3, 0, 255, tempUnit);
+        break;
+      case 14:
         inMenu = 0;
         break;
       default:
