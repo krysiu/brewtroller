@@ -113,3 +113,4 @@ void setAlarm(boolean value) {
   alarmStatus = value;
   digitalWrite(ALARM_PIN, value);
 }
+

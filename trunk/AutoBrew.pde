@@ -52,10 +52,10 @@ void doAutoBrew() {
   }
   if (!unit) {
     //Convert default values from F to C
-    setpoint[HLT] = (setpoint[HLT] - 32) / 1.8;
-    for (int i = DOUGHIN; i <= MASHOUT; i++) if (stepTemp[i]) stepTemp[i] = (stepTemp[i] - 32) / 1.8;
+    setpoint[HLT] = round((setpoint[HLT] - 32) / 1.8);
+    for (int i = DOUGHIN; i <= MASHOUT; i++) if (stepTemp[i]) stepTemp[i] = round((stepTemp[i] - 32) / 1.8);
     //Convert mashRatio from qts/lb to l/kg
-    mashRatio *= 2.0863514;
+    mashRatio = round(mashRatio * 2.0863514);
   }
 
   char volUnit[5] = " l";
@@ -182,13 +182,13 @@ void doAutoBrew() {
         return;
     }
     //Detrmine Total Water Needed (Evap + Deadspaces)
-    tgtVol[HLT] = tgtVol[KETTLE] / (1 - evapRate / 100 * boilMins / 60) + volLoss[HLT] + volLoss[MASH];
+    tgtVol[HLT] = round(tgtVol[KETTLE] / (1.0 - evapRate / 100.0 * boilMins / 60.0) + volLoss[HLT] + volLoss[MASH]);
     //Add Water Lost in Spent Grain
-    if (unit) tgtVol[HLT] += grainWeight * .2143; else tgtVol[HLT] += grainWeight * 1.7884;
+    if (unit) tgtVol[HLT] += round(grainWeight * .2143); else tgtVol[HLT] += round(grainWeight * 1.7884);
     //Calculate mash volume
-    tgtVol[MASH] = grainWeight * mashRatio / 100;
+    tgtVol[MASH] = round(grainWeight * mashRatio / 100.0);
     //Convert qts to gal for US
-    if (unit) tgtVol[MASH] /= 4;
+    if (unit) tgtVol[MASH] = round(tgtVol[MASH] / 4.0);
     tgtVol[HLT] -= tgtVol[MASH];
 
     {
@@ -206,7 +206,7 @@ void doAutoBrew() {
         while (!enterStatus) delay(500);
         enterStatus = 0;
       }
-      if (tgtVol[MASH] + grainWeight * grain2Vol > capacity[MASH]) {
+      if (tgtVol[MASH] + round(grainWeight * grain2Vol) > capacity[MASH]) {
         clearLCD();
         printLCD(0, 0, "Mash tun too small.");
         printLCD(1, 0, "Decrease mash ratio");
@@ -229,7 +229,7 @@ void doAutoBrew() {
     byte strikeTemp = 0;
     int i = 0;
     while (strikeTemp == 0 && i <= MASHOUT) strikeTemp = stepTemp[i++];
-    if (unit) strikeTemp = .2 / (mashRatio / 100.0) * (strikeTemp - 60) + strikeTemp; else strikeTemp = .41 / (mashRatio / 100.0) * (strikeTemp - 16) + strikeTemp;
+    if (unit) strikeTemp = round(.2 / (mashRatio / 100.0) * (strikeTemp - 60)) + strikeTemp; else strikeTemp = round(.41 / (mashRatio / 100.0) * (strikeTemp - 16)) + strikeTemp;
     setpoint[MASH] = strikeTemp;
   }
 

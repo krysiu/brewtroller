@@ -17,20 +17,20 @@ void menuSetup()
         if (unit) {
           //Convert Setup params
           for (int i = HLT; i <= KETTLE; i++) {
-            hysteresis[i] = hysteresis[i] * 1.8;
-            capacity[i] = capacity[i] * 0.26417;
-            volume[i] = volume[i] * 0.26417;
-            volLoss[i] = volLoss[i] * 0.26417;
+            hysteresis[i] = round(hysteresis[i] * 1.8);
+            capacity[i] = round(capacity[i] * 0.26417);
+            volume[i] = round(volume[i] * 0.26417);
+            volLoss[i] = round(volLoss[i] * 0.26417);
           }
-          defBatchVol = defBatchVol * 0.26417;
+          defBatchVol = round(defBatchVol * 0.26417);
         } else {
           for (int i = HLT; i <= KETTLE; i++) {
-            hysteresis[i] = hysteresis[i] / 1.8;
-            capacity[i] = capacity[i] / 0.26417;
-            volume[i] = volume[i] / 0.26417;
-            volLoss[i] = volLoss[i] / 0.26417;
+            hysteresis[i] = round(hysteresis[i] / 1.8);
+            capacity[i] = round(capacity[i] / 0.26417);
+            volume[i] = round(volume[i] / 0.26417);
+            volLoss[i] = round(volLoss[i] / 0.26417);
           }
-          defBatchVol = defBatchVol / 0.26417;
+          defBatchVol = round(defBatchVol / 0.26417);
         }
         break;
       case 1: assignSensor(); break;
