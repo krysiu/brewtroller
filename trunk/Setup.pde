@@ -17,7 +17,7 @@ void menuSetup()
         if (unit) {
           //Convert Setup params
           for (int i = HLT; i <= KETTLE; i++) {
-            hysteresis[i] = hysteresis[i] * 9 / 5;
+            hysteresis[i] = hysteresis[i] * 1.8;
             capacity[i] = capacity[i] * 0.26417;
             volume[i] = volume[i] * 0.26417;
             volLoss[i] = volLoss[i] * 0.26417;
@@ -25,7 +25,7 @@ void menuSetup()
           defBatchVol = defBatchVol * 0.26417;
         } else {
           for (int i = HLT; i <= KETTLE; i++) {
-            hysteresis[i] = hysteresis[i] * 5 / 9;
+            hysteresis[i] = hysteresis[i] / 1.8;
             capacity[i] = capacity[i] / 0.26417;
             volume[i] = volume[i] / 0.26417;
             volLoss[i] = volLoss[i] / 0.26417;

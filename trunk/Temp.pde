@@ -32,8 +32,37 @@ float get_temp(boolean tUnit, byte* addr) //Unit 1 for F and 0 for C
 */
 
 void getDSAddr(byte addrRet[8]){
+  byte scanAddr[8];
   ds.reset_search();
-  ds.search(addrRet);
+  byte limit = 0;
+  //Scan at most 10 sensors (In case the One Wire Search loop issue occurs)
+  while (limit <= 10) {
+    if (!ds.search(scanAddr)) {
+      //No Sensor found, Return
+      ds.reset_search();
+      return;
+    }
+    boolean found = 0;
+    for (int i = HLT; i <= BEEROUT; i++) {
+      if (scanAddr[0] == tSensor[i][0] &&
+          scanAddr[1] == tSensor[i][1] &&
+          scanAddr[2] == tSensor[i][2] &&
+          scanAddr[3] == tSensor[i][3] &&
+          scanAddr[4] == tSensor[i][4] &&
+          scanAddr[5] == tSensor[i][5] &&
+          scanAddr[6] == tSensor[i][6] &&
+          scanAddr[7] == tSensor[i][7])
+      { 
+          found = 1;
+          break;
+      }
+    }
+    if (!found) {
+      for (int i = 0; i < 8; i++) addrRet[i] = scanAddr[i];
+      return;
+    }
+    limit++;
+  }
 }
 
 /* This function is currently not in use:

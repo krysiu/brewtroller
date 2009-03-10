@@ -52,8 +52,8 @@ void doAutoBrew() {
   }
   if (!unit) {
     //Convert default values from F to C
-    setpoint[HLT] = (setpoint[HLT] - 32) * 5 / 9;
-    for (int i = DOUGHIN; i <= MASHOUT; i++) if (stepTemp[i]) stepTemp[i] = (stepTemp[i] - 32) * 5 / 9;
+    setpoint[HLT] = (setpoint[HLT] - 32) / 1.8;
+    for (int i = DOUGHIN; i <= MASHOUT; i++) if (stepTemp[i]) stepTemp[i] = (stepTemp[i] - 32) / 1.8;
     //Convert mashRatio from qts/lb to l/kg
     mashRatio *= 2.0863514;
   }

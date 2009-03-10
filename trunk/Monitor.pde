@@ -57,7 +57,7 @@ void doMon() {
             case 0:
               {
                 byte defHLTTemp = 180;
-                if (!unit) defHLTTemp = defHLTTemp * 5 / 9 + 32;
+                if (!unit) defHLTTemp = defHLTTemp / 1.8 + 32;
                 if (setpoint[HLT] > 0) setpoint[HLT] = getValue("Enter HLT Temp:", setpoint[HLT], 3, 0, 255, dispUnit);
                 else setpoint[HLT] = getValue("Enter HLT Temp:", defHLTTemp, 3, 0, 255, dispUnit);
               }
@@ -67,7 +67,7 @@ void doMon() {
             case 2:
               {
                 byte defMashTemp = 152;
-                if (!unit) defMashTemp = defMashTemp * 5 / 9 + 32;
+                if (!unit) defMashTemp = defMashTemp / 1.8 + 32;
                 if (setpoint[MASH] > 0) setpoint[MASH] = getValue("Enter Mash Temp:", setpoint[MASH], 3, 0, 255, dispUnit);
                 else setpoint[MASH] = getValue("Enter Mash Temp:", defMashTemp, 3, 0, 255, dispUnit);
               }
@@ -77,7 +77,7 @@ void doMon() {
             case 4:
               {
                 byte defKettleTemp = 212;
-                if (!unit) defKettleTemp = defKettleTemp * 5 / 9 + 32;
+                if (!unit) defKettleTemp = defKettleTemp / 1.8 + 32;
                 if (setpoint[KETTLE] > 0) setpoint[KETTLE] = getValue("Enter Kettle Temp:", setpoint[KETTLE], 3, 0, 255, dispUnit);
                 else setpoint[KETTLE] = getValue("Enter Kettle Temp:", defKettleTemp, 3, 0, 255, dispUnit);
               }
