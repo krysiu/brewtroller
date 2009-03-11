@@ -56,6 +56,7 @@ unsigned long defBatchVol;
 byte evapRate;
 
 //Output Globals
+boolean sysHERMS = 0;
 boolean PIDEnabled[3] = { 0, 0, 0 };
 
 double PIDInput[3], PIDOutput[3], setpoint[3];

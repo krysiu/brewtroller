@@ -2,7 +2,7 @@ const boolean PROMPT = -1;
 
 void doAutoBrew() {
   int delayMins = 0;
-  byte stepTemp[4], stepMins[4];
+  byte stepTemp[4], stepMins[4], spargeTemp;
   unsigned long tgtVol[3] = { 0, 0, defBatchVol };
   unsigned long grainWeight = 0;
   unsigned int boilMins = 60;
@@ -19,6 +19,9 @@ void doAutoBrew() {
     "Mash Out"
   };
 
+  spargeTemp = 168;
+  if (sysHERMS) setpoint[HLT] = 180; else setpoint[HLT] = spargeTemp;
+
   {
     char profileMenu[2][20] = {
       "Single Infusion",
@@ -26,25 +29,23 @@ void doAutoBrew() {
     };
     switch (scrollMenu("AutoBrew Program", profileMenu, 2)) {
       case 0:
-        setpoint[HLT] = 180;
         stepTemp[DOUGHIN] = 0;
         stepMins[DOUGHIN] = 0;
         stepTemp[PROTEIN] = 0;
         stepMins[PROTEIN] = 0;
         stepTemp[SACCH] = 153;
         stepMins[SACCH] = 60;
-        stepTemp[MASHOUT] = 170;
+        stepTemp[MASHOUT] = 168;
         stepMins[MASHOUT] = 0;
         break;
       case 1:
-        setpoint[HLT] = 180;
         stepTemp[DOUGHIN] = 104;
         stepMins[DOUGHIN] = 20;
         stepTemp[PROTEIN] = 122;
         stepMins[PROTEIN] = 20;
         stepTemp[SACCH] = 153;
         stepMins[SACCH] = 60;
-        stepTemp[MASHOUT] = 170;
+        stepTemp[MASHOUT] = 168;
         stepMins[MASHOUT] = 0;
         break;
       default: return;
@@ -53,6 +54,7 @@ void doAutoBrew() {
   if (!unit) {
     //Convert default values from F to C
     setpoint[HLT] = round((setpoint[HLT] - 32) / 1.8);
+    spargeTemp = round((spargeTemp - 32) / 1.8);
     for (int i = DOUGHIN; i <= MASHOUT; i++) if (stepTemp[i]) stepTemp[i] = round((stepTemp[i] - 32) / 1.8);
     //Convert mashRatio from qts/lb to l/kg
     mashRatio = round(mashRatio * 2.0863514);
@@ -69,13 +71,14 @@ void doAutoBrew() {
   
   boolean inMenu = 1;
   while (inMenu) {
-    char paramMenu[16][20] = {
+    char paramMenu[17][20] = {
       "Batch Vol:",
       "Grain Wt:",
       "Boil Length:",
       "Mash Ratio:",
       "Delay Start:",
-      "HLT Setpoint:",
+      "HLT Temp:",
+      "Sparge Temp:",
       "Dough In:",
       "Dough In:",
       "Protein Rest:",
@@ -107,32 +110,35 @@ void doAutoBrew() {
     
     strncat(paramMenu[5], itoa(setpoint[HLT], buf, 10), 3);
     strcat(paramMenu[5], tempUnit);
-
-    strncat(paramMenu[6], itoa(stepMins[DOUGHIN], buf, 10), 2);
-    strcat(paramMenu[6], " min");
-
-    strncat(paramMenu[7], itoa(stepTemp[DOUGHIN], buf, 10), 3);
-    strcat(paramMenu[7], tempUnit);
     
-    strncat(paramMenu[8], itoa(stepMins[PROTEIN], buf, 10), 2);
-    strcat(paramMenu[8], " min");
-
-    strncat(paramMenu[9], itoa(stepTemp[PROTEIN], buf, 10), 3);
-    strcat(paramMenu[9], tempUnit);
+    strncat(paramMenu[6], itoa(spargeTemp, buf, 10), 3);
+    strcat(paramMenu[6], tempUnit);
     
-    strncat(paramMenu[10], itoa(stepMins[SACCH], buf, 10), 2);
-    strcat(paramMenu[10], " min");
+    strncat(paramMenu[7], itoa(stepMins[DOUGHIN], buf, 10), 2);
+    strcat(paramMenu[7], " min");
 
-    strncat(paramMenu[11], itoa(stepTemp[SACCH], buf, 10), 3);
-    strcat(paramMenu[11], tempUnit);
+    strncat(paramMenu[8], itoa(stepTemp[DOUGHIN], buf, 10), 3);
+    strcat(paramMenu[8], tempUnit);
     
-    strncat(paramMenu[12], itoa(stepMins[MASHOUT], buf, 10), 2);
-    strcat(paramMenu[12], " min");
+    strncat(paramMenu[9], itoa(stepMins[PROTEIN], buf, 10), 2);
+    strcat(paramMenu[9], " min");
 
-    strncat(paramMenu[13], itoa(stepTemp[MASHOUT], buf, 10), 3);
-    strcat(paramMenu[13], tempUnit);
+    strncat(paramMenu[10], itoa(stepTemp[PROTEIN], buf, 10), 3);
+    strcat(paramMenu[10], tempUnit);
     
-    switch(scrollMenu("AutoBrew Parameters", paramMenu, 16)) {
+    strncat(paramMenu[11], itoa(stepMins[SACCH], buf, 10), 2);
+    strcat(paramMenu[11], " min");
+
+    strncat(paramMenu[12], itoa(stepTemp[SACCH], buf, 10), 3);
+    strcat(paramMenu[12], tempUnit);
+    
+    strncat(paramMenu[13], itoa(stepMins[MASHOUT], buf, 10), 2);
+    strcat(paramMenu[13], " min");
+
+    strncat(paramMenu[14], itoa(stepTemp[MASHOUT], buf, 10), 3);
+    strcat(paramMenu[14], tempUnit);
+    
+    switch(scrollMenu("AutoBrew Parameters", paramMenu, 17)) {
       case 0:
         tgtVol[KETTLE] = getValue("Batch Volume", tgtVol[KETTLE], 7, 3, 9999999, volUnit);
         break;
@@ -152,30 +158,33 @@ void doAutoBrew() {
         setpoint[HLT] = getValue("HLT Setpoint", setpoint[HLT], 3, 0, 255, tempUnit);
         break;
       case 6:
-        stepMins[DOUGHIN] = getTimerValue("Dough In", stepMins[DOUGHIN]);
+        spargeTemp = getValue("HLT Setpoint", spargeTemp, 3, 0, 255, tempUnit);
         break;
       case 7:
-        stepTemp[DOUGHIN] = getValue("Dough In", stepTemp[DOUGHIN], 3, 0, 255, tempUnit);
+        stepMins[DOUGHIN] = getTimerValue("Dough In", stepMins[DOUGHIN]);
         break;
       case 8:
-        stepMins[PROTEIN] = getTimerValue("Protein Rest", stepMins[PROTEIN]);
+        stepTemp[DOUGHIN] = getValue("Dough In", stepTemp[DOUGHIN], 3, 0, 255, tempUnit);
         break;
       case 9:
-        stepTemp[PROTEIN] = getValue("Protein Rest", stepTemp[PROTEIN], 3, 0, 255, tempUnit);
+        stepMins[PROTEIN] = getTimerValue("Protein Rest", stepMins[PROTEIN]);
         break;
       case 10:
-        stepMins[SACCH] = getTimerValue("Sacch Rest", stepMins[SACCH]);
+        stepTemp[PROTEIN] = getValue("Protein Rest", stepTemp[PROTEIN], 3, 0, 255, tempUnit);
         break;
       case 11:
-        stepTemp[SACCH] = getValue("Sacch Rest", stepTemp[SACCH], 3, 0, 255, tempUnit);
+        stepMins[SACCH] = getTimerValue("Sacch Rest", stepMins[SACCH]);
         break;
       case 12:
-        stepMins[MASHOUT] = getTimerValue("Mash Out", stepMins[MASHOUT]);
+        stepTemp[SACCH] = getValue("Sacch Rest", stepTemp[SACCH], 3, 0, 255, tempUnit);
         break;
       case 13:
-        stepTemp[MASHOUT] = getValue("Mash Out", stepTemp[MASHOUT], 3, 0, 255, tempUnit);
+        stepMins[MASHOUT] = getTimerValue("Mash Out", stepMins[MASHOUT]);
         break;
       case 14:
+        stepTemp[MASHOUT] = getValue("Mash Out", stepTemp[MASHOUT], 3, 0, 255, tempUnit);
+        break;
+      case 15:
         inMenu = 0;
         break;
       default:
@@ -213,7 +222,27 @@ void doAutoBrew() {
         printLCD(2, 0, "or grain weight.");
         while (!enterStatus) delay(500);
         enterStatus = 0;
-      } 
+      }
+      {
+        byte predictedSparge;
+        if (sysHERMS) {
+          if (unit) predictedSparge = round(((setpoint[HLT] * tgtVol[HLT]) - (stepTemp[MASHOUT] - stepTemp[SACCH]) * (tgtVol[MASH] + grainWeight * .05)) / tgtVol[HLT]);
+          else predictedSparge = round(((setpoint[HLT] * tgtVol[HLT]) - (stepTemp[MASHOUT] - stepTemp[SACCH]) * (tgtVol[MASH] + grainWeight * .41)) / tgtVol[HLT]);
+        } else predictedSparge = spargeTemp;
+        if (predictedSparge > spargeTemp + 3) {
+          clearLCD();
+          printLCD(0, 0, "HLT setpoint may be");
+          printLCD(1, 0, "too high for sparge.");
+          printLCD(2, 0, "Sparge:");
+          printLCD(3, 0, "Predicted HLT:");
+          printLCD(2, 7, itoa(spargeTemp, buf, 10));
+          printLCD(3, 14, itoa(predictedSparge, buf, 10));
+          printLCD(2, 10, tempUnit);
+          printLCD(3, 17, tempUnit);
+          while (!enterStatus) delay(500);
+          enterStatus = 0;
+        }
+      }
     }
   }
 
@@ -252,6 +281,7 @@ void doAutoBrew() {
   }
   
   for (int i = DOUGHIN; i <= MASHOUT; i++) {
+    if (i == MASHOUT) setpoint[HLT] = spargeTemp;
     if (stepTemp[i]) {
       setpoint[MASH] = stepTemp[i];
       mashStep(titles[i], stepMins[i]);

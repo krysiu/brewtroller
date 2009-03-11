@@ -12,6 +12,7 @@ void saveSetup() {
   if (PIDEnabled[HLT]) options |= 2;
   if (PIDEnabled[MASH]) options |= 4;
   if (PIDEnabled[KETTLE]) options |= 8;
+  if (sysHERMS) options |= 16;
   EEPROM.write(48, options);
   
   //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
@@ -41,7 +42,8 @@ void loadSetup() {
   if (options & 2) PIDEnabled[HLT] = 1;
   if (options & 4) PIDEnabled[MASH] = 1;
   if (options & 8) PIDEnabled[KETTLE] = 1;
-
+  if (options & 16) sysHERMS = 1;
+  
   //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
   //Volume Settings for HLT (64-71), MASH (72 - 79) and KETTLE (80 - 87)
   for (int i = HLT; i <= KETTLE; i++) {

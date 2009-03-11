@@ -1,6 +1,7 @@
 void menuSetup()
 {
-  char setupMenu[7][20] = {
+  char setupMenu[8][20] = {
+    "",
     "",
     "Assign Temp Sensor",
     "Configure Outputs",
@@ -11,7 +12,8 @@ void menuSetup()
   };
   while(1) {
     if (unit) strcpy(setupMenu[0], "Unit: US"); else strcpy(setupMenu[0], "Unit: Metric");
-    switch(scrollMenu("System Setup", setupMenu, 7)) {
+    if (sysHERMS) strcpy(setupMenu[1], "System Type: HERMS"); else strcpy(setupMenu[1], "System Type: Direct");
+    switch(scrollMenu("System Setup", setupMenu, 8)) {
       case 0:
         unit = unit ^ 1;
         if (unit) {
@@ -33,11 +35,14 @@ void menuSetup()
           defBatchVol = round(defBatchVol / 0.26417);
         }
         break;
-      case 1: assignSensor(); break;
-      case 2: cfgOutputs(); break;
-      case 3: cfgVolumes(); break;
-      case 4: saveSetup(); break;
-      case 5: loadSetup(); break;
+      case 1:
+        sysHERMS = sysHERMS ^ 1;
+        break;
+      case 2: assignSensor(); break;
+      case 3: cfgOutputs(); break;
+      case 4: cfgVolumes(); break;
+      case 5: saveSetup(); break;
+      case 6: loadSetup(); break;
       default: return;
     }
   }
