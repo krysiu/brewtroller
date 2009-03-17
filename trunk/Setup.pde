@@ -1,6 +1,7 @@
 void menuSetup()
 {
-  char setupMenu[8][20] = {
+  char setupMenu[9][20] = {
+    "",
     "",
     "",
     "Assign Temp Sensor",
@@ -13,7 +14,15 @@ void menuSetup()
   while(1) {
     if (unit) strcpy(setupMenu[0], "Unit: US"); else strcpy(setupMenu[0], "Unit: Metric");
     if (sysHERMS) strcpy(setupMenu[1], "System Type: HERMS"); else strcpy(setupMenu[1], "System Type: Direct");
-    switch(scrollMenu("System Setup", setupMenu, 8)) {
+    switch (encMode) {
+      case CUI:
+        strcpy(setupMenu[2], "Encoder: CUI");
+        break;
+      case ALPS:
+        strcpy(setupMenu[2], "Encoder: ALPS");
+        break;
+    }
+    switch(scrollMenu("System Setup", setupMenu, 9)) {
       case 0:
         unit = unit ^ 1;
         if (unit) {
@@ -38,11 +47,21 @@ void menuSetup()
       case 1:
         sysHERMS = sysHERMS ^ 1;
         break;
-      case 2: assignSensor(); break;
-      case 3: cfgOutputs(); break;
-      case 4: cfgVolumes(); break;
-      case 5: saveSetup(); break;
-      case 6: loadSetup(); break;
+      case 2:
+        {
+          char encModes[2][20] = {
+            "CUI",
+            "ALPS"
+          };
+          encMode = scrollMenu("Select Encoder Type:", encModes, 2);
+        }
+        initEncoder();
+        break;
+      case 3: assignSensor(); break;
+      case 4: cfgOutputs(); break;
+      case 5: cfgVolumes(); break;
+      case 6: saveSetup(); break;
+      case 7: loadSetup(); break;
       default: return;
     }
   }

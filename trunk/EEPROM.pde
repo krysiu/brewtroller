@@ -29,6 +29,7 @@ void saveSetup() {
   //Default Batch size (88-91)
   PROMwriteLong(defBatchVol, 88);
   EEPROM.write(92, evapRate);
+  EEPROM.write(93, encMode);
 }
 
 void loadSetup() {
@@ -58,6 +59,7 @@ void loadSetup() {
   //Default Batch size (88-91)
   defBatchVol = PROMreadLong(88);
   evapRate = EEPROM.read(92);
+  encMode = EEPROM.read(93);
 }
 
 void PROMwriteBytes(byte bytes[], int addr, int numBytes) {

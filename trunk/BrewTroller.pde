@@ -32,10 +32,14 @@ const byte BEEROUT = 5;
 const byte OUTPUT_PIN[3] = { 0, 1, 3 };
 
 //Encoder Globals
+byte encMode = 0;
 unsigned int encCount;
 unsigned int encMin;
 unsigned int encMax;
 unsigned int enterStatus = 0;
+
+const byte CUI = 0;
+const byte ALPS = 1;
 
 //8-byte Temperature Sensor Address x6 Sensors
 byte tSensor[6][8];
@@ -94,17 +98,16 @@ void setup() {
   for (int i = HLT; i <= KETTLE; i++) pinMode(OUTPUT_PIN[i], OUTPUT);
   resetOutputs();
 
-  attachInterrupt(ENCA_INT, doEncoderA, RISING);
-  attachInterrupt(ENTER_INT, doEnter, CHANGE);
-
   initLCD();
-  splashScreen();
-  
+
   //Check for cfgVersion variable and format EEPROM if necessary
   checkConfig();
   
   //Load global variable values stored in EEPROM
   loadSetup();
+  initEncoder();
+  splashScreen();
+
 }
 
 void loop() {  
