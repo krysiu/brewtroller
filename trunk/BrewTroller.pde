@@ -106,11 +106,15 @@ void setup() {
   //Load global variable values stored in EEPROM
   loadSetup();
   initEncoder();
-  splashScreen();
 
+  switch(getPwrRecovery()) {
+    case 1: doAutoBrew(); break;
+    case 2: doMon(); break;
+    default: splashScreen(); break;
+  }
 }
 
-void loop() {  
+void loop() {
   char mainMenu[3][20] = {
     "AutoBrew",
     "Brew Monitor",
@@ -130,58 +134,58 @@ void splashScreen() {
   { 
     byte bmpByte[] = {
       B00000,
-      B00001,
-      B00001, 
-      B00001, 
+      B00000,
+      B00000, 
+      B00000, 
       B00011, 
-      B00011, 
-      B00011, 
-      B00111
+      B01111, 
+      B11111, 
+      B11111
     }; 
     lcdSetCustChar(0, bmpByte);
-    lcdWriteCustChar(0, 0, 0);
+    lcdWriteCustChar(0, 1, 0);
   }
   { 
     byte bmpByte[] = {
+      B00000, 
+      B00000, 
+      B00000, 
+      B00000, 
       B11100, 
-      B11100, 
-      B01010, 
       B11110, 
-      B00011, 
-      B10011, 
       B11111, 
       B11111
     };
     lcdSetCustChar(1, bmpByte);
-    lcdWriteCustChar(0, 1, 1);
+    lcdWriteCustChar(0, 2, 1);
   }
   { 
     byte bmpByte[] = {
-      B00000, 
-      B00000, 
-      B00000, 
-      B11000, 
-      B11100, 
-      B11110, 
-      B11111, 
+      B00001, 
+      B00011, 
+      B00111, 
+      B01111, 
+      B00001, 
+      B00011, 
+      B01111, 
       B11111
     }; 
     lcdSetCustChar(2, bmpByte); 
-    lcdWriteCustChar(0, 2, 2); 
+    lcdWriteCustChar(1, 0, 2); 
   }
   { 
     byte bmpByte[] = {
       B11111, 
       B11111, 
+      B10001, 
+      B00011, 
+      B01111, 
       B11111, 
       B11111, 
-      B01111, 
-      B01111, 
-      B11110, 
-      B11110
+      B11111
     }; 
     lcdSetCustChar(3, bmpByte); 
-    lcdWriteCustChar(1, 0, 3); 
+    lcdWriteCustChar(1, 1, 3); 
   }
   { 
     byte bmpByte[] = {
@@ -189,58 +193,59 @@ void splashScreen() {
       B11111, 
       B11111, 
       B11111, 
-      B11100, 
-      B11011, 
-      B11011, 
-      B01101
+      B11111, 
+      B11111, 
+      B11111, 
+      B11111
     }; 
     lcdSetCustChar(4, bmpByte); 
-    lcdWriteCustChar(1, 1, 4); 
+    lcdWriteCustChar(1, 2, 4); 
   }
   { 
     byte bmpByte[] = {
-      B10111, 
+      B01111, 
+      B01110, 
+      B01100, 
+      B00001, 
+      B01111, 
+      B00111, 
+      B00011, 
+      B11101
+    }; 
+    lcdSetCustChar(5, bmpByte); 
+    lcdWriteCustChar(2, 0, 5); 
+  }
+  { 
+    byte bmpByte[] = {
+      B11111, 
+      B00111, 
+      B00111, 
+      B11111, 
+      B11111, 
+      B11111, 
+      B11110, 
+      B11001
+    }; 
+    lcdSetCustChar(6, bmpByte); 
+    lcdWriteCustChar(2, 1, 6); 
+  }
+  { 
+    byte bmpByte[] = {
+      B11111, 
+      B11111, 
+      B11110, 
+      B11101, 
       B11011, 
       B00111, 
       B11111, 
-      B11110, 
-      B11100, 
-      B11000, 
-      B00000
-    }; 
-    lcdSetCustChar(5, bmpByte); 
-    lcdWriteCustChar(1, 2, 5); 
-  }
-  { 
-    byte bmpByte[] = {
-      B11110, 
-      B11110, 
-      B11111, 
-      B01111, 
-      B01111, 
-      B01100, 
-      B01101, 
-      B00111
-    }; 
-    lcdSetCustChar(6, bmpByte); 
-    lcdWriteCustChar(2, 0, 6); 
-  }
-  { 
-    byte bmpByte[] = {
-      B01111, 
-      B01111, 
-      B11111, 
-      B11110, 
-      B11110, 
-      B11111, 
-      B01111, 
-      B01111
+      B11111
     }; 
     lcdSetCustChar(7, bmpByte); 
-    lcdWriteCustChar(2, 1, 7); 
+    lcdWriteCustChar(2, 2, 7); 
   }
-  printLCD(0, 5, "BrewTroller 1.0");
+  printLCD(0, 4, "BrewTroller v1.0");
   printLCD(1, 14, "Beta 1");
+  printLCD(2, 10, "Build 0130");
   printLCD(3, 1, "www.brewtroller.com");
   while(!enterStatus) delay(250);
   enterStatus = 0;

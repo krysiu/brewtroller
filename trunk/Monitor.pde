@@ -1,4 +1,5 @@
 void doMon() {
+  setPwrRecovery(2);
   char buf[6];
   float temp[6] = { 0, 0, 0, 0, 0, 0 };
   char sTempUnit[2] = "C";
@@ -25,6 +26,7 @@ void doMon() {
       enterStatus = 0;
       if (confirmExit()) {
           resetOutputs();
+          setPwrRecovery(0); 
           return;
       } else {
         encCount = lastCount;
@@ -103,6 +105,7 @@ void doMon() {
             case 10:
               if (confirmExit()) {
                 resetOutputs();
+                setPwrRecovery(0);
                 return;
               } else break;
             default:

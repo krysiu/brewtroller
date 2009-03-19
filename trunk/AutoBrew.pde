@@ -1,12 +1,13 @@
 const boolean PROMPT = -1;
 
 void doAutoBrew() {
-  int delayMins = 0;
+  unsigned int delayMins = 0;
   byte stepTemp[4], stepMins[4], spargeTemp;
   unsigned long tgtVol[3] = { 0, 0, defBatchVol };
   unsigned long grainWeight = 0;
   unsigned int boilMins = 60;
   unsigned int mashRatio = 133;
+  byte recoveryStep = 0;
   const byte DOUGHIN = 0;
   const byte PROTEIN = 1;
   const byte SACCH = 2;
@@ -19,10 +20,20 @@ void doAutoBrew() {
     "Mash Out"
   };
 
-  spargeTemp = 168;
-  if (sysHERMS) setpoint[HLT] = 180; else setpoint[HLT] = spargeTemp;
+  if (getPwrRecovery() == 1) {
+    recoveryStep = getABRecovery();
+    setpoint[HLT] = getABHLT();
+    loadABSteps(stepTemp, stepMins);
+    spargeTemp = getABSparge();
+    delayMins = getABDelay();
+    loadABVols(tgtVol);
+    grainWeight = getABGrain();
+    boilMins = getABBoil();
+    mashRatio = getABRatio();
+  } else {
+    spargeTemp = 168;
+    if (sysHERMS) setpoint[HLT] = 180; else setpoint[HLT] = spargeTemp;
 
-  {
     char profileMenu[2][20] = {
       "Single Infusion",
       "Multi-Rest"
@@ -50,14 +61,14 @@ void doAutoBrew() {
         break;
       default: return;
     }
-  }
-  if (!unit) {
-    //Convert default values from F to C
-    setpoint[HLT] = round((setpoint[HLT] - 32) / 1.8);
-    spargeTemp = round((spargeTemp - 32) / 1.8);
-    for (int i = DOUGHIN; i <= MASHOUT; i++) if (stepTemp[i]) stepTemp[i] = round((stepTemp[i] - 32) / 1.8);
-    //Convert mashRatio from qts/lb to l/kg
-    mashRatio = round(mashRatio * 2.0863514);
+    if (!unit) {
+      //Convert default values from F to C
+      setpoint[HLT] = round((setpoint[HLT] - 32) / 1.8);
+      spargeTemp = round((spargeTemp - 32) / 1.8);
+      for (int i = DOUGHIN; i <= MASHOUT; i++) if (stepTemp[i]) stepTemp[i] = round((stepTemp[i] - 32) / 1.8);
+      //Convert mashRatio from qts/lb to l/kg
+      mashRatio = round(mashRatio * 2.0863514);
+    }
   }
 
   char volUnit[5] = " l";
@@ -70,6 +81,7 @@ void doAutoBrew() {
   }
   
   boolean inMenu = 1;
+  if (recoveryStep) inMenu = 0;
   while (inMenu) {
     char paramMenu[17][20] = {
       "Batch Vol:",
@@ -188,6 +200,7 @@ void doAutoBrew() {
         inMenu = 0;
         break;
       default:
+        setPwrRecovery(0);
         return;
     }
     //Detrmine Total Water Needed (Evap + Deadspaces)
@@ -243,30 +256,53 @@ void doAutoBrew() {
           enterStatus = 0;
         }
       }
+      //Save Values to EEPROM for Recovery
+      setPwrRecovery(1);
+      setABRecovery(0);
+      setABHLT(setpoint[HLT]);
+      saveABSteps(stepTemp, stepMins);
+      setABSparge(spargeTemp);
+      setABDelay(delayMins);
+      saveABVols(tgtVol);
+      setABGrain(grainWeight);
+      setABBoil(boilMins);
+      setABRatio(mashRatio);
     }
   }
 
-  fillStage(tgtVol[HLT], tgtVol[MASH], volUnit);
-  if (enterStatus == 2) { enterStatus = 0; return; }
+  if (recoveryStep <= 1) {
+    setABRecovery(1);
+    fillStage(tgtVol[HLT], tgtVol[MASH], volUnit);
+    if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
+  }
   
-  if(delayMins) delayStart(delayMins);
-  if (enterStatus == 2) { enterStatus = 0; return; }
+  if(delayMins && recoveryStep <= 2) {
+    if (recoveryStep == 2) {
+      delayStart(getTimerRecovery());
+    } else { 
+      setABRecovery(2);
+      delayStart(delayMins);
+    }
+    if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
+  }
 
-
-  {
+  if (recoveryStep <= 3) {
     //Find first temp and adjust for strike temp
     byte strikeTemp = 0;
     int i = 0;
     while (strikeTemp == 0 && i <= MASHOUT) strikeTemp = stepTemp[i++];
     if (unit) strikeTemp = round(.2 / (mashRatio / 100.0) * (strikeTemp - 60)) + strikeTemp; else strikeTemp = round(.41 / (mashRatio / 100.0) * (strikeTemp - 16)) + strikeTemp;
     setpoint[MASH] = strikeTemp;
+    
+    setABRecovery(3);
+    mashStep("Preheat", PROMPT);  
+    if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
   }
-
-  mashStep("Preheat", PROMPT);  
-  if (enterStatus == 2) { enterStatus = 0; return; }
   
-  inMenu = 1;
+  inMenu = 0;
+  if (recoveryStep <=4) inMenu = 1;
   while(inMenu) {
+    setABRecovery(4);
     clearLCD();
     printLCD(1, 5, "Add Grain");
     printLCD(2, 0, "Press Enter to Start");
@@ -276,21 +312,30 @@ void doAutoBrew() {
       inMenu = 0;
     } else {
       enterStatus = 0;
-      if (confirmExit() == 1) return;
+      if (confirmExit() == 1) setPwrRecovery(0); return;
     }
   }
   
   for (int i = DOUGHIN; i <= MASHOUT; i++) {
     if (i == MASHOUT) setpoint[HLT] = spargeTemp;
-    if (stepTemp[i]) {
+    if (stepTemp[i] && recoveryStep <= i + 5) {
+      setABRecovery(i + 5);
       setpoint[MASH] = stepTemp[i];
-      mashStep(titles[i], stepMins[i]);
+      int recoverMins = getTimerRecovery();
+      if (recoveryStep == i + 5 && recoverMins > 0) mashStep(titles[i], recoverMins); else mashStep(titles[i], stepMins[i]);
+      if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     }
-    if (enterStatus == 2) { enterStatus = 0; return; }
+
   }
   //Hold last mash temp until user exits
-  mashStep("Mash Complete", PROMPT);
+  if (recoveryStep <= 9) {
+    setABRecovery(9); 
+    mashStep("Mash Complete", PROMPT);
+  }
+  
   enterStatus = 0;
+  setABRecovery(0);
+  setPwrRecovery(0);
 }
 
 void fillStage(unsigned long hltVol, unsigned long mashVol, char volUnit[]) {
@@ -349,6 +394,7 @@ void mashStep(char sTitle[ ], int iMins) {
   setAlarm(0);
   boolean doPrompt = 0;
   if (iMins == PROMPT) doPrompt = 1;
+  timerValue = 0;
   
   for (int i = HLT; i <= MASH; i++) {
     if (PIDEnabled[i]) {

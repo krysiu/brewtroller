@@ -95,6 +95,9 @@ void printTimer(int iRow, int iCol) {
     int timerMins = (timerValue - timerHours * 3600000) / 60000;
     int timerSecs = (timerValue - timerHours * 3600000 - timerMins * 60000) / 1000;
 
+    //Update EEPROM once per minute
+    if (timerLastWrite/60 != timerValue/60000) setTimerRecovery(timerValue/60000 + 1);
+    //Update LCD once per second
     if (timerLastWrite != timerValue/1000) {
       printLCD(iRow, iCol, "  :   ");
       if (timerHours > 0) {
