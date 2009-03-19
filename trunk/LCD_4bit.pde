@@ -1,16 +1,21 @@
 #include <LiquidCrystal.h>
 
-const byte LCD_DELAY_CURSOR = 40;
-const byte LCD_DELAY_CHAR = 40;
+const byte LCD_DELAY_CURSOR = 60;
+const byte LCD_DELAY_CHAR = 60;
 
 // LiquidCrystal display with:
 // rs on pin 17	  (LCD pin 4 ) aka DI
 // rw on pin 18	  (LCD pin 5)
 // enable on pin 19 (LCD pin 6)
 // d4, d5, d6, d7 on pins 20, 21, 22, 23  (LCD pins 11-14)
+
 LiquidCrystal lcd(17, -1, 19, 20, 21, 22, 23);
 
-void initLCD(){}
+void initLCD(){
+  //Attempt to avoid blank screen on boot by reinit of LCD after delay
+  delay(1000);
+  lcd = LiquidCrystal(17, -1, 19, 20, 21, 22, 23);
+}
 
 void printLCD(byte iRow, byte iCol, char sText[]){
  lcd.setCursor(iCol, iRow);
@@ -23,9 +28,7 @@ void printLCD(byte iRow, byte iCol, char sText[]){
  }
 } 
 
-void clearLCD(){
-lcd.clear();
-}
+void clearLCD(){ lcd.clear(); }
 
 char printLCDPad(byte iRow, byte iCol, char sText[], byte length, char pad) {
  lcd.setCursor(iCol, iRow);

@@ -143,7 +143,6 @@ void splashScreen() {
       B11111
     }; 
     lcdSetCustChar(0, bmpByte);
-    lcdWriteCustChar(0, 1, 0);
   }
   { 
     byte bmpByte[] = {
@@ -157,7 +156,6 @@ void splashScreen() {
       B11111
     };
     lcdSetCustChar(1, bmpByte);
-    lcdWriteCustChar(0, 2, 1);
   }
   { 
     byte bmpByte[] = {
@@ -171,7 +169,6 @@ void splashScreen() {
       B11111
     }; 
     lcdSetCustChar(2, bmpByte); 
-    lcdWriteCustChar(1, 0, 2); 
   }
   { 
     byte bmpByte[] = {
@@ -185,7 +182,6 @@ void splashScreen() {
       B11111
     }; 
     lcdSetCustChar(3, bmpByte); 
-    lcdWriteCustChar(1, 1, 3); 
   }
   { 
     byte bmpByte[] = {
@@ -199,7 +195,6 @@ void splashScreen() {
       B11111
     }; 
     lcdSetCustChar(4, bmpByte); 
-    lcdWriteCustChar(1, 2, 4); 
   }
   { 
     byte bmpByte[] = {
@@ -213,7 +208,6 @@ void splashScreen() {
       B11101
     }; 
     lcdSetCustChar(5, bmpByte); 
-    lcdWriteCustChar(2, 0, 5); 
   }
   { 
     byte bmpByte[] = {
@@ -227,7 +221,6 @@ void splashScreen() {
       B11001
     }; 
     lcdSetCustChar(6, bmpByte); 
-    lcdWriteCustChar(2, 1, 6); 
   }
   { 
     byte bmpByte[] = {
@@ -241,11 +234,18 @@ void splashScreen() {
       B11111
     }; 
     lcdSetCustChar(7, bmpByte); 
-    lcdWriteCustChar(2, 2, 7); 
   }
+
+  lcdWriteCustChar(0, 1, 0);
+  lcdWriteCustChar(0, 2, 1);
+  lcdWriteCustChar(1, 0, 2); 
+  lcdWriteCustChar(1, 1, 3); 
+  lcdWriteCustChar(1, 2, 4); 
+  lcdWriteCustChar(2, 0, 5); 
+  lcdWriteCustChar(2, 1, 6); 
+  lcdWriteCustChar(2, 2, 7); 
   printLCD(0, 4, "BrewTroller v1.0");
-  printLCD(1, 14, "Beta 1");
-  printLCD(2, 10, "Build 0130");
+  printLCD(1, 10, "Build 0131");
   printLCD(3, 1, "www.brewtroller.com");
   while(!enterStatus) delay(250);
   enterStatus = 0;
