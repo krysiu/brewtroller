@@ -22,7 +22,7 @@ void doAutoBrew() {
 
   if (getPwrRecovery() == 1) {
     recoveryStep = getABRecovery();
-    setpoint[HLT] = getABHLT();
+    loadSetpoints();
     loadABSteps(stepTemp, stepMins);
     spargeTemp = getABSparge();
     delayMins = getABDelay();
@@ -259,7 +259,7 @@ void doAutoBrew() {
       //Save Values to EEPROM for Recovery
       setPwrRecovery(1);
       setABRecovery(0);
-      setABHLT(setpoint[HLT]);
+      saveSetpoints();
       saveABSteps(stepTemp, stepMins);
       setABSparge(spargeTemp);
       setABDelay(delayMins);

@@ -31,9 +31,7 @@ void saveSetup() {
   EEPROM.write(92, evapRate);
   EEPROM.write(93, encMode);
 
-  //94 Reserved for Power Recovery
-  //95 - 131 Reserved for AutoBrew Recovery
-  //132 - 133 Reserved for Timer Recovery
+  //94 - 135 Reserved for Power Loss Recovery
 }
 
 void loadSetup() {
@@ -65,9 +63,7 @@ void loadSetup() {
   evapRate = EEPROM.read(92);
   encMode = EEPROM.read(93);
 
-  //94 Reserved for Power Recovery
-  //95 - 131 Reserved for AutoBrew Recovery
-  //132 - 133 Reserved for Timer Recovery
+  //94 - 135 Reserved for Power Recovery
 }
 
 void PROMwriteBytes(int addr, byte bytes[], int numBytes) {
@@ -134,30 +130,30 @@ byte getABRecovery() { return EEPROM.read(95); }
 void setABRecovery(byte recoveryStep) { EEPROM.write(95, recoveryStep); }
 byte getABSparge() { return EEPROM.read(96); }
 void setABSparge(byte spargeTemp) { EEPROM.write(96, spargeTemp); }
-byte getABHLT() { return EEPROM.read(97); }
-void setABHLT(byte setHLT) { EEPROM.write(97, setHLT); }
-unsigned long getABGrain() { return PROMreadLong(98); }
-void setABGrain(unsigned long grainWeight) { PROMwriteLong(98, grainWeight); }
-unsigned int getABDelay() { return PROMreadInt(102); }
-void setABDelay(unsigned int delayMins) { PROMwriteInt(102, delayMins); }
-unsigned int getABBoil() { return PROMreadInt(104); }
-void setABBoil(unsigned int boilMins) { PROMwriteInt(104, boilMins); }
-unsigned int getABRatio() { return PROMreadInt(106); }
-void setABRatio(unsigned int mashRatio) { PROMwriteInt(106, mashRatio); }
+unsigned long getABGrain() { return PROMreadLong(97); }
+void setABGrain(unsigned long grainWeight) { PROMwriteLong(97, grainWeight); }
+unsigned int getABDelay() { return PROMreadInt(101); }
+void setABDelay(unsigned int delayMins) { PROMwriteInt(101, delayMins); }
+unsigned int getABBoil() { return PROMreadInt(103); }
+void setABBoil(unsigned int boilMins) { PROMwriteInt(103, boilMins); }
+unsigned int getABRatio() { return PROMreadInt(105); }
+void setABRatio(unsigned int mashRatio) { PROMwriteInt(105, mashRatio); }
 void loadABSteps(byte stepTemp[4], byte stepMins[4]) { 
   for (int i=0; i<4; i++) {
-    stepTemp[i] = EEPROM.read(108 + i);
-    stepMins[i] = EEPROM.read(112 + i);
+    stepTemp[i] = EEPROM.read(107 + i);
+    stepMins[i] = EEPROM.read(111 + i);
   }
 }
 void saveABSteps(byte stepTemp[4], byte stepMins[4]) {
   for (int i=0; i<4; i++) {
-    EEPROM.write(108 + i, stepTemp[i]);
-    EEPROM.write(112 + i, stepMins[i]);
+    EEPROM.write(107 + i, stepTemp[i]);
+    EEPROM.write(111 + i, stepMins[i]);
   }  
 }
-void loadABVols(unsigned long tgtVol[3]) { for (int i=0; i<3; i++) { tgtVol[i] = PROMreadLong(116 + i * 4); } }
-void saveABVols(unsigned long tgtVol[3]) { for (int i=0; i<3; i++) { PROMwriteLong(116 + i * 4, tgtVol[i]); } }
+void loadABVols(unsigned long tgtVol[3]) { for (int i=0; i<3; i++) { tgtVol[i] = PROMreadLong(115 + i * 4); } }
+void saveABVols(unsigned long tgtVol[3]) { for (int i=0; i<3; i++) { PROMwriteLong(115 + i * 4, tgtVol[i]); } }
+void loadSetpoints() { for (int i=HLT; i<=KETTLE; i++) { setpoint[i] = EEPROM.read(131 + i); } }
+void saveSetpoints() { for (int i=HLT; i<=KETTLE; i++) { EEPROM.write(131 + i, setpoint[i]); } }
 
-unsigned int getTimerRecovery() { return PROMreadInt(132); }
-void setTimerRecovery(int newMins) { PROMwriteInt(132, newMins); }
+unsigned int getTimerRecovery() { return PROMreadInt(134); }
+void setTimerRecovery(unsigned int newMins) { PROMwriteInt(134, newMins); }

@@ -1,5 +1,4 @@
 void doMon() {
-  setPwrRecovery(2);
   char buf[6];
   float temp[6] = { 0, 0, 0, 0, 0, 0 };
   char sTempUnit[2] = "C";
@@ -7,6 +6,8 @@ void doMon() {
   unsigned long cycleStart[3];
   boolean heatStatus[3] = { 0, 0, 0 };
 
+  clearTimer();
+  
   for (int i = HLT; i <= KETTLE; i++) {
     if (PIDEnabled[i]) {
       pid[i].SetIOLimits(0, 255, 0, PIDCycle[i] * 1000);
@@ -20,6 +21,15 @@ void doMon() {
   encMax = 2;
   encCount = 0;
   int lastCount = 1;
+  if (getPwrRecovery() == 2) {
+    loadSetpoints();
+    unsigned int newMins = getTimerRecovery();
+    if (newMins > 0) setTimer(newMins);
+  } else { 
+    setTimerRecovery(0);
+    saveSetpoints();
+    setPwrRecovery(2);
+  }
   
   while (1) {
     if (enterStatus == 2) {
@@ -112,6 +122,7 @@ void doMon() {
               inMenu = 0;
               break;
           }
+          saveSetpoints();
         }
         encMin = 0;
         encMax = 2;

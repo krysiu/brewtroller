@@ -52,7 +52,7 @@ void resetOutputs() {
   digitalWrite(VALVE11_PIN, LOW);
 }
 
-void setTimer(int minutes) {
+void setTimer(unsigned int minutes) {
   timerValue = minutes * 60000;
   lastTime = millis();
   timerStatus = 1;
@@ -91,9 +91,9 @@ void printTimer(int iRow, int iCol) {
       lastTime = now;
     } else if (!alarmStatus) printLCD(iRow, iCol, "PAUSED");
 
-    int timerHours = timerValue / 3600000;
-    int timerMins = (timerValue - timerHours * 3600000) / 60000;
-    int timerSecs = (timerValue - timerHours * 3600000 - timerMins * 60000) / 1000;
+    unsigned int timerHours = timerValue / 3600000;
+    unsigned int timerMins = (timerValue - timerHours * 3600000) / 60000;
+    unsigned int timerSecs = (timerValue - timerHours * 3600000 - timerMins * 60000) / 1000;
 
     //Update EEPROM once per minute
     if (timerLastWrite/60 != timerValue/60000) setTimerRecovery(timerValue/60000 + 1);
