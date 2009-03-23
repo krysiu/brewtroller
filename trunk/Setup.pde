@@ -1,12 +1,13 @@
 void menuSetup()
 {
-  char setupMenu[9][20] = {
+  char setupMenu[10][20] = {
     "",
     "",
     "",
     "Assign Temp Sensor",
     "Configure Outputs",
     "Volume/Capacity",
+    "Configure Valves",
     "Save Settings",
     "Load Settings",
     "Exit Setup"
@@ -22,7 +23,7 @@ void menuSetup()
         strcpy(setupMenu[2], "Encoder: ALPS");
         break;
     }
-    switch(scrollMenu("System Setup", setupMenu, 9)) {
+    switch(scrollMenu("System Setup", setupMenu, 10)) {
       case 0:
         unit = unit ^ 1;
         if (unit) {
@@ -60,8 +61,9 @@ void menuSetup()
       case 3: assignSensor(); break;
       case 4: cfgOutputs(); break;
       case 5: cfgVolumes(); break;
-      case 6: saveSetup(); break;
-      case 7: loadSetup(); break;
+      case 6: cfgValves(); break;
+      case 7: saveSetup(); break;
+      case 8: loadSetup(); break;
       default: return;
     }
   }
@@ -304,4 +306,78 @@ void cfgVolumes() {
       default: return;
     }
   } 
+}
+
+void cfgValves() {
+  char valveMenu[9][20] = {
+    "HLT Fill           ",
+    "Mash Fill          ",
+    "Mash Heat          ",
+    "Mash Idle          ",
+    "Sparge In          ",
+    "Sparge Out         ",
+    "Chiller H2O In     ",
+    "Chiller Beer In    ",
+    "Exit               "
+  };
+  while (1) {
+    byte profile = scrollMenu("Valve Configuration", valveMenu, 9);
+    if (profile > 7) return; else setValveProfile(valveMenu[profile], &valveCfg[profile + 1]);
+  }
+}
+
+void setValveProfile (char sTitle[], unsigned int* profile) {
+  unsigned int retValue = *profile;
+  encMin = 0;
+  encMax = 11;
+  encCount = 0;
+  int lastCount = 1;
+  char buf[6];
+
+  clearLCD();
+  printLCD(0,0,sTitle);
+  {
+    int bit = 1;
+    for (int i = 0; i < 11; i++) { 
+      if (retValue & bit) printLCD(1, i + 4, "1"); else printLCD(1, i + 4, "0");
+      bit *= 2;
+    }
+  }
+  printLCD(3, 8, "OK");
+  
+  while(1) {
+    if (encCount != lastCount) {
+      printLCD(2, 0, "    0123456789A     ");
+      if (encCount == 11) {
+        printLCD(3, 7, ">");
+        printLCD(3, 10, "<");
+      } else {
+        printLCD(3, 7, " ");
+        printLCD(3, 10, " ");
+        printLCD(2, encCount + 4, "^");
+      }
+    }
+    lastCount = encCount;
+    
+    if (enterStatus == 1) {
+      enterStatus = 0;
+      if (encCount == 11) { *profile = retValue; return; }
+      {
+        int bit;
+        for (int i = 0; i <= encCount; i++) if (!i) bit = 1; else bit *= 2;
+        retValue = retValue ^ bit;
+      }
+
+      {
+        int bit = 1;
+        for (int i = 0; i < 11; i++) { 
+          if (retValue & bit) printLCD(1, i + 4, "1"); else printLCD(1, i + 4, "0");
+          bit *= 2;
+        }
+      }
+    } else if (enterStatus == 2) {
+      enterStatus = 0;
+      return;
+    }
+  }
 }

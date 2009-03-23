@@ -39,17 +39,7 @@ void resetOutputs() {
     if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
   }
   digitalWrite(ALARM_PIN, LOW);
-  digitalWrite(VALVE1_PIN, LOW);
-  digitalWrite(VALVE2_PIN, LOW);
-  digitalWrite(VALVE3_PIN, LOW);
-  digitalWrite(VALVE4_PIN, LOW);
-  digitalWrite(VALVE5_PIN, LOW);
-  digitalWrite(VALVE6_PIN, LOW);
-  digitalWrite(VALVE7_PIN, LOW);
-  digitalWrite(VALVE8_PIN, LOW);
-  digitalWrite(VALVE9_PIN, LOW);
-  digitalWrite(VALVE10_PIN, LOW);
-  digitalWrite(VALVE11_PIN, LOW);
+  setValves(valveCfg[ALLOFF]);
 }
 
 void setTimer(unsigned int minutes) {
@@ -117,3 +107,16 @@ void setAlarm(boolean value) {
   digitalWrite(ALARM_PIN, value);
 }
 
+void setValves (unsigned int valveBits) { 
+  digitalWrite(VALVE_PIN[0], valveBits & 1);
+  digitalWrite(VALVE_PIN[1], valveBits & 2);
+  digitalWrite(VALVE_PIN[2], valveBits & 4);
+  digitalWrite(VALVE_PIN[3], valveBits & 8);
+  digitalWrite(VALVE_PIN[4], valveBits & 16);
+  digitalWrite(VALVE_PIN[5], valveBits & 32);
+  digitalWrite(VALVE_PIN[6], valveBits & 64);
+  digitalWrite(VALVE_PIN[7], valveBits & 128);
+  digitalWrite(VALVE_PIN[8], valveBits & 256);
+  digitalWrite(VALVE_PIN[9], valveBits & 512);
+  digitalWrite(VALVE_PIN[10], valveBits & 1024);
+}

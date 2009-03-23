@@ -4,23 +4,12 @@
 const byte ENCA_PIN = 2;
 const byte ENCB_PIN = 4;
 const byte TEMP_PIN = 5;
-const byte VALVE1_PIN = 6;
-const byte VALVE2_PIN = 7;
-const byte VALVE3_PIN = 8;
-const byte VALVE4_PIN = 9;
-const byte VALVE5_PIN = 10;
 const byte ENTER_PIN = 11;
-const byte VALVE6_PIN = 12;
-const byte VALVE7_PIN = 13;
-const byte VALVE8_PIN = 14;
 const byte ALARM_PIN = 15;
-const byte VALVE9_PIN = 16;
-const byte VALVE10_PIN = 18;
-const byte VALVE11_PIN = 24;
 const byte ENTER_INT = 1;
 const byte ENCA_INT = 2;
 
-//Array Element Constants
+//TSensor Array Element Constants
 const byte HLT = 0;
 const byte MASH = 1;
 const byte KETTLE = 2;
@@ -28,8 +17,22 @@ const byte H2OIN = 3;
 const byte H2OOUT = 4;
 const byte BEEROUT = 5;
 
+//Valve Array Element Constants and Variables
+const byte ALLOFF = 0;
+const byte FILLHLT = 1;
+const byte FILLMASH = 2;
+const byte MASHHEAT = 3;
+const byte MASHIDLE = 4;
+const byte SPARGEIN = 5;
+const byte SPARGEOUT = 6;
+const byte CHILLH2O = 7;
+const byte CHILLBEER = 8;
+
+unsigned int valveCfg[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+
 //Loop-friendly Output Consts
 const byte OUTPUT_PIN[3] = { 0, 1, 3 };
+const byte VALVE_PIN[11] = { 6, 7, 8, 9, 10, 12, 13, 14, 16, 18, 24};
 
 //Encoder Globals
 byte encMode = 0;
@@ -84,20 +87,9 @@ void setup() {
   pinMode(ENCB_PIN, INPUT);
   pinMode(ENTER_PIN, INPUT);
   pinMode(ALARM_PIN, OUTPUT);
-  pinMode(VALVE1_PIN, OUTPUT);
-  pinMode(VALVE2_PIN, OUTPUT);
-  pinMode(VALVE3_PIN, OUTPUT);
-  pinMode(VALVE4_PIN, OUTPUT);
-  pinMode(VALVE5_PIN, OUTPUT);
-  pinMode(VALVE6_PIN, OUTPUT);
-  pinMode(VALVE7_PIN, OUTPUT);
-  pinMode(VALVE8_PIN, OUTPUT);
-  pinMode(VALVE9_PIN, OUTPUT);
-  pinMode(VALVE10_PIN, OUTPUT);
-  pinMode(VALVE11_PIN, OUTPUT);
+  for (int i = 0; i < 11; i++) pinMode(VALVE_PIN[i], OUTPUT);
   for (int i = HLT; i <= KETTLE; i++) pinMode(OUTPUT_PIN[i], OUTPUT);
   resetOutputs();
-
   initLCD();
 
   //Check for cfgVersion variable and format EEPROM if necessary
@@ -245,7 +237,7 @@ void splashScreen() {
   lcdWriteCustChar(2, 1, 6); 
   lcdWriteCustChar(2, 2, 7); 
   printLCD(0, 4, "BrewTroller v1.0");
-  printLCD(1, 10, "Build 0132");
+  printLCD(1, 10, "Build 0134");
   printLCD(3, 1, "www.brewtroller.com");
   while(!enterStatus) delay(250);
   enterStatus = 0;

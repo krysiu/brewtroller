@@ -32,6 +32,9 @@ void saveSetup() {
   EEPROM.write(93, encMode);
 
   //94 - 135 Reserved for Power Loss Recovery
+  
+  //Valve Profiles 136-153
+  for (int i = 0; i < 9; i++) { PROMwriteInt(136 + i * 2, valveCfg[i]); }
 }
 
 void loadSetup() {
@@ -64,6 +67,9 @@ void loadSetup() {
   encMode = EEPROM.read(93);
 
   //94 - 135 Reserved for Power Recovery
+  
+  //Valve Profiles 136-153
+  for (int i = 0; i < 9; i++) { valveCfg[i] = PROMreadInt(136 + i * 2); }
 }
 
 void PROMwriteBytes(int addr, byte bytes[], int numBytes) {
