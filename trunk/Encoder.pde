@@ -8,33 +8,35 @@ void initEncoder() {
     case CUI:
       enterBounceDelay = 50;
       encBounceDelay = 50;
-      attachInterrupt(ENCA_INT, doEncoderCUI, RISING);
+      attachInterrupt(2, doEncoderCUI, RISING);
       break;
     case ALPS:
       enterBounceDelay = 30;
       encBounceDelay = 60;
-      attachInterrupt(ENCA_INT, doEncoderALPS, CHANGE);
+      attachInterrupt(2, doEncoderALPS, CHANGE);
       break;
   }
-  attachInterrupt(ENTER_INT, doEnter, CHANGE);
+  attachInterrupt(1, doEnter, CHANGE);
 }
 
 void doEncoderCUI() {
   if (millis() - lastEncUpd < encBounceDelay) return;
-  if (digitalRead(ENCB_PIN) == LOW) encCount++; else encCount--;
+  //Read EncB
+  if (digitalRead(4) == LOW) encCount++; else encCount--;
   if (encCount == -1) encCount = 0; else if (encCount < encMin) { encCount = encMin; } else if (encCount > encMax) { encCount = encMax; }
   lastEncUpd = millis();
 } 
 
 void doEncoderALPS() {
   //if (millis() - lastEncUpd < encBounceDelay) return;
-  if (digitalRead(ENCA_PIN) != digitalRead(ENCB_PIN)) encCount++; else encCount--;
+  //Compare EncA and EncB
+  if (digitalRead(2) != digitalRead(4)) encCount++; else encCount--;
   if (encCount == -1) encCount = 0; else if (encCount < encMin) { encCount = encMin; } else if (encCount > encMax) { encCount = encMax; }
   lastEncUpd = millis();
 } 
 
 void doEnter() {
-  if (digitalRead(ENTER_PIN) == HIGH) {
+  if (digitalRead(11) == HIGH) {
     enterStart = millis();
   } else {
     if (millis() - enterStart > 1000) {

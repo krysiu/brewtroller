@@ -1,38 +1,25 @@
 #include <PID.h>
 
-//Pin and Interrupt Definitions
-const byte ENCA_PIN = 2;
-const byte ENCB_PIN = 4;
-const byte TEMP_PIN = 5;
-const byte ENTER_PIN = 11;
-const byte ALARM_PIN = 15;
-const byte ENTER_INT = 1;
-const byte ENCA_INT = 2;
-
 //TSensor Array Element Constants
-const byte HLT = 0;
-const byte MASH = 1;
-const byte KETTLE = 2;
-const byte H2OIN = 3;
-const byte H2OOUT = 4;
-const byte BEEROUT = 5;
+#define HLT 0
+#define MASH 1
+#define KETTLE 2
+#define H2OIN 3
+#define H2OOUT 4
+#define BEEROUT 5
 
 //Valve Array Element Constants and Variables
-const byte ALLOFF = 0;
-const byte FILLHLT = 1;
-const byte FILLMASH = 2;
-const byte MASHHEAT = 3;
-const byte MASHIDLE = 4;
-const byte SPARGEIN = 5;
-const byte SPARGEOUT = 6;
-const byte CHILLH2O = 7;
-const byte CHILLBEER = 8;
-
-unsigned int valveCfg[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+#define FILLHLT 0
+#define FILLMASH 1
+#define MASHHEAT 2
+#define MASHIDLE 3
+#define SPARGEIN 4
+#define SPARGEOUT 5
+#define CHILLH2O 6
+#define CHILLBEER 7
 
 //Loop-friendly Output Consts
 const byte OUTPUT_PIN[3] = { 0, 1, 3 };
-const byte VALVE_PIN[11] = { 6, 7, 8, 9, 10, 12, 13, 14, 16, 18, 24};
 
 //Encoder Globals
 byte encMode = 0;
@@ -41,8 +28,8 @@ unsigned int encMin;
 unsigned int encMax;
 unsigned int enterStatus = 0;
 
-const byte CUI = 0;
-const byte ALPS = 1;
+#define CUI 0
+#define ALPS 1
 
 //8-byte Temperature Sensor Address x6 Sensors
 byte tSensor[6][8];
@@ -50,8 +37,8 @@ byte tSensor[6][8];
 //Unit Definitions
 //International: Celcius, Liter, Kilogram
 //US: Fahrenheit, Gallon, US Pound
-const byte INTL = 0;
-const byte US = 1;
+#define INTL 0
+#define US 1
 
 //Unit Globals (Volume in thousandths)
 boolean unit;
@@ -83,11 +70,25 @@ boolean timerStatus = 0;
 boolean alarmStatus = 0;
   
 void setup() {
-  pinMode(ENCA_PIN, INPUT);
-  pinMode(ENCB_PIN, INPUT);
-  pinMode(ENTER_PIN, INPUT);
-  pinMode(ALARM_PIN, OUTPUT);
-  for (int i = 0; i < 11; i++) pinMode(VALVE_PIN[i], OUTPUT);
+  //EncA, EncB, Enter
+  pinMode(2, INPUT);
+  pinMode(4, INPUT);
+  pinMode(11, INPUT);
+  //Alarm
+  pinMode(15, OUTPUT);
+  //Valves 0-9, A
+  pinMode(6, OUTPUT);
+  pinMode(7, OUTPUT);
+  pinMode(8, OUTPUT);
+  pinMode(9, OUTPUT);
+  pinMode(10, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(13, OUTPUT);
+  pinMode(14, OUTPUT);
+  pinMode(16, OUTPUT);
+  pinMode(18, OUTPUT);
+  pinMode(24, OUTPUT);
+  
   for (int i = HLT; i <= KETTLE; i++) pinMode(OUTPUT_PIN[i], OUTPUT);
   resetOutputs();
   initLCD();
@@ -107,6 +108,7 @@ void setup() {
 }
 
 void loop() {
+  char buf[6];
   char mainMenu[3][20] = {
     "AutoBrew",
     "Brew Monitor",

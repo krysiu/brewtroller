@@ -322,12 +322,12 @@ void cfgValves() {
   };
   while (1) {
     byte profile = scrollMenu("Valve Configuration", valveMenu, 9);
-    if (profile > 7) return; else setValveProfile(valveMenu[profile], &valveCfg[profile + 1]);
+    if (profile > 7) return; else setValveCfg(profile, cfgValveProfile(valveMenu[profile], getValveCfg(profile)));
   }
 }
 
-void setValveProfile (char sTitle[], unsigned int* profile) {
-  unsigned int retValue = *profile;
+unsigned int cfgValveProfile (char sTitle[], unsigned int defValue) {
+  unsigned int retValue = defValue;
   encMin = 0;
   encMax = 11;
   encCount = 0;
@@ -361,7 +361,7 @@ void setValveProfile (char sTitle[], unsigned int* profile) {
     
     if (enterStatus == 1) {
       enterStatus = 0;
-      if (encCount == 11) { *profile = retValue; return; }
+      if (encCount == 11) {  return retValue; }
       {
         int bit;
         for (int i = 0; i <= encCount; i++) if (!i) bit = 1; else bit *= 2;
@@ -377,7 +377,7 @@ void setValveProfile (char sTitle[], unsigned int* profile) {
       }
     } else if (enterStatus == 2) {
       enterStatus = 0;
-      return;
+      return defValue;
     }
   }
 }

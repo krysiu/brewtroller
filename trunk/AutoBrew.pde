@@ -1,4 +1,4 @@
-const boolean PROMPT = -1;
+#define PROMPT -1
 
 void doAutoBrew() {
   unsigned int delayMins = 0;
@@ -149,7 +149,7 @@ void doAutoBrew() {
 
     strncat(paramMenu[14], itoa(stepTemp[MASHOUT], buf, 10), 3);
     strcat(paramMenu[14], tempUnit);
-    
+
     switch(scrollMenu("AutoBrew Parameters", paramMenu, 17)) {
       case 0:
         tgtVol[KETTLE] = getValue("Batch Volume", tgtVol[KETTLE], 7, 3, 9999999, volUnit);
@@ -341,21 +341,22 @@ void doAutoBrew() {
 void fillStage(unsigned long hltVol, unsigned long mashVol, char volUnit[]) {
   char buf[5];
   clearLCD();
-  printLCD(0, 0, "Add Brewing Liquor");
+  printLCD(0, 0, "HLT  -  Fill  - Mash");
+
   unsigned long whole = hltVol / 1000;
   unsigned long frac = hltVol - (whole * 1000) ;
-  printLCD(1, 0, " HLT:");
-  printLCDPad(1, 6, ltoa(whole, buf, 10), 4, ' ');
-  printLCD(1, 10, ".");
-  printLCDPad(1, 11, ltoa(frac, buf, 10), 3, '0');
-  printLCD(1, 14, volUnit);
+  printLCDPad(1, 0, ltoa(whole, buf, 10), 3, ' ');
+  printLCD(1, 3, ".");
+  printLCDPad(1, 4, ltoa(frac, buf, 10), 2, '0');
+  printLCD(1, 5, "         ");
+  printLCD(1, 8, volUnit);
+
   whole = mashVol / 1000;
   frac = mashVol - (whole * 1000) ;
-  printLCD(2, 0, "Mash:");
-  printLCDPad(2, 6, ltoa(whole, buf, 10), 4, ' ');
-  printLCD(2, 10, ".");
-  printLCDPad(2, 11, ltoa(frac, buf, 10), 3, '0');
-  printLCD(2, 14, volUnit);
+  printLCDPad(1, 14, ltoa(whole, buf, 10), 3, ' ');
+  printLCD(1, 17, ".");
+  printLCDPad(1, 18, ltoa(frac, buf, 10), 2, '0');
+
   char conExit[2][19] = {
     "     Continue     ",
     "       Abort      "};

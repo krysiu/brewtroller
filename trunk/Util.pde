@@ -29,8 +29,8 @@ int memoryTest() {
   
   free(byteArray); // also free memory after the function finishes
   return byteCounter; // send back the highest number of bytes successfully allocated
-}
-*/
+}*/
+
 
 void resetOutputs() {
   for (int i = HLT; i <= KETTLE; i++) {
@@ -38,8 +38,8 @@ void resetOutputs() {
     digitalWrite(OUTPUT_PIN[i], LOW);
     if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
   }
-  digitalWrite(ALARM_PIN, LOW);
-  setValves(valveCfg[ALLOFF]);
+  setAlarm(0);
+  setValves(0);
 }
 
 void setTimer(unsigned int minutes) {
@@ -104,19 +104,19 @@ void printTimer(int iRow, int iCol) {
 
 void setAlarm(boolean value) {
   alarmStatus = value;
-  digitalWrite(ALARM_PIN, value);
+  digitalWrite(15, value);
 }
 
 void setValves (unsigned int valveBits) { 
-  digitalWrite(VALVE_PIN[0], valveBits & 1);
-  digitalWrite(VALVE_PIN[1], valveBits & 2);
-  digitalWrite(VALVE_PIN[2], valveBits & 4);
-  digitalWrite(VALVE_PIN[3], valveBits & 8);
-  digitalWrite(VALVE_PIN[4], valveBits & 16);
-  digitalWrite(VALVE_PIN[5], valveBits & 32);
-  digitalWrite(VALVE_PIN[6], valveBits & 64);
-  digitalWrite(VALVE_PIN[7], valveBits & 128);
-  digitalWrite(VALVE_PIN[8], valveBits & 256);
-  digitalWrite(VALVE_PIN[9], valveBits & 512);
-  digitalWrite(VALVE_PIN[10], valveBits & 1024);
+  digitalWrite(6, valveBits & 1);
+  digitalWrite(7, valveBits & 2);
+  digitalWrite(8, valveBits & 4);
+  digitalWrite(9, valveBits & 8);
+  digitalWrite(10, valveBits & 16);
+  digitalWrite(12, valveBits & 32);
+  digitalWrite(13, valveBits & 64);
+  digitalWrite(14, valveBits & 128);
+  digitalWrite(16, valveBits & 256);
+  digitalWrite(18, valveBits & 512);
+  digitalWrite(24, valveBits & 1024);
 }

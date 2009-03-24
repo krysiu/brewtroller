@@ -1,5 +1,6 @@
 #include <OneWire.h>
-OneWire ds(TEMP_PIN);
+//One Wire Bus on 
+OneWire ds(5);
 
 /* The following function is currently not in use:
 float get_temp(boolean tUnit, byte* addr) //Unit 1 for F and 0 for C

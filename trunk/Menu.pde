@@ -102,7 +102,7 @@ long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision
     byte charByte[] = {B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
     lcdSetCustChar(1, charByte);
   }
-  
+      
   clearLCD();
   printLCD(0,0,sTitle);
   printLCD(1, (20 - digits + 1) / 2 + digits + 1, dispUnit);
