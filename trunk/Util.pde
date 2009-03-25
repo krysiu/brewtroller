@@ -14,31 +14,24 @@ void ftoa(float val, char retStr[], int precision) {
 }
 
 // The following function is currently not being used: 
-/*
-int memoryTest() {
-  int byteCounter = 0; // initialize a counter
-  byte *byteArray; // create a pointer to a byte array
-  // More on pointers here: http://en.wikipedia.org/wiki/Pointer#C_pointers
-
-  // use the malloc function to repeatedly attempt allocating a certain number of bytes to memory
-  // More on malloc here: http://en.wikipedia.org/wiki/Malloc
-  while ( (byteArray = (byte*) malloc (byteCounter * sizeof(byte))) != NULL ) {
-    byteCounter++; // if allocation was successful, then up the count for the next try
-    free(byteArray); // free memory after allocating it
-  }
-  
-  free(byteArray); // also free memory after the function finishes
-  return byteCounter; // send back the highest number of bytes successfully allocated
-}*/
+int availableMemory() {
+  int size = 4096;
+  byte *buf;
+  while ((buf = (byte *) malloc(--size)) == NULL);
+  free(buf);
+  return size;
+}
 
 
 void resetOutputs() {
   for (int i = HLT; i <= KETTLE; i++) {
     setpoint[i] = 0;
-    digitalWrite(OUTPUT_PIN[i], LOW);
     if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
   }
-  setAlarm(0);
+  digitalWrite(HLTHEAT_PIN, LOW);
+  digitalWrite(MASHHEAT_PIN, LOW);
+  digitalWrite(KETTLEHEAT_PIN, LOW);
+  digitalWrite(ALARM_PIN, LOW);
   setValves(0);
 }
 
@@ -104,19 +97,19 @@ void printTimer(int iRow, int iCol) {
 
 void setAlarm(boolean value) {
   alarmStatus = value;
-  digitalWrite(15, value);
+  digitalWrite(ALARM_PIN, value);
 }
 
 void setValves (unsigned int valveBits) { 
-  digitalWrite(6, valveBits & 1);
-  digitalWrite(7, valveBits & 2);
-  digitalWrite(8, valveBits & 4);
-  digitalWrite(9, valveBits & 8);
-  digitalWrite(10, valveBits & 16);
-  digitalWrite(12, valveBits & 32);
-  digitalWrite(13, valveBits & 64);
-  digitalWrite(14, valveBits & 128);
-  digitalWrite(16, valveBits & 256);
-  digitalWrite(18, valveBits & 512);
-  digitalWrite(24, valveBits & 1024);
+  digitalWrite(VALVE0_PIN, valveBits & 1);
+  digitalWrite(VALVE1_PIN, valveBits & 2);
+  digitalWrite(VALVE2_PIN, valveBits & 4);
+  digitalWrite(VALVE3_PIN, valveBits & 8);
+  digitalWrite(VALVE4_PIN, valveBits & 16);
+  digitalWrite(VALVE5_PIN, valveBits & 32);
+  digitalWrite(VALVE6_PIN, valveBits & 64);
+  digitalWrite(VALVE7_PIN, valveBits & 128);
+  digitalWrite(VALVE8_PIN, valveBits & 256);
+  digitalWrite(VALVE9_PIN, valveBits & 512);
+  digitalWrite(VALVEA_PIN, valveBits & 1024);
 }

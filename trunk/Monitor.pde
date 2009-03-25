@@ -49,23 +49,22 @@ void doMon() {
         setAlarm(0);
       } else {
         //Pop-Up Menu
-        char monMenu[11][20] = {
-          "Set HLT Temp",
-          "Clear HLT Temp",
-          "Set Mash Temp",
-          "Clear Mash Temp",
-          "Set Kettle Temp",
-          "Clear Kettle Temp",
-          "Set Timer",
-          "Pause Timer",
-          "Clear Timer",
-          "Close Menu",
-          "Quit Brew Monitor"
-        };
+        strcpy(menuopts[0], "Set HLT Temp");
+        strcpy(menuopts[1], "Clear HLT Temp");
+        strcpy(menuopts[2], "Set Mash Temp");
+        strcpy(menuopts[3], "Clear Mash Temp");
+        strcpy(menuopts[4], "Set Kettle Temp");
+        strcpy(menuopts[5], "Clear Kettle Temp");
+        strcpy(menuopts[6], "Set Timer");
+        strcpy(menuopts[7], "Pause Timer");
+        strcpy(menuopts[8], "Clear Timer");
+        strcpy(menuopts[9], "Close Menu");
+        strcpy(menuopts[10], "Quit Brew Monitor");
+
         boolean inMenu = 1;
         while(inMenu) {
           char dispUnit[2] = "C"; if (unit) strcpy(dispUnit, "F");
-          switch (scrollMenu("Brew Monitor Menu   ", monMenu, 11)) {
+          switch (scrollMenu("Brew Monitor Menu   ", menuopts, 11)) {
             case 0:
               {
                 byte defHLTTemp = 180;
@@ -220,6 +219,7 @@ void doMon() {
       convStart = 0;
     }
     for (int i = HLT; i <= KETTLE; i++) {
+      boolean setOut;
       if (PIDEnabled[i]) {
         if (temp[i] == -1) {
           pid[i].SetMode(MANUAL);
@@ -230,20 +230,24 @@ void doMon() {
           pid[i].Compute();
         }
         if (millis() - cycleStart[i] > PIDCycle[i] * 1000) cycleStart[i] += PIDCycle[i] * 1000;
-        if (PIDOutput[i] > millis() - cycleStart[i]) digitalWrite(OUTPUT_PIN[i], HIGH);
-        else digitalWrite(OUTPUT_PIN[i], LOW);
+        if (PIDOutput[i] > millis() - cycleStart[i]) setOut = 1; else setOut = 0;
       } else {
         if (heatStatus[i]) {
           if (temp[i] == -1 || temp[i] >= setpoint[i]) {
-            digitalWrite(OUTPUT_PIN[i], LOW);
+            setOut = 0;
             heatStatus[i] = 0;
-          }
+          } else setOut = 1;
         } else { 
           if (temp[i] != -1 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
-            digitalWrite(OUTPUT_PIN[i], HIGH);
+            setOut = 1;
             heatStatus[i] = 1;
-          }
+          } else setOut = 0;
         }
+      }
+      switch(i) {
+        case HLT: digitalWrite(HLTHEAT_PIN, setOut); break;
+        case MASH: digitalWrite(MASHHEAT_PIN, setOut); break;
+        case KETTLE: digitalWrite(KETTLEHEAT_PIN, setOut); break;
       }
     }
   }

@@ -1,5 +1,14 @@
+<<<<<<< .mine
+#define PROMPT -1
+#define DOUGHIN 0
+#define PROTEIN 1
+#define SACCH 2
+#define MASHOUT 3
+  
+=======
 #define PROMPT -1
 
+>>>>>>> .r135
 void doAutoBrew() {
   unsigned int delayMins = 0;
   byte stepTemp[4], stepMins[4], spargeTemp;
@@ -8,12 +17,8 @@ void doAutoBrew() {
   unsigned int boilMins = 60;
   unsigned int mashRatio = 133;
   byte recoveryStep = 0;
-  const byte DOUGHIN = 0;
-  const byte PROTEIN = 1;
-  const byte SACCH = 2;
-  const byte MASHOUT = 3;
   char buf[9];
-  char titles[4][15] = {
+  char titles[4][13] = {
     "Dough In",
     "Protein Rest",
     "Sacch Rest",
@@ -33,12 +38,11 @@ void doAutoBrew() {
   } else {
     spargeTemp = 168;
     if (sysHERMS) setpoint[HLT] = 180; else setpoint[HLT] = spargeTemp;
+  
+    strcpy(menuopts[0], "Single Infusion");
+    strcpy(menuopts[1], "Multi-Rest");
 
-    char profileMenu[2][20] = {
-      "Single Infusion",
-      "Multi-Rest"
-    };
-    switch (scrollMenu("AutoBrew Program", profileMenu, 2)) {
+    switch (scrollMenu("AutoBrew Program", menuopts, 2)) {
       case 0:
         stepTemp[DOUGHIN] = 0;
         stepMins[DOUGHIN] = 0;
@@ -70,7 +74,6 @@ void doAutoBrew() {
       mashRatio = round(mashRatio * 2.0863514);
     }
   }
-
   char volUnit[5] = " l";
   char wtUnit[4] = " kg";
   char tempUnit[2] = "C";
@@ -83,52 +86,45 @@ void doAutoBrew() {
   boolean inMenu = 1;
   if (recoveryStep) inMenu = 0;
   while (inMenu) {
-    char paramMenu[17][20] = {
-      "Batch Vol:",
-      "Grain Wt:",
-      "Boil Length:",
-      "Mash Ratio:",
-      "Delay Start:",
-      "HLT Temp:",
-      "Sparge Temp:",
-      "Dough In:",
-      "Dough In:",
-      "Protein Rest:",
-      "Protein Rest:",
-      "Sacch Rest:",
-      "Sacch Rest:",
-      "Mash Out:",
-      "Mash Out:",
-      "Start Program",
-      "Exit"
-    };
+
+    strcpy(menuopts[0], "Batch Vol:");
+    strcpy(menuopts[1], "Grain Wt:");
+    strcpy(menuopts[2], "Boil Length:");
+    strcpy(menuopts[3], "Mash Ratio:");
+    strcpy(menuopts[4], "Delay Start:");
+    strcpy(menuopts[5], "HLT Temp:");
+    strcpy(menuopts[6], "Sparge Temp:");
+    strcpy(menuopts[7], "Mash Schedule");
+    strcpy(menuopts[8], "Start Program");
+    strcpy(menuopts[9], "Exit");    
+
     ftoa((float)tgtVol[KETTLE]/1000, buf, 2);
-    strncat(paramMenu[0], buf, 5);
-    strcat(paramMenu[0], volUnit);
+    strncat(menuopts[0], buf, 5);
+    strcat(menuopts[0], volUnit);
 
     ftoa((float)grainWeight/1000, buf, 3);
-    strncat(paramMenu[1], buf, 7);
-    strcat(paramMenu[1], wtUnit);
+    strncat(menuopts[1], buf, 7);
+    strcat(menuopts[1], wtUnit);
 
-    strncat(paramMenu[2], itoa(boilMins, buf, 10), 3);
-    strcat(paramMenu[2], " min");
+    strncat(menuopts[2], itoa(boilMins, buf, 10), 3);
+    strcat(menuopts[2], " min");
 
     ftoa((float)mashRatio/100, buf, 2);
-    strncat(paramMenu[3], buf, 4);
-    strcat(paramMenu[3], ":1");
+    strncat(menuopts[3], buf, 4);
+    strcat(menuopts[3], ":1");
 
-    strncat(paramMenu[4], itoa(delayMins/60, buf, 10), 4);
-    strcat(paramMenu[4], " hr");
+    strncat(menuopts[4], itoa(delayMins/60, buf, 10), 4);
+    strcat(menuopts[4], " hr");
     
-    strncat(paramMenu[5], itoa(setpoint[HLT], buf, 10), 3);
-    strcat(paramMenu[5], tempUnit);
+    strncat(menuopts[5], itoa(setpoint[HLT], buf, 10), 3);
+    strcat(menuopts[5], tempUnit);
     
-    strncat(paramMenu[6], itoa(spargeTemp, buf, 10), 3);
-    strcat(paramMenu[6], tempUnit);
-    
-    strncat(paramMenu[7], itoa(stepMins[DOUGHIN], buf, 10), 2);
-    strcat(paramMenu[7], " min");
+    strncat(menuopts[6], itoa(spargeTemp, buf, 10), 3);
+    strcat(menuopts[6], tempUnit);
 
+<<<<<<< .mine
+    switch(scrollMenu("AutoBrew Parameters", menuopts, 10)) {
+=======
     strncat(paramMenu[8], itoa(stepTemp[DOUGHIN], buf, 10), 3);
     strcat(paramMenu[8], tempUnit);
     
@@ -151,6 +147,7 @@ void doAutoBrew() {
     strcat(paramMenu[14], tempUnit);
 
     switch(scrollMenu("AutoBrew Parameters", paramMenu, 17)) {
+>>>>>>> .r135
       case 0:
         tgtVol[KETTLE] = getValue("Batch Volume", tgtVol[KETTLE], 7, 3, 9999999, volUnit);
         break;
@@ -173,30 +170,9 @@ void doAutoBrew() {
         spargeTemp = getValue("HLT Setpoint", spargeTemp, 3, 0, 255, tempUnit);
         break;
       case 7:
-        stepMins[DOUGHIN] = getTimerValue("Dough In", stepMins[DOUGHIN]);
+        editMashSchedule(stepTemp, stepMins);
         break;
       case 8:
-        stepTemp[DOUGHIN] = getValue("Dough In", stepTemp[DOUGHIN], 3, 0, 255, tempUnit);
-        break;
-      case 9:
-        stepMins[PROTEIN] = getTimerValue("Protein Rest", stepMins[PROTEIN]);
-        break;
-      case 10:
-        stepTemp[PROTEIN] = getValue("Protein Rest", stepTemp[PROTEIN], 3, 0, 255, tempUnit);
-        break;
-      case 11:
-        stepMins[SACCH] = getTimerValue("Sacch Rest", stepMins[SACCH]);
-        break;
-      case 12:
-        stepTemp[SACCH] = getValue("Sacch Rest", stepTemp[SACCH], 3, 0, 255, tempUnit);
-        break;
-      case 13:
-        stepMins[MASHOUT] = getTimerValue("Mash Out", stepMins[MASHOUT]);
-        break;
-      case 14:
-        stepTemp[MASHOUT] = getValue("Mash Out", stepTemp[MASHOUT], 3, 0, 255, tempUnit);
-        break;
-      case 15:
         inMenu = 0;
         break;
       default:
@@ -341,9 +317,22 @@ void doAutoBrew() {
 void fillStage(unsigned long hltVol, unsigned long mashVol, char volUnit[]) {
   char buf[5];
   clearLCD();
+<<<<<<< .mine
+  printLCD(0, 0, "HLT - Fill - Mash");
+=======
   printLCD(0, 0, "HLT  -  Fill  - Mash");
 
+>>>>>>> .r135
   unsigned long whole = hltVol / 1000;
+<<<<<<< .mine
+  //Throw away the last digit
+  unsigned long frac = round ((hltVol - whole * 1000)/10.0) ;
+  printLCDPad(1, 0, ltoa(whole, buf, 10), 3, ' ');
+  printLCD(1, 3, ".");
+  printLCDPad(1, 4, ltoa(frac, buf, 10), 2, '0');
+  printLCD(1, 5, " ");
+  printLCD(1, 8, volUnit);
+=======
   unsigned long frac = hltVol - (whole * 1000) ;
   printLCDPad(1, 0, ltoa(whole, buf, 10), 3, ' ');
   printLCD(1, 3, ".");
@@ -351,12 +340,22 @@ void fillStage(unsigned long hltVol, unsigned long mashVol, char volUnit[]) {
   printLCD(1, 5, "         ");
   printLCD(1, 8, volUnit);
 
+>>>>>>> .r135
   whole = mashVol / 1000;
+<<<<<<< .mine
+  //Throw away the last digit
+  frac = round ((mashVol - whole * 1000)/10.0) ;
+  printLCDPad(1, 14, ltoa(whole, buf, 10), 3, ' ');
+  printLCD(1, 17, ".");
+  printLCDPad(1, 18, ltoa(frac, buf, 10), 2, '0');
+  
+=======
   frac = mashVol - (whole * 1000) ;
   printLCDPad(1, 14, ltoa(whole, buf, 10), 3, ' ');
   printLCD(1, 17, ".");
   printLCDPad(1, 18, ltoa(frac, buf, 10), 2, '0');
 
+>>>>>>> .r135
   char conExit[2][19] = {
     "     Continue     ",
     "       Abort      "};
@@ -455,6 +454,7 @@ void mashStep(char sTitle[ ], int iMins) {
       }
 
       for (int i = HLT; i <= MASH; i++) {
+        boolean setOut;
         if (PIDEnabled[i]) {
           if (temp[i] == -1) {
             pid[i].SetMode(MANUAL);
@@ -465,20 +465,24 @@ void mashStep(char sTitle[ ], int iMins) {
             pid[i].Compute();
           }
           if (millis() - cycleStart[i] > PIDCycle[i] * 1000) cycleStart[i] += PIDCycle[i] * 1000;
-          if (PIDOutput[i] > millis() - cycleStart[i]) digitalWrite(OUTPUT_PIN[i], HIGH);
-          else digitalWrite(OUTPUT_PIN[i], LOW);
+          if (PIDOutput[i] > millis() - cycleStart[i]) setOut = 1; else setOut = 0;
         } else {
           if (heatStatus[i]) {
             if (temp[i] == -1 || temp[i] >= setpoint[i]) {
-              digitalWrite(OUTPUT_PIN[i], LOW);
+              setOut = 0;
               heatStatus[i] = 0;
-            }
+            } else setOut = 1;
           } else { 
             if (temp[i] != -1 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
-              digitalWrite(OUTPUT_PIN[i], HIGH);
+              setOut = 1;
               heatStatus[i] = 1;
-            }
+            } else setOut = 0;
           }
+        }
+        switch(i) {
+          case HLT: digitalWrite(HLTHEAT_PIN, setOut); break;
+          case MASH: digitalWrite(MASHHEAT_PIN, setOut); break;
+          case KETTLE: digitalWrite(KETTLEHEAT_PIN, setOut); break;
         }
       }
       if (doPrompt && preheated && enterStatus == 1) { enterStatus = 0; break; }
@@ -490,12 +494,82 @@ void mashStep(char sTitle[ ], int iMins) {
     }
     if (!redraw) {
        //Turn off HLT and MASH outputs
-       for (int i = HLT; i <= MASH; i++) {
-        if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
-        digitalWrite(OUTPUT_PIN[i], LOW);
-       }
+       for (int i = HLT; i <= MASH; i++) { if (PIDEnabled[i]) pid[i].SetMode(MANUAL); }
+       digitalWrite(HLTHEAT_PIN, LOW);
+       digitalWrite(MASHHEAT_PIN, LOW);
+       digitalWrite(KETTLEHEAT_PIN, LOW);
        //Exit
       return;
+    }
+  }
+}
+
+void editMashSchedule(byte stepTemp[4], byte stepMins[4]) {
+  char buf[4];
+  char tempUnit[2] = "C";
+  if (unit) strcpy (tempUnit, "F");
+  while (1) {
+    strcpy(menuopts[0], "Dough In:");
+    strcpy(menuopts[1], "Dough In:");
+    strcpy(menuopts[2], "Protein Rest:");
+    strcpy(menuopts[3], "Protein Rest:");
+    strcpy(menuopts[4], "Sacch Rest:");
+    strcpy(menuopts[5], "Sacch Rest:");
+    strcpy(menuopts[6], "Mash Out:");
+    strcpy(menuopts[7], "Mash Out:");
+    strcpy(menuopts[8], "Exit");
+  
+    strncat(menuopts[0], itoa(stepMins[DOUGHIN], buf, 10), 2);
+    strcat(menuopts[0], " min");
+
+    strncat(menuopts[1], itoa(stepTemp[DOUGHIN], buf, 10), 3);
+    strcat(menuopts[1], tempUnit);
+    
+    strncat(menuopts[2], itoa(stepMins[PROTEIN], buf, 10), 2);
+    strcat(menuopts[2], " min");
+
+    strncat(menuopts[3], itoa(stepTemp[PROTEIN], buf, 10), 3);
+    strcat(menuopts[3], tempUnit);
+    
+    strncat(menuopts[4], itoa(stepMins[SACCH], buf, 10), 2);
+    strcat(menuopts[4], " min");
+
+    strncat(menuopts[5], itoa(stepTemp[SACCH], buf, 10), 3);
+    strcat(menuopts[5], tempUnit);
+    
+    strncat(menuopts[6], itoa(stepMins[MASHOUT], buf, 10), 2);
+    strcat(menuopts[6], " min");
+
+    strncat(menuopts[7], itoa(stepTemp[MASHOUT], buf, 10), 3);
+    strcat(menuopts[7], tempUnit);
+
+    switch (scrollMenu("Mash Schedule", menuopts, 9)) {
+      case 0:
+        stepMins[DOUGHIN] = getTimerValue("Dough In", stepMins[DOUGHIN]);
+        break;
+      case 1:
+        stepTemp[DOUGHIN] = getValue("Dough In", stepTemp[DOUGHIN], 3, 0, 255, tempUnit);
+        break;
+      case 2:
+        stepMins[PROTEIN] = getTimerValue("Protein Rest", stepMins[PROTEIN]);
+        break;
+      case 3:
+        stepTemp[PROTEIN] = getValue("Protein Rest", stepTemp[PROTEIN], 3, 0, 255, tempUnit);
+        break;
+      case 4:
+        stepMins[SACCH] = getTimerValue("Sacch Rest", stepMins[SACCH]);
+        break;
+      case 5:
+        stepTemp[SACCH] = getValue("Sacch Rest", stepTemp[SACCH], 3, 0, 255, tempUnit);
+        break;
+      case 6:
+        stepMins[MASHOUT] = getTimerValue("Mash Out", stepMins[MASHOUT]);
+        break;
+      case 7:
+        stepTemp[MASHOUT] = getValue("Mash Out", stepTemp[MASHOUT], 3, 0, 255, tempUnit);
+        break;
+      default:
+        return;
     }
   }
 }

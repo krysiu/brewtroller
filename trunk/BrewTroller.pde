@@ -1,5 +1,28 @@
 #include <PID.h>
 
+//Pin and Interrupt Definitions
+#define ENCA_PIN 2
+#define ENCB_PIN 4
+#define TEMP_PIN 5
+#define ENTER_PIN 11
+#define ALARM_PIN 15
+#define ENTER_INT 1
+#define ENCA_INT 2
+#define VALVE0_PIN 6
+#define VALVE1_PIN 7
+#define VALVE2_PIN 8
+#define VALVE3_PIN 9
+#define VALVE4_PIN 10
+#define VALVE5_PIN 12
+#define VALVE6_PIN 13
+#define VALVE7_PIN 14
+#define VALVE8_PIN 16
+#define VALVE9_PIN 18
+#define VALVEA_PIN 24
+#define HLTHEAT_PIN 0
+#define MASHHEAT_PIN 1
+#define KETTLEHEAT_PIN 3
+
 //TSensor Array Element Constants
 #define HLT 0
 #define MASH 1
@@ -9,36 +32,35 @@
 #define BEEROUT 5
 
 //Valve Array Element Constants and Variables
-#define FILLHLT 0
-#define FILLMASH 1
-#define MASHHEAT 2
-#define MASHIDLE 3
-#define SPARGEIN 4
-#define SPARGEOUT 5
-#define CHILLH2O 6
-#define CHILLBEER 7
-
-//Loop-friendly Output Consts
-const byte OUTPUT_PIN[3] = { 0, 1, 3 };
-
-//Encoder Globals
-byte encMode = 0;
-unsigned int encCount;
-unsigned int encMin;
-unsigned int encMax;
-unsigned int enterStatus = 0;
-
-#define CUI 0
-#define ALPS 1
-
-//8-byte Temperature Sensor Address x6 Sensors
-byte tSensor[6][8];
+#define ALLOFF 0
+#define FILLHLT 1
+#define FILLMASH 2
+#define MASHHEAT 3
+#define MASHIDLE 4
+#define SPARGEIN 5
+#define SPARGEOUT 6
+#define CHILLH2O 7
+#define CHILLBEER 8
 
 //Unit Definitions
 //International: Celcius, Liter, Kilogram
 //US: Fahrenheit, Gallon, US Pound
 #define INTL 0
 #define US 1
+
+//Encoder Types
+#define CUI 0
+#define ALPS 1
+
+//Encoder Globals
+byte encMode = 0;
+int encCount;
+byte encMin;
+byte encMax;
+byte enterStatus = 0;
+
+//8-byte Temperature Sensor Address x6 Sensors
+byte tSensor[6][8];
 
 //Unit Globals (Volume in thousandths)
 boolean unit;
@@ -52,6 +74,9 @@ byte evapRate;
 //Output Globals
 boolean sysHERMS = 0;
 boolean PIDEnabled[3] = { 0, 0, 0 };
+
+//Shared menuOptions Array
+char menuopts[16][20];
 
 double PIDInput[3], PIDOutput[3], setpoint[3];
 byte PIDp[3], PIDi[3], PIDd[3], PIDCycle[3], hysteresis[3];
@@ -70,26 +95,24 @@ boolean timerStatus = 0;
 boolean alarmStatus = 0;
   
 void setup() {
-  //EncA, EncB, Enter
-  pinMode(2, INPUT);
-  pinMode(4, INPUT);
-  pinMode(11, INPUT);
-  //Alarm
-  pinMode(15, OUTPUT);
-  //Valves 0-9, A
-  pinMode(6, OUTPUT);
-  pinMode(7, OUTPUT);
-  pinMode(8, OUTPUT);
-  pinMode(9, OUTPUT);
-  pinMode(10, OUTPUT);
-  pinMode(12, OUTPUT);
-  pinMode(13, OUTPUT);
-  pinMode(14, OUTPUT);
-  pinMode(16, OUTPUT);
-  pinMode(18, OUTPUT);
-  pinMode(24, OUTPUT);
-  
-  for (int i = HLT; i <= KETTLE; i++) pinMode(OUTPUT_PIN[i], OUTPUT);
+  pinMode(ENCA_PIN, INPUT);
+  pinMode(ENCB_PIN, INPUT);
+  pinMode(ENTER_PIN, INPUT);
+  pinMode(ALARM_PIN, OUTPUT);
+  pinMode(VALVE0_PIN, OUTPUT);
+  pinMode(VALVE1_PIN, OUTPUT);
+  pinMode(VALVE2_PIN, OUTPUT);
+  pinMode(VALVE3_PIN, OUTPUT);
+  pinMode(VALVE4_PIN, OUTPUT);
+  pinMode(VALVE5_PIN, OUTPUT);
+  pinMode(VALVE6_PIN, OUTPUT);
+  pinMode(VALVE7_PIN, OUTPUT);
+  pinMode(VALVE8_PIN, OUTPUT);
+  pinMode(VALVE9_PIN, OUTPUT);
+  pinMode(VALVEA_PIN, OUTPUT);
+  pinMode(HLTHEAT_PIN, OUTPUT);
+  pinMode(MASHHEAT_PIN, OUTPUT);
+  pinMode(KETTLEHEAT_PIN, OUTPUT);
   resetOutputs();
   initLCD();
 
@@ -108,18 +131,14 @@ void setup() {
 }
 
 void loop() {
-  char buf[6];
-  char mainMenu[3][20] = {
-    "AutoBrew",
-    "Brew Monitor",
-    "System Setup"
-  };
-  while(1) {
-    switch (scrollMenu("BrewTroller", mainMenu, 3)) {
-      case 0: doAutoBrew(); break;
-      case 1: doMon(); break;
-      case 2: menuSetup(); break;
-    }
+  strcpy(menuopts[0], "AutoBrew");
+  strcpy(menuopts[1], "Brew Monitor");
+  strcpy(menuopts[2], "System Setup");
+ 
+  switch (scrollMenu("BrewTroller", menuopts, 3)) {
+    case 0: doAutoBrew(); break;
+    case 1: doMon(); break;
+    case 2: menuSetup(); break;
   }
 }
 
@@ -239,7 +258,7 @@ void splashScreen() {
   lcdWriteCustChar(2, 1, 6); 
   lcdWriteCustChar(2, 2, 7); 
   printLCD(0, 4, "BrewTroller v1.0");
-  printLCD(1, 10, "Build 0134");
+  printLCD(1, 10, "Build 0136");
   printLCD(3, 1, "www.brewtroller.com");
   while(!enterStatus) delay(250);
   enterStatus = 0;
