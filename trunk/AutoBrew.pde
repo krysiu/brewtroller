@@ -1,14 +1,10 @@
-<<<<<<< .mine
 #define PROMPT -1
 #define DOUGHIN 0
 #define PROTEIN 1
 #define SACCH 2
 #define MASHOUT 3
-  
-=======
 #define PROMPT -1
 
->>>>>>> .r135
 void doAutoBrew() {
   unsigned int delayMins = 0;
   byte stepTemp[4], stepMins[4], spargeTemp;
@@ -122,32 +118,7 @@ void doAutoBrew() {
     strncat(menuopts[6], itoa(spargeTemp, buf, 10), 3);
     strcat(menuopts[6], tempUnit);
 
-<<<<<<< .mine
     switch(scrollMenu("AutoBrew Parameters", menuopts, 10)) {
-=======
-    strncat(paramMenu[8], itoa(stepTemp[DOUGHIN], buf, 10), 3);
-    strcat(paramMenu[8], tempUnit);
-    
-    strncat(paramMenu[9], itoa(stepMins[PROTEIN], buf, 10), 2);
-    strcat(paramMenu[9], " min");
-
-    strncat(paramMenu[10], itoa(stepTemp[PROTEIN], buf, 10), 3);
-    strcat(paramMenu[10], tempUnit);
-    
-    strncat(paramMenu[11], itoa(stepMins[SACCH], buf, 10), 2);
-    strcat(paramMenu[11], " min");
-
-    strncat(paramMenu[12], itoa(stepTemp[SACCH], buf, 10), 3);
-    strcat(paramMenu[12], tempUnit);
-    
-    strncat(paramMenu[13], itoa(stepMins[MASHOUT], buf, 10), 2);
-    strcat(paramMenu[13], " min");
-
-    strncat(paramMenu[14], itoa(stepTemp[MASHOUT], buf, 10), 3);
-    strcat(paramMenu[14], tempUnit);
-
-    switch(scrollMenu("AutoBrew Parameters", paramMenu, 17)) {
->>>>>>> .r135
       case 0:
         tgtVol[KETTLE] = getValue("Batch Volume", tgtVol[KETTLE], 7, 3, 9999999, volUnit);
         break;
@@ -317,14 +288,8 @@ void doAutoBrew() {
 void fillStage(unsigned long hltVol, unsigned long mashVol, char volUnit[]) {
   char buf[5];
   clearLCD();
-<<<<<<< .mine
   printLCD(0, 0, "HLT - Fill - Mash");
-=======
-  printLCD(0, 0, "HLT  -  Fill  - Mash");
-
->>>>>>> .r135
   unsigned long whole = hltVol / 1000;
-<<<<<<< .mine
   //Throw away the last digit
   unsigned long frac = round ((hltVol - whole * 1000)/10.0) ;
   printLCDPad(1, 0, ltoa(whole, buf, 10), 3, ' ');
@@ -332,30 +297,13 @@ void fillStage(unsigned long hltVol, unsigned long mashVol, char volUnit[]) {
   printLCDPad(1, 4, ltoa(frac, buf, 10), 2, '0');
   printLCD(1, 5, " ");
   printLCD(1, 8, volUnit);
-=======
-  unsigned long frac = hltVol - (whole * 1000) ;
-  printLCDPad(1, 0, ltoa(whole, buf, 10), 3, ' ');
-  printLCD(1, 3, ".");
-  printLCDPad(1, 4, ltoa(frac, buf, 10), 2, '0');
-  printLCD(1, 5, "         ");
-  printLCD(1, 8, volUnit);
-
->>>>>>> .r135
   whole = mashVol / 1000;
-<<<<<<< .mine
   //Throw away the last digit
   frac = round ((mashVol - whole * 1000)/10.0) ;
   printLCDPad(1, 14, ltoa(whole, buf, 10), 3, ' ');
   printLCD(1, 17, ".");
   printLCDPad(1, 18, ltoa(frac, buf, 10), 2, '0');
   
-=======
-  frac = mashVol - (whole * 1000) ;
-  printLCDPad(1, 14, ltoa(whole, buf, 10), 3, ' ');
-  printLCD(1, 17, ".");
-  printLCDPad(1, 18, ltoa(frac, buf, 10), 2, '0');
-
->>>>>>> .r135
   char conExit[2][19] = {
     "     Continue     ",
     "       Abort      "};
