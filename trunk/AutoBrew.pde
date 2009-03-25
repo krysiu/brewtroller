@@ -219,7 +219,7 @@ void doAutoBrew() {
 
   if (recoveryStep <= 1) {
     setABRecovery(1);
-    fillStage(tgtVol[HLT], tgtVol[MASH], volUnit);
+    fillStage(tgtVol[HLT], tgtVol[MASH]);
     if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
   }
   
@@ -285,29 +285,91 @@ void doAutoBrew() {
   setPwrRecovery(0);
 }
 
-void fillStage(unsigned long hltVol, unsigned long mashVol, char volUnit[]) {
-  char buf[5];
-  clearLCD();
-  printLCD(0, 0, "HLT - Fill - Mash");
-  unsigned long whole = hltVol / 1000;
-  //Throw away the last digit
-  unsigned long frac = round ((hltVol - whole * 1000)/10.0) ;
-  printLCDPad(1, 0, ltoa(whole, buf, 10), 3, ' ');
-  printLCD(1, 3, ".");
-  printLCDPad(1, 4, ltoa(frac, buf, 10), 2, '0');
-  printLCD(1, 5, " ");
-  printLCD(1, 8, volUnit);
-  whole = mashVol / 1000;
-  //Throw away the last digit
-  frac = round ((mashVol - whole * 1000)/10.0) ;
-  printLCDPad(1, 14, ltoa(whole, buf, 10), 3, ' ');
-  printLCD(1, 17, ".");
-  printLCDPad(1, 18, ltoa(frac, buf, 10), 2, '0');
-  
-  char conExit[2][19] = {
-    "     Continue     ",
-    "       Abort      "};
-  if (getChoice(conExit, 2, 3) != 0) enterStatus = 2;
+void fillStage(unsigned long hltVol, unsigned long mashVol) {
+  char fString[7], buf[5];
+  int fillHLT = getValveCfg(FILLHLT);
+  int fillMash = getValveCfg(FILLMASH);
+  int fillBoth = fillHLT || fillMash;
+
+  while (1) {
+    clearLCD();
+    printLCD(0, 0, "HLT");
+    if (unit) printLCD(0, 5, "Fill (gal)"); else printLCD(0, 6, "Fill (l)");
+    printLCD(0, 16, "Mash");
+
+    printLCD(1, 7, "Target");
+    printLCD(2, 7, "Actual");
+    unsigned long whole = hltVol / 1000;
+    //Throw away the last digit
+    unsigned long frac = round ((hltVol - whole * 1000)/10.0);
+    //Build string to align left
+
+    strcpy(fString, ltoa(whole, buf, 10));
+    strcat(fString, ".");
+    strcat(fString, ltoa(frac, buf, 10));
+    printLCD(1, 0, fString);
+
+    whole = mashVol / 1000;
+    //Throw away the last digit
+    frac = round ((mashVol - whole * 1000)/10.0) ;
+    printLCDPad(1, 14, ltoa(whole, buf, 10), 3, ' ');
+    printLCD(1, 17, ".");
+    printLCDPad(1, 18, ltoa(frac, buf, 10), 2, '0');
+
+    setValves(0);
+    printLCD(3, 0, "Off");
+    printLCD(3, 17, "Off");
+
+    encMin = 0;
+    encMax = 5;
+    encCount = 0;
+    int lastCount = 1;
+    
+    boolean redraw = 0;
+    while(!redraw) {
+      if (encCount != lastCount) {
+        switch(encCount) {
+          case 0: printLCD(3, 4, "> Continue <"); break;
+          case 1: printLCD(3, 4, "> Fill HLT <"); break;
+          case 2: printLCD(3, 4, "> Fill Mash<"); break;
+          case 3: printLCD(3, 4, "> Fill Both<"); break;
+          case 4: printLCD(3, 4, ">  All Off <"); break;
+          case 5: printLCD(3, 4, ">   Abort  <"); break;
+        }
+        lastCount = encCount;
+      }
+      if (enterStatus == 1) {
+        enterStatus = 0;
+        switch(encCount) {
+          case 0: return;
+          case 1:
+            printLCD(3, 0, "On ");
+            printLCD(3, 17, "Off");
+            setValves(fillHLT);
+            break;
+          case 2:
+            printLCD(3, 0, "Off");
+            printLCD(3, 17, " On");
+            setValves(fillMash);
+            break;
+          case 3:
+            printLCD(3, 0, "On ");
+            printLCD(3, 17, " On");
+            setValves(fillBoth);
+            break;
+          case 4:
+            printLCD(3, 0, "Off");
+            printLCD(3, 17, "Off");
+            setValves(0);
+            break;
+          case 5: if (confirmExit()) { enterStatus = 2; return; } else redraw = 1;
+        }
+      } else if (enterStatus == 2) {
+        enterStatus = 0;
+        if (confirmExit()) { enterStatus = 2; return; } else redraw = 1;
+      }
+    }
+  }
 }
 
 void delayStart(int iMins) {
