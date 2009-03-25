@@ -10,7 +10,8 @@ void doMon() {
   
   for (int i = HLT; i <= KETTLE; i++) {
     if (PIDEnabled[i]) {
-      pid[i].SetIOLimits(0, 255, 0, PIDCycle[i] * 1000);
+      pid[i].SetInputLimits(0, 255);
+      pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
       PIDOutput[i] = 0;
       cycleStart[i] = millis();
     }
