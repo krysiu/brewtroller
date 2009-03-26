@@ -28,6 +28,18 @@ void printLCD(byte iRow, byte iCol, char sText[]){
  }
 } 
 
+//Version of PrintLCD reading from PROGMEM
+void printLCD_P(byte iRow, byte iCol, const char *sText){
+ lcd.setCursor(iCol, iRow);
+ delayMicroseconds(LCD_DELAY_CURSOR);
+ int i = 0;
+ while (pgm_read_byte(sText) != 0)
+ {
+   lcd.print(pgm_read_byte(sText++)); 
+   delayMicroseconds(LCD_DELAY_CHAR);
+ }
+} 
+
 void clearLCD(){ lcd.clear(); }
 
 char printLCDPad(byte iRow, byte iCol, char sText[], byte length, char pad) {
@@ -45,9 +57,9 @@ char printLCDPad(byte iRow, byte iCol, char sText[], byte length, char pad) {
  }
 }  
 
-void lcdSetCustChar(byte slot, byte charDef[8]) {
+void lcdSetCustChar(byte slot, const byte charDef[]) {
   lcd.command(64 | (slot << 3));
-  for(byte i = 0; i < 8; i++) {
+  for (int i = 0; i < 8; i++) {
     lcd.write(charDef[i]);
     delayMicroseconds(LCD_DELAY_CHAR);
   }

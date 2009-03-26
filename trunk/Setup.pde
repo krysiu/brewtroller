@@ -4,25 +4,25 @@ void menuSetup()
 
 
   while(1) {
-    if (unit) strcpy(menuopts[0], "Unit: US"); else strcpy(menuopts[0], "Unit: Metric");
-    if (sysHERMS) strcpy(menuopts[1], "System Type: HERMS"); else strcpy(menuopts[1], "System Type: Direct");
+    if (unit) strcpy_P(menuopts[0], PSTR("Unit: US")); else strcpy_P(menuopts[0], PSTR("Unit: Metric"));
+    if (sysHERMS) strcpy_P(menuopts[1], PSTR("System Type: HERMS")); else strcpy_P(menuopts[1], PSTR("System Type: Direct"));
       
     switch (encMode) {
       case CUI:
-        strcpy(menuopts[2], "Encoder: CUI");
+        strcpy_P(menuopts[2], PSTR("Encoder: CUI"));
         break;
       case ALPS:
-        strcpy(menuopts[2], "Encoder: ALPS");
+        strcpy_P(menuopts[2], PSTR("Encoder: ALPS"));
         break;
     }
     
-    strcpy(menuopts[3], "Assign Temp Sensor");
-    strcpy(menuopts[4], "Configure Outputs");
-    strcpy(menuopts[5], "Volume/Capacity");
-    strcpy(menuopts[6], "Configure Valves");
-    strcpy(menuopts[7], "Save Settings");
-    strcpy(menuopts[8], "Load Settings");
-    strcpy(menuopts[9], "Exit Setup");
+    strcpy_P(menuopts[3], PSTR("Assign Temp Sensor"));
+    strcpy_P(menuopts[4], PSTR("Configure Outputs"));
+    strcpy_P(menuopts[5], PSTR("Volume/Capacity"));
+    strcpy_P(menuopts[6], PSTR("Configure Valves"));
+    strcpy_P(menuopts[7], PSTR("Save Settings"));
+    strcpy_P(menuopts[8], PSTR("Load Settings"));
+    strcpy_P(menuopts[9], PSTR("Exit Setup"));
   
     switch(scrollMenu("System Setup", menuopts, 10)) {
       case 0:
@@ -35,7 +35,7 @@ void menuSetup()
             volume[i] = round(volume[i] * 0.26417);
             volLoss[i] = round(volLoss[i] * 0.26417);
           }
-          defBatchVol = round(defBatchVol * 0.26417);
+          setDefBatch(round(getDefBatch() * 0.26417));
         } else {
           for (int i = HLT; i <= KETTLE; i++) {
             hysteresis[i] = round(hysteresis[i] / 1.8);
@@ -43,7 +43,7 @@ void menuSetup()
             volume[i] = round(volume[i] / 0.26417);
             volLoss[i] = round(volLoss[i] / 0.26417);
           }
-          defBatchVol = round(defBatchVol / 0.26417);
+          setDefBatch(round(getDefBatch() / 0.26417));
         }
         break;
       case 1:
@@ -80,7 +80,7 @@ void assignSensor() {
     if (encCount != lastCount) {
       lastCount = encCount;
       clearLCD();
-      printLCD(0, 0, "Assign Temp Sensor");
+      printLCD_P(0, 0, PSTR("Assign Temp Sensor"));
       printLCD(1, 0, dispTitle[lastCount]);
       for (int i=0; i<8; i++) printLCDPad(2,i*2+2,itoa(tSensor[lastCount][i], buf, 16), 2, '0');  
     }
@@ -91,16 +91,16 @@ void assignSensor() {
     if (enterStatus == 1) {
       enterStatus = 0;
       //Pop-Up Menu
-      strcpy(menuopts[0], "Scan Bus");
-      strcpy(menuopts[1], "Delete Address");
-      strcpy(menuopts[2], "Close Menu");
-      strcpy(menuopts[3], "Exit");
+      strcpy_P(menuopts[0], PSTR("Scan Bus"));
+      strcpy_P(menuopts[1], PSTR("Delete Address"));
+      strcpy_P(menuopts[2], PSTR("Close Menu"));
+      strcpy_P(menuopts[3], PSTR("Exit"));
       switch (scrollMenu(dispTitle[lastCount], menuopts, 4)) {
         case 0:
           clearLCD();
           printLCD(0,0, dispTitle[lastCount]);
-          printLCD(1,0,"Disconnect all other");
-          printLCD(2,0,"  temp sensors now  ");
+          printLCD_P(1,0,PSTR("Disconnect all other"));
+          printLCD_P(2,0,PSTR("  temp sensors now  "));
           {
             char conExit[2][19] = {
               "     Continue     ",
@@ -123,22 +123,22 @@ void assignSensor() {
 
 void cfgOutputs() {
   char dispUnit[2] = "C";
-  if (unit) strcpy(dispUnit, "F");
+  if (unit) strcpy_P(dispUnit, PSTR("F"));
 
   while(1) {
-    if (PIDEnabled[HLT]) strcpy(menuopts[0], "HLT Mode: PID"); else strcpy(menuopts[0], "HLT Mode: On/Off");
-    strcpy(menuopts[1], "HLT PID Cycle");
-    strcpy(menuopts[2], "HLT PID Gain");
-    strcpy(menuopts[3], "HLT Hysteresis");
-    if (PIDEnabled[MASH]) strcpy(menuopts[4], "Mash Mode: PID"); else strcpy(menuopts[4], "Mash Mode: On/Off");
-    strcpy(menuopts[5], "Mash PID Cycle");
-    strcpy(menuopts[6], "Mash PID Gain");
-    strcpy(menuopts[7], "Mash Hysteresis");
-    if (PIDEnabled[KETTLE]) strcpy(menuopts[8], "Kettle Mode: PID"); else strcpy(menuopts[8], "Kettle Mode: On/Off");
-    strcpy(menuopts[9], "Kettle PID Cycle");
-    strcpy(menuopts[10], "Kettle PID Gain");
-    strcpy(menuopts[11], "Kettle Hysteresis");
-    strcpy(menuopts[12], "Exit");
+    if (PIDEnabled[HLT]) strcpy_P(menuopts[0], PSTR("HLT Mode: PID")); else strcpy_P(menuopts[0], PSTR("HLT Mode: On/Off"));
+    strcpy_P(menuopts[1], PSTR("HLT PID Cycle"));
+    strcpy_P(menuopts[2], PSTR("HLT PID Gain"));
+    strcpy_P(menuopts[3], PSTR("HLT Hysteresis"));
+    if (PIDEnabled[MASH]) strcpy_P(menuopts[4], PSTR("Mash Mode: PID")); else strcpy_P(menuopts[4], PSTR("Mash Mode: On/Off"));
+    strcpy_P(menuopts[5], PSTR("Mash PID Cycle"));
+    strcpy_P(menuopts[6], PSTR("Mash PID Gain"));
+    strcpy_P(menuopts[7], PSTR("Mash Hysteresis"));
+    if (PIDEnabled[KETTLE]) strcpy_P(menuopts[8], PSTR("Kettle Mode: PID")); else strcpy_P(menuopts[8], PSTR("Kettle Mode: On/Off"));
+    strcpy_P(menuopts[9], PSTR("Kettle PID Cycle"));
+    strcpy_P(menuopts[10], PSTR("Kettle PID Gain"));
+    strcpy_P(menuopts[11], PSTR("Kettle Hysteresis"));
+    strcpy_P(menuopts[12], PSTR("Exit"));
 
     switch(scrollMenu("Configure Outputs", menuopts, 13)) {
       case 0: PIDEnabled[HLT] = PIDEnabled[HLT] ^ 1; break;
@@ -172,8 +172,8 @@ void setPIDGain(char sTitle[], byte* p, byte* i, byte* d) {
   
   clearLCD();
   printLCD(0,0,sTitle);
-  printLCD(1, 0, "P:     I:     D:    ");
-  printLCD(3, 8, "OK");
+  printLCD_P(1, 0, PSTR("P:     I:     D:    "));
+  printLCD_P(3, 8, PSTR("OK"));
   
   while(1) {
     if (encCount != lastCount) {
@@ -187,32 +187,32 @@ void setPIDGain(char sTitle[], byte* p, byte* i, byte* d) {
         cursorPos = encCount;
         switch (cursorPos) {
           case 0:
-            printLCD(1, 2, ">");
-            printLCD(1, 9, " ");
-            printLCD(1, 16, " ");
-            printLCD(3, 7, " ");
-            printLCD(3, 10, " ");
+            printLCD_P(1, 2, PSTR(">"));
+            printLCD_P(1, 9, PSTR(" "));
+            printLCD_P(1, 16, PSTR(" "));
+            printLCD_P(3, 7, PSTR(" "));
+            printLCD_P(3, 10, PSTR(" "));
             break;
           case 1:
-            printLCD(1, 2, " ");
-            printLCD(1, 9, ">");
-            printLCD(1, 16, " ");
-            printLCD(3, 7, " ");
-            printLCD(3, 10, " ");
+            printLCD_P(1, 2, PSTR(" "));
+            printLCD_P(1, 9, PSTR(">"));
+            printLCD_P(1, 16, PSTR(" "));
+            printLCD_P(3, 7, PSTR(" "));
+            printLCD_P(3, 10, PSTR(" "));
             break;
           case 2:
-            printLCD(1, 2, " ");
-            printLCD(1, 9, " ");
-            printLCD(1, 16, ">");
-            printLCD(3, 7, " ");
-            printLCD(3, 10, " ");
+            printLCD_P(1, 2, PSTR(" "));
+            printLCD_P(1, 9, PSTR(" "));
+            printLCD_P(1, 16, PSTR(">"));
+            printLCD_P(3, 7, PSTR(" "));
+            printLCD_P(3, 10, PSTR(" "));
             break;
           case 3:
-            printLCD(1, 2, " ");
-            printLCD(1, 9, " ");
-            printLCD(1, 16, " ");
-            printLCD(3, 7, ">");
-            printLCD(3, 10, "<");
+            printLCD_P(1, 2, PSTR(" "));
+            printLCD_P(1, 9, PSTR(" "));
+            printLCD_P(1, 16, PSTR(" "));
+            printLCD_P(3, 7, PSTR(">"));
+            printLCD_P(3, 10, PSTR("<"));
             break;
         }
       }
@@ -252,18 +252,18 @@ void setPIDGain(char sTitle[], byte* p, byte* i, byte* d) {
 
 void cfgVolumes() {
   while(1) {
-    strcpy(menuopts[0], "HLT Capacity       ");
-    strcpy(menuopts[1], "HLT Dead Space     ");
-    strcpy(menuopts[2], "Mash Capacity      ");
-    strcpy(menuopts[3], "Mash Dead Space    ");
-    strcpy(menuopts[4], "Kettle Capacity    ");
-    strcpy(menuopts[5], "Kettle Dead Space  ");
-    strcpy(menuopts[6], "Batch Size         ");
-    strcpy(menuopts[7], "Evaporation Rate   ");
-    strcpy(menuopts[8], "Exit               ");
+    strcpy_P(menuopts[0], PSTR("HLT Capacity       "));
+    strcpy_P(menuopts[1], PSTR("HLT Dead Space     "));
+    strcpy_P(menuopts[2], PSTR("Mash Capacity      "));
+    strcpy_P(menuopts[3], PSTR("Mash Dead Space    "));
+    strcpy_P(menuopts[4], PSTR("Kettle Capacity    "));
+    strcpy_P(menuopts[5], PSTR("Kettle Dead Space  "));
+    strcpy_P(menuopts[6], PSTR("Batch Size         "));
+    strcpy_P(menuopts[7], PSTR("Evaporation Rate   "));
+    strcpy_P(menuopts[8], PSTR("Exit               "));
 
     char volUnit[5] = "L";
-    if (unit) strcpy(volUnit, "Gal");
+    if (unit) strcpy_P(volUnit, PSTR("Gal"));
     switch(scrollMenu("Volume/Capacity", menuopts, 9)) {
       case 0: capacity[HLT] = getValue("HLT Capacity", capacity[HLT], 7, 3, 9999999, volUnit); break;
       case 1: volLoss[HLT] = getValue("HLT Dead Space", volLoss[HLT], 5, 3, 65535, volUnit); break;
@@ -271,7 +271,7 @@ void cfgVolumes() {
       case 3: volLoss[MASH] = getValue("Mash Dead Spac", volLoss[MASH], 5, 3, 65535, volUnit); break;
       case 4: capacity[KETTLE] = getValue("Kettle Capacity", capacity[KETTLE], 7, 3, 9999999, volUnit); break;
       case 5: volLoss[KETTLE] = getValue("Kettle Dead Spac", volLoss[KETTLE], 5, 3, 65535, volUnit); break;
-      case 6: defBatchVol = getValue("Batch Size", defBatchVol, 7, 3, 9999999, volUnit); break;
+      case 6: setDefBatch(getValue("Batch Size", getDefBatch(), 7, 3, 9999999, volUnit)); break;
       case 7: evapRate = getValue("Evaporation Rate", evapRate, 3, 0, 100, "%/hr");
       default: return;
     }
@@ -280,15 +280,15 @@ void cfgVolumes() {
 
 void cfgValves() {
   while (1) {
-    strcpy(menuopts[0], "HLT Fill           ");
-    strcpy(menuopts[1], "Mash Fill          ");
-    strcpy(menuopts[2], "Mash Heat          ");
-    strcpy(menuopts[3], "Mash Idle          ");
-    strcpy(menuopts[4], "Sparge In          ");
-    strcpy(menuopts[5], "Sparge Out         ");
-    strcpy(menuopts[6], "Chiller H2O In     ");
-    strcpy(menuopts[7], "Chiller Beer In    ");
-    strcpy(menuopts[8], "Exit               ");
+    strcpy_P(menuopts[0], PSTR("HLT Fill           "));
+    strcpy_P(menuopts[1], PSTR("Mash Fill          "));
+    strcpy_P(menuopts[2], PSTR("Mash Heat          "));
+    strcpy_P(menuopts[3], PSTR("Mash Idle          "));
+    strcpy_P(menuopts[4], PSTR("Sparge In          "));
+    strcpy_P(menuopts[5], PSTR("Sparge Out         "));
+    strcpy_P(menuopts[6], PSTR("Chiller H2O In     "));
+    strcpy_P(menuopts[7], PSTR("Chiller Beer In    "));
+    strcpy_P(menuopts[8], PSTR("Exit               "));
     
     byte profile = scrollMenu("Valve Configuration", menuopts, 9);
     if (profile > 7) return; else setValveCfg(profile, cfgValveProfile(menuopts[profile], getValveCfg(profile)));
@@ -308,22 +308,22 @@ unsigned int cfgValveProfile (char sTitle[], unsigned int defValue) {
   {
     int bit = 1;
     for (int i = 0; i < 11; i++) { 
-      if (retValue & bit) printLCD(1, i + 4, "1"); else printLCD(1, i + 4, "0");
+      if (retValue & bit) printLCD_P(1, i + 4, PSTR("1")); else printLCD_P(1, i + 4, PSTR("0"));
       bit *= 2;
     }
   }
-  printLCD(3, 8, "OK");
+  printLCD_P(3, 8, PSTR("OK"));
   
   while(1) {
     if (encCount != lastCount) {
-      printLCD(2, 0, "    0123456789A     ");
+      printLCD_P(2, 0, PSTR("    0123456789A     "));
       if (encCount == 11) {
-        printLCD(3, 7, ">");
-        printLCD(3, 10, "<");
+        printLCD_P(3, 7, PSTR(">"));
+        printLCD_P(3, 10, PSTR("<"));
       } else {
-        printLCD(3, 7, " ");
-        printLCD(3, 10, " ");
-        printLCD(2, encCount + 4, "^");
+        printLCD_P(3, 7, PSTR(" "));
+        printLCD_P(3, 10, PSTR(" "));
+        printLCD_P(2, encCount + 4, PSTR("^"));
       }
     }
     lastCount = encCount;
@@ -340,7 +340,7 @@ unsigned int cfgValveProfile (char sTitle[], unsigned int defValue) {
       {
         int bit = 1;
         for (int i = 0; i < 11; i++) { 
-          if (retValue & bit) printLCD(1, i + 4, "1"); else printLCD(1, i + 4, "0");
+          if (retValue & bit) printLCD_P(1, i + 4, PSTR("1")); else printLCD_P(1, i + 4, PSTR("0"));
           bit *= 2;
         }
       }
@@ -352,8 +352,8 @@ unsigned int cfgValveProfile (char sTitle[], unsigned int defValue) {
 }
 
 void cfgEncoder() {
-  strcpy(menuopts[0], "CUI");
-  strcpy(menuopts[1], "ALPS");
+  strcpy_P(menuopts[0], PSTR("CUI"));
+  strcpy_P(menuopts[1], PSTR("ALPS"));
   encMode = scrollMenu("Select Encoder Type:", menuopts, 2);
   initEncoder();
 }

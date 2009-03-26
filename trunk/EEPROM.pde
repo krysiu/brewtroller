@@ -27,12 +27,12 @@ void saveSetup() {
     PROMwriteLong(i * 8 + 68, volLoss[i]);
   }
   //Default Batch size (88-91)
-  PROMwriteLong(88, defBatchVol);
   EEPROM.write(92, evapRate);
   EEPROM.write(93, encMode);
 
   //94 - 135 Reserved for Power Loss Recovery
   //136-151 Reserved for Valve Profiles 
+  //152-154 Power Recovery
 }
 
 void loadSetup() {
@@ -60,12 +60,12 @@ void loadSetup() {
     volLoss[i] = PROMreadLong(i * 8 + 68);
   }
   //Default Batch size (88-91)
-  defBatchVol = PROMreadLong(88);
   evapRate = EEPROM.read(92);
   encMode = EEPROM.read(93);
 
   //94 - 135 Reserved for Power Recovery
   //136-151 Reserved for Valve Profiles 
+  //152-154 Power Recovery
 }
 
 void PROMwriteBytes(int addr, byte bytes[], int numBytes) {
@@ -162,3 +162,12 @@ void setTimerRecovery(unsigned int newMins) { PROMwriteInt(134, newMins); }
 
 unsigned int getValveCfg(byte profile) { return PROMreadInt(136 + profile * 2); }
 void setValveCfg(byte profile, unsigned int value) { PROMwriteInt(136 + profile * 2, value); }
+
+byte getABPitch() { return EEPROM.read(152); }
+void setABPitch(byte pitchTemp) { EEPROM.write(152, pitchTemp); }
+
+unsigned int getABAdds() { return PROMreadInt(153); }
+void setABAdds(unsigned int adds) { PROMwriteInt(153, adds); }
+
+unsigned long getDefBatch() { return PROMreadLong(88); }
+void setDefBatch(unsigned long batchSize) { PROMwriteLong(88, batchSize); }

@@ -11,7 +11,7 @@ using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrar
 using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 */
 
-
+#include <avr/pgmspace.h>
 #include <PID_Beta6.h>
 
 //Pin and Interrupt Definitions
@@ -81,7 +81,6 @@ boolean unit;
 unsigned long capacity[3];
 unsigned long volume[3];
 unsigned int volLoss[3];
-unsigned long defBatchVol;
 //Rate of Evaporation (Percent per hour)
 byte evapRate;
 
@@ -129,7 +128,9 @@ void setup() {
   pinMode(KETTLEHEAT_PIN, OUTPUT);
   resetOutputs();
   initLCD();
-
+  //Memory Check
+  //char buf[6]; printLCD(0,0,itoa(availableMemory(), buf, 10)); delay (5000);
+  
   //Check for cfgVersion variable and format EEPROM if necessary
   checkConfig();
   
@@ -145,9 +146,9 @@ void setup() {
 }
 
 void loop() {
-  strcpy(menuopts[0], "AutoBrew");
-  strcpy(menuopts[1], "Brew Monitor");
-  strcpy(menuopts[2], "System Setup");
+  strcpy_P(menuopts[0], PSTR("AutoBrew"));
+  strcpy_P(menuopts[1], PSTR("Brew Monitor"));
+  strcpy_P(menuopts[2], PSTR("System Setup"));
  
   switch (scrollMenu("BrewTroller", menuopts, 3)) {
     case 0: doAutoBrew(); break;
@@ -159,7 +160,7 @@ void loop() {
 void splashScreen() {
   clearLCD();
   { 
-    byte bmpByte[] = {
+    const byte bmpByte[] = {
       B00000,
       B00000,
       B00000, 
@@ -172,7 +173,7 @@ void splashScreen() {
     lcdSetCustChar(0, bmpByte);
   }
   { 
-    byte bmpByte[] = {
+    const byte bmpByte[] = {
       B00000, 
       B00000, 
       B00000, 
@@ -185,7 +186,7 @@ void splashScreen() {
     lcdSetCustChar(1, bmpByte);
   }
   { 
-    byte bmpByte[] = {
+    const byte bmpByte[] = {
       B00001, 
       B00011, 
       B00111, 
@@ -198,7 +199,7 @@ void splashScreen() {
     lcdSetCustChar(2, bmpByte); 
   }
   { 
-    byte bmpByte[] = {
+    const byte bmpByte[] = {
       B11111, 
       B11111, 
       B10001, 
@@ -211,7 +212,7 @@ void splashScreen() {
     lcdSetCustChar(3, bmpByte); 
   }
   { 
-    byte bmpByte[] = {
+    const byte bmpByte[] = {
       B11111, 
       B11111, 
       B11111, 
@@ -224,7 +225,7 @@ void splashScreen() {
     lcdSetCustChar(4, bmpByte); 
   }
   { 
-    byte bmpByte[] = {
+    const byte bmpByte[] = {
       B01111, 
       B01110, 
       B01100, 
@@ -237,7 +238,7 @@ void splashScreen() {
     lcdSetCustChar(5, bmpByte); 
   }
   { 
-    byte bmpByte[] = {
+    const byte bmpByte[] = {
       B11111, 
       B00111, 
       B00111, 
@@ -250,7 +251,7 @@ void splashScreen() {
     lcdSetCustChar(6, bmpByte); 
   }
   { 
-    byte bmpByte[] = {
+    const byte bmpByte[] = {
       B11111, 
       B11111, 
       B11110, 
@@ -271,9 +272,9 @@ void splashScreen() {
   lcdWriteCustChar(2, 0, 5); 
   lcdWriteCustChar(2, 1, 6); 
   lcdWriteCustChar(2, 2, 7); 
-  printLCD(0, 4, "BrewTroller v1.0");
-  printLCD(1, 10, "Build 0140");
-  printLCD(3, 1, "www.brewtroller.com");
+  printLCD_P(0, 4, PSTR("BrewTroller v1.0"));
+  printLCD_P(1, 10, PSTR("Build 0141"));
+  printLCD_P(3, 1, PSTR("www.brewtroller.com"));
   while(!enterStatus) delay(250);
   enterStatus = 0;
 }

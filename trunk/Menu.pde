@@ -95,11 +95,11 @@ long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision
   char buf[11];
 
   {
-    byte charByte[] = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};
+    const byte charByte[] = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};
     lcdSetCustChar(0, charByte);
   }
   {
-    byte charByte[] = {B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
+    const byte charByte[] = {B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
     lcdSetCustChar(1, charByte);
   }
       
