@@ -92,9 +92,10 @@ void assignSensor() {
       enterStatus = 0;
       //Pop-Up Menu
       strcpy(menuopts[0], "Scan Bus");
-      strcpy(menuopts[1], "Close Menu");
-      strcpy(menuopts[2], "Exit");
-      switch (scrollMenu(dispTitle[lastCount], menuopts, 3)) {
+      strcpy(menuopts[1], "Delete Address");
+      strcpy(menuopts[2], "Close Menu");
+      strcpy(menuopts[3], "Exit");
+      switch (scrollMenu(dispTitle[lastCount], menuopts, 4)) {
         case 0:
           clearLCD();
           printLCD(0,0, dispTitle[lastCount]);
@@ -107,7 +108,9 @@ void assignSensor() {
             if (getChoice(conExit, 2, 3) == 0) getDSAddr(tSensor[lastCount]);
           }
           break;
-        case 1: break;
+        case 1:
+          for (int i = 0; i <8; i++) tSensor[lastCount][i] = 0; break;
+        case 2: break;
         default: return;
       }
       encMin = 0;

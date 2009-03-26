@@ -584,3 +584,7 @@ void editMashSchedule(byte stepTemp[4], byte stepMins[4]) {
     }
   }
 }
+
+void manSparge() {
+  
+}
