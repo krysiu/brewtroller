@@ -1,10 +1,10 @@
-int scrollMenu(char sTitle[], char menuItems[][20], int numOpts) {
+byte scrollMenu(char sTitle[], char menuItems[][20], byte numOpts, byte defOption) {
   encMin = 0;
   encMax = numOpts-1;
   
-  encCount = 0;
-  int lastCount = 1;
-  unsigned int topItem = 1;
+  encCount = defOption;
+  byte lastCount = encCount + 1;
+  byte topItem = numOpts;
 
   while(1) {
     if (encCount != lastCount) {

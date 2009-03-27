@@ -1,17 +1,15 @@
 void menuSetup()
 {
-  
-
-
+  byte lastOption = 0;
   while(1) {
     if (unit) strcpy_P(menuopts[0], PSTR("Unit: US")); else strcpy_P(menuopts[0], PSTR("Unit: Metric"));
-    if (sysHERMS) strcpy_P(menuopts[1], PSTR("System Type: HERMS")); else strcpy_P(menuopts[1], PSTR("System Type: Direct"));
+    if (sysType == SYS_HERMS) strcpy_P(menuopts[1], PSTR("System Type: HERMS")); else strcpy_P(menuopts[1], PSTR("System Type: Direct"));
       
     switch (encMode) {
-      case CUI:
+      case ENC_CUI:
         strcpy_P(menuopts[2], PSTR("Encoder: CUI"));
         break;
-      case ALPS:
+      case ENC_ALPS:
         strcpy_P(menuopts[2], PSTR("Encoder: ALPS"));
         break;
     }
@@ -23,13 +21,14 @@ void menuSetup()
     strcpy_P(menuopts[7], PSTR("Save Settings"));
     strcpy_P(menuopts[8], PSTR("Load Settings"));
     strcpy_P(menuopts[9], PSTR("Exit Setup"));
-  
-    switch(scrollMenu("System Setup", menuopts, 10)) {
+    
+    lastOption = scrollMenu("System Setup", menuopts, 10, lastOption);
+    switch(lastOption) {
       case 0:
         unit = unit ^ 1;
         if (unit) {
           //Convert Setup params
-          for (int i = HLT; i <= KETTLE; i++) {
+          for (int i = TS_HLT; i <= TS_KETTLE; i++) {
             hysteresis[i] = round(hysteresis[i] * 1.8);
             capacity[i] = round(capacity[i] * 0.26417);
             volume[i] = round(volume[i] * 0.26417);
@@ -37,7 +36,7 @@ void menuSetup()
           }
           setDefBatch(round(getDefBatch() * 0.26417));
         } else {
-          for (int i = HLT; i <= KETTLE; i++) {
+          for (int i = TS_HLT; i <= TS_KETTLE; i++) {
             hysteresis[i] = round(hysteresis[i] / 1.8);
             capacity[i] = round(capacity[i] / 0.26417);
             volume[i] = round(volume[i] / 0.26417);
@@ -46,9 +45,7 @@ void menuSetup()
           setDefBatch(round(getDefBatch() / 0.26417));
         }
         break;
-      case 1:
-        sysHERMS = sysHERMS ^ 1;
-        break;
+      case 1: cfgSysType(); break;
       case 2: cfgEncoder(); break;
       case 3: assignSensor(); break;
       case 4: cfgOutputs(); break;
@@ -95,7 +92,7 @@ void assignSensor() {
       strcpy_P(menuopts[1], PSTR("Delete Address"));
       strcpy_P(menuopts[2], PSTR("Close Menu"));
       strcpy_P(menuopts[3], PSTR("Exit"));
-      switch (scrollMenu(dispTitle[lastCount], menuopts, 4)) {
+      switch (scrollMenu(dispTitle[lastCount], menuopts, 4, 0)) {
         case 0:
           clearLCD();
           printLCD(0,0, dispTitle[lastCount]);
@@ -125,34 +122,36 @@ void cfgOutputs() {
   char dispUnit[2] = "C";
   if (unit) strcpy_P(dispUnit, PSTR("F"));
 
+  byte lastOption = 0;
   while(1) {
-    if (PIDEnabled[HLT]) strcpy_P(menuopts[0], PSTR("HLT Mode: PID")); else strcpy_P(menuopts[0], PSTR("HLT Mode: On/Off"));
+    if (PIDEnabled[TS_HLT]) strcpy_P(menuopts[0], PSTR("HLT Mode: PID")); else strcpy_P(menuopts[0], PSTR("HLT Mode: On/Off"));
     strcpy_P(menuopts[1], PSTR("HLT PID Cycle"));
     strcpy_P(menuopts[2], PSTR("HLT PID Gain"));
     strcpy_P(menuopts[3], PSTR("HLT Hysteresis"));
-    if (PIDEnabled[MASH]) strcpy_P(menuopts[4], PSTR("Mash Mode: PID")); else strcpy_P(menuopts[4], PSTR("Mash Mode: On/Off"));
+    if (PIDEnabled[TS_MASH]) strcpy_P(menuopts[4], PSTR("Mash Mode: PID")); else strcpy_P(menuopts[4], PSTR("Mash Mode: On/Off"));
     strcpy_P(menuopts[5], PSTR("Mash PID Cycle"));
     strcpy_P(menuopts[6], PSTR("Mash PID Gain"));
     strcpy_P(menuopts[7], PSTR("Mash Hysteresis"));
-    if (PIDEnabled[KETTLE]) strcpy_P(menuopts[8], PSTR("Kettle Mode: PID")); else strcpy_P(menuopts[8], PSTR("Kettle Mode: On/Off"));
+    if (PIDEnabled[TS_KETTLE]) strcpy_P(menuopts[8], PSTR("Kettle Mode: PID")); else strcpy_P(menuopts[8], PSTR("Kettle Mode: On/Off"));
     strcpy_P(menuopts[9], PSTR("Kettle PID Cycle"));
     strcpy_P(menuopts[10], PSTR("Kettle PID Gain"));
     strcpy_P(menuopts[11], PSTR("Kettle Hysteresis"));
     strcpy_P(menuopts[12], PSTR("Exit"));
 
-    switch(scrollMenu("Configure Outputs", menuopts, 13)) {
-      case 0: PIDEnabled[HLT] = PIDEnabled[HLT] ^ 1; break;
-      case 1: PIDCycle[HLT] = getValue("HLT Cycle Time", PIDCycle[HLT], 3, 0, 255, "s"); break;
-      case 2: setPIDGain("HLT PID Gain", &PIDp[HLT], &PIDi[HLT], &PIDd[HLT]); break;
-      case 3: hysteresis[HLT] = getValue("HLT Hysteresis", hysteresis[HLT], 3, 1, 255, dispUnit); break;
-      case 4: PIDEnabled[MASH] = PIDEnabled[MASH] ^ 1; break;
-      case 5: PIDCycle[MASH] = getValue("Mash Cycle Time", PIDCycle[MASH], 3, 0, 255, "s"); break;
-      case 6: setPIDGain("Mash PID Gain", &PIDp[MASH], &PIDi[MASH], &PIDd[MASH]); break;
-      case 7: hysteresis[MASH] = getValue("Mash Hysteresis", hysteresis[MASH], 3, 1, 255, dispUnit); break;
-      case 8: PIDEnabled[KETTLE] = PIDEnabled[KETTLE] ^ 1; break;
-      case 9: PIDCycle[KETTLE] = getValue("Kettle Cycle Time", PIDCycle[KETTLE], 3, 0, 255, "s"); break;
-      case 10: setPIDGain("Kettle PID Gain", &PIDp[KETTLE], &PIDi[KETTLE], &PIDd[KETTLE]); break;
-      case 11: hysteresis[KETTLE] = getValue("Kettle Hysteresis", hysteresis[KETTLE], 3, 1, 255, dispUnit); break;
+    lastOption = scrollMenu("Configure Outputs", menuopts, 13, lastOption);
+    switch(lastOption) {
+      case 0: PIDEnabled[TS_HLT] = PIDEnabled[TS_HLT] ^ 1; break;
+      case 1: PIDCycle[TS_HLT] = getValue("HLT Cycle Time", PIDCycle[TS_HLT], 3, 0, 255, "s"); break;
+      case 2: setPIDGain("HLT PID Gain", &PIDp[TS_HLT], &PIDi[TS_HLT], &PIDd[TS_HLT]); break;
+      case 3: hysteresis[TS_HLT] = getValue("HLT Hysteresis", hysteresis[TS_HLT], 3, 1, 255, dispUnit); break;
+      case 4: PIDEnabled[TS_MASH] = PIDEnabled[TS_MASH] ^ 1; break;
+      case 5: PIDCycle[TS_MASH] = getValue("Mash Cycle Time", PIDCycle[TS_MASH], 3, 0, 255, "s"); break;
+      case 6: setPIDGain("Mash PID Gain", &PIDp[TS_MASH], &PIDi[TS_MASH], &PIDd[TS_MASH]); break;
+      case 7: hysteresis[TS_MASH] = getValue("Mash Hysteresis", hysteresis[TS_MASH], 3, 1, 255, dispUnit); break;
+      case 8: PIDEnabled[TS_KETTLE] = PIDEnabled[TS_KETTLE] ^ 1; break;
+      case 9: PIDCycle[TS_KETTLE] = getValue("Kettle Cycle Time", PIDCycle[TS_KETTLE], 3, 0, 255, "s"); break;
+      case 10: setPIDGain("Kettle PID Gain", &PIDp[TS_KETTLE], &PIDi[TS_KETTLE], &PIDd[TS_KETTLE]); break;
+      case 11: hysteresis[TS_KETTLE] = getValue("Kettle Hysteresis", hysteresis[TS_KETTLE], 3, 1, 255, dispUnit); break;
       default: return;
     }
   } 
@@ -251,6 +250,7 @@ void setPIDGain(char sTitle[], byte* p, byte* i, byte* d) {
 }
 
 void cfgVolumes() {
+  byte lastOption = 0;
   while(1) {
     strcpy_P(menuopts[0], PSTR("HLT Capacity       "));
     strcpy_P(menuopts[1], PSTR("HLT Dead Space     "));
@@ -264,13 +264,14 @@ void cfgVolumes() {
 
     char volUnit[5] = "L";
     if (unit) strcpy_P(volUnit, PSTR("Gal"));
-    switch(scrollMenu("Volume/Capacity", menuopts, 9)) {
-      case 0: capacity[HLT] = getValue("HLT Capacity", capacity[HLT], 7, 3, 9999999, volUnit); break;
-      case 1: volLoss[HLT] = getValue("HLT Dead Space", volLoss[HLT], 5, 3, 65535, volUnit); break;
-      case 2: capacity[MASH] = getValue("Mash Capacity", capacity[MASH], 7, 3, 9999999, volUnit); break;
-      case 3: volLoss[MASH] = getValue("Mash Dead Spac", volLoss[MASH], 5, 3, 65535, volUnit); break;
-      case 4: capacity[KETTLE] = getValue("Kettle Capacity", capacity[KETTLE], 7, 3, 9999999, volUnit); break;
-      case 5: volLoss[KETTLE] = getValue("Kettle Dead Spac", volLoss[KETTLE], 5, 3, 65535, volUnit); break;
+    lastOption = scrollMenu("Volume/Capacity", menuopts, 9, lastOption);
+    switch(lastOption) {
+      case 0: capacity[TS_HLT] = getValue("HLT Capacity", capacity[TS_HLT], 7, 3, 9999999, volUnit); break;
+      case 1: volLoss[TS_HLT] = getValue("HLT Dead Space", volLoss[TS_HLT], 5, 3, 65535, volUnit); break;
+      case 2: capacity[TS_MASH] = getValue("Mash Capacity", capacity[TS_MASH], 7, 3, 9999999, volUnit); break;
+      case 3: volLoss[TS_MASH] = getValue("Mash Dead Spac", volLoss[TS_MASH], 5, 3, 65535, volUnit); break;
+      case 4: capacity[TS_KETTLE] = getValue("Kettle Capacity", capacity[TS_KETTLE], 7, 3, 9999999, volUnit); break;
+      case 5: volLoss[TS_KETTLE] = getValue("Kettle Dead Spac", volLoss[TS_KETTLE], 5, 3, 65535, volUnit); break;
       case 6: setDefBatch(getValue("Batch Size", getDefBatch(), 7, 3, 9999999, volUnit)); break;
       case 7: evapRate = getValue("Evaporation Rate", evapRate, 3, 0, 100, "%/hr");
       default: return;
@@ -279,6 +280,7 @@ void cfgVolumes() {
 }
 
 void cfgValves() {
+  byte lastOption = 0;
   while (1) {
     strcpy_P(menuopts[0], PSTR("HLT Fill           "));
     strcpy_P(menuopts[1], PSTR("Mash Fill          "));
@@ -290,8 +292,8 @@ void cfgValves() {
     strcpy_P(menuopts[7], PSTR("Chiller Beer In    "));
     strcpy_P(menuopts[8], PSTR("Exit               "));
     
-    byte profile = scrollMenu("Valve Configuration", menuopts, 9);
-    if (profile > 7) return; else setValveCfg(profile, cfgValveProfile(menuopts[profile], getValveCfg(profile)));
+    lastOption = scrollMenu("Valve Configuration", menuopts, 9, lastOption);
+    if (lastOption > 7) return; else setValveCfg(lastOption, cfgValveProfile(menuopts[lastOption], getValveCfg(lastOption)));
   }
 }
 
@@ -354,6 +356,20 @@ unsigned int cfgValveProfile (char sTitle[], unsigned int defValue) {
 void cfgEncoder() {
   strcpy_P(menuopts[0], PSTR("CUI"));
   strcpy_P(menuopts[1], PSTR("ALPS"));
-  encMode = scrollMenu("Select Encoder Type:", menuopts, 2);
-  initEncoder();
+  switch( scrollMenu("Select Encoder Type:", menuopts, 2, encMode)) {
+    case 0: encMode = ENC_CUI; break;
+    case 1: encMode = ENC_ALPS; break;
+  }
+}
+
+void cfgSysType() {
+  strcpy_P(menuopts[0], PSTR("Direct Heat"));
+  strcpy_P(menuopts[1], PSTR("HERMS"));
+  strcpy_P(menuopts[2], PSTR("Steam"));
+  //Steam is not enabled yet and hidden
+  switch(scrollMenu("Select Encoder Type:", menuopts, 2, sysType)) {
+    case 0: sysType = SYS_DIRECT; break;
+    case 1: sysType = SYS_HERMS; break;
+    case 2: sysType = SYS_STEAM; break;
+  }
 }

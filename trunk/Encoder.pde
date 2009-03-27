@@ -5,12 +5,12 @@ unsigned long enterStart;
 
 void initEncoder() {
   switch(encMode) {
-    case CUI:
+    case ENC_CUI:
       enterBounceDelay = 50;
       encBounceDelay = 50;
       attachInterrupt(2, doEncoderCUI, RISING);
       break;
-    case ALPS:
+    case ENC_ALPS:
       enterBounceDelay = 30;
       encBounceDelay = 60;
       attachInterrupt(2, doEncoderALPS, CHANGE);

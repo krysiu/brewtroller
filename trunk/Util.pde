@@ -24,7 +24,7 @@ int availableMemory() {
 
 
 void resetOutputs() {
-  for (int i = HLT; i <= KETTLE; i++) {
+  for (int i = TS_HLT; i <= TS_KETTLE; i++) {
     setpoint[i] = 0;
     if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
   }

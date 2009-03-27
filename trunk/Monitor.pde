@@ -8,7 +8,7 @@ void doMon() {
 
   clearTimer();
   
-  for (int i = HLT; i <= KETTLE; i++) {
+  for (int i = TS_HLT; i <= TS_KETTLE; i++) {
     if (PIDEnabled[i]) {
       pid[i].SetInputLimits(0, 255);
       pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
@@ -63,39 +63,41 @@ void doMon() {
         strcpy(menuopts[10], "Quit Brew Monitor");
 
         boolean inMenu = 1;
+        byte lastOption = 0;
         while(inMenu) {
           char dispUnit[2] = "C"; if (unit) strcpy(dispUnit, "F");
-          switch (scrollMenu("Brew Monitor Menu   ", menuopts, 11)) {
+          lastOption = scrollMenu("Brew Monitor Menu   ", menuopts, 11, lastOption);
+          switch (lastOption) {
             case 0:
               {
                 byte defHLTTemp = 180;
                 if (!unit) defHLTTemp = round(defHLTTemp / 1.8) + 32;
-                if (setpoint[HLT] > 0) setpoint[HLT] = getValue("Enter HLT Temp:", setpoint[HLT], 3, 0, 255, dispUnit);
-                else setpoint[HLT] = getValue("Enter HLT Temp:", defHLTTemp, 3, 0, 255, dispUnit);
+                if (setpoint[TS_HLT] > 0) setpoint[TS_HLT] = getValue("Enter HLT Temp:", setpoint[TS_HLT], 3, 0, 255, dispUnit);
+                else setpoint[TS_HLT] = getValue("Enter HLT Temp:", defHLTTemp, 3, 0, 255, dispUnit);
               }
               inMenu = 0;
               break;
-            case 1: setpoint[HLT] = 0; inMenu = 0; break; 
+            case 1: setpoint[TS_HLT] = 0; inMenu = 0; break; 
             case 2:
               {
                 byte defMashTemp = 152;
                 if (!unit) defMashTemp = round(defMashTemp / 1.8) + 32;
-                if (setpoint[MASH] > 0) setpoint[MASH] = getValue("Enter Mash Temp:", setpoint[MASH], 3, 0, 255, dispUnit);
-                else setpoint[MASH] = getValue("Enter Mash Temp:", defMashTemp, 3, 0, 255, dispUnit);
+                if (setpoint[TS_MASH] > 0) setpoint[TS_MASH] = getValue("Enter Mash Temp:", setpoint[TS_MASH], 3, 0, 255, dispUnit);
+                else setpoint[TS_MASH] = getValue("Enter Mash Temp:", defMashTemp, 3, 0, 255, dispUnit);
               }
               inMenu = 0;
               break;
-            case 3: setpoint[MASH] = 0; inMenu = 0; break; 
+            case 3: setpoint[TS_MASH] = 0; inMenu = 0; break; 
             case 4:
               {
                 byte defKettleTemp = 212;
                 if (!unit) defKettleTemp = round(defKettleTemp / 1.8) + 32;
-                if (setpoint[KETTLE] > 0) setpoint[KETTLE] = getValue("Enter Kettle Temp:", setpoint[KETTLE], 3, 0, 255, dispUnit);
-                else setpoint[KETTLE] = getValue("Enter Kettle Temp:", defKettleTemp, 3, 0, 255, dispUnit);
+                if (setpoint[TS_KETTLE] > 0) setpoint[TS_KETTLE] = getValue("Enter Kettle Temp:", setpoint[TS_KETTLE], 3, 0, 255, dispUnit);
+                else setpoint[TS_KETTLE] = getValue("Enter Kettle Temp:", defKettleTemp, 3, 0, 255, dispUnit);
               }
               inMenu = 0;
               break;
-            case 5: setpoint[KETTLE] = 0; inMenu = 0; break; 
+            case 5: setpoint[TS_KETTLE] = 0; inMenu = 0; break; 
             case 6:
               unsigned int newMins;
               newMins = getTimerValue("Enter Timer Value:", timerValue/60000);
@@ -150,7 +152,7 @@ void doMon() {
           timerLastWrite = 0;
         }
         
-        for (int i = HLT; i <= MASH; i++) {
+        for (int i = TS_HLT; i <= TS_MASH; i++) {
           if (temp[i] == -1) printLCD(2, i * 14 + 1, "---"); else printLCDPad(2, i * 14 + 1, itoa(temp[i], buf, 10), 3, ' ');
           printLCDPad(3, i * 14 + 1, itoa(setpoint[i], buf, 10), 3, ' ');
           if (PIDEnabled[i]) {
@@ -176,16 +178,16 @@ void doMon() {
           lastCount = encCount;
           timerLastWrite = 0;
         }
-        if (temp[KETTLE] == -1) printLCD(2, 1, "---"); else printLCDPad(2, 1, itoa(temp[KETTLE], buf, 10), 3, ' ');
-        printLCDPad(3, 1, itoa(setpoint[KETTLE], buf, 10), 3, ' ');
-        if (PIDEnabled[KETTLE]) {
-          byte pct = PIDOutput[KETTLE] / PIDCycle[KETTLE] / 10;
+        if (temp[TS_KETTLE] == -1) printLCD(2, 1, "---"); else printLCDPad(2, 1, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
+        printLCDPad(3, 1, itoa(setpoint[TS_KETTLE], buf, 10), 3, ' ');
+        if (PIDEnabled[TS_KETTLE]) {
+          byte pct = PIDOutput[TS_KETTLE] / PIDCycle[TS_KETTLE] / 10;
           switch (pct) {
             case 0: strcpy(buf, "Off"); break;
             case 100: strcpy(buf, " On"); break;
             default: itoa(pct, buf, 10); strcat(buf, "%"); break;
           }
-        } else if (heatStatus[KETTLE]) strcpy(buf, " On"); else strcpy(buf, "Off");
+        } else if (heatStatus[TS_KETTLE]) strcpy(buf, " On"); else strcpy(buf, "Off");
         printLCDPad(3, 6, buf, 3, ' ');
         break;
       case 2:
@@ -204,10 +206,10 @@ void doMon() {
           timerLastWrite = 0;
         }
         
-        if (temp[KETTLE] == -1) printLCD(2, 0, "---"); else printLCDPad(2, 0, itoa(temp[KETTLE], buf, 10), 3, ' ');
-        if (temp[BEEROUT] == -1) printLCD(2, 16, "---"); else printLCDPad(2, 16, itoa(temp[BEEROUT], buf, 10), 3, ' ');
-        if (temp[H2OIN] == -1) printLCD(3, 0, "---"); else printLCDPad(3, 0, itoa(temp[H2OIN], buf, 10), 3, ' ');
-        if (temp[H2OOUT] == -1) printLCD(3, 16, "---"); else printLCDPad(3, 16, itoa(temp[H2OOUT], buf, 10), 3, ' ');
+        if (temp[TS_KETTLE] == -1) printLCD(2, 0, "---"); else printLCDPad(2, 0, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
+        if (temp[TS_BEEROUT] == -1) printLCD(2, 16, "---"); else printLCDPad(2, 16, itoa(temp[TS_BEEROUT], buf, 10), 3, ' ');
+        if (temp[TS_H2OIN] == -1) printLCD(3, 0, "---"); else printLCDPad(3, 0, itoa(temp[TS_H2OIN], buf, 10), 3, ' ');
+        if (temp[TS_H2OOUT] == -1) printLCD(3, 16, "---"); else printLCDPad(3, 16, itoa(temp[TS_H2OOUT], buf, 10), 3, ' ');
         break;
     }
     printTimer(1,7);
@@ -216,10 +218,10 @@ void doMon() {
       convertAll();
       convStart = millis();
     } else if (millis() - convStart >= 750) {
-      for (int i = HLT; i <= BEEROUT; i++) temp[i] = read_temp(unit, tSensor[i]);
+      for (int i = TS_HLT; i <= TS_BEEROUT; i++) temp[i] = read_temp(unit, tSensor[i]);
       convStart = 0;
     }
-    for (int i = HLT; i <= KETTLE; i++) {
+    for (int i = TS_HLT; i <= TS_KETTLE; i++) {
       boolean setOut;
       if (PIDEnabled[i]) {
         if (temp[i] == -1) {
@@ -246,9 +248,9 @@ void doMon() {
         }
       }
       switch(i) {
-        case HLT: digitalWrite(HLTHEAT_PIN, setOut); break;
-        case MASH: digitalWrite(MASHHEAT_PIN, setOut); break;
-        case KETTLE: digitalWrite(KETTLEHEAT_PIN, setOut); break;
+        case TS_HLT: digitalWrite(HLTHEAT_PIN, setOut); break;
+        case TS_MASH: digitalWrite(MASHHEAT_PIN, setOut); break;
+        case TS_KETTLE: digitalWrite(KETTLEHEAT_PIN, setOut); break;
       }
     }
   }

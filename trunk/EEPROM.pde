@@ -4,20 +4,19 @@
 void saveSetup() {
   //Walk through the 6 tSensor elements and store 8-byte address of each
   //HLT (0-7), MASH (8-15), KETTLE (16-23), H2OIN (24-31), H2OOUT (32-39), BEEROUT (40-47)
-  for (int i = HLT; i <= BEEROUT; i++) PROMwriteBytes(i * 8, tSensor[i], 8);
+  for (int i = TS_HLT; i <= TS_BEEROUT; i++) PROMwriteBytes(i * 8, tSensor[i], 8);
 
   //Option Array (48)
   byte options = B00000000;
   if (unit) options |= 1;
-  if (PIDEnabled[HLT]) options |= 2;
-  if (PIDEnabled[MASH]) options |= 4;
-  if (PIDEnabled[KETTLE]) options |= 8;
-  if (sysHERMS) options |= 16;
+  if (PIDEnabled[TS_HLT]) options |= 2;
+  if (PIDEnabled[TS_MASH]) options |= 4;
+  if (PIDEnabled[TS_KETTLE]) options |= 8;
   EEPROM.write(48, options);
   
   //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
   //Volume Settings for HLT (64-71), MASH (72 - 79) and KETTLE (80 - 87)
-  for (int i = HLT; i <= KETTLE; i++) {
+  for (int i = TS_HLT; i <= TS_KETTLE; i++) {
     EEPROM.write(i * 5 + 49, PIDp[i]);
     EEPROM.write(i * 5 + 50, PIDi[i]);
     EEPROM.write(i * 5 + 51, PIDd[i]);
@@ -33,24 +32,26 @@ void saveSetup() {
   //94 - 135 Reserved for Power Loss Recovery
   //136-151 Reserved for Valve Profiles 
   //152-154 Power Recovery
+  //155 System Type (Direct, HERMS, Steam)
+  EEPROM.write(155, sysType);
+  
 }
 
 void loadSetup() {
   //Walk through the 6 tSensor elements and load 8-byte address of each
   //HLT (0-7), MASH (8-15), KETTLE (16-23), H2OIN (24-31), H2OOUT (32-39), BEEROUT (40-47)
-  for (int i = HLT; i <= BEEROUT; i++) PROMreadBytes(i * 8, tSensor[i], 8);
+  for (int i = TS_HLT; i <= TS_BEEROUT; i++) PROMreadBytes(i * 8, tSensor[i], 8);
  
   //Option Array (48)
   byte options = EEPROM.read(48);
   if (options & 1) unit = 1;
-  if (options & 2) PIDEnabled[HLT] = 1;
-  if (options & 4) PIDEnabled[MASH] = 1;
-  if (options & 8) PIDEnabled[KETTLE] = 1;
-  if (options & 16) sysHERMS = 1;
+  if (options & 2) PIDEnabled[TS_HLT] = 1;
+  if (options & 4) PIDEnabled[TS_MASH] = 1;
+  if (options & 8) PIDEnabled[TS_KETTLE] = 1;
   
   //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
   //Volume Settings for HLT (64-71), MASH (72 - 79) and KETTLE (80 - 87)
-  for (int i = HLT; i <= KETTLE; i++) {
+  for (int i = TS_HLT; i <= TS_KETTLE; i++) {
     PIDp[i] = EEPROM.read(i * 5 + 49);
     PIDi[i] = EEPROM.read(i * 5 + 50);
     PIDd[i] = EEPROM.read(i * 5 + 51);
@@ -66,6 +67,8 @@ void loadSetup() {
   //94 - 135 Reserved for Power Recovery
   //136-151 Reserved for Valve Profiles 
   //152-154 Power Recovery
+  //155 System Type (Direct, HERMS, Steam)
+  sysType = EEPROM.read(155);
 }
 
 void PROMwriteBytes(int addr, byte bytes[], int numBytes) {
@@ -154,8 +157,8 @@ void saveABSteps(byte stepTemp[4], byte stepMins[4]) {
 }
 void loadABVols(unsigned long tgtVol[3]) { for (int i=0; i<3; i++) { tgtVol[i] = PROMreadLong(115 + i * 4); } }
 void saveABVols(unsigned long tgtVol[3]) { for (int i=0; i<3; i++) { PROMwriteLong(115 + i * 4, tgtVol[i]); } }
-void loadSetpoints() { for (int i=HLT; i<=KETTLE; i++) { setpoint[i] = EEPROM.read(131 + i); } }
-void saveSetpoints() { for (int i=HLT; i<=KETTLE; i++) { EEPROM.write(131 + i, setpoint[i]); } }
+void loadSetpoints() { for (int i=TS_HLT; i<=TS_KETTLE; i++) { setpoint[i] = EEPROM.read(131 + i); } }
+void saveSetpoints() { for (int i=TS_HLT; i<=TS_KETTLE; i++) { EEPROM.write(131 + i, setpoint[i]); } }
 
 unsigned int getTimerRecovery() { return PROMreadInt(134); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(134, newMins); }
