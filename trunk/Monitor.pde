@@ -222,7 +222,6 @@ void doMon() {
       convStart = 0;
     }
     for (int i = TS_HLT; i <= TS_KETTLE; i++) {
-      boolean setOut;
       if (PIDEnabled[i]) {
         if (temp[i] == -1) {
           pid[i].SetMode(MANUAL);
@@ -233,24 +232,19 @@ void doMon() {
           pid[i].Compute();
         }
         if (millis() - cycleStart[i] > PIDCycle[i] * 1000) cycleStart[i] += PIDCycle[i] * 1000;
-        if (PIDOutput[i] > millis() - cycleStart[i]) setOut = 1; else setOut = 0;
+        if (PIDOutput[i] > millis() - cycleStart[i]) digitalWrite(heatPin[i], HIGH); else digitalWrite(heatPin[i], LOW);
       } else {
         if (heatStatus[i]) {
           if (temp[i] == -1 || temp[i] >= setpoint[i]) {
-            setOut = 0;
+            digitalWrite(heatPin[i], LOW);
             heatStatus[i] = 0;
-          } else setOut = 1;
+          } else digitalWrite(heatPin[i], HIGH);
         } else { 
           if (temp[i] != -1 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
-            setOut = 1;
+            digitalWrite(heatPin[i], HIGH);
             heatStatus[i] = 1;
-          } else setOut = 0;
+          } else digitalWrite(heatPin[i], LOW);
         }
-      }
-      switch(i) {
-        case TS_HLT: digitalWrite(HLTHEAT_PIN, setOut); break;
-        case TS_MASH: digitalWrite(MASHHEAT_PIN, setOut); break;
-        case TS_KETTLE: digitalWrite(KETTLEHEAT_PIN, setOut); break;
       }
     }
   }

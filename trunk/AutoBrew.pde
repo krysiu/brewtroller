@@ -342,9 +342,9 @@ void doAutoBrew() {
 
 void manFill(unsigned long hltVol, unsigned long mashVol) {
   char fString[7], buf[5];
-  int fillHLT = getValveCfg(VLV_FILLHLT);
-  int fillMash = getValveCfg(VLV_FILLMASH);
-  int fillBoth = fillHLT || fillMash;
+  unsigned int fillHLT = getValveCfg(VLV_FILLHLT);
+  unsigned int fillMash = getValveCfg(VLV_FILLMASH);
+  unsigned int fillBoth = fillHLT || fillMash;
 
   while (1) {
     clearLCD();
@@ -454,6 +454,8 @@ void mashStep(char sTitle[ ], int iMins) {
   char sTempUnit[2] = "C";
   unsigned long convStart = 0;
   unsigned long cycleStart[2] = { 0, 0 };
+  unsigned int mashHeat = getValveCfg(VLV_MASHHEAT);
+  unsigned int mashIdle = getValveCfg(VLV_MASHIDLE);
   boolean heatStatus[2] = { 0, 0 };
   boolean preheated = 0;
   setAlarm(0);
@@ -518,7 +520,6 @@ void mashStep(char sTitle[ ], int iMins) {
       }
 
       for (int i = TS_HLT; i <= TS_MASH; i++) {
-        boolean setOut;
         if (PIDEnabled[i]) {
           if (temp[i] == -1) {
             pid[i].SetMode(MANUAL);
@@ -529,26 +530,28 @@ void mashStep(char sTitle[ ], int iMins) {
             pid[i].Compute();
           }
           if (millis() - cycleStart[i] > PIDCycle[i] * 1000) cycleStart[i] += PIDCycle[i] * 1000;
-          if (PIDOutput[i] > millis() - cycleStart[i]) setOut = 1; else setOut = 0;
-        } else {
-          if (heatStatus[i]) {
-            if (temp[i] == -1 || temp[i] >= setpoint[i]) {
-              setOut = 0;
-              heatStatus[i] = 0;
-            } else setOut = 1;
-          } else { 
-            if (temp[i] != -1 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
-              setOut = 1;
-              heatStatus[i] = 1;
-            } else setOut = 0;
+          if (PIDOutput[i] > millis() - cycleStart[i]) digitalWrite(heatPin[i], HIGH); else digitalWrite(heatPin[i], LOW);
+        } 
+
+        if (heatStatus[i]) {
+          if (temp[i] == -1 || temp[i] >= setpoint[i]) {
+            if (!PIDEnabled[i]) digitalWrite(heatPin[i], LOW);
+            heatStatus[i] = 0;
+          } else {
+            if (!PIDEnabled[i]) digitalWrite(heatPin[i], HIGH);
+          }
+        } else { 
+          if (temp[i] != -1 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
+            if (!PIDEnabled[i]) digitalWrite(heatPin[i], HIGH);
+            heatStatus[i] = 1;
+          } else {
+            if (!PIDEnabled[i]) digitalWrite(heatPin[i], LOW);
           }
         }
-        switch(i) {
-          case TS_HLT: digitalWrite(HLTHEAT_PIN, setOut); break;
-          case TS_MASH: digitalWrite(MASHHEAT_PIN, setOut); break;
-          case TS_KETTLE: digitalWrite(KETTLEHEAT_PIN, setOut); break;
-        }
-      }
+      }    
+      //Do Valves
+      if (heatStatus[TS_MASH]) setValves(mashHeat); else setValves(mashIdle); 
+
       if (doPrompt && preheated && enterStatus == 1) { enterStatus = 0; break; }
       if (enterStatus == 2) {
         enterStatus = 0;
@@ -558,10 +561,10 @@ void mashStep(char sTitle[ ], int iMins) {
     }
     if (!redraw) {
        //Turn off HLT and MASH outputs
-       for (int i = TS_HLT; i <= TS_MASH; i++) { if (PIDEnabled[i]) pid[i].SetMode(MANUAL); }
-       digitalWrite(HLTHEAT_PIN, LOW);
-       digitalWrite(MASHHEAT_PIN, LOW);
-       digitalWrite(KETTLEHEAT_PIN, LOW);
+       for (int i = TS_HLT; i <= TS_MASH; i++) { 
+         if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
+         digitalWrite(heatPin[i], LOW);
+       }
        //Exit
       return;
     }
@@ -642,9 +645,9 @@ void editMashSchedule(byte stepTemp[4], byte stepMins[4]) {
 
 void manSparge() {
   char fString[7], buf[5];
-  int spargeIn = getValveCfg(VLV_SPARGEIN);
-  int spargeOut = getValveCfg(VLV_SPARGEOUT);
-  int spargeFly = spargeIn || spargeOut;
+  unsigned int spargeIn = getValveCfg(VLV_SPARGEIN);
+  unsigned int spargeOut = getValveCfg(VLV_SPARGEOUT);
+  unsigned int spargeFly = spargeIn || spargeOut;
 
   while (1) {
     clearLCD();
@@ -812,9 +815,9 @@ void boilStage(unsigned int iMins, byte boilAdds) {
 void manChill(byte settemp) {
   boolean doAuto = 0;
   char fString[7], buf[5];
-  int chillLow = getValveCfg(VLV_CHILLBEER);
-  int chillHigh = getValveCfg(VLV_CHILLH2O);
-  int chillNorm = chillLow || chillHigh;
+  unsigned int chillLow = getValveCfg(VLV_CHILLBEER);
+  unsigned int chillHigh = getValveCfg(VLV_CHILLH2O);
+  unsigned int chillNorm = chillLow || chillHigh;
   unsigned long convStart = 0;
   float temp[6];
   
