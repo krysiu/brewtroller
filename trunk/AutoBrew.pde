@@ -648,16 +648,30 @@ void editMashSchedule(byte stepTemp[4], byte stepMins[4]) {
 
 void manSparge() {
   char fString[7], buf[5];
+  float temp[2] = { 0, 0 };
+  unsigned long convStart = 0;
   unsigned int spargeIn = getValveCfg(VLV_SPARGEIN);
   unsigned int spargeOut = getValveCfg(VLV_SPARGEOUT);
   unsigned int spargeFly = spargeIn || spargeOut;
 
   while (1) {
     clearLCD();
-    printLCD_P(0, 8, PSTR("Sparge"));
-    printLCD_P(1, 0, PSTR("HLT"));
-    printLCD_P(1, 16, PSTR("Mash"));
-    printLCD_P(2, 7, PSTR("Volume"));
+    printLCD_P(0, 7, PSTR("Sparge"));
+    printLCD_P(0, 0, PSTR("HLT"));
+    printLCD_P(0, 16, PSTR("Mash"));
+    printLCD_P(1, 0, PSTR("---"));
+    printLCD_P(1, 16, PSTR("---"));
+    printLCD_P(2, 0, PSTR("---.-"));
+    printLCD_P(2, 15, PSTR("---.-"));
+    if (unit) {
+      printLCD_P(1, 3, PSTR("F"));
+      printLCD_P(1, 19, PSTR("F"));
+      printLCD_P(2, 7, PSTR("Gallons"));
+    } else {
+      printLCD_P(1, 3, PSTR("C"));
+      printLCD_P(1, 19, PSTR("C"));
+      printLCD_P(2, 7, PSTR("Liters"));
+    }
 
     setValves(0);
     printLCD_P(3, 0, PSTR("Off"));
@@ -680,6 +694,16 @@ void manSparge() {
           case 5: printLCD_P(3, 4, PSTR(">   Abort  <")); break;
         }
         lastCount = encCount;
+      }
+      if (convStart == 0) {
+        convertAll();
+        convStart = millis();
+      } else if (millis() - convStart >= 750) {
+        for (int i = TS_HLT; i <= TS_MASH; i++) {
+          temp[i] = read_temp(unit, tSensor[i]);
+          if (temp[i] == -1) printLCD_P(1, i * 16, PSTR("---")); else printLCDPad(1, i * 16, itoa(temp[i], buf, 10), 3, ' ');
+        }
+        convStart = 0;
       }
       if (enterStatus == 1) {
         enterStatus = 0;
