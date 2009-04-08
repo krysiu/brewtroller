@@ -44,7 +44,7 @@ void doAutoBrew() {
         stepMins[STEP_PROTEIN] = 0;
         stepTemp[STEP_SACCH] = 153;
         stepMins[STEP_SACCH] = 60;
-        stepTemp[STEP_MASHOUT] = 168;
+        stepTemp[STEP_MASHOUT] = 0;
         stepMins[STEP_MASHOUT] = 0;
         break;
       case 1:
@@ -54,7 +54,7 @@ void doAutoBrew() {
         stepMins[STEP_PROTEIN] = 20;
         stepTemp[STEP_SACCH] = 153;
         stepMins[STEP_SACCH] = 60;
-        stepTemp[STEP_MASHOUT] = 168;
+        stepTemp[STEP_MASHOUT] = 0;
         stepMins[STEP_MASHOUT] = 0;
         break;
       default: return;
@@ -196,7 +196,9 @@ void doAutoBrew() {
         while (!enterStatus) delay(500);
         enterStatus = 0;
       }
-      {
+
+// Removing calculation as it doesn't seem to be working very well
+/*      {
         byte predictedSparge;
         if (sysType == SYS_HERMS) {
           if (unit) predictedSparge = round(((setpoint[TS_HLT] * tgtVol[TS_HLT]) - (stepTemp[STEP_MASHOUT] - stepTemp[STEP_SACCH]) * (tgtVol[TS_MASH] + grainWeight * .05)) / tgtVol[TS_HLT]);
@@ -215,7 +217,8 @@ void doAutoBrew() {
           while (!enterStatus) delay(500);
           enterStatus = 0;
         }
-      }
+      } */
+      
       //Save Values to EEPROM for Recovery
       setPwrRecovery(1);
       setABRecovery(0);
@@ -304,7 +307,6 @@ void doAutoBrew() {
 
   if (stepTemp[STEP_MASHOUT] && recoveryStep <= 8) {
     setABRecovery(8);
-    setpoint[TS_HLT] = spargeTemp;
     setpoint[TS_MASH] = stepTemp[STEP_MASHOUT];
     int recoverMins = getTimerRecovery();
     if (recoveryStep == 8 && recoverMins > 0) mashStep("Mash Out", recoverMins); else mashStep("Mash Out", stepMins[STEP_MASHOUT]);
@@ -314,6 +316,7 @@ void doAutoBrew() {
   //Hold last mash temp until user exits
   if (recoveryStep <= 9) {
     setABRecovery(9); 
+    setpoint[TS_HLT] = spargeTemp;
     mashStep("Mash Complete", MINS_PROMPT);
     setpoint[TS_HLT] = 0;
     setpoint[TS_MASH] = 0;
