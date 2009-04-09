@@ -1,7 +1,10 @@
-void menuSetup()
-{
+void menuSetup() {
   byte lastOption = 0;
+  
   while(1) {
+    char tempUnit[2] = "C";
+    if (unit) strcpy_P(tempUnit, PSTR("F"));
+
     if (unit) strcpy_P(menuopts[0], PSTR("Unit: US")); else strcpy_P(menuopts[0], PSTR("Unit: Metric"));
     if (sysType == SYS_HERMS) strcpy_P(menuopts[1], PSTR("System Type: HERMS")); else strcpy_P(menuopts[1], PSTR("System Type: Direct"));
       
@@ -17,12 +20,13 @@ void menuSetup()
     strcpy_P(menuopts[3], PSTR("Assign Temp Sensor"));
     strcpy_P(menuopts[4], PSTR("Configure Outputs"));
     strcpy_P(menuopts[5], PSTR("Volume/Capacity"));
-    strcpy_P(menuopts[6], PSTR("Configure Valves"));
-    strcpy_P(menuopts[7], PSTR("Save Settings"));
-    strcpy_P(menuopts[8], PSTR("Load Settings"));
-    strcpy_P(menuopts[9], PSTR("Exit Setup"));
+    strcpy_P(menuopts[6], PSTR("Default Grain Temp"));
+    strcpy_P(menuopts[7], PSTR("Configure Valves"));
+    strcpy_P(menuopts[8], PSTR("Save Settings"));
+    strcpy_P(menuopts[9], PSTR("Load Settings"));
+    strcpy_P(menuopts[10], PSTR("Exit Setup"));
     
-    lastOption = scrollMenu("System Setup", menuopts, 10, lastOption);
+    lastOption = scrollMenu("System Setup", menuopts, 11, lastOption);
     switch(lastOption) {
       case 0:
         unit = unit ^ 1;
@@ -34,6 +38,7 @@ void menuSetup()
             volume[i] = round(volume[i] * 0.26417);
             volLoss[i] = round(volLoss[i] * 0.26417);
           }
+          setDefGrainTemp(round(getDefGrainTemp() * 1.8) + 32);
           setDefBatch(round(getDefBatch() * 0.26417));
         } else {
           for (int i = TS_HLT; i <= TS_KETTLE; i++) {
@@ -42,6 +47,7 @@ void menuSetup()
             volume[i] = round(volume[i] / 0.26417);
             volLoss[i] = round(volLoss[i] / 0.26417);
           }
+          setDefGrainTemp(round((getDefGrainTemp() - 32)/ 1.8));
           setDefBatch(round(getDefBatch() / 0.26417));
         }
         break;
@@ -50,9 +56,10 @@ void menuSetup()
       case 3: assignSensor(); break;
       case 4: cfgOutputs(); break;
       case 5: cfgVolumes(); break;
-      case 6: cfgValves(); break;
-      case 7: saveSetup(); break;
-      case 8: loadSetup(); break;
+      case 6: setDefGrainTemp(getValue("Default Grain Temp", getDefGrainTemp(), 3, 0, 255, tempUnit)); break;
+      case 7: cfgValves(); break;
+      case 8: saveSetup(); break;
+      case 9: loadSetup(); break;
       default: return;
     }
   }

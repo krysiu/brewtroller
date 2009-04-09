@@ -13,6 +13,7 @@ void doAutoBrew() {
   unsigned int mashRatio = 133;
   byte pitchTemp = 70;
   unsigned int boilAdds = 0;
+  byte grainTemp = getDefGrainTemp();
   
   byte recoveryStep = 0;
   char buf[9];
@@ -84,16 +85,17 @@ void doAutoBrew() {
   while (inMenu) {
     strcpy_P(menuopts[0], PSTR("Batch Vol:"));
     strcpy_P(menuopts[1], PSTR("Grain Wt:"));
-    strcpy_P(menuopts[2], PSTR("Boil Length:"));
-    strcpy_P(menuopts[3], PSTR("Mash Ratio:"));
-    strcpy_P(menuopts[4], PSTR("Delay Start:"));
-    strcpy_P(menuopts[5], PSTR("HLT Temp:"));
-    strcpy_P(menuopts[6], PSTR("Sparge Temp:"));
-    strcpy_P(menuopts[7], PSTR("Pitch Temp:"));
-    strcpy_P(menuopts[8], PSTR("Mash Schedule"));
-    strcpy_P(menuopts[9], PSTR("Boil Additions"));    
-    strcpy_P(menuopts[10], PSTR("Start Program"));
-    strcpy_P(menuopts[11], PSTR("Exit"));
+    strcpy_P(menuopts[2], PSTR("Grain Temp:"));
+    strcpy_P(menuopts[3], PSTR("Boil Length:"));
+    strcpy_P(menuopts[4], PSTR("Mash Ratio:"));
+    strcpy_P(menuopts[5], PSTR("Delay Start:"));
+    strcpy_P(menuopts[6], PSTR("HLT Temp:"));
+    strcpy_P(menuopts[7], PSTR("Sparge Temp:"));
+    strcpy_P(menuopts[8], PSTR("Pitch Temp:"));
+    strcpy_P(menuopts[9], PSTR("Mash Schedule"));
+    strcpy_P(menuopts[10], PSTR("Boil Additions"));    
+    strcpy_P(menuopts[11], PSTR("Start Program"));
+    strcpy_P(menuopts[12], PSTR("Exit"));
 
     ftoa((float)tgtVol[TS_KETTLE]/1000, buf, 2);
     strncat(menuopts[0], buf, 5);
@@ -103,26 +105,29 @@ void doAutoBrew() {
     strncat(menuopts[1], buf, 7);
     strcat(menuopts[1], wtUnit);
 
-    strncat(menuopts[2], itoa(boilMins, buf, 10), 3);
-    strcat_P(menuopts[2], PSTR(" min"));
+    strncat(menuopts[2], itoa(grainTemp, buf, 10), 3);
+    strcat(menuopts[2], tempUnit);
+
+    strncat(menuopts[3], itoa(boilMins, buf, 10), 3);
+    strcat_P(menuopts[3], PSTR(" min"));
 
     ftoa((float)mashRatio/100, buf, 2);
-    strncat(menuopts[3], buf, 4);
-    strcat_P(menuopts[3], PSTR(":1"));
+    strncat(menuopts[4], buf, 4);
+    strcat_P(menuopts[4], PSTR(":1"));
 
-    strncat(menuopts[4], itoa(delayMins/60, buf, 10), 4);
-    strcat_P(menuopts[4], PSTR(" hr"));
+    strncat(menuopts[5], itoa(delayMins/60, buf, 10), 4);
+    strcat_P(menuopts[5], PSTR(" hr"));
     
-    strncat(menuopts[5], itoa(setpoint[TS_HLT], buf, 10), 3);
-    strcat(menuopts[5], tempUnit);
-    
-    strncat(menuopts[6], itoa(spargeTemp, buf, 10), 3);
+    strncat(menuopts[6], itoa(setpoint[TS_HLT], buf, 10), 3);
     strcat(menuopts[6], tempUnit);
-
-    strncat(menuopts[7], itoa(pitchTemp, buf, 10), 3);
+    
+    strncat(menuopts[7], itoa(spargeTemp, buf, 10), 3);
     strcat(menuopts[7], tempUnit);
 
-    lastOption = scrollMenu("AutoBrew Parameters", menuopts, 12, lastOption);
+    strncat(menuopts[8], itoa(pitchTemp, buf, 10), 3);
+    strcat(menuopts[8], tempUnit);
+
+    lastOption = scrollMenu("AutoBrew Parameters", menuopts, 13, lastOption);
     switch(lastOption) {
       case 0:
         tgtVol[TS_KETTLE] = getValue("Batch Volume", tgtVol[TS_KETTLE], 7, 3, 9999999, volUnit);
@@ -131,30 +136,33 @@ void doAutoBrew() {
         grainWeight = getValue("Grain Weight", grainWeight, 7, 3, 9999999, wtUnit);
         break;
       case 2:
-        boilMins = getTimerValue("Boil Length", boilMins);
+        grainTemp = getValue("Grain Temp", grainTemp, 3, 0, 255, tempUnit);
         break;
       case 3:
-        if (unit) mashRatio = getValue("Mash Ratio", mashRatio, 3, 2, 999, " qts/lb"); else mashRatio = getValue("Mash Ratio", mashRatio, 3, 2, 999, " l/kg");
+        boilMins = getTimerValue("Boil Length", boilMins);
         break;
       case 4:
-        delayMins = getTimerValue("Delay Start", delayMins);
+        if (unit) mashRatio = getValue("Mash Ratio", mashRatio, 3, 2, 999, " qts/lb"); else mashRatio = getValue("Mash Ratio", mashRatio, 3, 2, 999, " l/kg");
         break;
       case 5:
-        setpoint[TS_HLT] = getValue("HLT Setpoint", setpoint[TS_HLT], 3, 0, 255, tempUnit);
+        delayMins = getTimerValue("Delay Start", delayMins);
         break;
       case 6:
-        spargeTemp = getValue("HLT Setpoint", spargeTemp, 3, 0, 255, tempUnit);
+        setpoint[TS_HLT] = getValue("HLT Setpoint", setpoint[TS_HLT], 3, 0, 255, tempUnit);
         break;
       case 7:
-        pitchTemp = getValue("Pitch Temp", pitchTemp, 3, 0, 255, tempUnit);
+        spargeTemp = getValue("HLT Setpoint", spargeTemp, 3, 0, 255, tempUnit);
         break;
       case 8:
-        editMashSchedule(stepTemp, stepMins);
+        pitchTemp = getValue("Pitch Temp", pitchTemp, 3, 0, 255, tempUnit);
         break;
       case 9:
-        boilAdds = editHopSchedule(boilAdds);
+        editMashSchedule(stepTemp, stepMins);
         break;
       case 10:
+        boilAdds = editHopSchedule(boilAdds);
+        break;
+      case 11:
         inMenu = 0;
         break;
       default:
@@ -256,7 +264,7 @@ void doAutoBrew() {
     byte strikeTemp = 0;
     int i = 0;
     while (strikeTemp == 0 && i <= STEP_MASHOUT) strikeTemp = stepTemp[i++];
-    if (unit) strikeTemp = round(.2 / (mashRatio / 100.0) * (strikeTemp - 60)) + strikeTemp; else strikeTemp = round(.41 / (mashRatio / 100.0) * (strikeTemp - 16)) + strikeTemp;
+    if (unit) strikeTemp = round(.2 / (mashRatio / 100.0) * (strikeTemp - grainTemp)) + strikeTemp; else strikeTemp = round(.41 / (mashRatio / 100.0) * (strikeTemp - grainTemp)) + strikeTemp;
     setpoint[TS_MASH] = strikeTemp;
     
     setABRecovery(3);

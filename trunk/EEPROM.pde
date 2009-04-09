@@ -34,7 +34,7 @@ void saveSetup() {
   //152-154 Power Recovery
   //155 System Type (Direct, HERMS, Steam)
   EEPROM.write(155, sysType);
-  
+  //156 DefGrainTemp
 }
 
 void loadSetup() {
@@ -69,6 +69,7 @@ void loadSetup() {
   //152-154 Power Recovery
   //155 System Type (Direct, HERMS, Steam)
   sysType = EEPROM.read(155);
+  //156 DefGrainTemp
 }
 
 void PROMwriteBytes(int addr, byte bytes[], int numBytes) {
@@ -84,24 +85,37 @@ void PROMreadBytes(int addr, byte bytes[], int numBytes) {
 }
 
 void checkConfig() {
-  byte cfgVersion = EEPROM.read(64);
+  byte cfgVersion = EEPROM.read(2047);
   if (cfgVersion == 255) cfgVersion = 0;
   switch(cfgVersion) {
     case 0:
+      initEncoder();
       clearLCD();
-      printLCD(1, 0, "Initializing EEPROM ");
-      printLCD(2, 0, "   Please Wait...   ");
-      //Format EEPROM to 0's
-      for (int i=0; i<2048; i++) EEPROM.write(i, 0);
+      printLCD_P(0, 0, PSTR("System Configuration"));
+      printLCD_P(1, 0, PSTR("Version Check Failed"));
       {
-        //Default Output Settings: p: 3, i: 4, d: 2, cycle: 4s, Hysteresis 0.3C(0.5F)
-        byte defOutputSettings[5] = {3, 4, 2, 4, 3};
-        PROMwriteBytes(49, defOutputSettings, 5);
-        PROMwriteBytes(54, defOutputSettings, 5);
-        PROMwriteBytes(59, defOutputSettings, 5);
+        char choices[2][19] = {"Initialize EEPROM ", "  Ignore Version  "};
+        if (!getChoice(choices, 2, 3)) {
+          clearLCD();
+          printLCD_P(1, 0, PSTR("Initializing EEPROM "));
+          printLCD_P(2, 0, PSTR("   Please Wait...   "));
+          //Format EEPROM to 0's
+          for (int i=0; i<2048; i++) EEPROM.write(i, 0);
+          {
+            //Default Output Settings: p: 3, i: 4, d: 2, cycle: 4s, Hysteresis 0.3C(0.5F)
+            byte defOutputSettings[5] = {3, 4, 2, 4, 3};
+            PROMwriteBytes(49, defOutputSettings, 5);
+            PROMwriteBytes(54, defOutputSettings, 5);
+            PROMwriteBytes(59, defOutputSettings, 5);
+          }
+        }
       }
       //Set cfgVersion = 1
-      EEPROM.write(64, 1);
+      EEPROM.write(2047, 1);
+    case 1:
+      //Default Grain Temp = 60F/16C
+      if(EEPROM.read(48) & 1) EEPROM.write(156, 60); else EEPROM.write(156, 16);
+      EEPROM.write(2047, 2);
     default:
       //No EEPROM Upgrade Required
       return;
@@ -174,3 +188,6 @@ void setABAdds(unsigned int adds) { PROMwriteInt(153, adds); }
 
 unsigned long getDefBatch() { return PROMreadLong(88); }
 void setDefBatch(unsigned long batchSize) { PROMwriteLong(88, batchSize); }
+
+byte getDefGrainTemp() { return EEPROM.read(156); }
+void setDefGrainTemp(byte grainTemp) { EEPROM.write(156, grainTemp); }
