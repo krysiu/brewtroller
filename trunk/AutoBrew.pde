@@ -189,18 +189,30 @@ void doAutoBrew() {
       //Check for capacity overages
       if (tgtVol[TS_HLT] > capacity[TS_HLT]) {
         clearLCD();
-        printLCD_P(0, 0, PSTR("HLT too small for"));
-        printLCD_P(1, 0, PSTR("sparge. Increase"));
-        printLCD_P(2, 0, PSTR("mash ratio or"));
-        printLCD_P(3, 0, PSTR("decrease batch size."));
+        printLCD_P(0, 0, PSTR("HLT Capacity Issue"));
+        printLCD_P(1, 0, PSTR("Sparge Vol:"));
+        ftoa(tgtVol[TS_HLT]/1000.0, buf, 2);
+        strncpy(buf, buf, 5);
+        printLCD(1, 11, buf);
+        printLCD(1, 16, volUnit);
+        printLCD_P(3, 4, PSTR("> Continue <"));
         while (!enterStatus) delay(500);
         enterStatus = 0;
       }
       if (tgtVol[TS_MASH] + round(grainWeight * grain2Vol) > capacity[TS_MASH]) {
         clearLCD();
-        printLCD_P(0, 0, PSTR("Mash tun too small."));
-        printLCD_P(1, 0, PSTR("Decrease mash ratio"));
-        printLCD_P(2, 0, PSTR("or grain weight."));
+        printLCD_P(0, 0, PSTR("Mash Capacity Issue"));
+        printLCD_P(1, 0, PSTR("Strike Vol:"));
+        ftoa(tgtVol[TS_MASH]/1000.0, buf, 2);
+        strncpy(buf, buf, 5);
+        printLCD(1, 11, buf);
+        printLCD(1, 16, volUnit);
+        printLCD_P(2, 0, PSTR("Grain Vol:"));
+        ftoa(round(grainWeight * grain2Vol) / 1000.0, buf, 2);
+        strncpy(buf, buf, 5);
+        printLCD(2, 11, buf);
+        printLCD(2, 16, volUnit);
+        printLCD_P(3, 4, PSTR("> Continue <"));
         while (!enterStatus) delay(500);
         enterStatus = 0;
       }
