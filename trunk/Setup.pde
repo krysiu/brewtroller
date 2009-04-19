@@ -300,7 +300,7 @@ void cfgValves() {
     strcpy_P(menuopts[8], PSTR("Exit               "));
     
     lastOption = scrollMenu("Valve Configuration", menuopts, 9, lastOption);
-    if (lastOption > 7) return; else setValveCfg(lastOption, cfgValveProfile(menuopts[lastOption], getValveCfg(lastOption)));
+    if (lastOption > 7) return; else setValveCfg(lastOption + 1, cfgValveProfile(menuopts[lastOption + 1], getValveCfg(lastOption + 1)));
   }
 }
 
@@ -325,24 +325,24 @@ unsigned int cfgValveProfile (char sTitle[], unsigned int defValue) {
   
   while(1) {
     if (encCount != lastCount) {
-      printLCD_P(2, 0, PSTR("    0123456789A     "));
-      if (encCount == 11) {
+      lastCount = encCount;
+      printLCD_P(2, 0, PSTR("    123456789AB     "));
+      if (lastCount == 11) {
         printLCD_P(3, 7, PSTR(">"));
         printLCD_P(3, 10, PSTR("<"));
       } else {
         printLCD_P(3, 7, PSTR(" "));
         printLCD_P(3, 10, PSTR(" "));
-        printLCD_P(2, encCount + 4, PSTR("^"));
+        printLCD_P(2, lastCount + 4, PSTR("^"));
       }
     }
-    lastCount = encCount;
     
     if (enterStatus == 1) {
       enterStatus = 0;
-      if (encCount == 11) {  return retValue; }
+      if (lastCount == 11) {  return retValue; }
       {
         int bit;
-        for (int i = 0; i <= encCount; i++) if (!i) bit = 1; else bit *= 2;
+        for (int i = 0; i <= lastCount; i++) if (!i) bit = 1; else bit *= 2;
         retValue = retValue ^ bit;
       }
 

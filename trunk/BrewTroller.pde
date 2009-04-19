@@ -22,17 +22,17 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 #define ALARM_PIN 15
 #define ENTER_INT 1
 #define ENCA_INT 2
-#define VALVE0_PIN 6
-#define VALVE1_PIN 7
-#define VALVE2_PIN 8
-#define VALVE3_PIN 9
-#define VALVE4_PIN 10
-#define VALVE5_PIN 12
-#define VALVE6_PIN 13
-#define VALVE7_PIN 14
-#define VALVE8_PIN 16
-#define VALVE9_PIN 18
-#define VALVEA_PIN 24
+#define VALVE1_PIN 6
+#define VALVE2_PIN 7
+#define VALVE3_PIN 8
+#define VALVE4_PIN 9
+#define VALVE5_PIN 10
+#define VALVE6_PIN 12
+#define VALVE7_PIN 13
+#define VALVE8_PIN 14
+#define VALVE9_PIN 24
+#define VALVEA_PIN 18
+#define VALVEB_PIN 16
 #define HLTHEAT_PIN 0
 #define MASHHEAT_PIN 1
 #define KETTLEHEAT_PIN 3
@@ -121,7 +121,6 @@ void setup() {
   pinMode(ENCB_PIN, INPUT);
   pinMode(ENTER_PIN, INPUT);
   pinMode(ALARM_PIN, OUTPUT);
-  pinMode(VALVE0_PIN, OUTPUT);
   pinMode(VALVE1_PIN, OUTPUT);
   pinMode(VALVE2_PIN, OUTPUT);
   pinMode(VALVE3_PIN, OUTPUT);
@@ -132,6 +131,7 @@ void setup() {
   pinMode(VALVE8_PIN, OUTPUT);
   pinMode(VALVE9_PIN, OUTPUT);
   pinMode(VALVEA_PIN, OUTPUT);
+  pinMode(VALVEB_PIN, OUTPUT);
   pinMode(HLTHEAT_PIN, OUTPUT);
   pinMode(MASHHEAT_PIN, OUTPUT);
   pinMode(KETTLEHEAT_PIN, OUTPUT);
@@ -282,7 +282,7 @@ void splashScreen() {
   lcdWriteCustChar(2, 1, 6); 
   lcdWriteCustChar(2, 2, 7); 
   printLCD_P(0, 4, PSTR("BrewTroller v1.0"));
-  printLCD_P(1, 10, PSTR("Build 0161"));
+  printLCD_P(1, 10, PSTR("Build 0162"));
   printLCD_P(3, 1, PSTR("www.brewtroller.com"));
   while(!enterStatus) delay(250);
   enterStatus = 0;

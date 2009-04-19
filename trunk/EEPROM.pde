@@ -177,8 +177,8 @@ void saveSetpoints() { for (int i=TS_HLT; i<=TS_KETTLE; i++) { EEPROM.write(131 
 unsigned int getTimerRecovery() { return PROMreadInt(134); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(134, newMins); }
 
-unsigned int getValveCfg(byte profile) { return PROMreadInt(136 + profile * 2); }
-void setValveCfg(byte profile, unsigned int value) { PROMwriteInt(136 + profile * 2, value); }
+unsigned int getValveCfg(byte profile) { return PROMreadInt(136 + (profile - 1) * 2); }
+void setValveCfg(byte profile, unsigned int value) { PROMwriteInt(136 + (profile - 1) * 2, value); }
 
 byte getABPitch() { return EEPROM.read(152); }
 void setABPitch(byte pitchTemp) { EEPROM.write(152, pitchTemp); }

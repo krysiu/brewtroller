@@ -101,15 +101,15 @@ void setAlarm(boolean value) {
 }
 
 void setValves (unsigned int valveBits) { 
-  digitalWrite(VALVE0_PIN, valveBits & 1);
-  digitalWrite(VALVE1_PIN, valveBits & 2);
-  digitalWrite(VALVE2_PIN, valveBits & 4);
-  digitalWrite(VALVE3_PIN, valveBits & 8);
-  digitalWrite(VALVE4_PIN, valveBits & 16);
-  digitalWrite(VALVE5_PIN, valveBits & 32);
-  digitalWrite(VALVE6_PIN, valveBits & 64);
-  digitalWrite(VALVE7_PIN, valveBits & 128);
-  digitalWrite(VALVE8_PIN, valveBits & 256);
-  digitalWrite(VALVE9_PIN, valveBits & 512);
-  digitalWrite(VALVEA_PIN, valveBits & 1024);
+  digitalWrite(VALVE1_PIN, valveBits & 1);
+  digitalWrite(VALVE2_PIN, valveBits & 2);
+  digitalWrite(VALVE3_PIN, valveBits & 4);
+  digitalWrite(VALVE4_PIN, valveBits & 8);
+  digitalWrite(VALVE5_PIN, valveBits & 16);
+  digitalWrite(VALVE6_PIN, valveBits & 32);
+  digitalWrite(VALVE7_PIN, valveBits & 64);
+  digitalWrite(VALVE8_PIN, valveBits & 128);
+  digitalWrite(VALVE9_PIN, valveBits & 256);
+  digitalWrite(VALVEA_PIN, valveBits & 512);
+  digitalWrite(VALVEB_PIN, valveBits & 1024);
 }

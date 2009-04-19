@@ -367,7 +367,7 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
   char fString[7], buf[5];
   unsigned int fillHLT = getValveCfg(VLV_FILLHLT);
   unsigned int fillMash = getValveCfg(VLV_FILLMASH);
-  unsigned int fillBoth = fillHLT || fillMash;
+  unsigned int fillBoth = fillHLT | fillMash;
 
   while (1) {
     clearLCD();
@@ -672,7 +672,7 @@ void manSparge() {
   unsigned long convStart = 0;
   unsigned int spargeIn = getValveCfg(VLV_SPARGEIN);
   unsigned int spargeOut = getValveCfg(VLV_SPARGEOUT);
-  unsigned int spargeFly = spargeIn || spargeOut;
+  unsigned int spargeFly = spargeIn | spargeOut;
 
   while (1) {
     clearLCD();
@@ -864,7 +864,7 @@ void manChill(byte settemp) {
   char fString[7], buf[5];
   unsigned int chillLow = getValveCfg(VLV_CHILLBEER);
   unsigned int chillHigh = getValveCfg(VLV_CHILLH2O);
-  unsigned int chillNorm = chillLow || chillHigh;
+  unsigned int chillNorm = chillLow | chillHigh;
   unsigned long convStart = 0;
   float temp[6];
   
