@@ -440,11 +440,20 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
             printLCD_P(3, 17, PSTR("Off"));
             setValves(0);
             break;
-          case 5: if (confirmExit()) { enterStatus = 2; return; } else redraw = 1;
+          case 5:
+            if (confirmExit()) {
+              setValves(0);
+              enterStatus = 2;
+              return;
+            } else redraw = 1;
         }
       } else if (enterStatus == 2) {
         enterStatus = 0;
-        if (confirmExit()) { enterStatus = 2; return; } else redraw = 1;
+        if (confirmExit()) { 
+          setValves(0);
+          enterStatus = 2;
+          return;
+        } else redraw = 1;
       }
     }
   }
@@ -588,6 +597,7 @@ void mashStep(char sTitle[ ], int iMins) {
          if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
          digitalWrite(heatPin[i], LOW);
        }
+       setValves(0);
        //Exit
       return;
     }
@@ -749,11 +759,20 @@ void manSparge() {
             printLCD_P(3, 17, PSTR("Off"));
             setValves(0);
             break;
-          case 5: if (confirmExit()) { enterStatus = 2; return; } else redraw = 1;
+          case 5:
+            if (confirmExit()) {
+              setValves(0);
+              enterStatus = 2;
+              return;
+            } else redraw = 1;
         }
       } else if (enterStatus == 2) {
         enterStatus = 0;
-        if (confirmExit()) { enterStatus = 2; return; } else redraw = 1;
+        if (confirmExit()) {
+          setValves(0);
+          enterStatus = 2;
+          return;
+        } else redraw = 1;
       }
     }
   }  
@@ -941,11 +960,20 @@ void manChill(byte settemp) {
           case 5:
             doAuto = 1;
             break;  
-          case 6: if (confirmExit()) { enterStatus = 2; return; } else redraw = 1;
+          case 6: 
+            if (confirmExit()) {
+              setValves(0);
+              enterStatus = 2;
+              return;
+            } else redraw = 1;
         }
       } else if (enterStatus == 2) {
         enterStatus = 0;
-        if (confirmExit()) { enterStatus = 2; return; } else redraw = 1;
+        if (confirmExit()) { 
+          setValves(0);
+          enterStatus = 2;
+          return;
+        } else redraw = 1;
       }
       if (convStart == 0) {
         convertAll();
