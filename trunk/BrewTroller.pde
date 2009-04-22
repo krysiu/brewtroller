@@ -98,7 +98,7 @@ byte sysType = SYS_DIRECT;
 boolean PIDEnabled[3] = { 0, 0, 0 };
 
 //Shared menuOptions Array
-char menuopts[16][20];
+char menuopts[20][20];
 
 double PIDInput[3], PIDOutput[3], setpoint[3];
 byte PIDp[3], PIDi[3], PIDd[3], PIDCycle[3], hysteresis[3];
@@ -281,8 +281,8 @@ void splashScreen() {
   lcdWriteCustChar(2, 0, 5); 
   lcdWriteCustChar(2, 1, 6); 
   lcdWriteCustChar(2, 2, 7); 
-  printLCD_P(0, 4, PSTR("BrewTroller v1.0"));
-  printLCD_P(1, 10, PSTR("Build 0163"));
+  printLCD_P(0, 4, PSTR("BrewTroller v1.1"));
+  printLCD_P(1, 10, PSTR("Build 0164"));
   printLCD_P(3, 1, PSTR("www.brewtroller.com"));
   while(!enterStatus) delay(250);
   enterStatus = 0;

@@ -235,3 +235,105 @@ unsigned int getTimerValue(char sTitle[], unsigned int defMins) {
     }
   }
 }
+
+void getString(char sTitle[], char defValue[], byte chars) {
+  char retValue[20];
+  strcpy(retValue, defValue);
+  
+  //Right-Pad with spaces
+  boolean doWipe = 0;
+  for (int i = 0; i < chars; i++) {
+    if (retValue[i] < 32 || retValue[i] > 126) doWipe = 1;
+    if (doWipe) retValue[i] = 32;
+  }
+  retValue[chars] = '\0';
+  
+  byte cursorPos = 0; 
+  boolean cursorState = 0; //0 = Unselected, 1 = Selected
+
+  encMin = 0;
+  encMax = chars;
+  encCount = 0;
+  int lastCount = 1;
+
+  {
+    const byte charByte[] = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};
+    lcdSetCustChar(0, charByte);
+  }
+  {
+    const byte charByte[] = {B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
+    lcdSetCustChar(1, charByte);
+  }
+      
+  clearLCD();
+  printLCD(0,0,sTitle);
+  printLCD(3, 9, "OK");
+  
+  while(1) {
+    if (encCount != lastCount) {
+      if (cursorState) {
+        retValue[cursorPos] = enc2ASCII(encCount);
+      } else {
+        cursorPos = encCount;
+        for (int i = (20 - chars + 1) / 2 - 1; i < (20 - chars + 1) / 2 - 1 + chars; i++) lcdWriteCustChar(2, i, 0);
+        printLCD(3, 8, " ");
+        printLCD(3, 11, " ");
+        if (cursorPos == chars) {
+          printLCD(3, 8, ">");
+          printLCD(3, 11, "<");
+        } else {
+          lcdWriteCustChar(2, (20 - chars + 1) / 2 + encCount - 1, 1);
+        }
+      }
+      lastCount = encCount;
+      printLCD(1, (20 - chars + 1) / 2 - 1, retValue);
+    }
+    if (enterStatus == 1) {
+      enterStatus = 0;
+      if (cursorPos == chars) {
+        strcpy(defValue, retValue);
+        return;
+      }
+      else {
+        cursorState = cursorState ^ 1;
+        if (cursorState) {
+          encMin = 0;
+          encMax = 94;
+          encCount = ASCII2enc(retValue[cursorPos]);
+        } else {
+          encMin = 0;
+          encMax = chars;
+          encCount = cursorPos;
+        }
+        lastCount = encCount;
+      }
+    } else if (enterStatus == 2) {
+      enterStatus = 0;
+      return;
+    }
+  }
+}
+
+
+//Next two functions used to change order of charactor scroll to (space), A-Z, a-z, 0-9, symbols
+byte ASCII2enc(byte charin) {
+  if (charin == 32) return 0;
+  else if (charin >= 65 && charin <= 90) return charin - 64;
+  else if (charin >= 97 && charin <= 122) return charin - 70;
+  else if (charin >= 48 && charin <= 57) return charin + 5;
+  else if (charin >= 33 && charin <= 47) return charin + 30;
+  else if (charin >= 58 && charin <= 64) return charin + 20;
+  else if (charin >= 91 && charin <= 96) return charin - 6;
+  else if (charin >= 123 && charin <= 126) return charin - 32;
+}
+
+byte enc2ASCII(byte charin) {
+  if (charin == 0) return 32;
+  else if (charin >= 1 && charin <= 26) return charin + 64;
+  else if (charin >= 27 && charin <= 52) return charin + 70;
+  else if (charin >= 53 && charin <= 62) return charin - 5;
+  else if (charin >= 63 && charin <= 77) return charin - 30;
+  else if (charin >= 78 && charin <= 84) return charin - 20;
+  else if (charin >= 85 && charin <= 90) return charin + 6;
+  else if (charin >= 91 && charin <= 94) return charin + 32;
+}

@@ -25,16 +25,18 @@ void saveSetup() {
     PROMwriteLong(i * 8 + 64, capacity[i]);
     PROMwriteLong(i * 8 + 68, volLoss[i]);
   }
-  //Default Batch size (88-91)
+  //88-91 ***OPEN***
   EEPROM.write(92, evapRate);
   EEPROM.write(93, encMode);
 
-  //94 - 135 Reserved for Power Loss Recovery
+  //94 - 127 Reserved for Power Recovery
+  //128-130 ***OPEN***
+  //131 - 135 Reserved for Power Recovery
   //136-151 Reserved for Valve Profiles 
   //152-154 Power Recovery
   //155 System Type (Direct, HERMS, Steam)
   EEPROM.write(155, sysType);
-  //156 DefGrainTemp
+  //156-1310 Saved Programs
 }
 
 void loadSetup() {
@@ -60,16 +62,18 @@ void loadSetup() {
     capacity[i] = PROMreadLong(i * 8 + 64);
     volLoss[i] = PROMreadLong(i * 8 + 68);
   }
-  //Default Batch size (88-91)
+  //88-91 ***OPEN***
   evapRate = EEPROM.read(92);
   encMode = EEPROM.read(93);
 
-  //94 - 135 Reserved for Power Recovery
+  //94 - 127 Reserved for Power Recovery
+  //128-130 ***OPEN***
+  //131 - 135 Reserved for Power Recovery
   //136-151 Reserved for Valve Profiles 
   //152-154 Power Recovery
   //155 System Type (Direct, HERMS, Steam)
   sysType = EEPROM.read(155);
-  //156 DefGrainTemp
+  //156-1310 Saved Programs
 }
 
 void PROMwriteBytes(int addr, byte bytes[], int numBytes) {
@@ -116,6 +120,68 @@ void checkConfig() {
       //Default Grain Temp = 60F/16C
       if(EEPROM.read(48) & 1) EEPROM.write(156, 60); else EEPROM.write(156, 16);
       EEPROM.write(2047, 2);
+    case 2:
+      //Default Programs
+      setProgName(0, "Single Infusion");
+      if (EEPROM.read(48) & 1) {
+        byte temps[4] = {0, 0, 153, 0};
+        byte mins[4] = {0, 0, 60, 0};
+        setProgSchedule(0, temps, mins);
+        setProgSparge(0, 168);
+        setProgHLT(0, 180);
+        setProgRatio(0, 133);
+        setProgPitch(0, 70);
+        setProgGrainT(0, 60);
+      } else {
+        byte temps[4] = {0, 0, 67, 0};
+        byte mins[4] = {0, 0, 60, 0};
+        setProgSchedule(0, temps, mins);
+        setProgSparge(0, 76);
+        setProgHLT(0, 82);
+        setProgRatio(0, 277);
+        setProgPitch(0, 21);
+        setProgGrainT(0, 16);
+      }
+      setProgBoil(0, 60);
+      setProgGrain(0, 0);
+      setProgDelay(0, 0);
+      {
+        unsigned long vols[3] = {0, 0, 0};
+        setProgVols(0, vols);
+      }
+      setProgAdds(0, 0);
+
+            
+      setProgName(1, "Multi-Rest");
+      if (EEPROM.read(48) & 1) {
+        byte temps[4] = {104, 122, 153, 0};
+        byte mins[4] = {20, 20, 60, 0};
+        setProgSchedule(1, temps, mins);
+        setProgSparge(1, 168);
+        setProgHLT(1, 180);
+        setProgRatio(1, 133);
+        setProgPitch(1, 70);
+        setProgGrainT(1, 60);
+      } else {
+        byte temps[4] = {40, 50, 67, 0};
+        byte mins[4] = {20, 20, 60, 0};
+        setProgSchedule(1, temps, mins);
+        setProgSparge(1, 76);
+        setProgHLT(1, 82);
+        setProgRatio(1, 277);
+        setProgPitch(1, 21);
+        setProgGrainT(1, 16);
+      }
+      setProgBoil(1, 60);
+      setProgGrain(1, 0);
+      setProgDelay(1, 0);
+      {
+        unsigned long vols[3] = {0, 0, 0};
+        setProgVols(1, vols);
+      }
+      setProgAdds(1, 0);
+      
+      EEPROM.write(2047, 3);
     default:
       //No EEPROM Upgrade Required
       return;
@@ -171,6 +237,7 @@ void saveABSteps(byte stepTemp[4], byte stepMins[4]) {
 }
 void loadABVols(unsigned long tgtVol[3]) { for (int i=0; i<3; i++) { tgtVol[i] = PROMreadLong(115 + i * 4); } }
 void saveABVols(unsigned long tgtVol[3]) { for (int i=0; i<3; i++) { PROMwriteLong(115 + i * 4, tgtVol[i]); } }
+
 void loadSetpoints() { for (int i=TS_HLT; i<=TS_KETTLE; i++) { setpoint[i] = EEPROM.read(131 + i); } }
 void saveSetpoints() { for (int i=TS_HLT; i<=TS_KETTLE; i++) { EEPROM.write(131 + i, setpoint[i]); } }
 
@@ -186,8 +253,58 @@ void setABPitch(byte pitchTemp) { EEPROM.write(152, pitchTemp); }
 unsigned int getABAdds() { return PROMreadInt(153); }
 void setABAdds(unsigned int adds) { PROMwriteInt(153, adds); }
 
-unsigned long getDefBatch() { return PROMreadLong(88); }
-void setDefBatch(unsigned long batchSize) { PROMwriteLong(88, batchSize); }
+byte getABGrainTemp() { return EEPROM.read(127); }
+void setABGrainTemp(byte grainTemp) { EEPROM.write(127, grainTemp); }
 
-byte getDefGrainTemp() { return EEPROM.read(156); }
-void setDefGrainTemp(byte grainTemp) { EEPROM.write(156, grainTemp); }
+void setProgName(byte preset, char name[20]) {
+  for (int i = 0; i < 19; i++) EEPROM.write(preset * 55 + 156 + i, name[i]);
+}
+
+void getProgName(byte preset, char name[20]) {
+  for (int i = 0; i < 19; i++) name[i] = EEPROM.read(preset * 55 + 156 + i);
+  name[19] = '\0';
+}
+
+void setProgSparge(byte preset, byte sparge) { EEPROM.write(preset * 55 + 175, sparge); }
+byte getProgSparge(byte preset) { return EEPROM.read(preset * 55 + 175); }
+
+void setProgGrain(byte preset, unsigned long grain) { PROMwriteLong(preset * 55 + 176, grain); }
+unsigned long getProgGrain(byte preset) { return PROMreadLong(preset * 55 + 176); }
+
+void setProgDelay(byte preset, unsigned int delayMins) { PROMwriteInt(preset * 55 + 180, delayMins); }
+unsigned int getProgDelay(byte preset) { return PROMreadInt(preset * 55 + 180); }
+
+void setProgBoil(byte preset, unsigned int boilMins) { PROMwriteInt(preset * 55 + 182, boilMins); }
+unsigned int getProgBoil(byte preset) { return PROMreadInt(preset * 55 + 182); }
+
+void setProgRatio(byte preset, unsigned int ratio) { PROMwriteInt(preset * 55 + 184, ratio); }
+unsigned int getProgRatio(byte preset) { return PROMreadInt(preset * 55 + 184); }
+
+void setProgSchedule(byte preset, byte stepTemp[4], byte stepMins[4]) {
+  for (int i=0; i<4; i++) {
+     EEPROM.write(preset * 55 + 186 + i, stepTemp[i]);
+     EEPROM.write(preset * 55 + 190 + i, stepMins[i]);
+  }
+}
+
+void getProgSchedule(byte preset, byte stepTemp[4], byte stepMins[4]) {
+  for (int i=0; i<4; i++) {
+    stepTemp[i] = EEPROM.read(preset * 55 + 186 + i);
+    stepMins[i] = EEPROM.read(preset * 55 + 190 + i);
+  }
+}
+
+void getProgVols(byte preset, unsigned long vols[3]) { for (int i=0; i<3; i++) vols[i] = PROMreadLong(preset * 55 + 194 + i * 4); }
+void setProgVols(byte preset, unsigned long vols[3]) { for (int i=0; i<3; i++) PROMwriteLong(preset * 55 + 194 + i * 4, vols[i]); }
+
+void setProgHLT(byte preset, byte HLT) { EEPROM.write(preset * 55 + 206, HLT); }
+byte getProgHLT(byte preset) { return EEPROM.read(preset * 55 + 206); }
+
+void setProgPitch(byte preset, byte pitch) { EEPROM.write(preset * 55 + 207, pitch); }
+byte getProgPitch(byte preset) { return EEPROM.read(preset * 55 + 207); }
+
+void setProgAdds(byte preset, unsigned int adds) { PROMwriteInt(preset * 55 + 208, adds); }
+unsigned int getProgAdds(byte preset) { return PROMreadInt(preset * 55 + 208); }
+
+void setProgGrainT(byte preset, byte grain) { EEPROM.write(preset * 55 + 210, grain); }
+byte getProgGrainT(byte preset) { return EEPROM.read(preset * 55 + 210); }
