@@ -30,7 +30,12 @@ void doAutoBrew() {
   boilAdds = getABAdds();
   grainTemp = getABGrainTemp();
 
-  if (getPwrRecovery() == 1) recoveryStep = getABRecovery();
+  if (getPwrRecovery() == 1) {
+    recoveryStep = getABRecovery();
+  } else {
+    //Set Zero Volume Calibrations on Normal AutoBrew Start (Not Power Loss Recovery)
+    for (int i = TS_HLT; i <= TS_KETTLE; i++) setZeroVol(i, analogRead(vSensor[i]));
+  }
 
   char volUnit[5] = " l";
   char wtUnit[4] = " kg";
@@ -133,9 +138,9 @@ void doAutoBrew() {
         {
           byte profile = 0;
           //Display Stored Programs
-          for (int i = 0; i < 20; i++) getProgName(i, menuopts[i]);
-          profile = scrollMenu("Load Program", menuopts, 20, profile);
-          if (profile < 20) {
+          for (int i = 0; i < 30; i++) getProgName(i, menuopts[i]);
+          profile = scrollMenu("Load Program", menuopts, 30, profile);
+          if (profile < 30) {
             spargeTemp = getProgSparge(profile);
             grainWeight = getProgGrain(profile);
             delayMins = getProgDelay(profile);
@@ -154,9 +159,9 @@ void doAutoBrew() {
         {
           byte profile = 0;
           //Display Stored Schedules
-          for (int i = 0; i < 20; i++) getProgName(i, menuopts[i]);
-          profile = scrollMenu("Save Program", menuopts, 20, profile);
-          if (profile < 20) {
+          for (int i = 0; i < 30; i++) getProgName(i, menuopts[i]);
+          profile = scrollMenu("Save Program", menuopts, 30, profile);
+          if (profile < 30) {
             getString("Save Program As:", menuopts[profile], 19);
             setProgName(profile, menuopts[profile]);
             setProgSparge(profile, spargeTemp);
@@ -424,24 +429,32 @@ void editMashSchedule(byte stepTemp[4], byte stepMins[4]) {
 }
 
 void manFill(unsigned long hltVol, unsigned long mashVol) {
-  char fString[7], buf[5];
+  char fString[7], buf[8];
   unsigned int fillHLT = getValveCfg(VLV_FILLHLT);
   unsigned int fillMash = getValveCfg(VLV_FILLMASH);
   unsigned int fillBoth = fillHLT | fillMash;
-
+  unsigned int calibVals[2][10];
+  unsigned long calibVols[2][10];
+  unsigned int zero[2];
+  unsigned long vols[2];
+  unsigned long lastUpdate = 0;
+  
+  for (int i = TS_HLT; i <= TS_MASH; i++) {
+    zero[i] = getZeroVol(i);
+    getVolCalibs(i, calibVols[i], calibVals[i]);
+  }
+  
   while (1) {
     clearLCD();
     printLCD_P(0, 0, PSTR("HLT"));
     if (unit) printLCD_P(0, 5, PSTR("Fill (gal)")); else printLCD_P(0, 6, PSTR("Fill (l)"));
     printLCD_P(0, 16, PSTR("Mash"));
-
     printLCD_P(1, 7, PSTR("Target"));
     printLCD_P(2, 7, PSTR("Actual"));
     unsigned long whole = hltVol / 1000;
     //Throw away the last digit
     unsigned long frac = round ((hltVol - whole * 1000)/10.0);
     //Build string to align left
-
     strcpy(fString, ltoa(whole, buf, 10));
     strcat(fString, ".");
     strcat(fString, ltoa(frac, buf, 10));
@@ -465,6 +478,18 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
     
     boolean redraw = 0;
     while(!redraw) {
+      for (int i = TS_HLT; i <= TS_MASH; i++) vols[i] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
+
+      if (millis() - lastUpdate > 500) {
+        ftoa(vols[TS_HLT]/1000.0, buf, 2);
+        printLCD(2, 0, "       ");
+        printLCD(2, 0, buf);
+
+        ftoa(vols[TS_MASH]/1000.0, buf, 2);
+        printLCDPad(2, 14, buf, 6, ' ');
+        lastUpdate = millis();
+      }
+      
       if (encCount != lastCount) {
         switch(encCount) {
           case 0: printLCD_P(3, 4, PSTR("> Continue <")); break;
@@ -671,7 +696,17 @@ void manSparge() {
   unsigned int spargeIn = getValveCfg(VLV_SPARGEIN);
   unsigned int spargeOut = getValveCfg(VLV_SPARGEOUT);
   unsigned int spargeFly = spargeIn | spargeOut;
-
+  unsigned int calibVals[2][10];
+  unsigned long calibVols[2][10];
+  unsigned int zero[2];
+  unsigned long vols[2];
+  unsigned long lastUpdate = 0;
+    
+  for (int i = TS_HLT; i <= TS_MASH; i++) {
+    zero[i] = getZeroVol(i);
+    getVolCalibs(i, calibVols[i], calibVals[i]);
+  }
+  
   while (1) {
     clearLCD();
     printLCD_P(0, 7, PSTR("Sparge"));
@@ -702,6 +737,18 @@ void manSparge() {
     
     boolean redraw = 0;
     while(!redraw) {
+      for (int i = TS_HLT; i <= TS_MASH; i++) vols[i] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
+
+      if (millis() - lastUpdate > 500) {
+        ftoa(vols[TS_HLT]/1000.0, buf, 2);
+        printLCD(2, 0, "       ");
+        printLCD(2, 0, buf);
+
+        ftoa(vols[TS_MASH]/1000.0, buf, 2);
+        printLCDPad(2, 14, buf, 6, ' ');
+        lastUpdate = millis();
+      }
+
       if (encCount != lastCount) {
         switch(encCount) {
           case 0: printLCD_P(3, 4, PSTR("> Continue <")); break;

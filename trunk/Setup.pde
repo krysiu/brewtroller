@@ -255,27 +255,75 @@ void cfgVolumes() {
   while(1) {
     strcpy_P(menuopts[0], PSTR("HLT Capacity       "));
     strcpy_P(menuopts[1], PSTR("HLT Dead Space     "));
-    strcpy_P(menuopts[2], PSTR("Mash Capacity      "));
-    strcpy_P(menuopts[3], PSTR("Mash Dead Space    "));
-    strcpy_P(menuopts[4], PSTR("Kettle Capacity    "));
-    strcpy_P(menuopts[5], PSTR("Kettle Dead Space  "));
-    strcpy_P(menuopts[6], PSTR("Evaporation Rate   "));
-    strcpy_P(menuopts[7], PSTR("Exit               "));
+    strcpy_P(menuopts[2], PSTR("HLT Calibration    "));
+    strcpy_P(menuopts[3], PSTR("Mash Capacity      "));
+    strcpy_P(menuopts[4], PSTR("Mash Dead Space    "));
+    strcpy_P(menuopts[5], PSTR("Mash Calibration   "));
+    strcpy_P(menuopts[6], PSTR("Kettle Capacity    "));
+    strcpy_P(menuopts[7], PSTR("Kettle Dead Space  "));
+    strcpy_P(menuopts[8], PSTR("Kettle Calibration "));
+    strcpy_P(menuopts[9], PSTR("Evaporation Rate   "));
+    strcpy_P(menuopts[10], PSTR("Exit               "));
 
     char volUnit[5] = "L";
     if (unit) strcpy_P(volUnit, PSTR("Gal"));
-    lastOption = scrollMenu("Volume/Capacity", menuopts, 8, lastOption);
+    lastOption = scrollMenu("Volume/Capacity", menuopts, 11, lastOption);
     switch(lastOption) {
       case 0: capacity[TS_HLT] = getValue("HLT Capacity", capacity[TS_HLT], 7, 3, 9999999, volUnit); break;
       case 1: volLoss[TS_HLT] = getValue("HLT Dead Space", volLoss[TS_HLT], 5, 3, 65535, volUnit); break;
-      case 2: capacity[TS_MASH] = getValue("Mash Capacity", capacity[TS_MASH], 7, 3, 9999999, volUnit); break;
-      case 3: volLoss[TS_MASH] = getValue("Mash Dead Space", volLoss[TS_MASH], 5, 3, 65535, volUnit); break;
-      case 4: capacity[TS_KETTLE] = getValue("Kettle Capacity", capacity[TS_KETTLE], 7, 3, 9999999, volUnit); break;
-      case 5: volLoss[TS_KETTLE] = getValue("Kettle Dead Space", volLoss[TS_KETTLE], 5, 3, 65535, volUnit); break;
-      case 6: evapRate = getValue("Evaporation Rate", evapRate, 3, 0, 100, "%/hr");
+      case 2: volCalibMenu(TS_HLT); break;
+      case 3: capacity[TS_MASH] = getValue("Mash Capacity", capacity[TS_MASH], 7, 3, 9999999, volUnit); break;
+      case 4: volLoss[TS_MASH] = getValue("Mash Dead Space", volLoss[TS_MASH], 5, 3, 65535, volUnit); break;
+      case 5: volCalibMenu(TS_MASH); break;
+      case 6: capacity[TS_KETTLE] = getValue("Kettle Capacity", capacity[TS_KETTLE], 7, 3, 9999999, volUnit); break;
+      case 7: volLoss[TS_KETTLE] = getValue("Kettle Dead Space", volLoss[TS_KETTLE], 5, 3, 65535, volUnit); break;
+      case 8: volCalibMenu(TS_KETTLE); break;
+      case 9: evapRate = getValue("Evaporation Rate", evapRate, 3, 0, 100, "%/hr");
       default: return;
     }
   } 
+}
+
+void volCalibMenu(byte vessel) {
+  byte lastOption = 0;
+  unsigned long vols[10];
+  unsigned int vals[10];
+  char sVessel[7];
+  char sTitle[20];
+  char buf[9];
+  unsigned int zeroVol = getZeroVol(vessel);
+  switch(vessel) {
+    case TS_HLT: strcpy_P(sVessel, PSTR("HLT")); break;
+    case TS_MASH: strcpy_P(sVessel, PSTR("Mash")); break;
+    case TS_KETTLE: strcpy_P(sVessel, PSTR("Kettle")); break;
+  }  
+  while(1) {
+    getVolCalibs(vessel, vols, vals);
+    for(int i = 0; i < 10; i++) {
+      if (vals[i] > 0) {
+        ftoa(vols[i] / 1000.0, buf, 3); 
+        strcpy(menuopts[i], buf);
+        if (unit) strcat(menuopts[i], " gal"); else strcat(menuopts[i], " l");
+      } else strcpy_P(menuopts[i], PSTR("OPEN"));
+    }
+    strcpy_P(menuopts[10], PSTR("Exit"));
+    strcpy(sTitle, sVessel);
+    strcat_P(sTitle, PSTR(" Calibration"));
+    lastOption = scrollMenu(sTitle, menuopts, 11, lastOption);
+    if (lastOption > 9) return; else {
+      if (vols[lastOption]) {
+        if(confirmDel()) setVolCalib(vessel, lastOption, 0, 0);
+      } else {
+        strcpy_P(sTitle, PSTR("Current "));
+        strcat(sTitle, sVessel);
+        strcat_P(sTitle, PSTR(" Vol:"));
+       if (unit) vols[lastOption] = getValue(sTitle, 0, 7, 3, 9999999, " gal");
+       else vols[lastOption] = getValue(sTitle, 0, 7, 3, 9999999, " l");
+        //Check for Value and save to EEPROM
+        if (vols[lastOption] > 0) setVolCalib(vessel, lastOption, vols[lastOption], analogRead(vSensor[vessel]) - zeroVol);
+      }
+    }
+  }
 }
 
 void cfgValves() {
@@ -292,7 +340,7 @@ void cfgValves() {
     strcpy_P(menuopts[8], PSTR("Exit               "));
     
     lastOption = scrollMenu("Valve Configuration", menuopts, 9, lastOption);
-    if (lastOption > 7) return; else setValveCfg(lastOption + 1, cfgValveProfile(menuopts[lastOption + 1], getValveCfg(lastOption + 1)));
+    if (lastOption > 7) return; else setValveCfg(lastOption + 1, cfgValveProfile(menuopts[lastOption], getValveCfg(lastOption + 1)));
   }
 }
 

@@ -71,16 +71,26 @@ int getChoice(char choices[][19], int numChoices, int iRow) {
   }
 }
 
-int confirmExit() {
+boolean confirmExit() {
   clearLCD();
-  printLCD(0, 0, "Exiting will reset");
-  printLCD(1, 0, "outputs, setpoints");
-  printLCD(2, 0, "and timers.");
+  printLCD_P(0, 0, PSTR("Exiting will reset"));
+  printLCD_P(1, 0, PSTR("outputs, setpoints"));
+  printLCD_P(2, 0, PSTR("and timers."));
   
   char choices[2][19] = {
     "      Return      ",
     "   Exit Program   "};
-  return getChoice(choices, 2, 3);;
+  if(getChoice(choices, 2, 3) == 1) return 1; else return 0;
+}
+
+boolean confirmDel() {
+  clearLCD();
+  printLCD_P(1, 0, PSTR("Delete Item?"));
+  
+  char choices[2][19] = {
+    "      Cancel      ",
+    "      Delete      "};
+  if(getChoice(choices, 2, 3) == 1) return 1; else return 0;
 }
 
 long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision, long maxValue, char dispUnit[]) {

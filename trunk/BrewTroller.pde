@@ -36,6 +36,9 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 #define HLTHEAT_PIN 0
 #define MASHHEAT_PIN 1
 #define KETTLEHEAT_PIN 3
+#define HLTVOL_APIN 0
+#define MASHVOL_APIN 1
+#define KETTLEVOL_APIN 2
 
 //TSensor and Output (0-2) Array Element Constants
 #define TS_HLT 0
@@ -75,6 +78,9 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 //Heat Output Pin Array
 byte heatPin[3] = { HLTHEAT_PIN, MASHHEAT_PIN, KETTLEHEAT_PIN };
 
+//Volume Sensor Pin Array
+byte vSensor[3] = { HLTVOL_APIN, MASHVOL_APIN, KETTLEVOL_APIN};
+
 //Encoder Globals
 byte encMode = 0;
 int encCount;
@@ -98,7 +104,7 @@ byte sysType = SYS_DIRECT;
 boolean PIDEnabled[3] = { 0, 0, 0 };
 
 //Shared menuOptions Array
-char menuopts[20][20];
+char menuopts[30][20];
 
 double PIDInput[3], PIDOutput[3], setpoint[3];
 byte PIDp[3], PIDi[3], PIDd[3], PIDCycle[3], hysteresis[3];
@@ -150,7 +156,9 @@ void setup() {
   switch(getPwrRecovery()) {
     case 1: doAutoBrew(); break;
     case 2: doMon(); break;
-    default: splashScreen(); break;
+    default:
+      splashScreen();
+      break;
   }
 }
 
@@ -282,7 +290,7 @@ void splashScreen() {
   lcdWriteCustChar(2, 1, 6); 
   lcdWriteCustChar(2, 2, 7); 
   printLCD_P(0, 4, PSTR("BrewTroller v1.1"));
-  printLCD_P(1, 10, PSTR("Build 0164"));
+  printLCD_P(1, 10, PSTR("Build 0165"));
   printLCD_P(3, 1, PSTR("www.brewtroller.com"));
   while(!enterStatus) delay(250);
   enterStatus = 0;

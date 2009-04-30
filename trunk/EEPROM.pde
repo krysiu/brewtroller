@@ -36,7 +36,10 @@ void saveSetup() {
   //152-154 Power Recovery
   //155 System Type (Direct, HERMS, Steam)
   EEPROM.write(155, sysType);
-  //156-1310 Saved Programs
+  //156-1805 Saved Programs
+  //1981-2040 Volume Calibrations
+  //2041-2046 Zero Volumes
+  //2047 EEPROM Version
 }
 
 void loadSetup() {
@@ -73,7 +76,10 @@ void loadSetup() {
   //152-154 Power Recovery
   //155 System Type (Direct, HERMS, Steam)
   sysType = EEPROM.read(155);
-  //156-1310 Saved Programs
+  //156-1805 Saved Programs
+  //1981-2040 Volume Calibrations
+  //2041-2046 Zero Volumes
+  //2047 EEPROM Version
 }
 
 void PROMwriteBytes(int addr, byte bytes[], int numBytes) {
@@ -308,3 +314,28 @@ unsigned int getProgAdds(byte preset) { return PROMreadInt(preset * 55 + 208); }
 
 void setProgGrainT(byte preset, byte grain) { EEPROM.write(preset * 55 + 210, grain); }
 byte getProgGrainT(byte preset) { return EEPROM.read(preset * 55 + 210); }
+
+//Set a single Volume Calibration (EEPROM Bytes 1981 - 2040)
+// vessel: 0-2 Corresponding to TS_HLT, TS_MASH, TS_KETTLE
+// slot: 0-9 Individual slots representing a single volume/value pairing
+// vol: The volume for this calibration as a long in thousandths (1000 = 1)
+// val: An int representing the analogReadValue() to pair to the given volume
+void setVolCalib(byte vessel, byte slot, unsigned long vol, unsigned int val) {
+  PROMwriteLong(1981 + slot * 4 + vessel * 60, vol);
+  PROMwriteInt(2021 + slot * 2 + vessel * 60, val);
+}
+
+//Get all Volume Calibrations for a given vessel (EEPROM Bytes 1981 - 2040)
+// vessel: 0-2 Corresponding to TS_HLT, TS_MASH, TS_KETTLE
+// vol: The volume for this calibration as a long in thousandths (1000 = 1)
+// val: An int representing the analogReadValue() to pair to the given volume
+void getVolCalibs(byte vessel, unsigned long vols[10], unsigned int vals[10]) {
+  for (int i = 0; i < 10; i++) {
+    vols[i] = PROMreadLong(1981 + i * 4 + vessel * 60);
+    vals[i] = PROMreadInt(2021 + i * 2 + vessel * 60);
+  }
+}
+
+//Zero Volumes 2041-2046 (analogRead of Empty Vessels)
+unsigned int getZeroVol(byte vessel) { return PROMreadInt(2041 + vessel * 2); }
+void setZeroVol(byte vessel, unsigned int zeroVal) { PROMwriteInt(2041 + vessel * 2, zeroVal); }

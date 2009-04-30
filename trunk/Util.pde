@@ -13,7 +13,6 @@ void ftoa(float val, char retStr[], int precision) {
   }
 }
 
-// The following function is currently not being used: 
 int availableMemory() {
   int size = 4096;
   byte *buf;
