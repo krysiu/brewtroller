@@ -21,11 +21,9 @@ void menuSetup() {
     strcpy_P(menuopts[4], PSTR("Configure Outputs"));
     strcpy_P(menuopts[5], PSTR("Volume/Capacity"));
     strcpy_P(menuopts[6], PSTR("Configure Valves"));
-    strcpy_P(menuopts[7], PSTR("Save Settings"));
-    strcpy_P(menuopts[8], PSTR("Load Settings"));
-    strcpy_P(menuopts[9], PSTR("Exit Setup"));
+    strcpy_P(menuopts[7], PSTR("Exit Setup"));
     
-    lastOption = scrollMenu("System Setup", menuopts, 10, lastOption);
+    lastOption = scrollMenu("System Setup", menuopts, 8, lastOption);
     switch(lastOption) {
       case 0:
         unit = unit ^ 1;
@@ -52,10 +50,9 @@ void menuSetup() {
       case 4: cfgOutputs(); break;
       case 5: cfgVolumes(); break;
       case 6: cfgValves(); break;
-      case 7: saveSetup(); break;
-      case 8: loadSetup(); break;
       default: return;
     }
+    saveSetup();
   }
 }
 
@@ -111,6 +108,7 @@ void assignSensor() {
         case 2: break;
         default: return;
       }
+      saveSetup();
       encMin = 0;
       encMax = 5;
       encCount = lastCount;
@@ -155,6 +153,7 @@ void cfgOutputs() {
       case 11: hysteresis[TS_KETTLE] = getValue("Kettle Hysteresis", hysteresis[TS_KETTLE], 3, 1, 255, dispUnit); break;
       default: return;
     }
+    saveSetup();
   } 
 }
 
@@ -281,6 +280,7 @@ void cfgVolumes() {
       case 9: evapRate = getValue("Evaporation Rate", evapRate, 3, 0, 100, "%/hr");
       default: return;
     }
+    saveSetup();
   } 
 }
 

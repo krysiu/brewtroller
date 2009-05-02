@@ -21,7 +21,7 @@ void printLCD(byte iRow, byte iCol, char sText[]){
  lcd.setCursor(iCol, iRow);
  delayMicroseconds(LCD_DELAY_CURSOR);
  int i = 0;
- while (sText[i] != 0)
+ while (sText[i] != '\0')
  {
    lcd.print(sText[i++]);
    delayMicroseconds(LCD_DELAY_CHAR);
@@ -45,10 +45,13 @@ void clearLCD(){ lcd.clear(); }
 char printLCDPad(byte iRow, byte iCol, char sText[], byte length, char pad) {
  lcd.setCursor(iCol, iRow);
  delayMicroseconds(LCD_DELAY_CURSOR);
- for (int i=0; i < length-strlen(sText) ; i++) {
-   lcd.print(pad);
-   delayMicroseconds(LCD_DELAY_CHAR);
+ if (strlen(sText) < length) {
+   for (int i=0; i < length-strlen(sText) ; i++) {
+     lcd.print(pad);
+     delayMicroseconds(LCD_DELAY_CHAR);
+   }
  }
+ 
  int i = 0;
  while (sText[i] != 0)
  {

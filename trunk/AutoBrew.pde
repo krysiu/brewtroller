@@ -451,21 +451,12 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
     printLCD_P(0, 16, PSTR("Mash"));
     printLCD_P(1, 7, PSTR("Target"));
     printLCD_P(2, 7, PSTR("Actual"));
-    unsigned long whole = hltVol / 1000;
-    //Throw away the last digit
-    unsigned long frac = round ((hltVol - whole * 1000)/10.0);
-    //Build string to align left
-    strcpy(fString, ltoa(whole, buf, 10));
-    strcat(fString, ".");
-    strcat(fString, ltoa(frac, buf, 10));
-    printLCD(1, 0, fString);
+    
+    ftoa(hltVol/1000.0, buf, 2);
+    printLCD(1, 0, buf);
 
-    whole = mashVol / 1000;
-    //Throw away the last digit
-    frac = round ((mashVol - whole * 1000)/10.0) ;
-    printLCDPad(1, 14, ltoa(whole, buf, 10), 3, ' ');
-    printLCD_P(1, 17, PSTR("."));
-    printLCDPad(1, 18, ltoa(frac, buf, 10), 2, '0');
+    ftoa(mashVol/1000.0, buf, 2);
+    printLCDPad(1, 14, buf, 6, ' ');
 
     setValves(0);
     printLCD_P(3, 0, PSTR("Off"));
@@ -741,10 +732,12 @@ void manSparge() {
 
       if (millis() - lastUpdate > 500) {
         ftoa(vols[TS_HLT]/1000.0, buf, 2);
+        truncFloat(buf, 6);
         printLCD(2, 0, "       ");
         printLCD(2, 0, buf);
 
         ftoa(vols[TS_MASH]/1000.0, buf, 2);
+        truncFloat(buf, 6);
         printLCDPad(2, 14, buf, 6, ' ');
         lastUpdate = millis();
       }

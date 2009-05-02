@@ -1,5 +1,13 @@
 unsigned long readVolume( byte pin, unsigned long calibrationVols[10], unsigned int calibrationValues[10], unsigned int zeroValue ) {
   unsigned int aValue = analogRead(pin);
+  #ifdef DEBUG
+    Serial.print("readVolume (Pin ");
+    Serial.print(pin, DEC);
+    Serial.print(") analogRead: ");
+    Serial.print(aValue, DEC);
+    Serial.print(" zeroValue: ");
+    Serial.println(zeroValue, DEC);
+  #endif
   if (aValue <= zeroValue) return 0; else aValue -= zeroValue;
   
   byte upperCal = 0;
@@ -11,6 +19,18 @@ unsigned long readVolume( byte pin, unsigned long calibrationVols[10], unsigned 
     else if (aValue > calibrationValues[i] && calibrationValues[i] > calibrationValues[lowerCal2]) lowerCal2 = i;
     else if (aValue < calibrationValues[i] && calibrationValues[i] < calibrationValues[upperCal]) upperCal = i;
   }
+  
+  #ifdef DEBUG
+    Serial.print("readVolume Corrected: ");
+    Serial.print(aValue, DEC);
+    Serial.print(" upperCal Value: ");
+    Serial.print(calibrationValues[upperCal], DEC);
+    Serial.print(" lowerCal Value: ");
+    Serial.print(calibrationValues[lowerCal], DEC);
+    Serial.print(" lowerCal2 Value: ");
+    Serial.println(calibrationValues[lowerCal2], DEC);
+  #endif
+  
   //If no calibrations exist return zero
   if (calibrationValues[upperCal] == 0 && calibrationValues[lowerCal] == 0) return 0;
   

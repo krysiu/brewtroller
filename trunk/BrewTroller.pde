@@ -14,6 +14,8 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 #include <avr/pgmspace.h>
 #include <PID_Beta6.h>
 
+//#define DEBUG
+
 //Pin and Interrupt Definitions
 #define ENCA_PIN 2
 #define ENCB_PIN 4
@@ -123,6 +125,10 @@ boolean timerStatus = 0;
 boolean alarmStatus = 0;
   
 void setup() {
+  #ifdef DEBUG
+    Serial.begin(9600);
+  #endif
+  
   pinMode(ENCA_PIN, INPUT);
   pinMode(ENCB_PIN, INPUT);
   pinMode(ENTER_PIN, INPUT);
@@ -290,7 +296,7 @@ void splashScreen() {
   lcdWriteCustChar(2, 1, 6); 
   lcdWriteCustChar(2, 2, 7); 
   printLCD_P(0, 4, PSTR("BrewTroller v1.1"));
-  printLCD_P(1, 10, PSTR("Build 0165"));
+  printLCD_P(1, 10, PSTR("Build 0166"));
   printLCD_P(3, 1, PSTR("www.brewtroller.com"));
   while(!enterStatus) delay(250);
   enterStatus = 0;
