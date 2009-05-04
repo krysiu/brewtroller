@@ -28,20 +28,164 @@ void menuSetup() {
       case 0:
         unit = unit ^ 1;
         if (unit) {
+          clearLCD();
+          printLCD_P(1, 0, PSTR(" Converting System"));
+          printLCD_P(2, 0, PSTR("Settings to US Units"));
+          
           //Convert Setup params
+          unsigned long vols[10];
+          unsigned int vals[10];
+          
           for (int i = TS_HLT; i <= TS_KETTLE; i++) {
             hysteresis[i] = round(hysteresis[i] * 1.8);
             capacity[i] = round(capacity[i] * 0.26417);
             volume[i] = round(volume[i] * 0.26417);
             volLoss[i] = round(volLoss[i] * 0.26417);
+            getVolCalibs(i, vols, vals);
+            for (int j = 0; j < 10; j++) if(vols[j] > 0) setVolCalib(i, j, round(vols[j] * 0.26417), vals[j]);
           }
+          //Update Stored Programs
+          clearLCD();
+          printLCD_P(1, 0, PSTR(" Converting Program"));
+          printLCD_P(2, 0, PSTR("Settings to US Units"));
+
+          byte varByte[4];
+          byte varByte2[4];
+          unsigned long varLong[3];
+          unsigned int varInt;
+            
+          for (int i = 0; i < 30; i++) {
+            varByte[0] = getProgSparge(i);
+            if (varByte[0] > 0) setProgSparge(i, round(varByte[0] * 1.8) + 32);
+            
+            varLong[0] = getProgGrain(i);
+            if (varLong[0] > 0) setProgGrain(i, round(varLong[0] * 2.2046));
+            
+            varInt = getProgRatio(i);
+            if (varInt > 0) setProgRatio(i, round(varInt * .58));
+            
+            getProgSchedule(i, varByte, varByte2);
+            for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round(varByte[j] * 1.8) + 32;
+            setProgSchedule(i, varByte, varByte2);
+            
+            getProgVols(i, varLong);
+            for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] * 0.26417);
+            setProgVols(i, varLong);
+            
+            varByte[0] = getProgHLT(i);
+            if (varByte[0] > 0) setProgHLT(i, round(varByte[0] * 1.8) + 32);
+
+            varByte[0] = getProgPitch(i);
+            if (varByte[0] > 0) setProgPitch(i, round(varByte[0] * 1.8) + 32);
+
+            varByte[0] = getProgGrainT(i);
+            if (varByte[0] > 0) setProgGrainT(i, round(varByte[0] * 1.8) + 32);
+          }
+          //Update Recovery Settings
+          varByte[0] = getABSparge();
+          if (varByte[0] > 0) setABSparge(round(varByte[0] * 1.8) + 32);
+          
+          varLong[0] = getABGrain();
+          if (varLong[0] > 0) setABGrain(round(varLong[0] * 2.2046));
+          
+          varInt = getABRatio();
+          if (varInt > 0) setABRatio(round(varInt * .58));
+          
+          loadABSteps(varByte, varByte2);
+          for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round(varByte[j] * 1.8) + 32;
+          saveABSteps(varByte, varByte2);
+          
+          loadABVols(varLong);
+          for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] * 0.26417);
+          saveABVols(varLong);
+          
+          for (int j = 0; j < 3; j++) if (setpoint[j] > 0) setpoint[j] = round(setpoint[j] * 1.8) + 32;
+          saveSetpoints();
+          
+          varByte[0] = getABPitch();
+          if (varByte[0] > 0) setABPitch(round(varByte[0] * 1.8) + 32);
+          
+          varByte[0] = getABGrainTemp();
+          if (varByte[0] > 0) setABGrainTemp(round(varByte[0] * 1.8) + 32);
         } else {
+          clearLCD();
+          printLCD_P(1, 0, PSTR(" Converting System"));
+          printLCD_P(2, 0, PSTR(" Settings to Metric"));
+          
+          unsigned long vols[10];
+          unsigned int vals[10];
+
           for (int i = TS_HLT; i <= TS_KETTLE; i++) {
             hysteresis[i] = round(hysteresis[i] / 1.8);
             capacity[i] = round(capacity[i] / 0.26417);
             volume[i] = round(volume[i] / 0.26417);
             volLoss[i] = round(volLoss[i] / 0.26417);
+            getVolCalibs(i, vols, vals);
+            for (int j = 0; j < 10; j++) if(vols[j] > 0) setVolCalib(i, j, round(vols[j] / 0.26417), vals[j]);
           }
+          //Update Stored Programs
+          clearLCD();
+          printLCD_P(1, 0, PSTR(" Converting Program"));
+          printLCD_P(2, 0, PSTR(" Settings to Metric"));
+
+          byte varByte[4];
+          byte varByte2[4];
+          unsigned long varLong[3];
+          unsigned int varInt;
+            
+          for (int i = 0; i < 30; i++) {
+            varByte[0] = getProgSparge(i);
+            if (varByte[0] > 0) setProgSparge(i, round((varByte[0] - 32) / 1.8));
+            
+            varLong[0] = getProgGrain(i);
+            if (varLong[0] > 0) setProgGrain(i, round(varLong[0] / 2.2046));
+            
+            varInt = getProgRatio(i);
+            if (varInt > 0) setProgRatio(i, round(varInt / .58));
+            
+            getProgSchedule(i, varByte, varByte2);
+            for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round((varByte[0] - 32) / 1.8);
+            setProgSchedule(i, varByte, varByte2);
+            
+            getProgVols(i, varLong);
+            for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] / 0.26417);
+            setProgVols(i, varLong);
+            
+            varByte[0] = getProgHLT(i);
+            if (varByte[0] > 0) setProgHLT(i, round((varByte[0] - 32) / 1.8));
+
+            varByte[0] = getProgPitch(i);
+            if (varByte[0] > 0) setProgPitch(i, round((varByte[0] - 32) / 1.8));
+
+            varByte[0] = getProgGrainT(i);
+            if (varByte[0] > 0) setProgGrainT(i, round((varByte[0] - 32) / 1.8));
+          }
+           //Update Recovery Settings
+          varByte[0] = getABSparge();
+          if (varByte[0] > 0) setABSparge(round((varByte[0] - 32) / 1.8));
+          
+          varLong[0] = getABGrain();
+          if (varLong[0] > 0) setABGrain(round(varLong[0] / 2.2046));
+          
+          varInt = getABRatio();
+          if (varInt > 0) setABRatio(round(varInt / .58));
+          
+          loadABSteps(varByte, varByte2);
+          for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round((varByte[0] - 32) / 1.8);
+          saveABSteps(varByte, varByte2);
+          
+          loadABVols(varLong);
+          for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] / 0.26417);
+          saveABVols(varLong);
+          
+          for (int j = 0; j < 3; j++) if (setpoint[j] > 0) setpoint[j] = round((varByte[0] - 32) / 1.8);
+          saveSetpoints();
+          
+          varByte[0] = getABPitch();
+          if (varByte[0] > 0) setABPitch(round((varByte[0] - 32) / 1.8));
+          
+          varByte[0] = getABGrainTemp();
+          if (varByte[0] > 0) setABGrainTemp(round((varByte[0] - 32) / 1.8));
         }
         break;
       case 1: cfgSysType(); break;

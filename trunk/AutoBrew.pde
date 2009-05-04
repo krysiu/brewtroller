@@ -67,11 +67,13 @@ void doAutoBrew() {
     strcpy_P(menuopts[14], PSTR("Exit"));
 
     ftoa((float)tgtVol[TS_KETTLE]/1000, buf, 2);
-    strncat(menuopts[0], buf, 5);
+    truncFloat(buf, 5);
+    strcat(menuopts[0], buf);
     strcat(menuopts[0], volUnit);
 
     ftoa((float)grainWeight/1000, buf, 3);
-    strncat(menuopts[1], buf, 7);
+    truncFloat(buf, 7);
+    strcat(menuopts[1], buf);
     strcat(menuopts[1], wtUnit);
 
     strncat(menuopts[2], itoa(grainTemp, buf, 10), 3);
@@ -81,7 +83,8 @@ void doAutoBrew() {
     strcat_P(menuopts[3], PSTR(" min"));
 
     ftoa((float)mashRatio/100, buf, 2);
-    strncat(menuopts[4], buf, 4);
+    truncFloat(buf, 4);
+    strcat(menuopts[4], buf);
     strcat_P(menuopts[4], PSTR(":1"));
 
     strncat(menuopts[5], itoa(delayMins/60, buf, 10), 4);
@@ -206,7 +209,7 @@ void doAutoBrew() {
         printLCD_P(0, 0, PSTR("HLT Capacity Issue"));
         printLCD_P(1, 0, PSTR("Sparge Vol:"));
         ftoa(tgtVol[TS_HLT]/1000.0, buf, 2);
-        strncpy(buf, buf, 5);
+        truncFloat(buf, 5);
         printLCD(1, 11, buf);
         printLCD(1, 16, volUnit);
         printLCD_P(3, 4, PSTR("> Continue <"));
@@ -218,12 +221,12 @@ void doAutoBrew() {
         printLCD_P(0, 0, PSTR("Mash Capacity Issue"));
         printLCD_P(1, 0, PSTR("Strike Vol:"));
         ftoa(tgtVol[TS_MASH]/1000.0, buf, 2);
-        strncpy(buf, buf, 5);
+        truncFloat(buf, 5);
         printLCD(1, 11, buf);
         printLCD(1, 16, volUnit);
         printLCD_P(2, 0, PSTR("Grain Vol:"));
         ftoa(round(grainWeight * grain2Vol) / 1000.0, buf, 2);
-        strncpy(buf, buf, 5);
+        truncFloat(buf, 5);
         printLCD(2, 11, buf);
         printLCD(2, 16, volUnit);
         printLCD_P(3, 4, PSTR("> Continue <"));
@@ -273,7 +276,7 @@ void doAutoBrew() {
     setpoint[TS_MASH] = strikeTemp;
     
     setABRecovery(3);
-    mashStep("Preheat", MINS_PROMPT);  
+    mashStep(" Preheat", MINS_PROMPT);  
     if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
   }
   
@@ -298,7 +301,7 @@ void doAutoBrew() {
     setABRecovery(5);
     setpoint[TS_MASH] = stepTemp[STEP_DOUGHIN];
     int recoverMins = getTimerRecovery();
-    if (recoveryStep == 5 && recoverMins > 0) mashStep("Dough In", recoverMins); else mashStep("Dough In", stepMins[STEP_DOUGHIN]);
+    if (recoveryStep == 5 && recoverMins > 0) mashStep(" Dough In", recoverMins); else mashStep("Dough In", stepMins[STEP_DOUGHIN]);
     if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
   }
 
@@ -306,7 +309,7 @@ void doAutoBrew() {
     setABRecovery(6);
     setpoint[TS_MASH] = stepTemp[STEP_PROTEIN];
     int recoverMins = getTimerRecovery();
-    if (recoveryStep == 6 && recoverMins > 0) mashStep("Protein Rest", recoverMins); else mashStep("Protein Rest", stepMins[STEP_PROTEIN]);
+    if (recoveryStep == 6 && recoverMins > 0) mashStep(" Protein", recoverMins); else mashStep("Protein Rest", stepMins[STEP_PROTEIN]);
     if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
   }
 
@@ -322,7 +325,7 @@ void doAutoBrew() {
     setABRecovery(8);
     setpoint[TS_MASH] = stepTemp[STEP_MASHOUT];
     int recoverMins = getTimerRecovery();
-    if (recoveryStep == 8 && recoverMins > 0) mashStep("Mash Out", recoverMins); else mashStep("Mash Out", stepMins[STEP_MASHOUT]);
+    if (recoveryStep == 8 && recoverMins > 0) mashStep(" Mash Out", recoverMins); else mashStep("Mash Out", stepMins[STEP_MASHOUT]);
     if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
   }
 
@@ -453,9 +456,11 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
     printLCD_P(2, 7, PSTR("Actual"));
     
     ftoa(hltVol/1000.0, buf, 2);
+    truncFloat(buf, 6);
     printLCD(1, 0, buf);
 
     ftoa(mashVol/1000.0, buf, 2);
+    truncFloat(buf, 6);
     printLCDPad(1, 14, buf, 6, ' ');
 
     setValves(0);
@@ -473,10 +478,12 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
 
       if (millis() - lastUpdate > 500) {
         ftoa(vols[TS_HLT]/1000.0, buf, 2);
+        truncFloat(buf, 6);
         printLCD(2, 0, "       ");
         printLCD(2, 0, buf);
 
         ftoa(vols[TS_MASH]/1000.0, buf, 2);
+        truncFloat(buf, 6);
         printLCDPad(2, 14, buf, 6, ' ');
         lastUpdate = millis();
       }
@@ -557,13 +564,17 @@ void delayStart(int iMins) {
 }
 
 void mashStep(char sTitle[ ], int iMins) {
-  char buf[6];
+  char buf[9];
   float temp[2] = { 0, 0 };
-  char sTempUnit[2] = "C";
   unsigned long convStart = 0;
   unsigned long cycleStart[2] = { 0, 0 };
   unsigned int mashHeat = getValveCfg(VLV_MASHHEAT);
   unsigned int mashIdle = getValveCfg(VLV_MASHIDLE);
+  unsigned int calibVals[2][10];
+  unsigned long calibVols[2][10];
+  unsigned int zero[2];
+  unsigned long vols[2];
+  unsigned long lastUpdate = 0;
   boolean heatStatus[2] = { 0, 0 };
   boolean preheated = 0;
   setAlarm(0);
@@ -572,6 +583,9 @@ void mashStep(char sTitle[ ], int iMins) {
   timerValue = 0;
   
   for (int i = TS_HLT; i <= TS_MASH; i++) {
+    zero[i] = getZeroVol(i);
+    getVolCalibs(i, calibVols[i], calibVals[i]);
+
     if (PIDEnabled[i]) {
       pid[i].SetInputLimits(0, 255);
       pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
@@ -579,33 +593,42 @@ void mashStep(char sTitle[ ], int iMins) {
       cycleStart[i] = millis();
     }
   }
-  
-  if (unit) strcpy_P(sTempUnit, PSTR("F"));
 
   while(1) {
     boolean redraw = 0;
     timerLastWrite = 0;
     clearLCD();
-    printLCD(0,0,sTitle);
-    printLCD_P(0,14,PSTR("(WAIT)"));
-    printLCD_P(1,2,PSTR("HLT"));
-    printLCD_P(3,0,PSTR("[    ]"));
-    printLCD(2, 4, sTempUnit);
-    printLCD(3, 4, sTempUnit);
-    printLCD_P(1,15,PSTR("Mash"));
-    printLCD_P(3,14,PSTR("[    ]"));
-    printLCD(2, 18, sTempUnit);
-    printLCD(3, 18, sTempUnit);
+    printLCD(0,5,sTitle);
+    printLCD_P(2, 7, PSTR("(WAIT)"));
+    printLCD_P(0, 0, PSTR("HLT"));
+    printLCD_P(3, 0, PSTR("[    ]"));
+    printLCD_P(0, 16, PSTR("Mash"));
+    printLCD_P(3, 14, PSTR("[    ]"));
+    
+    if (unit) {
+      printLCD_P(1, 8, PSTR("Gals"));
+      printLCD_P(2, 3, PSTR("F"));
+      printLCD_P(3, 4, PSTR("F"));
+      printLCD_P(2, 19, PSTR("F"));
+      printLCD_P(3, 18, PSTR("F"));
+    } else {
+      printLCD_P(1, 7, PSTR("Liters"));
+      printLCD_P(2, 3, PSTR("C"));
+      printLCD_P(3, 4, PSTR("C"));
+      printLCD_P(2, 19, PSTR("C"));
+      printLCD_P(3, 18, PSTR("C"));
+    }
     
     while(!preheated || timerValue > 0 || doPrompt) {
       if (!preheated && temp[TS_MASH] >= setpoint[TS_MASH]) {
         preheated = 1;
-        printLCD(0,14,"      ");
-        if(doPrompt) printLCD_P(1, 0, PSTR("    > Continue <    ")); else setTimer(iMins);
+        printLCD(2, 7,"      ");
+        if(doPrompt) printLCD_P(2, 5, PSTR(">Continue<")); else setTimer(iMins);
       }
 
       for (int i = TS_HLT; i <= TS_MASH; i++) {
-        if (temp[i] == -1) printLCD_P(2, i * 14 + 1, PSTR("---")); else printLCDPad(2, i * 14 + 1, itoa(temp[i], buf, 10), 3, ' ');
+        vols[i] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
+        if (temp[i] == -1) printLCD_P(2, i * 16, PSTR("---")); else printLCDPad(2, i * 16, itoa(temp[i], buf, 10), 3, ' ');
         printLCDPad(3, i * 14 + 1, itoa(setpoint[i], buf, 10), 3, ' ');
         if (PIDEnabled[i]) {
           byte pct = PIDOutput[i] / PIDCycle[i] / 10;
@@ -617,7 +640,18 @@ void mashStep(char sTitle[ ], int iMins) {
         } else if (heatStatus[i]) strcpy_P(buf, PSTR(" On")); else strcpy_P(buf, PSTR("Off")); 
         printLCDPad(3, i * 5 + 6, buf, 3, ' ');
       }
-      if (!doPrompt) printTimer(1,7);
+      if (millis() - lastUpdate > 500) {
+        ftoa(vols[TS_HLT]/1000.0, buf, 2);
+        truncFloat(buf, 6);
+        printLCD(1, 0, "       ");
+        printLCD(1, 0, buf);
+
+        ftoa(vols[TS_MASH]/1000.0, buf, 2);
+        truncFloat(buf, 6);
+        printLCDPad(1, 14, buf, 6, ' ');
+        lastUpdate = millis();
+      }
+      if (preheated && !doPrompt) printTimer(2, 7);
 
       if (convStart == 0) {
         convertAll();
@@ -710,7 +744,7 @@ void manSparge() {
     if (unit) {
       printLCD_P(1, 3, PSTR("F"));
       printLCD_P(1, 19, PSTR("F"));
-      printLCD_P(2, 7, PSTR("Gallons"));
+      printLCD_P(2, 8, PSTR("Gals"));
     } else {
       printLCD_P(1, 3, PSTR("C"));
       printLCD_P(1, 19, PSTR("C"));
