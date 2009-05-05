@@ -20,172 +20,35 @@ void menuSetup() {
     strcpy_P(menuopts[3], PSTR("Assign Temp Sensor"));
     strcpy_P(menuopts[4], PSTR("Configure Outputs"));
     strcpy_P(menuopts[5], PSTR("Volume/Capacity"));
-    strcpy_P(menuopts[6], PSTR("Configure Valves"));
-    strcpy_P(menuopts[7], PSTR("Exit Setup"));
+    strcpy_P(menuopts[6], PSTR("Default Grain Temp"));
+    strcpy_P(menuopts[7], PSTR("Configure Valves"));
+    strcpy_P(menuopts[8], PSTR("Save Settings"));
+    strcpy_P(menuopts[9], PSTR("Load Settings"));
+    strcpy_P(menuopts[10], PSTR("Exit Setup"));
     
-    lastOption = scrollMenu("System Setup", menuopts, 8, lastOption);
+    lastOption = scrollMenu("System Setup", menuopts, 11, lastOption);
     switch(lastOption) {
       case 0:
         unit = unit ^ 1;
         if (unit) {
-          clearLCD();
-          printLCD_P(1, 0, PSTR(" Converting System"));
-          printLCD_P(2, 0, PSTR("Settings to US Units"));
-          
           //Convert Setup params
-          unsigned long vols[10];
-          unsigned int vals[10];
-          
           for (int i = TS_HLT; i <= TS_KETTLE; i++) {
             hysteresis[i] = round(hysteresis[i] * 1.8);
             capacity[i] = round(capacity[i] * 0.26417);
             volume[i] = round(volume[i] * 0.26417);
             volLoss[i] = round(volLoss[i] * 0.26417);
-            getVolCalibs(i, vols, vals);
-            for (int j = 0; j < 10; j++) if(vols[j] > 0) setVolCalib(i, j, round(vols[j] * 0.26417), vals[j]);
           }
-          //Update Stored Programs
-          clearLCD();
-          printLCD_P(1, 0, PSTR(" Converting Program"));
-          printLCD_P(2, 0, PSTR("Settings to US Units"));
-
-          byte varByte[4];
-          byte varByte2[4];
-          unsigned long varLong[3];
-          unsigned int varInt;
-            
-          for (int i = 0; i < 30; i++) {
-            varByte[0] = getProgSparge(i);
-            if (varByte[0] > 0) setProgSparge(i, round(varByte[0] * 1.8) + 32);
-            
-            varLong[0] = getProgGrain(i);
-            if (varLong[0] > 0) setProgGrain(i, round(varLong[0] * 2.2046));
-            
-            varInt = getProgRatio(i);
-            if (varInt > 0) setProgRatio(i, round(varInt * .58));
-            
-            getProgSchedule(i, varByte, varByte2);
-            for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round(varByte[j] * 1.8) + 32;
-            setProgSchedule(i, varByte, varByte2);
-            
-            getProgVols(i, varLong);
-            for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] * 0.26417);
-            setProgVols(i, varLong);
-            
-            varByte[0] = getProgHLT(i);
-            if (varByte[0] > 0) setProgHLT(i, round(varByte[0] * 1.8) + 32);
-
-            varByte[0] = getProgPitch(i);
-            if (varByte[0] > 0) setProgPitch(i, round(varByte[0] * 1.8) + 32);
-
-            varByte[0] = getProgGrainT(i);
-            if (varByte[0] > 0) setProgGrainT(i, round(varByte[0] * 1.8) + 32);
-          }
-          //Update Recovery Settings
-          varByte[0] = getABSparge();
-          if (varByte[0] > 0) setABSparge(round(varByte[0] * 1.8) + 32);
-          
-          varLong[0] = getABGrain();
-          if (varLong[0] > 0) setABGrain(round(varLong[0] * 2.2046));
-          
-          varInt = getABRatio();
-          if (varInt > 0) setABRatio(round(varInt * .58));
-          
-          loadABSteps(varByte, varByte2);
-          for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round(varByte[j] * 1.8) + 32;
-          saveABSteps(varByte, varByte2);
-          
-          loadABVols(varLong);
-          for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] * 0.26417);
-          saveABVols(varLong);
-          
-          for (int j = 0; j < 3; j++) if (setpoint[j] > 0) setpoint[j] = round(setpoint[j] * 1.8) + 32;
-          saveSetpoints();
-          
-          varByte[0] = getABPitch();
-          if (varByte[0] > 0) setABPitch(round(varByte[0] * 1.8) + 32);
-          
-          varByte[0] = getABGrainTemp();
-          if (varByte[0] > 0) setABGrainTemp(round(varByte[0] * 1.8) + 32);
+          setDefGrainTemp(round(getDefGrainTemp() * 1.8) + 32);
+          setDefBatch(round(getDefBatch() * 0.26417));
         } else {
-          clearLCD();
-          printLCD_P(1, 0, PSTR(" Converting System"));
-          printLCD_P(2, 0, PSTR(" Settings to Metric"));
-          
-          unsigned long vols[10];
-          unsigned int vals[10];
-
           for (int i = TS_HLT; i <= TS_KETTLE; i++) {
             hysteresis[i] = round(hysteresis[i] / 1.8);
             capacity[i] = round(capacity[i] / 0.26417);
             volume[i] = round(volume[i] / 0.26417);
             volLoss[i] = round(volLoss[i] / 0.26417);
-            getVolCalibs(i, vols, vals);
-            for (int j = 0; j < 10; j++) if(vols[j] > 0) setVolCalib(i, j, round(vols[j] / 0.26417), vals[j]);
           }
-          //Update Stored Programs
-          clearLCD();
-          printLCD_P(1, 0, PSTR(" Converting Program"));
-          printLCD_P(2, 0, PSTR(" Settings to Metric"));
-
-          byte varByte[4];
-          byte varByte2[4];
-          unsigned long varLong[3];
-          unsigned int varInt;
-            
-          for (int i = 0; i < 30; i++) {
-            varByte[0] = getProgSparge(i);
-            if (varByte[0] > 0) setProgSparge(i, round((varByte[0] - 32) / 1.8));
-            
-            varLong[0] = getProgGrain(i);
-            if (varLong[0] > 0) setProgGrain(i, round(varLong[0] / 2.2046));
-            
-            varInt = getProgRatio(i);
-            if (varInt > 0) setProgRatio(i, round(varInt / .58));
-            
-            getProgSchedule(i, varByte, varByte2);
-            for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round((varByte[0] - 32) / 1.8);
-            setProgSchedule(i, varByte, varByte2);
-            
-            getProgVols(i, varLong);
-            for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] / 0.26417);
-            setProgVols(i, varLong);
-            
-            varByte[0] = getProgHLT(i);
-            if (varByte[0] > 0) setProgHLT(i, round((varByte[0] - 32) / 1.8));
-
-            varByte[0] = getProgPitch(i);
-            if (varByte[0] > 0) setProgPitch(i, round((varByte[0] - 32) / 1.8));
-
-            varByte[0] = getProgGrainT(i);
-            if (varByte[0] > 0) setProgGrainT(i, round((varByte[0] - 32) / 1.8));
-          }
-           //Update Recovery Settings
-          varByte[0] = getABSparge();
-          if (varByte[0] > 0) setABSparge(round((varByte[0] - 32) / 1.8));
-          
-          varLong[0] = getABGrain();
-          if (varLong[0] > 0) setABGrain(round(varLong[0] / 2.2046));
-          
-          varInt = getABRatio();
-          if (varInt > 0) setABRatio(round(varInt / .58));
-          
-          loadABSteps(varByte, varByte2);
-          for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round((varByte[0] - 32) / 1.8);
-          saveABSteps(varByte, varByte2);
-          
-          loadABVols(varLong);
-          for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] / 0.26417);
-          saveABVols(varLong);
-          
-          for (int j = 0; j < 3; j++) if (setpoint[j] > 0) setpoint[j] = round((varByte[0] - 32) / 1.8);
-          saveSetpoints();
-          
-          varByte[0] = getABPitch();
-          if (varByte[0] > 0) setABPitch(round((varByte[0] - 32) / 1.8));
-          
-          varByte[0] = getABGrainTemp();
-          if (varByte[0] > 0) setABGrainTemp(round((varByte[0] - 32) / 1.8));
+          setDefGrainTemp(round((getDefGrainTemp() - 32)/ 1.8));
+          setDefBatch(round(getDefBatch() / 0.26417));
         }
         break;
       case 1: cfgSysType(); break;
@@ -193,10 +56,12 @@ void menuSetup() {
       case 3: assignSensor(); break;
       case 4: cfgOutputs(); break;
       case 5: cfgVolumes(); break;
-      case 6: cfgValves(); break;
+      case 6: setDefGrainTemp(getValue("Default Grain Temp", getDefGrainTemp(), 3, 0, 255, tempUnit)); break;
+      case 7: cfgValves(); break;
+      case 8: saveSetup(); break;
+      case 9: loadSetup(); break;
       default: return;
     }
-    saveSetup();
   }
 }
 
@@ -252,7 +117,6 @@ void assignSensor() {
         case 2: break;
         default: return;
       }
-      saveSetup();
       encMin = 0;
       encMax = 5;
       encCount = lastCount;
@@ -297,7 +161,6 @@ void cfgOutputs() {
       case 11: hysteresis[TS_KETTLE] = getValue("Kettle Hysteresis", hysteresis[TS_KETTLE], 3, 1, 255, dispUnit); break;
       default: return;
     }
-    saveSetup();
   } 
 }
 
@@ -398,76 +261,29 @@ void cfgVolumes() {
   while(1) {
     strcpy_P(menuopts[0], PSTR("HLT Capacity       "));
     strcpy_P(menuopts[1], PSTR("HLT Dead Space     "));
-    strcpy_P(menuopts[2], PSTR("HLT Calibration    "));
-    strcpy_P(menuopts[3], PSTR("Mash Capacity      "));
-    strcpy_P(menuopts[4], PSTR("Mash Dead Space    "));
-    strcpy_P(menuopts[5], PSTR("Mash Calibration   "));
-    strcpy_P(menuopts[6], PSTR("Kettle Capacity    "));
-    strcpy_P(menuopts[7], PSTR("Kettle Dead Space  "));
-    strcpy_P(menuopts[8], PSTR("Kettle Calibration "));
-    strcpy_P(menuopts[9], PSTR("Evaporation Rate   "));
-    strcpy_P(menuopts[10], PSTR("Exit               "));
+    strcpy_P(menuopts[2], PSTR("Mash Capacity      "));
+    strcpy_P(menuopts[3], PSTR("Mash Dead Space    "));
+    strcpy_P(menuopts[4], PSTR("Kettle Capacity    "));
+    strcpy_P(menuopts[5], PSTR("Kettle Dead Space  "));
+    strcpy_P(menuopts[6], PSTR("Batch Size         "));
+    strcpy_P(menuopts[7], PSTR("Evaporation Rate   "));
+    strcpy_P(menuopts[8], PSTR("Exit               "));
 
     char volUnit[5] = "L";
     if (unit) strcpy_P(volUnit, PSTR("Gal"));
-    lastOption = scrollMenu("Volume/Capacity", menuopts, 11, lastOption);
+    lastOption = scrollMenu("Volume/Capacity", menuopts, 9, lastOption);
     switch(lastOption) {
       case 0: capacity[TS_HLT] = getValue("HLT Capacity", capacity[TS_HLT], 7, 3, 9999999, volUnit); break;
       case 1: volLoss[TS_HLT] = getValue("HLT Dead Space", volLoss[TS_HLT], 5, 3, 65535, volUnit); break;
-      case 2: volCalibMenu(TS_HLT); break;
-      case 3: capacity[TS_MASH] = getValue("Mash Capacity", capacity[TS_MASH], 7, 3, 9999999, volUnit); break;
-      case 4: volLoss[TS_MASH] = getValue("Mash Dead Space", volLoss[TS_MASH], 5, 3, 65535, volUnit); break;
-      case 5: volCalibMenu(TS_MASH); break;
-      case 6: capacity[TS_KETTLE] = getValue("Kettle Capacity", capacity[TS_KETTLE], 7, 3, 9999999, volUnit); break;
-      case 7: volLoss[TS_KETTLE] = getValue("Kettle Dead Space", volLoss[TS_KETTLE], 5, 3, 65535, volUnit); break;
-      case 8: volCalibMenu(TS_KETTLE); break;
-      case 9: evapRate = getValue("Evaporation Rate", evapRate, 3, 0, 100, "%/hr");
+      case 2: capacity[TS_MASH] = getValue("Mash Capacity", capacity[TS_MASH], 7, 3, 9999999, volUnit); break;
+      case 3: volLoss[TS_MASH] = getValue("Mash Dead Spac", volLoss[TS_MASH], 5, 3, 65535, volUnit); break;
+      case 4: capacity[TS_KETTLE] = getValue("Kettle Capacity", capacity[TS_KETTLE], 7, 3, 9999999, volUnit); break;
+      case 5: volLoss[TS_KETTLE] = getValue("Kettle Dead Spac", volLoss[TS_KETTLE], 5, 3, 65535, volUnit); break;
+      case 6: setDefBatch(getValue("Batch Size", getDefBatch(), 7, 3, 9999999, volUnit)); break;
+      case 7: evapRate = getValue("Evaporation Rate", evapRate, 3, 0, 100, "%/hr");
       default: return;
     }
-    saveSetup();
   } 
-}
-
-void volCalibMenu(byte vessel) {
-  byte lastOption = 0;
-  unsigned long vols[10];
-  unsigned int vals[10];
-  char sVessel[7];
-  char sTitle[20];
-  char buf[9];
-  unsigned int zeroVol = getZeroVol(vessel);
-  switch(vessel) {
-    case TS_HLT: strcpy_P(sVessel, PSTR("HLT")); break;
-    case TS_MASH: strcpy_P(sVessel, PSTR("Mash")); break;
-    case TS_KETTLE: strcpy_P(sVessel, PSTR("Kettle")); break;
-  }  
-  while(1) {
-    getVolCalibs(vessel, vols, vals);
-    for(int i = 0; i < 10; i++) {
-      if (vals[i] > 0) {
-        ftoa(vols[i] / 1000.0, buf, 3); 
-        strcpy(menuopts[i], buf);
-        if (unit) strcat(menuopts[i], " gal"); else strcat(menuopts[i], " l");
-      } else strcpy_P(menuopts[i], PSTR("OPEN"));
-    }
-    strcpy_P(menuopts[10], PSTR("Exit"));
-    strcpy(sTitle, sVessel);
-    strcat_P(sTitle, PSTR(" Calibration"));
-    lastOption = scrollMenu(sTitle, menuopts, 11, lastOption);
-    if (lastOption > 9) return; else {
-      if (vols[lastOption]) {
-        if(confirmDel()) setVolCalib(vessel, lastOption, 0, 0);
-      } else {
-        strcpy_P(sTitle, PSTR("Current "));
-        strcat(sTitle, sVessel);
-        strcat_P(sTitle, PSTR(" Vol:"));
-       if (unit) vols[lastOption] = getValue(sTitle, 0, 7, 3, 9999999, " gal");
-       else vols[lastOption] = getValue(sTitle, 0, 7, 3, 9999999, " l");
-        //Check for Value and save to EEPROM
-        if (vols[lastOption] > 0) setVolCalib(vessel, lastOption, vols[lastOption], analogRead(vSensor[vessel]) - zeroVol);
-      }
-    }
-  }
 }
 
 void cfgValves() {
