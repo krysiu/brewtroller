@@ -300,7 +300,7 @@ void cfgValves() {
     strcpy_P(menuopts[8], PSTR("Exit               "));
     
     lastOption = scrollMenu("Valve Configuration", menuopts, 9, lastOption);
-    if (lastOption > 7) return; else setValveCfg(lastOption + 1, cfgValveProfile(menuopts[lastOption + 1], getValveCfg(lastOption + 1)));
+    if (lastOption > 7) return; else setValveCfg(lastOption + 1, cfgValveProfile(menuopts[lastOption], getValveCfg(lastOption + 1)));
   }
 }
 
@@ -374,7 +374,7 @@ void cfgSysType() {
   strcpy_P(menuopts[1], PSTR("HERMS"));
   strcpy_P(menuopts[2], PSTR("Steam"));
   //Steam is not enabled yet and hidden
-  switch(scrollMenu("Select Encoder Type:", menuopts, 2, sysType)) {
+  switch(scrollMenu("Select System Type:", menuopts, 2, sysType)) {
     case 0: sysType = SYS_DIRECT; break;
     case 1: sysType = SYS_HERMS; break;
     case 2: sysType = SYS_STEAM; break;
