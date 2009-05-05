@@ -13,7 +13,14 @@ void ftoa(float val, char retStr[], int precision) {
   }
 }
 
-// The following function is currently not being used: 
+//Truncate a string representation of a float to (length) chars but do not end string with a decimal point
+void truncFloat(char string[], byte length) {
+  if (strlen(string) > length) {
+    if (string[length - 1] == '.') string[length - 1] = '\0';
+    else string[length] = '\0';
+  }
+}
+
 int availableMemory() {
   int size = 4096;
   byte *buf;
