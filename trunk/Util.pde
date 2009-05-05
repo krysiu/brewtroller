@@ -13,14 +13,7 @@ void ftoa(float val, char retStr[], int precision) {
   }
 }
 
-//Truncate a string representation of a float to (length) chars but do not end string with a decimal point
-void truncFloat(char string[], byte length) {
-  if (strlen(string) > length) {
-    if (string[length - 1] == '.') string[length - 1] = '\0';
-    else string[length] = '\0';
-  }
-}
-
+// The following function is currently not being used: 
 int availableMemory() {
   int size = 4096;
   byte *buf;
@@ -108,15 +101,15 @@ void setAlarm(boolean value) {
 }
 
 void setValves (unsigned int valveBits) { 
-  if (valveBits & 1) digitalWrite(VALVE1_PIN, HIGH); else digitalWrite(VALVE1_PIN, LOW);
-  if (valveBits & 2) digitalWrite(VALVE2_PIN, HIGH); else digitalWrite(VALVE2_PIN, LOW);
-  if (valveBits & 4) digitalWrite(VALVE3_PIN, HIGH); else digitalWrite(VALVE3_PIN, LOW);
-  if (valveBits & 8) digitalWrite(VALVE4_PIN, HIGH); else digitalWrite(VALVE4_PIN, LOW);
-  if (valveBits & 16) digitalWrite(VALVE5_PIN, HIGH); else digitalWrite(VALVE5_PIN, LOW);
-  if (valveBits & 32) digitalWrite(VALVE6_PIN, HIGH); else digitalWrite(VALVE6_PIN, LOW);
-  if (valveBits & 64) digitalWrite(VALVE7_PIN, HIGH); else digitalWrite(VALVE7_PIN, LOW);
-  if (valveBits & 128) digitalWrite(VALVE8_PIN, HIGH); else digitalWrite(VALVE8_PIN, LOW);
-  if (valveBits & 256) digitalWrite(VALVE9_PIN, HIGH); else digitalWrite(VALVE9_PIN, LOW);
-  if (valveBits & 512) digitalWrite(VALVEA_PIN, HIGH); else digitalWrite(VALVEA_PIN, LOW);
-  if (valveBits & 1024) digitalWrite(VALVEB_PIN, HIGH); else digitalWrite(VALVEB_PIN, LOW);
+  digitalWrite(VALVE1_PIN, valveBits & 1);
+  digitalWrite(VALVE2_PIN, valveBits & 2);
+  digitalWrite(VALVE3_PIN, valveBits & 4);
+  digitalWrite(VALVE4_PIN, valveBits & 8);
+  digitalWrite(VALVE5_PIN, valveBits & 16);
+  digitalWrite(VALVE6_PIN, valveBits & 32);
+  digitalWrite(VALVE7_PIN, valveBits & 64);
+  digitalWrite(VALVE8_PIN, valveBits & 128);
+  digitalWrite(VALVE9_PIN, valveBits & 256);
+  digitalWrite(VALVEA_PIN, valveBits & 512);
+  digitalWrite(VALVEB_PIN, valveBits & 1024);
 }
