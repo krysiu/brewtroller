@@ -27,16 +27,17 @@ void saveSetup() {
   }
   //88-91 ***OPEN***
   EEPROM.write(92, evapRate);
-  EEPROM.write(93, encMode);
+  //93 ***OPEN***
 
   //94 - 127 Reserved for Power Recovery
   //128-130 ***OPEN***
   //131 - 135 Reserved for Power Recovery
-  //136-151 Reserved for Valve Profiles 
+  //136-151 ***OPEN*** (Old Valve Profiles )
   //152-154 Power Recovery
   //155 System Type (Direct, HERMS, Steam)
   EEPROM.write(155, sysType);
   //156-1805 Saved Programs
+  //1806-1837 Valve Config
   //1861-2040 Volume Calibrations
   //2041-2046 Zero Volumes
   //2047 EEPROM Version
@@ -67,16 +68,16 @@ void loadSetup() {
   }
   //88-91 ***OPEN***
   evapRate = EEPROM.read(92);
-  encMode = EEPROM.read(93);
-
+  //93 ***OPEN***
   //94 - 127 Reserved for Power Recovery
   //128-130 ***OPEN***
   //131 - 135 Reserved for Power Recovery
-  //136-151 Reserved for Valve Profiles 
+  //136-151 ***OPEN*** (Old Valve Profiles )
   //152-154 Power Recovery
   //155 System Type (Direct, HERMS, Steam)
   sysType = EEPROM.read(155);
   //156-1805 Saved Programs
+  //1806-1837 Valve Config
   //1861-2040 Volume Calibrations
   //2041-2046 Zero Volumes
   //2047 EEPROM Version
@@ -99,7 +100,6 @@ void checkConfig() {
   if (cfgVersion == 255) cfgVersion = 0;
   switch(cfgVersion) {
     case 0:
-      initEncoder();
       clearLCD();
       printLCD_P(0, 0, PSTR("System Configuration"));
       printLCD_P(1, 0, PSTR("Version Check Failed"));
@@ -188,6 +188,10 @@ void checkConfig() {
       setProgAdds(1, 0);
       
       EEPROM.write(2047, 3);
+    case 3:
+      //Move Valve Configs from old 2-Byte EEPROM (136-151) to new 4-Byte Locations
+      for (int i=0; i<=7; i++) setValveCfg(i, PROMreadInt(136 + i * 2));
+      EEPROM.write(2047, 4);
     default:
       //No EEPROM Upgrade Required
       return;
@@ -250,8 +254,8 @@ void saveSetpoints() { for (int i=TS_HLT; i<=TS_KETTLE; i++) { EEPROM.write(131 
 unsigned int getTimerRecovery() { return PROMreadInt(134); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(134, newMins); }
 
-unsigned int getValveCfg(byte profile) { return PROMreadInt(136 + (profile - 1) * 2); }
-void setValveCfg(byte profile, unsigned int value) { PROMwriteInt(136 + (profile - 1) * 2, value); }
+unsigned long getValveCfg(byte profile) { return PROMreadLong(1806 + (profile) * 4); }
+void setValveCfg(byte profile, unsigned long value) { PROMwriteLong(1806 + (profile) * 4, value); }
 
 byte getABPitch() { return EEPROM.read(152); }
 void setABPitch(byte pitchTemp) { EEPROM.write(152, pitchTemp); }

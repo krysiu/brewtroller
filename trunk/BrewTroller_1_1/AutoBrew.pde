@@ -433,9 +433,9 @@ void editMashSchedule(byte stepTemp[4], byte stepMins[4]) {
 
 void manFill(unsigned long hltVol, unsigned long mashVol) {
   char fString[7], buf[8];
-  unsigned int fillHLT = getValveCfg(VLV_FILLHLT);
-  unsigned int fillMash = getValveCfg(VLV_FILLMASH);
-  unsigned int fillBoth = fillHLT | fillMash;
+  unsigned long fillHLT = getValveCfg(VLV_FILLHLT);
+  unsigned long fillMash = getValveCfg(VLV_FILLMASH);
+  unsigned long fillBoth = fillHLT | fillMash;
   unsigned int calibVals[2][10];
   unsigned long calibVols[2][10];
   unsigned int zero[2];
@@ -568,8 +568,8 @@ void mashStep(char sTitle[ ], int iMins) {
   float temp[2] = { 0, 0 };
   unsigned long convStart = 0;
   unsigned long cycleStart[2] = { 0, 0 };
-  unsigned int mashHeat = getValveCfg(VLV_MASHHEAT);
-  unsigned int mashIdle = getValveCfg(VLV_MASHIDLE);
+  unsigned long mashHeat = getValveCfg(VLV_MASHHEAT);
+  unsigned long mashIdle = getValveCfg(VLV_MASHIDLE);
   unsigned int calibVals[2][10];
   unsigned long calibVols[2][10];
   unsigned int zero[2];
@@ -718,9 +718,9 @@ void manSparge() {
   char fString[7], buf[5];
   float temp[2] = { 0, 0 };
   unsigned long convStart = 0;
-  unsigned int spargeIn = getValveCfg(VLV_SPARGEIN);
-  unsigned int spargeOut = getValveCfg(VLV_SPARGEOUT);
-  unsigned int spargeFly = spargeIn | spargeOut;
+  unsigned long spargeIn = getValveCfg(VLV_SPARGEIN);
+  unsigned long spargeOut = getValveCfg(VLV_SPARGEOUT);
+  unsigned long spargeFly = spargeIn | spargeOut;
   unsigned int calibVals[2][10];
   unsigned long calibVols[2][10];
   unsigned int zero[2];
@@ -943,9 +943,9 @@ void boilStage(unsigned int iMins, byte boilAdds) {
 void manChill(byte settemp) {
   boolean doAuto = 0;
   char fString[7], buf[5];
-  unsigned int chillLow = getValveCfg(VLV_CHILLBEER);
-  unsigned int chillHigh = getValveCfg(VLV_CHILLH2O);
-  unsigned int chillNorm = chillLow | chillHigh;
+  unsigned long chillLow = getValveCfg(VLV_CHILLBEER);
+  unsigned long chillHigh = getValveCfg(VLV_CHILLH2O);
+  unsigned long chillNorm = chillLow | chillHigh;
   unsigned long convStart = 0;
   float temp[6];
   

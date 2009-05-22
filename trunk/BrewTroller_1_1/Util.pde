@@ -107,7 +107,31 @@ void setAlarm(boolean value) {
   digitalWrite(ALARM_PIN, value);
 }
 
-void setValves (unsigned int valveBits) { 
+void setValves (unsigned long valveBits) {
+#ifdef MUXBOARDS
+//New MUX Valve Code
+  //ground latchPin and hold low for as long as you are transmitting
+  digitalWrite(MUX_LATCH_PIN, 0);
+  //clear everything out just in case to prepare shift register for bit shifting
+  digitalWrite(MUX_DATA_PIN, 0);
+  digitalWrite(MUX_CLOCK_PIN, 0);
+
+  //for each bit in the long myDataOut
+  for (byte i = 0; i < 32; i++)  {
+    digitalWrite(MUX_CLOCK_PIN, 0);
+    //create bitmask to grab the bit associated with our counter i and set data pin accordingly (NOTE: 32 - i causes bits to be sent most significant to least significant)
+    if ( valveBits & ((unsigned long)1<<(32 - i)) ) digitalWrite(MUX_DATA_PIN, 1); else  digitalWrite(MUX_DATA_PIN, 0);
+    //register shifts bits on upstroke of clock pin  
+    digitalWrite(MUX_CLOCK_PIN, 1);
+    //zero the data pin after shift to prevent bleed through
+    digitalWrite(MUX_DATA_PIN, 0);
+  }
+
+  //stop shifting
+  digitalWrite(MUX_CLOCK_PIN, 0);
+  digitalWrite(MUX_LATCH_PIN, 1);
+#else
+//Original 11 Valve Code
   if (valveBits & 1) digitalWrite(VALVE1_PIN, HIGH); else digitalWrite(VALVE1_PIN, LOW);
   if (valveBits & 2) digitalWrite(VALVE2_PIN, HIGH); else digitalWrite(VALVE2_PIN, LOW);
   if (valveBits & 4) digitalWrite(VALVE3_PIN, HIGH); else digitalWrite(VALVE3_PIN, LOW);
@@ -119,4 +143,5 @@ void setValves (unsigned int valveBits) {
   if (valveBits & 256) digitalWrite(VALVE9_PIN, HIGH); else digitalWrite(VALVE9_PIN, LOW);
   if (valveBits & 512) digitalWrite(VALVEA_PIN, HIGH); else digitalWrite(VALVEA_PIN, LOW);
   if (valveBits & 1024) digitalWrite(VALVEB_PIN, HIGH); else digitalWrite(VALVEB_PIN, LOW);
+#endif
 }

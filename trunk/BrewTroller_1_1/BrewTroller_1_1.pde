@@ -1,4 +1,4 @@
-#define BUILD 202 
+#define BUILD 205 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -12,6 +12,56 @@ using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrar
 using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 */
 
+//*****************************************************************************************************************************
+// USER COMPILE OPTIONS
+//*****************************************************************************************************************************
+
+
+//**********************************************************************************
+// ENCODER TYPE
+//**********************************************************************************
+// You must uncomment one and only one of the following ENCODER_ definitions
+// Use ENCODER_ALPS for ALPS and Panasonic Encoders
+// Use ENCODER_CUI for older CUI encoders
+//
+#define ENCODER_ALPS
+//#define ENCODER_CUI
+//**********************************************************************************
+
+
+//**********************************************************************************
+// P/V 3-4 Serial Fix
+//**********************************************************************************
+// BrewTroller 1.0 - 2.0 boards share the output pins used for pump/valve outputs
+// 3 and 4 with the serial connection used to flash the board with new software. 
+// Newer boards use pins xx and xx for P/V 3 & 4 to avoid a conflict that causes
+// these outputs to be momentarily switched on during boot up causing unexpected
+// results.
+// If you are using a newer board or have implemented a fix to connect P/V to the new
+// pins, uncomment the following line. 
+// Note: This option is not used when MUXBOARDS is enabled.
+//
+//#define PV34REMAP
+//**********************************************************************************
+
+
+//**********************************************************************************
+// USEMUX
+//**********************************************************************************
+// Uncomment one of the following lines to enable MUX'ing of Pump/Valve Outputs
+// Note: MUX'ing requires 1-4 expansion boards providing 8-32 pump/valve outputs
+// To use the original 11 Pump/valve outputs included in BrewTroller 1.0 - 2.0 leave
+// all lines commented
+//
+//#define MUXBOARDS 1
+//#define MUXBOARDS 2
+//#define MUXBOARDS 3
+//#define MUXBOARDS 4
+//**********************************************************************************
+
+//*****************************************************************************************************************************
+// BEGIN CODE
+//*****************************************************************************************************************************
 #include <avr/pgmspace.h>
 #include <PID_Beta6.h>
 
@@ -25,17 +75,33 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 #define ALARM_PIN 15
 #define ENTER_INT 1
 #define ENCA_INT 2
-#define VALVE1_PIN 6
-#define VALVE2_PIN 7
-#define VALVE3_PIN 8
-#define VALVE4_PIN 9
-#define VALVE5_PIN 10
-#define VALVE6_PIN 12
-#define VALVE7_PIN 13
-#define VALVE8_PIN 14
-#define VALVE9_PIN 24
-#define VALVEA_PIN 18
-#define VALVEB_PIN 16
+
+//Standard 11 P/V Ouput Defines
+#ifdef MUXBOARDS
+  #define MUX_LATCH_PIN 12
+  #define MUX_CLOCK_PIN 13
+  #define MUX_DATA_PIN 14
+#else
+  #define VALVE1_PIN 6
+  #define VALVE2_PIN 7
+
+#ifdef PV34REMAP
+  #define VALVE3_PIN 26
+  #define VALVE4_PIN 25
+#else
+  #define VALVE3_PIN 8
+  #define VALVE4_PIN 9
+#endif
+
+  #define VALVE5_PIN 10
+  #define VALVE6_PIN 12
+  #define VALVE7_PIN 13
+  #define VALVE8_PIN 14
+  #define VALVE9_PIN 24
+  #define VALVEA_PIN 18
+  #define VALVEB_PIN 16
+#endif
+
 #define HLTHEAT_PIN 0
 #define MASHHEAT_PIN 1
 #define KETTLEHEAT_PIN 3
@@ -52,26 +118,20 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 #define TS_BEEROUT 5
 
 //Valve Array Element Constants and Variables
-#define VLV_ALLOFF 0
-#define VLV_FILLHLT 1
-#define VLV_FILLMASH 2
-#define VLV_MASHHEAT 3
-#define VLV_MASHIDLE 4
-#define VLV_SPARGEIN 5
-#define VLV_SPARGEOUT 6
-#define VLV_CHILLH2O 7
-#define VLV_CHILLBEER 8
+#define VLV_FILLHLT 0
+#define VLV_FILLMASH 1
+#define VLV_MASHHEAT 2
+#define VLV_MASHIDLE 3
+#define VLV_SPARGEIN 4
+#define VLV_SPARGEOUT 5
+#define VLV_CHILLH2O 6
+#define VLV_CHILLBEER 7
 
 //Unit Definitions
 //International: Celcius, Liter, Kilogram
 //US: Fahrenheit, Gallon, US Pound
 #define UNIT_INTL 0
 #define UNIT_US 1
-
-//Encoder Types
-#define ENC_CUI 0
-#define ENC_ALPS 1
-
 
 //System Types
 #define SYS_DIRECT 0
@@ -85,7 +145,6 @@ byte heatPin[3] = { HLTHEAT_PIN, MASHHEAT_PIN, KETTLEHEAT_PIN };
 byte vSensor[3] = { HLTVOL_APIN, MASHVOL_APIN, KETTLEVOL_APIN};
 
 //Encoder Globals
-byte encMode = 0;
 int encCount;
 byte encMin;
 byte encMax;
@@ -126,14 +185,18 @@ boolean timerStatus = 0;
 boolean alarmStatus = 0;
   
 void setup() {
-  #ifdef DEBUG
-    Serial.begin(9600);
-  #endif
-  
+#ifdef DEBUG
+  Serial.begin(9600);
+#endif
   pinMode(ENCA_PIN, INPUT);
   pinMode(ENCB_PIN, INPUT);
   pinMode(ENTER_PIN, INPUT);
   pinMode(ALARM_PIN, OUTPUT);
+#ifdef MUXBOARDS
+  pinMode(MUX_LATCH_PIN, OUTPUT);
+  pinMode(MUX_CLOCK_PIN, OUTPUT);
+  pinMode(MUX_DATA_PIN, OUTPUT);
+#else
   pinMode(VALVE1_PIN, OUTPUT);
   pinMode(VALVE2_PIN, OUTPUT);
   pinMode(VALVE3_PIN, OUTPUT);
@@ -145,11 +208,22 @@ void setup() {
   pinMode(VALVE9_PIN, OUTPUT);
   pinMode(VALVEA_PIN, OUTPUT);
   pinMode(VALVEB_PIN, OUTPUT);
+#endif
   pinMode(HLTHEAT_PIN, OUTPUT);
   pinMode(MASHHEAT_PIN, OUTPUT);
   pinMode(KETTLEHEAT_PIN, OUTPUT);
   resetOutputs();
   initLCD();
+  
+  //Encoder Setup
+  #ifdef ENCODER_ALPS
+      attachInterrupt(2, doEncoderALPS, CHANGE);
+  #endif
+  #ifdef ENCODER_CUI
+      attachInterrupt(2, doEncoderCUI, RISING);
+  #endif
+  attachInterrupt(1, doEnter, CHANGE);
+
   //Memory Check
   //char buf[6]; printLCD(0,0,itoa(availableMemory(), buf, 10)); delay (5000);
   
@@ -158,7 +232,6 @@ void setup() {
   
   //Load global variable values stored in EEPROM
   loadSetup();
-  initEncoder();
 
   switch(getPwrRecovery()) {
     case 1: doAutoBrew(); break;

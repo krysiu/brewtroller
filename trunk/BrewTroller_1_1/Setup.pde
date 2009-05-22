@@ -8,22 +8,13 @@ void menuSetup() {
     if (unit) strcpy_P(menuopts[0], PSTR("Unit: US")); else strcpy_P(menuopts[0], PSTR("Unit: Metric"));
     if (sysType == SYS_HERMS) strcpy_P(menuopts[1], PSTR("System Type: HERMS")); else strcpy_P(menuopts[1], PSTR("System Type: Direct"));
       
-    switch (encMode) {
-      case ENC_CUI:
-        strcpy_P(menuopts[2], PSTR("Encoder: CUI"));
-        break;
-      case ENC_ALPS:
-        strcpy_P(menuopts[2], PSTR("Encoder: ALPS"));
-        break;
-    }
+    strcpy_P(menuopts[2], PSTR("Assign Temp Sensor"));
+    strcpy_P(menuopts[3], PSTR("Configure Outputs"));
+    strcpy_P(menuopts[4], PSTR("Volume/Capacity"));
+    strcpy_P(menuopts[5], PSTR("Configure Valves"));
+    strcpy_P(menuopts[6], PSTR("Exit Setup"));
     
-    strcpy_P(menuopts[3], PSTR("Assign Temp Sensor"));
-    strcpy_P(menuopts[4], PSTR("Configure Outputs"));
-    strcpy_P(menuopts[5], PSTR("Volume/Capacity"));
-    strcpy_P(menuopts[6], PSTR("Configure Valves"));
-    strcpy_P(menuopts[7], PSTR("Exit Setup"));
-    
-    lastOption = scrollMenu("System Setup", menuopts, 8, lastOption);
+    lastOption = scrollMenu("System Setup", menuopts, 7, lastOption);
     switch(lastOption) {
       case 0:
         unit = unit ^ 1;
@@ -189,11 +180,10 @@ void menuSetup() {
         }
         break;
       case 1: cfgSysType(); break;
-      case 2: cfgEncoder(); break;
-      case 3: assignSensor(); break;
-      case 4: cfgOutputs(); break;
-      case 5: cfgVolumes(); break;
-      case 6: cfgValves(); break;
+      case 2: assignSensor(); break;
+      case 3: cfgOutputs(); break;
+      case 4: cfgVolumes(); break;
+      case 5: cfgValves(); break;
       default: return;
     }
     saveSetup();
@@ -484,72 +474,65 @@ void cfgValves() {
     strcpy_P(menuopts[8], PSTR("Exit               "));
     
     lastOption = scrollMenu("Valve Configuration", menuopts, 9, lastOption);
-    if (lastOption > 7) return; else setValveCfg(lastOption + 1, cfgValveProfile(menuopts[lastOption], getValveCfg(lastOption + 1)));
+    if (lastOption > 7) return; else setValveCfg(lastOption, cfgValveProfile(menuopts[lastOption], getValveCfg(lastOption)));
   }
 }
 
-unsigned int cfgValveProfile (char sTitle[], unsigned int defValue) {
-  unsigned int retValue = defValue;
+unsigned long cfgValveProfile (char sTitle[], unsigned long defValue) {
+  unsigned long retValue = defValue;
   encMin = 0;
+
+#ifdef MUXBOARDS
+  encMax = MUXBOARDS * 8;
+#else
   encMax = 11;
+#endif
+
+  //The left most bit being displayed (Set to MAX + 1 to force redraw)
+  byte firstBit = encMax + 1;
   encCount = 0;
   int lastCount = 1;
   char buf[6];
 
   clearLCD();
   printLCD(0,0,sTitle);
-  {
-    int bit = 1;
-    for (int i = 0; i < 11; i++) { 
-      if (retValue & bit) printLCD_P(1, i + 4, PSTR("1")); else printLCD_P(1, i + 4, PSTR("0"));
-      bit *= 2;
-    }
-  }
   printLCD_P(3, 8, PSTR("OK"));
   
   while(1) {
     if (encCount != lastCount) {
       lastCount = encCount;
-      printLCD_P(2, 0, PSTR("    123456789AB     "));
-      if (lastCount == 11) {
+      
+      if (lastCount < firstBit || lastCount > firstBit + 17) {
+        if (lastCount < firstBit) firstBit = lastCount; else if (lastCount < encMax) firstBit = lastCount - 17;
+        for (byte i = firstBit; i < min(encMax, firstBit + 18); i++) if (retValue & ((unsigned long)1<<i)) printLCD_P(1, i - firstBit + 1, PSTR("1")); else printLCD_P(1, i - firstBit + 1, PSTR("0"));
+      }
+
+      for (byte i = firstBit; i < min(encMax, firstBit + 18); i++) {
+        if (i < 9) itoa(i + 1, buf, 10); else buf[0] = i + 56;
+        buf[1] = '\0';
+        printLCD(2, i - firstBit + 1, buf);
+      }
+      if (firstBit > 0) printLCD_P(2, 0, PSTR("<")); else printLCD_P(2, 0, PSTR(" "));
+      if (firstBit + 18 < encMax) printLCD_P(2, 19, PSTR(">")); else printLCD_P(2, 19, PSTR(" "));
+      if (lastCount == encMax) {
         printLCD_P(3, 7, PSTR(">"));
         printLCD_P(3, 10, PSTR("<"));
       } else {
         printLCD_P(3, 7, PSTR(" "));
         printLCD_P(3, 10, PSTR(" "));
-        printLCD_P(2, lastCount + 4, PSTR("^"));
+        printLCD_P(2, lastCount - firstBit + 1, PSTR("^"));
       }
     }
     
     if (enterStatus == 1) {
       enterStatus = 0;
-      if (lastCount == 11) {  return retValue; }
-      {
-        int bit;
-        for (int i = 0; i <= lastCount; i++) if (!i) bit = 1; else bit *= 2;
-        retValue = retValue ^ bit;
-      }
-
-      {
-        int bit = 1;
-        for (int i = 0; i < 11; i++) { 
-          if (retValue & bit) printLCD_P(1, i + 4, PSTR("1")); else printLCD_P(1, i + 4, PSTR("0"));
-          bit *= 2;
-        }
-      }
+      if (lastCount == encMax) return retValue;
+      retValue = retValue ^ ((unsigned long)1<<lastCount);
+      for (byte i = firstBit; i < min(encMax, firstBit + 18); i++) if (retValue & ((unsigned long)1<<i)) printLCD_P(1, i - firstBit + 1, PSTR("1")); else printLCD_P(1, i - firstBit + 1, PSTR("0"));
     } else if (enterStatus == 2) {
       enterStatus = 0;
       return defValue;
     }
-  }
-}
-
-void cfgEncoder() {
-  strcpy_P(menuopts[0], PSTR("CUI"));
-  strcpy_P(menuopts[1], PSTR("ALPS"));
-  switch( scrollMenu("Select Encoder Type:", menuopts, 2, encMode)) {
-    case 0: encMode = ENC_CUI; break;
-    case 1: encMode = ENC_ALPS; break;
   }
 }
 
