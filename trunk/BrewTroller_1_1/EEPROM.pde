@@ -96,6 +96,8 @@ void PROMreadBytes(int addr, byte bytes[], int numBytes) {
 }
 
 void checkConfig() {
+//Program memory used: 1KB (as of Build 205)
+#ifdef MODULE_EEPROMUPGRADE
   byte cfgVersion = EEPROM.read(2047);
   if (cfgVersion == 255) cfgVersion = 0;
   switch(cfgVersion) {
@@ -196,6 +198,7 @@ void checkConfig() {
       //No EEPROM Upgrade Required
       return;
   }
+#endif
 }
 
 long PROMreadLong(int address) {

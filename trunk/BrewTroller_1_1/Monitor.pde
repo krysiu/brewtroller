@@ -1,4 +1,6 @@
 void doMon() {
+//Program memory used: 4KB (as of Build 205)
+#ifdef MODULE_BREWMONITOR
   char buf[6];
   float temp[6] = { 0, 0, 0, 0, 0, 0 };
   char sTempUnit[2] = "C";
@@ -248,4 +250,5 @@ void doMon() {
       }
     }
   }
+#endif
 }

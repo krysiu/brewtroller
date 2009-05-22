@@ -1,4 +1,4 @@
-#define BUILD 205 
+#define BUILD 206 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -57,6 +57,18 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 //#define MUXBOARDS 2
 //#define MUXBOARDS 3
 //#define MUXBOARDS 4
+//**********************************************************************************
+
+
+//**********************************************************************************
+// OPTIONAL MODULES
+//**********************************************************************************
+// Comment out any of the following lines to disable a module. This is handy to see
+// how much space these chunks of code use. (Not much.)
+//
+#define MODULE_BREWMONITOR
+#define MODULE_SYSTEST
+#define MODULE_EEPROMUPGRADE
 //**********************************************************************************
 
 //*****************************************************************************************************************************
@@ -246,11 +258,13 @@ void loop() {
   strcpy_P(menuopts[0], PSTR("AutoBrew"));
   strcpy_P(menuopts[1], PSTR("Brew Monitor"));
   strcpy_P(menuopts[2], PSTR("System Setup"));
+  strcpy_P(menuopts[3], PSTR("System Tests"));
  
-  switch (scrollMenu("BrewTroller", menuopts, 3, 0)) {
+  switch (scrollMenu("BrewTroller", menuopts, 4, 0)) {
     case 0: doAutoBrew(); break;
     case 1: doMon(); break;
     case 2: menuSetup(); break;
+    case 3: menuTest(); break;
   }
 }
 

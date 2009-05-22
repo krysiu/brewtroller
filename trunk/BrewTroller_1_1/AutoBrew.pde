@@ -432,7 +432,7 @@ void editMashSchedule(byte stepTemp[4], byte stepMins[4]) {
 }
 
 void manFill(unsigned long hltVol, unsigned long mashVol) {
-  char fString[7], buf[8];
+  char buf[8];
   unsigned long fillHLT = getValveCfg(VLV_FILLHLT);
   unsigned long fillMash = getValveCfg(VLV_FILLMASH);
   unsigned long fillBoth = fillHLT | fillMash;
@@ -715,7 +715,7 @@ void mashStep(char sTitle[ ], int iMins) {
 }
 
 void manSparge() {
-  char fString[7], buf[5];
+  char buf[5];
   float temp[2] = { 0, 0 };
   unsigned long convStart = 0;
   unsigned long spargeIn = getValveCfg(VLV_SPARGEIN);
@@ -942,7 +942,7 @@ void boilStage(unsigned int iMins, byte boilAdds) {
 
 void manChill(byte settemp) {
   boolean doAuto = 0;
-  char fString[7], buf[5];
+  char buf[5];
   unsigned long chillLow = getValveCfg(VLV_CHILLBEER);
   unsigned long chillHigh = getValveCfg(VLV_CHILLH2O);
   unsigned long chillNorm = chillLow | chillHigh;
