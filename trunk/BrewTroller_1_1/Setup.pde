@@ -257,34 +257,42 @@ void cfgOutputs() {
 
   byte lastOption = 0;
   while(1) {
-    if (PIDEnabled[TS_HLT]) strcpy_P(menuopts[0], PSTR("HLT Mode: PID")); else strcpy_P(menuopts[0], PSTR("HLT Mode: On/Off"));
+    if (PIDEnabled[VS_HLT]) strcpy_P(menuopts[0], PSTR("HLT Mode: PID")); else strcpy_P(menuopts[0], PSTR("HLT Mode: On/Off"));
     strcpy_P(menuopts[1], PSTR("HLT PID Cycle"));
     strcpy_P(menuopts[2], PSTR("HLT PID Gain"));
     strcpy_P(menuopts[3], PSTR("HLT Hysteresis"));
-    if (PIDEnabled[TS_MASH]) strcpy_P(menuopts[4], PSTR("Mash Mode: PID")); else strcpy_P(menuopts[4], PSTR("Mash Mode: On/Off"));
+    if (PIDEnabled[VS_MASH]) strcpy_P(menuopts[4], PSTR("Mash Mode: PID")); else strcpy_P(menuopts[4], PSTR("Mash Mode: On/Off"));
     strcpy_P(menuopts[5], PSTR("Mash PID Cycle"));
     strcpy_P(menuopts[6], PSTR("Mash PID Gain"));
     strcpy_P(menuopts[7], PSTR("Mash Hysteresis"));
-    if (PIDEnabled[TS_KETTLE]) strcpy_P(menuopts[8], PSTR("Kettle Mode: PID")); else strcpy_P(menuopts[8], PSTR("Kettle Mode: On/Off"));
+    if (PIDEnabled[VS_KETTLE]) strcpy_P(menuopts[8], PSTR("Kettle Mode: PID")); else strcpy_P(menuopts[8], PSTR("Kettle Mode: On/Off"));
     strcpy_P(menuopts[9], PSTR("Kettle PID Cycle"));
     strcpy_P(menuopts[10], PSTR("Kettle PID Gain"));
     strcpy_P(menuopts[11], PSTR("Kettle Hysteresis"));
-    strcpy_P(menuopts[12], PSTR("Exit"));
+    if (PIDEnabled[VS_STEAM]) strcpy_P(menuopts[12], PSTR("Steam Mode: PID")); else strcpy_P(menuopts[12], PSTR("Steam Mode: On/Off"));
+    strcpy_P(menuopts[13], PSTR("Steam PID Cycle"));
+    strcpy_P(menuopts[14], PSTR("Steam PID Gain"));
+    strcpy_P(menuopts[15], PSTR("Steam Hysteresis"));
+    strcpy_P(menuopts[16], PSTR("Exit"));
 
-    lastOption = scrollMenu("Configure Outputs", menuopts, 13, lastOption);
+    lastOption = scrollMenu("Configure Outputs", menuopts, 17, lastOption);
     switch(lastOption) {
-      case 0: PIDEnabled[TS_HLT] = PIDEnabled[TS_HLT] ^ 1; break;
-      case 1: PIDCycle[TS_HLT] = getValue("HLT Cycle Time", PIDCycle[TS_HLT], 3, 0, 255, "s"); break;
-      case 2: setPIDGain("HLT PID Gain", &PIDp[TS_HLT], &PIDi[TS_HLT], &PIDd[TS_HLT]); break;
-      case 3: hysteresis[TS_HLT] = getValue("HLT Hysteresis", hysteresis[TS_HLT], 3, 1, 255, dispUnit); break;
-      case 4: PIDEnabled[TS_MASH] = PIDEnabled[TS_MASH] ^ 1; break;
-      case 5: PIDCycle[TS_MASH] = getValue("Mash Cycle Time", PIDCycle[TS_MASH], 3, 0, 255, "s"); break;
-      case 6: setPIDGain("Mash PID Gain", &PIDp[TS_MASH], &PIDi[TS_MASH], &PIDd[TS_MASH]); break;
-      case 7: hysteresis[TS_MASH] = getValue("Mash Hysteresis", hysteresis[TS_MASH], 3, 1, 255, dispUnit); break;
-      case 8: PIDEnabled[TS_KETTLE] = PIDEnabled[TS_KETTLE] ^ 1; break;
-      case 9: PIDCycle[TS_KETTLE] = getValue("Kettle Cycle Time", PIDCycle[TS_KETTLE], 3, 0, 255, "s"); break;
-      case 10: setPIDGain("Kettle PID Gain", &PIDp[TS_KETTLE], &PIDi[TS_KETTLE], &PIDd[TS_KETTLE]); break;
-      case 11: hysteresis[TS_KETTLE] = getValue("Kettle Hysteresis", hysteresis[TS_KETTLE], 3, 1, 255, dispUnit); break;
+      case 0: PIDEnabled[VS_HLT] = PIDEnabled[VS_HLT] ^ 1; break;
+      case 1: PIDCycle[VS_HLT] = getValue("HLT Cycle Time", PIDCycle[VS_HLT], 3, 0, 255, "s"); break;
+      case 2: setPIDGain("HLT PID Gain", &PIDp[VS_HLT], &PIDi[VS_HLT], &PIDd[VS_HLT]); break;
+      case 3: hysteresis[VS_HLT] = getValue("HLT Hysteresis", hysteresis[VS_HLT], 3, 1, 255, dispUnit); break;
+      case 4: PIDEnabled[VS_MASH] = PIDEnabled[VS_MASH] ^ 1; break;
+      case 5: PIDCycle[VS_MASH] = getValue("Mash Cycle Time", PIDCycle[VS_MASH], 3, 0, 255, "s"); break;
+      case 6: setPIDGain("Mash PID Gain", &PIDp[VS_MASH], &PIDi[VS_MASH], &PIDd[VS_MASH]); break;
+      case 7: hysteresis[VS_MASH] = getValue("Mash Hysteresis", hysteresis[VS_MASH], 3, 1, 255, dispUnit); break;
+      case 8: PIDEnabled[VS_KETTLE] = PIDEnabled[VS_KETTLE] ^ 1; break;
+      case 9: PIDCycle[VS_KETTLE] = getValue("Kettle Cycle Time", PIDCycle[VS_KETTLE], 3, 0, 255, "s"); break;
+      case 10: setPIDGain("Kettle PID Gain", &PIDp[VS_KETTLE], &PIDi[VS_KETTLE], &PIDd[VS_KETTLE]); break;
+      case 11: hysteresis[VS_KETTLE] = getValue("Kettle Hysteresis", hysteresis[VS_KETTLE], 3, 1, 255, dispUnit); break;
+      case 12: PIDEnabled[VS_STEAM] = PIDEnabled[VS_STEAM] ^ 1; break;
+      case 13: PIDCycle[VS_STEAM] = getValue("Steam Cycle Time", PIDCycle[VS_STEAM], 3, 0, 255, "s"); break;
+      case 14: setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]); break;
+      case 15: hysteresis[VS_STEAM] = getValue("Steam Hysteresis", hysteresis[VS_STEAM], 3, 1, 255, dispUnit); break;
       default: return;
     }
     saveSetup();

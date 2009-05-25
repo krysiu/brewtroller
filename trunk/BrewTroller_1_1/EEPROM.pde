@@ -9,14 +9,15 @@ void saveSetup() {
   //Option Array (48)
   byte options = B00000000;
   if (unit) options |= 1;
-  if (PIDEnabled[TS_HLT]) options |= 2;
-  if (PIDEnabled[TS_MASH]) options |= 4;
-  if (PIDEnabled[TS_KETTLE]) options |= 8;
+  if (PIDEnabled[VS_HLT]) options |= 2;
+  if (PIDEnabled[VS_MASH]) options |= 4;
+  if (PIDEnabled[VS_KETTLE]) options |= 8;
+  if (PIDEnabled[VS_STEAM]) options |= 16;
   EEPROM.write(48, options);
   
   //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
   //Volume Settings for HLT (64-71), MASH (72 - 79) and KETTLE (80 - 87)
-  for (int i = TS_HLT; i <= TS_KETTLE; i++) {
+  for (int i = VS_HLT; i <= VS_KETTLE; i++) {
     EEPROM.write(i * 5 + 49, PIDp[i]);
     EEPROM.write(i * 5 + 50, PIDi[i]);
     EEPROM.write(i * 5 + 51, PIDd[i]);
@@ -25,9 +26,15 @@ void saveSetup() {
     PROMwriteLong(i * 8 + 64, capacity[i]);
     PROMwriteLong(i * 8 + 68, volLoss[i]);
   }
-  //88-91 ***OPEN***
+  
+  //88-91, 93 Output Settings for Steam
+  EEPROM.write(88, PIDp[VS_STEAM]);
+  EEPROM.write(89, PIDi[VS_STEAM]);
+  EEPROM.write(90, PIDd[VS_STEAM]);
+  EEPROM.write(91, PIDCycle[VS_STEAM]);
+  EEPROM.write(93, hysteresis[VS_STEAM]);
+    
   EEPROM.write(92, evapRate);
-  //93 ***OPEN***
 
   //94 - 127 Reserved for Power Recovery
   //128-130 ***OPEN***
@@ -51,13 +58,14 @@ void loadSetup() {
   //Option Array (48)
   byte options = EEPROM.read(48);
   if (options & 1) unit = 1;
-  if (options & 2) PIDEnabled[TS_HLT] = 1;
-  if (options & 4) PIDEnabled[TS_MASH] = 1;
-  if (options & 8) PIDEnabled[TS_KETTLE] = 1;
+  if (options & 2) PIDEnabled[VS_HLT] = 1;
+  if (options & 4) PIDEnabled[VS_MASH] = 1;
+  if (options & 8) PIDEnabled[VS_KETTLE] = 1;
+  if (options & 16) PIDEnabled[VS_STEAM] = 1;
   
   //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
   //Volume Settings for HLT (64-71), MASH (72 - 79) and KETTLE (80 - 87)
-  for (int i = TS_HLT; i <= TS_KETTLE; i++) {
+  for (int i = VS_HLT; i <= VS_KETTLE; i++) {
     PIDp[i] = EEPROM.read(i * 5 + 49);
     PIDi[i] = EEPROM.read(i * 5 + 50);
     PIDd[i] = EEPROM.read(i * 5 + 51);
@@ -66,9 +74,16 @@ void loadSetup() {
     capacity[i] = PROMreadLong(i * 8 + 64);
     volLoss[i] = PROMreadLong(i * 8 + 68);
   }
-  //88-91 ***OPEN***
+
+  //88-91, 93 Output Settings for Steam
+  PIDp[VS_STEAM] = EEPROM.read(88);
+  PIDi[VS_STEAM] = EEPROM.read(89);
+  PIDd[VS_STEAM] = EEPROM.read(90);
+  PIDCycle[VS_STEAM] = EEPROM.read(91);
+  hysteresis[VS_STEAM] = EEPROM.read(93);
+  
   evapRate = EEPROM.read(92);
-  //93 ***OPEN***
+
   //94 - 127 Reserved for Power Recovery
   //128-130 ***OPEN***
   //131 - 135 Reserved for Power Recovery
@@ -126,11 +141,13 @@ void checkConfig() {
       EEPROM.write(2047, 1);
     case 1:
       //Default Grain Temp = 60F/16C
+      //If F else C
       if(EEPROM.read(48) & 1) EEPROM.write(156, 60); else EEPROM.write(156, 16);
       EEPROM.write(2047, 2);
     case 2:
       //Default Programs
       setProgName(0, "Single Infusion");
+      //If F else C
       if (EEPROM.read(48) & 1) {
         byte temps[4] = {0, 0, 153, 0};
         byte mins[4] = {0, 0, 60, 0};
@@ -161,6 +178,7 @@ void checkConfig() {
 
             
       setProgName(1, "Multi-Rest");
+      //If F else C
       if (EEPROM.read(48) & 1) {
         byte temps[4] = {104, 122, 153, 0};
         byte mins[4] = {20, 20, 60, 0};
@@ -194,6 +212,15 @@ void checkConfig() {
       //Move Valve Configs from old 2-Byte EEPROM (136-151) to new 4-Byte Locations
       for (int i=0; i<=7; i++) setValveCfg(i, PROMreadInt(136 + i * 2));
       EEPROM.write(2047, 4);
+    case 4:
+      //Default Steam Output Settings
+      EEPROM.write(88, 3);
+      EEPROM.write(89, 4);
+      EEPROM.write(90, 2);
+      EEPROM.write(91, 4);
+      //If F else C
+      if (EEPROM.read(48) & 1) EEPROM.write(93, 5); else EEPROM.write(93, 3);
+      EEPROM.write(2047, 5);
     default:
       //No EEPROM Upgrade Required
       return;

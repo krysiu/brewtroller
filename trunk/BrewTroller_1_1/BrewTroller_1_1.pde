@@ -1,4 +1,4 @@
-#define BUILD 206 
+#define BUILD 207 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -117,9 +117,11 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 #define HLTHEAT_PIN 0
 #define MASHHEAT_PIN 1
 #define KETTLEHEAT_PIN 3
+#define STEAMHEAT_PIN 27
 #define HLTVOL_APIN 0
 #define MASHVOL_APIN 1
 #define KETTLEVOL_APIN 2
+#define STEAMPRESS_APIN 3
 
 //TSensor and Output (0-2) Array Element Constants
 #define TS_HLT 0
@@ -128,6 +130,23 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 #define TS_H2OIN 3
 #define TS_H2OOUT 4
 #define TS_BEEROUT 5
+
+#define VS_HLT 0
+#define VS_MASH 1
+#define VS_KETTLE 2
+#define VS_STEAM 3
+
+//Pressure Sensor Models
+#define PSTYPE_MPXX5010 0
+#define PSTYPE_MPXX7025 1
+#define PSTYPE_MPXX5100 2
+#define PSTYPE_MPXX4250 3
+#define PSTYPE_MPXX5500 4
+#define PSTYPE_MPXX5700 5
+#define PSTYPE_MPXX5999 6
+
+//Pressure Sensor sensitivity (kPA per mV *10)
+unsigned int psSens[] = {4500, 900, 450, 188, 90, 64, 45};
 
 //Valve Array Element Constants and Variables
 #define VLV_FILLHLT 0
@@ -175,18 +194,19 @@ byte evapRate;
 
 //Output Globals
 byte sysType = SYS_DIRECT;
-boolean PIDEnabled[3] = { 0, 0, 0 };
+boolean PIDEnabled[4] = { 0, 0, 0, 0 };
 
 //Shared menuOptions Array
 char menuopts[30][20];
 
-double PIDInput[3], PIDOutput[3], setpoint[3];
-byte PIDp[3], PIDi[3], PIDd[3], PIDCycle[3], hysteresis[3];
+double PIDInput[4], PIDOutput[4], setpoint[4];
+byte PIDp[4], PIDi[4], PIDd[4], PIDCycle[4], hysteresis[4];
 
-PID pid[3] = {
-  PID(&PIDInput[TS_HLT], &PIDOutput[TS_HLT], &setpoint[TS_HLT], 3, 4, 1),
-  PID(&PIDInput[TS_MASH], &PIDOutput[TS_MASH], &setpoint[TS_MASH], 3, 4, 1),
-  PID(&PIDInput[TS_KETTLE], &PIDOutput[TS_KETTLE], &setpoint[TS_KETTLE], 3, 4, 1)
+PID pid[4] = {
+  PID(&PIDInput[VS_HLT], &PIDOutput[VS_HLT], &setpoint[VS_HLT], 3, 4, 1),
+  PID(&PIDInput[VS_MASH], &PIDOutput[VS_MASH], &setpoint[VS_MASH], 3, 4, 1),
+  PID(&PIDInput[VS_KETTLE], &PIDOutput[VS_KETTLE], &setpoint[VS_KETTLE], 3, 4, 1),
+  PID(&PIDInput[VS_STEAM], &PIDOutput[VS_STEAM], &setpoint[VS_STEAM], 3, 4, 1)
 };
 
 //Timer Globals

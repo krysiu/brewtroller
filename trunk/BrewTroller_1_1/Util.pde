@@ -31,13 +31,14 @@ int availableMemory() {
 
 
 void resetOutputs() {
-  for (int i = TS_HLT; i <= TS_KETTLE; i++) {
+  for (int i = VS_HLT; i <= VS_STEAM; i++) {
     setpoint[i] = 0;
     if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
   }
   digitalWrite(HLTHEAT_PIN, LOW);
   digitalWrite(MASHHEAT_PIN, LOW);
   digitalWrite(KETTLEHEAT_PIN, LOW);
+  digitalWrite(STEAMHEAT_PIN, LOW);
   digitalWrite(ALARM_PIN, LOW);
   setValves(0);
 }
