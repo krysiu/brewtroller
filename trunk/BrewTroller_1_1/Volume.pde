@@ -49,6 +49,6 @@ unsigned long readVolume( byte pin, unsigned long calibrationVols[10], unsigned 
 
 //Read Analog value of aPin and calculate kPA or psi based on unit and sensorType
 unsigned long readPressure( byte aPin, byte sensorType, boolean unit ) {
-  if (unit) return analogRead(aPin) * .0049 / (psSens(sensorType) / 10000.0) * .145; 
-    else return analogRead(aPin) * .0049 / (psSens(sensorType) / 10000.0); 
+  if (unit) return analogRead(aPin) * .0049 / (psSens[sensorType] / 10000.0) * .145; 
+    else return analogRead(aPin) * .0049 / (psSens[sensorType] / 10000.0); 
 }
