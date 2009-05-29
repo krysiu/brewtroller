@@ -14,10 +14,11 @@ void menuSetup() {
     strcpy_P(menuopts[5], PSTR("Configure Valves"));
     strcpy_P(menuopts[6], PSTR("Exit Setup"));
     
-    lastOption = scrollMenu("System Setup", menuopts, 7, lastOption);
+    lastOption = scrollMenu("System Setup", 7, lastOption);
     switch(lastOption) {
       case 0:
         unit = unit ^ 1;
+        #ifdef MODULE_UNITCONV
         if (unit) {
           clearLCD();
           printLCD_P(1, 0, PSTR(" Converting System"));
@@ -45,7 +46,7 @@ void menuSetup() {
           unsigned long varLong[3];
           unsigned int varInt;
             
-          for (int i = 0; i < 30; i++) {
+          for (byte i = 0; i < 30; i++) {
             varByte[0] = getProgSparge(i);
             if (varByte[0] > 0) setProgSparge(i, round(varByte[0] * 1.8) + 32);
             
@@ -124,7 +125,7 @@ void menuSetup() {
           unsigned long varLong[3];
           unsigned int varInt;
             
-          for (int i = 0; i < 30; i++) {
+          for (byte i = 0; i < 30; i++) {
             varByte[0] = getProgSparge(i);
             if (varByte[0] > 0) setProgSparge(i, round((varByte[0] - 32) / 1.8));
             
@@ -178,6 +179,7 @@ void menuSetup() {
           varByte[0] = getABGrainTemp();
           if (varByte[0] > 0) setABGrainTemp(round((varByte[0] - 32) / 1.8));
         }
+        #endif
         break;
       case 1: cfgSysType(); break;
       case 2: assignSensor(); break;
@@ -196,22 +198,21 @@ void assignSensor() {
   encCount = 0;
   int lastCount = 1;
   char dispTitle[6][21] = {
-    "   Hot Liquor Tank  ",
-    "      Mash Tun      ",
-    "     Brew Kettle    ",
-    "       H2O In       ",
-    "       H2O Out      ",
-    "      Beer Out      "
+    "Hot Liquor Tank",
+    "Mash Tun",
+    "Brew Kettle",
+    "H2O In",
+    "H2O Out",
+    "Beer Out"
   };
-  char buf[3];
   
   while (1) {
     if (encCount != lastCount) {
       lastCount = encCount;
       clearLCD();
       printLCD_P(0, 0, PSTR("Assign Temp Sensor"));
-      printLCD(1, 0, dispTitle[lastCount]);
-      for (int i=0; i<8; i++) printLCDPad(2,i*2+2,itoa(tSensor[lastCount][i], buf, 16), 2, '0');  
+      printLCDCenter(1, 0, dispTitle[lastCount], 20);
+      for (int i=0; i<8; i++) printLCDLPad(2,i*2+2,itoa(tSensor[lastCount][i], buf, 16), 2, '0');  
     }
     if (enterStatus == 2) {
       enterStatus = 0;
@@ -224,21 +225,20 @@ void assignSensor() {
       strcpy_P(menuopts[1], PSTR("Delete Address"));
       strcpy_P(menuopts[2], PSTR("Close Menu"));
       strcpy_P(menuopts[3], PSTR("Exit"));
-      switch (scrollMenu(dispTitle[lastCount], menuopts, 4, 0)) {
+      switch (scrollMenu(dispTitle[lastCount], 4, 0)) {
         case 0:
           clearLCD();
-          printLCD(0,0, dispTitle[lastCount]);
+          printLCDCenter(0, 0, dispTitle[lastCount], 20);
           printLCD_P(1,0,PSTR("Disconnect all other"));
-          printLCD_P(2,0,PSTR("  temp sensors now  "));
+          printLCD_P(2,2,PSTR("temp sensors now"));
           {
-            char conExit[2][19] = {
-              "     Continue     ",
-              "      Cancel      "};
-            if (getChoice(conExit, 2, 3) == 0) getDSAddr(tSensor[lastCount]);
+            strcpy_P(menuopts[0], PSTR("Continue"));
+            strcpy_P(menuopts[1], CANCEL);
+            if (getChoice(2, 3) == 0) getDSAddr(tSensor[lastCount]);
           }
           break;
         case 1:
-          for (int i = 0; i <8; i++) tSensor[lastCount][i] = 0; break;
+          for (byte i = 0; i <8; i++) tSensor[lastCount][i] = 0; break;
         case 2: break;
         default: return;
       }
@@ -275,7 +275,7 @@ void cfgOutputs() {
     strcpy_P(menuopts[15], PSTR("Steam Hysteresis"));
     strcpy_P(menuopts[16], PSTR("Exit"));
 
-    lastOption = scrollMenu("Configure Outputs", menuopts, 17, lastOption);
+    lastOption = scrollMenu("Configure Outputs", 17, lastOption);
     switch(lastOption) {
       case 0: PIDEnabled[VS_HLT] = PIDEnabled[VS_HLT] ^ 1; break;
       case 1: PIDCycle[VS_HLT] = getValue("HLT Cycle Time", PIDCycle[VS_HLT], 3, 0, 255, "s"); break;
@@ -309,7 +309,6 @@ void setPIDGain(char sTitle[], byte* p, byte* i, byte* d) {
   encMax = 3;
   encCount = 0;
   int lastCount = 1;
-  char buf[3];
   
   clearLCD();
   printLCD(0,0,sTitle);
@@ -357,9 +356,9 @@ void setPIDGain(char sTitle[], byte* p, byte* i, byte* d) {
             break;
         }
       }
-      printLCDPad(1, 3, itoa(retP, buf, 10), 3, ' ');
-      printLCDPad(1, 10, itoa(retI, buf, 10), 3, ' ');
-      printLCDPad(1, 17, itoa(retD, buf, 10), 3, ' ');
+      printLCDLPad(1, 3, itoa(retP, buf, 10), 3, ' ');
+      printLCDLPad(1, 10, itoa(retI, buf, 10), 3, ' ');
+      printLCDLPad(1, 17, itoa(retD, buf, 10), 3, ' ');
       lastCount = encCount;
     }
     if (enterStatus == 1) {
@@ -408,7 +407,7 @@ void cfgVolumes() {
 
     char volUnit[5] = "L";
     if (unit) strcpy_P(volUnit, PSTR("Gal"));
-    lastOption = scrollMenu("Volume/Capacity", menuopts, 11, lastOption);
+    lastOption = scrollMenu("Volume/Capacity", 11, lastOption);
     switch(lastOption) {
       case 0: capacity[TS_HLT] = getValue("HLT Capacity", capacity[TS_HLT], 7, 3, 9999999, volUnit); break;
       case 1: volLoss[TS_HLT] = getValue("HLT Dead Space", volLoss[TS_HLT], 5, 3, 65535, volUnit); break;
@@ -432,7 +431,6 @@ void volCalibMenu(byte vessel) {
   unsigned int vals[10];
   char sVessel[7];
   char sTitle[20];
-  char buf[9];
   unsigned int zeroVol = getZeroVol(vessel);
   switch(vessel) {
     case TS_HLT: strcpy_P(sVessel, PSTR("HLT")); break;
@@ -441,7 +439,7 @@ void volCalibMenu(byte vessel) {
   }  
   while(1) {
     getVolCalibs(vessel, vols, vals);
-    for(int i = 0; i < 10; i++) {
+    for(byte i = 0; i < 10; i++) {
       if (vals[i] > 0) {
         ftoa(vols[i] / 1000.0, buf, 3); 
         strcpy(menuopts[i], buf);
@@ -451,7 +449,7 @@ void volCalibMenu(byte vessel) {
     strcpy_P(menuopts[10], PSTR("Exit"));
     strcpy(sTitle, sVessel);
     strcat_P(sTitle, PSTR(" Calibration"));
-    lastOption = scrollMenu(sTitle, menuopts, 11, lastOption);
+    lastOption = scrollMenu(sTitle, 11, lastOption);
     if (lastOption > 9) return; else {
       if (vols[lastOption]) {
         if(confirmDel()) setVolCalib(vessel, lastOption, 0, 0);
@@ -481,7 +479,7 @@ void cfgValves() {
     strcpy_P(menuopts[7], PSTR("Chiller Beer In    "));
     strcpy_P(menuopts[8], PSTR("Exit               "));
     
-    lastOption = scrollMenu("Valve Configuration", menuopts, 9, lastOption);
+    lastOption = scrollMenu("Valve Configuration", 9, lastOption);
     if (lastOption > 7) return; else setValveCfg(lastOption, cfgValveProfile(menuopts[lastOption], getValveCfg(lastOption)));
   }
 }
@@ -500,7 +498,6 @@ unsigned long cfgValveProfile (char sTitle[], unsigned long defValue) {
   byte firstBit = encMax + 1;
   encCount = 0;
   int lastCount = 1;
-  char buf[6];
 
   clearLCD();
   printLCD(0,0,sTitle);
@@ -549,7 +546,7 @@ void cfgSysType() {
   strcpy_P(menuopts[1], PSTR("HERMS"));
   strcpy_P(menuopts[2], PSTR("Steam"));
   //Steam is not enabled yet and hidden
-  switch(scrollMenu("Select System Type:", menuopts, 2, sysType)) {
+  switch(scrollMenu("Select System Type:", 2, sysType)) {
     case 0: sysType = SYS_DIRECT; break;
     case 1: sysType = SYS_HERMS; break;
     case 2: sysType = SYS_STEAM; break;

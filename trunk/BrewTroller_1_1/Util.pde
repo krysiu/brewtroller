@@ -1,15 +1,15 @@
 void ftoa(float val, char retStr[], int precision) {
+  char lbuf[11];
   itoa(val, retStr, 10);  
   if(val < 0) val = -val;
   if( precision > 0) {
     strcat(retStr, ".");
     unsigned int mult = 1;
-    for(int i = 0; i< precision; i++) mult *=10;
+    for(byte i = 0; i< precision; i++) mult *=10;
     unsigned int frac = (val - int(val)) * mult;
-    char buf[6];
-    itoa(frac, buf, 10);
-    for(int i = 0; i < precision - (int)strlen(buf); i++) strcat(retStr, "0");
-    strcat(retStr, buf);
+    itoa(frac, lbuf, 10);
+    for(byte i = 0; i < precision - (int)strlen(lbuf); i++) strcat(retStr, "0");
+    strcat(retStr, lbuf);
   }
 }
 
@@ -29,7 +29,6 @@ int availableMemory() {
   return size;
 }
 
-
 void resetOutputs() {
   for (int i = VS_HLT; i <= VS_STEAM; i++) {
     setpoint[i] = 0;
@@ -39,7 +38,6 @@ void resetOutputs() {
   digitalWrite(MASHHEAT_PIN, LOW);
   digitalWrite(KETTLEHEAT_PIN, LOW);
   digitalWrite(STEAMHEAT_PIN, LOW);
-  digitalWrite(ALARM_PIN, LOW);
   setValves(0);
 }
 
@@ -67,7 +65,6 @@ void clearTimer() {
 }
 
 void printTimer(int iRow, int iCol) {
-  char buf[3];
   if (alarmStatus || timerValue > 0) {
     if (timerStatus) {
       unsigned long now = millis();
@@ -90,17 +87,18 @@ void printTimer(int iRow, int iCol) {
     if (timerLastWrite/60 != timerValue/60000) setTimerRecovery(timerValue/60000 + 1);
     //Update LCD once per second
     if (timerLastWrite != timerValue/1000) {
-      printLCD(iRow, iCol, "  :   ");
+      printLCDRPad(iRow, iCol, "", 6, ' ');
+      printLCD_P(iRow, iCol+2, PSTR(":"));
       if (timerHours > 0) {
-        printLCDPad(iRow, iCol, itoa(timerHours, buf, 10), 2, '0');
-        printLCDPad(iRow, iCol + 3, itoa(timerMins, buf, 10), 2, '0');
+        printLCDLPad(iRow, iCol, itoa(timerHours, buf, 10), 2, '0');
+        printLCDLPad(iRow, iCol + 3, itoa(timerMins, buf, 10), 2, '0');
       } else {
-        printLCDPad(iRow, iCol, itoa(timerMins, buf, 10), 2, '0');
-        printLCDPad(iRow, iCol+ 3, itoa(timerSecs, buf, 10), 2, '0');
+        printLCDLPad(iRow, iCol, itoa(timerMins, buf, 10), 2, '0');
+        printLCDLPad(iRow, iCol+ 3, itoa(timerSecs, buf, 10), 2, '0');
       }
       timerLastWrite = timerValue/1000;
     }
-  } else printLCD(iRow, iCol, "      ");
+  } else printLCDRPad(iRow, iCol, "", 6, ' ');
 }
 
 void setAlarm(boolean value) {
@@ -146,3 +144,4 @@ void setValves (unsigned long valveBits) {
   if (valveBits & 1024) digitalWrite(VALVEB_PIN, HIGH); else digitalWrite(VALVEB_PIN, LOW);
 #endif
 }
+

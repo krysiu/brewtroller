@@ -1,12 +1,12 @@
 unsigned long readVolume( byte pin, unsigned long calibrationVols[10], unsigned int calibrationValues[10], unsigned int zeroValue ) {
   unsigned int aValue = analogRead(pin);
+  unsigned long retValue;
   #ifdef DEBUG
-    Serial.print("readVolume (Pin ");
-    Serial.print(pin, DEC);
-    Serial.print(") analogRead: ");
-    Serial.print(aValue, DEC);
-    Serial.print(" zeroValue: ");
-    Serial.println(zeroValue, DEC);
+    logStart_P(LOGDEBUG);
+    logField_P("VOL_READ");
+    logFieldI(pin);
+    logFieldI(aValue);
+    logFieldI(zeroValue);
   #endif
   if (aValue <= zeroValue) return 0; else aValue -= zeroValue;
   
@@ -21,34 +21,36 @@ unsigned long readVolume( byte pin, unsigned long calibrationVols[10], unsigned 
   }
   
   #ifdef DEBUG
-    Serial.print("readVolume Corrected: ");
-    Serial.print(aValue, DEC);
-    Serial.print(" upperCal Value: ");
-    Serial.print(calibrationValues[upperCal], DEC);
-    Serial.print(" lowerCal Value: ");
-    Serial.print(calibrationValues[lowerCal], DEC);
-    Serial.print(" lowerCal2 Value: ");
-    Serial.println(calibrationValues[lowerCal2], DEC);
+    logFieldI(aValue);
+    logFieldI(upperCal);
+    logFieldI(lowerCal);
+    logFieldI(lowerCal2);
   #endif
   
   //If no calibrations exist return zero
-  if (calibrationValues[upperCal] == 0 && calibrationValues[lowerCal] == 0) return 0;
-  
+  if (calibrationValues[upperCal] == 0 && calibrationValues[lowerCal] == 0) retValue = 0;
+
   //If read value is greater than all calibrations plot value based on two closest lesser values
-  if (aValue > calibrationValues[upperCal] && calibrationValues[lowerCal] > calibrationValues[lowerCal2]) return round((float) (aValue - calibrationValues[lowerCal]) / (float) (calibrationValues[lowerCal] - calibrationValues[lowerCal2]) * (calibrationVols[lowerCal] - calibrationVols[lowerCal2])) + calibrationVols[lowerCal];
+  else if (aValue > calibrationValues[upperCal] && calibrationValues[lowerCal] > calibrationValues[lowerCal2]) retValue = round((float) (aValue - calibrationValues[lowerCal]) / (float) (calibrationValues[lowerCal] - calibrationValues[lowerCal2]) * (calibrationVols[lowerCal] - calibrationVols[lowerCal2])) + calibrationVols[lowerCal];
   
   //If read value exceeds all calibrations and only one lower calibration point is available plot value based on zero and closest lesser value
-  if (aValue > calibrationValues[upperCal] && calibrationValues[lowerCal] == calibrationValues[lowerCal2]) return round((float) (aValue - calibrationValues[lowerCal]) / (float) (calibrationValues[lowerCal]) * (calibrationVols[lowerCal])) + calibrationVols[lowerCal];
+  else if (aValue > calibrationValues[upperCal] && calibrationValues[lowerCal] == calibrationValues[lowerCal2]) retValue = round((float) (aValue - calibrationValues[lowerCal]) / (float) (calibrationValues[lowerCal]) * (calibrationVols[lowerCal])) + calibrationVols[lowerCal];
   
   //If read value is less than all calibrations plot value between zero and closest greater value
-  if (aValue < calibrationValues[lowerCal]) return round((float) aValue / (float) calibrationValues[upperCal] * calibrationVols[upperCal]);
+  else if (aValue < calibrationValues[lowerCal]) retValue = round((float) aValue / (float) calibrationValues[upperCal] * calibrationVols[upperCal]);
   
   //Otherwise plot value between lower and greater calibrations
-  else return round((float) (aValue - calibrationValues[lowerCal]) / (float) (calibrationValues[upperCal] - calibrationValues[lowerCal]) * (calibrationVols[upperCal] - calibrationVols[lowerCal])) + calibrationVols[lowerCal];
+  else retValue = round((float) (aValue - calibrationValues[lowerCal]) / (float) (calibrationValues[upperCal] - calibrationValues[lowerCal]) * (calibrationVols[upperCal] - calibrationVols[lowerCal])) + calibrationVols[lowerCal];
+
+  #ifdef DEBUG
+    logFieldI(retValue);
+    logEnd();
+  #endif
 }
 
-//Read Analog value of aPin and calculate kPA or psi based on unit and sensorType
-unsigned long readPressure( byte aPin, byte sensorType, boolean unit ) {
-  if (unit) return analogRead(aPin) * .0049 / (psSens[sensorType] / 10000.0) * .145; 
-    else return analogRead(aPin) * .0049 / (psSens[sensorType] / 10000.0); 
+//Read Analog value of aPin and calculate kPA or psi based on unit and sensitivity (sens in tenths of mv per kpa)
+unsigned long readPressure( byte aPin, byte sens, boolean unit ) {
+  unsigned long retValue = analogRead(aPin) * .0049 / (sens / 10000.0);
+  if (unit) return retValue * .145; 
+  else return retValue; 
 }

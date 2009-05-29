@@ -1,7 +1,6 @@
 void doMon() {
 //Program memory used: 4KB (as of Build 205)
 #ifdef MODULE_BREWMONITOR
-  char buf[6];
   float temp[6] = { 0, 0, 0, 0, 0, 0 };
   char sTempUnit[2] = "C";
   unsigned long convStart = 0;
@@ -68,7 +67,7 @@ void doMon() {
         byte lastOption = 0;
         while(inMenu) {
           char dispUnit[2] = "C"; if (unit) strcpy(dispUnit, "F");
-          lastOption = scrollMenu("Brew Monitor Menu   ", menuopts, 11, lastOption);
+          lastOption = scrollMenu("Brew Monitor Menu   ", 11, lastOption);
           switch (lastOption) {
             case 0:
               {
@@ -134,7 +133,6 @@ void doMon() {
         lastCount += 1;
       }
     }
-    char buf[6];
     switch (encCount) {
       case 0:
         if (encCount != lastCount) {
@@ -155,8 +153,8 @@ void doMon() {
         }
         
         for (int i = TS_HLT; i <= TS_MASH; i++) {
-          if (temp[i] == -1) printLCD(2, i * 14 + 1, "---"); else printLCDPad(2, i * 14 + 1, itoa(temp[i], buf, 10), 3, ' ');
-          printLCDPad(3, i * 14 + 1, itoa(setpoint[i], buf, 10), 3, ' ');
+          if (temp[i] == -1) printLCD(2, i * 14 + 1, "---"); else printLCDLPad(2, i * 14 + 1, itoa(temp[i], buf, 10), 3, ' ');
+          printLCDLPad(3, i * 14 + 1, itoa(setpoint[i], buf, 10), 3, ' ');
           if (PIDEnabled[i]) {
             byte pct = PIDOutput[i] / PIDCycle[i] / 10;
             switch (pct) {
@@ -165,7 +163,7 @@ void doMon() {
               default: itoa(pct, buf, 10); strcat(buf, "%"); break;
             }
           } else if (heatStatus[i]) strcpy(buf, " On"); else strcpy(buf, "Off"); 
-          printLCDPad(3, i * 5 + 6, buf, 3, ' ');
+          printLCDLPad(3, i * 5 + 6, buf, 3, ' ');
         }
         break;
       case 1:
@@ -180,8 +178,8 @@ void doMon() {
           lastCount = encCount;
           timerLastWrite = 0;
         }
-        if (temp[TS_KETTLE] == -1) printLCD(2, 1, "---"); else printLCDPad(2, 1, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
-        printLCDPad(3, 1, itoa(setpoint[TS_KETTLE], buf, 10), 3, ' ');
+        if (temp[TS_KETTLE] == -1) printLCD(2, 1, "---"); else printLCDLPad(2, 1, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
+        printLCDLPad(3, 1, itoa(setpoint[TS_KETTLE], buf, 10), 3, ' ');
         if (PIDEnabled[TS_KETTLE]) {
           byte pct = PIDOutput[TS_KETTLE] / PIDCycle[TS_KETTLE] / 10;
           switch (pct) {
@@ -190,7 +188,7 @@ void doMon() {
             default: itoa(pct, buf, 10); strcat(buf, "%"); break;
           }
         } else if (heatStatus[TS_KETTLE]) strcpy(buf, " On"); else strcpy(buf, "Off");
-        printLCDPad(3, 6, buf, 3, ' ');
+        printLCDLPad(3, 6, buf, 3, ' ');
         break;
       case 2:
         if (encCount != lastCount) {
@@ -208,10 +206,10 @@ void doMon() {
           timerLastWrite = 0;
         }
         
-        if (temp[TS_KETTLE] == -1) printLCD(2, 0, "---"); else printLCDPad(2, 0, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
-        if (temp[TS_BEEROUT] == -1) printLCD(2, 16, "---"); else printLCDPad(2, 16, itoa(temp[TS_BEEROUT], buf, 10), 3, ' ');
-        if (temp[TS_H2OIN] == -1) printLCD(3, 0, "---"); else printLCDPad(3, 0, itoa(temp[TS_H2OIN], buf, 10), 3, ' ');
-        if (temp[TS_H2OOUT] == -1) printLCD(3, 16, "---"); else printLCDPad(3, 16, itoa(temp[TS_H2OOUT], buf, 10), 3, ' ');
+        if (temp[TS_KETTLE] == -1) printLCD(2, 0, "---"); else printLCDLPad(2, 0, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
+        if (temp[TS_BEEROUT] == -1) printLCD(2, 16, "---"); else printLCDLPad(2, 16, itoa(temp[TS_BEEROUT], buf, 10), 3, ' ');
+        if (temp[TS_H2OIN] == -1) printLCD(3, 0, "---"); else printLCDLPad(3, 0, itoa(temp[TS_H2OIN], buf, 10), 3, ' ');
+        if (temp[TS_H2OOUT] == -1) printLCD(3, 16, "---"); else printLCDLPad(3, 16, itoa(temp[TS_H2OOUT], buf, 10), 3, ' ');
         break;
     }
     printTimer(1,7);

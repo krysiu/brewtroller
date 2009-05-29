@@ -1,4 +1,4 @@
-#define BUILD 208 
+#define BUILD 209 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -10,6 +10,10 @@ Compiled on Arduino-0015 (http://arduino.cc/en/Main/Software)
 With Sanguino Software v1.4 (http://code.google.com/p/sanguino/downloads/list)
 using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrary)
 using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
+using LiquidCrystal Fix by Donald Weiman:
+  Download fix: http://web.alfredstate.edu/weimandn/arduino/LiquidCrystal_library/LiquidCrystal.cpp
+  Replace arduino-0015\hardware\libraries\LiquidCrystal\LiquidCrystal.cpp
+  Delete arduino-0015\hardware\libraries\LiquidCrystal\LiquidCrystal.o if it exists
 */
 
 //*****************************************************************************************************************************
@@ -41,7 +45,7 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 // pins, uncomment the following line. 
 // Note: This option is not used when MUXBOARDS is enabled.
 //
-//#define PV34REMAP
+#define PV34REMAP
 //**********************************************************************************
 
 
@@ -64,20 +68,31 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 // OPTIONAL MODULES
 //**********************************************************************************
 // Comment out any of the following lines to disable a module. This is handy to see
-// how much space these chunks of code use. (Not much.)
+// how much space these chunks of code use.
 //
 #define MODULE_BREWMONITOR
 #define MODULE_SYSTEST
 #define MODULE_EEPROMUPGRADE
+
+//The following module converts all EEPROM settings between US and Metric when system unit setting is altered (5.6KB)
+#define MODULE_UNITCONV
 //**********************************************************************************
+
+
+//**********************************************************************************
+// DEBUG
+//**********************************************************************************
+// Enables Serial Out with Additional Debug Data
+//
+//#define DEBUG
+//**********************************************************************************
+
 
 //*****************************************************************************************************************************
 // BEGIN CODE
 //*****************************************************************************************************************************
 #include <avr/pgmspace.h>
 #include <PID_Beta6.h>
-
-//#define DEBUG
 
 //Pin and Interrupt Definitions
 #define ENCA_PIN 2
@@ -136,18 +151,6 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 #define VS_KETTLE 2
 #define VS_STEAM 3
 
-//Pressure Sensor Models
-#define PSTYPE_MPXX5010 0
-#define PSTYPE_MPXX7025 1
-#define PSTYPE_MPXX5100 2
-#define PSTYPE_MPXX4250 3
-#define PSTYPE_MPXX5500 4
-#define PSTYPE_MPXX5700 5
-#define PSTYPE_MPXX5999 6
-
-//Pressure Sensor sensitivity (kPA per mV *10)
-unsigned int psSens[] = {4500, 900, 450, 188, 90, 64, 45};
-
 //Valve Array Element Constants and Variables
 #define VLV_FILLHLT 0
 #define VLV_FILLMASH 1
@@ -199,6 +202,9 @@ boolean PIDEnabled[4] = { 0, 0, 0, 0 };
 //Shared menuOptions Array
 char menuopts[30][20];
 
+//Common Buffer
+char buf[11];
+
 double PIDInput[4], PIDOutput[4], setpoint[4];
 byte PIDp[4], PIDi[4], PIDd[4], PIDCycle[4], hysteresis[4];
 
@@ -215,11 +221,56 @@ unsigned long lastTime = 0;
 unsigned long timerLastWrite = 0;
 boolean timerStatus = 0;
 boolean alarmStatus = 0;
+
+char msg[20][21];
+byte msgField = 0;
+boolean msgQueued = 0;
+
+//Log Message Classes
+const char LOGAB[] PROGMEM = "AB";
+const char LOGCMD[] PROGMEM = "CMD";
+const char LOGDEBUG[] PROGMEM = "DEBUG";
+const char LOGMENU[] PROGMEM = "MENU";
+const char LOGSYS[] PROGMEM = "SYSTEM";
+
+//Other PROGMEM Repeated Strings
+const char PWRLOSSRECOVER[] PROGMEM = "PLR";
+const char BT[] PROGMEM = "BrewTroller";
+const char BTVER[] PROGMEM = "v1.1";
+const char CANCEL[] PROGMEM = "Cancel";
+const char SPACE[] PROGMEM = " ";
+const char INIT_EEPROM[] PROGMEM = "Initialize EEPROM";
+const char LOGSCROLLP[] PROGMEM = "PROMPT";
+const char LOGSCROLLR[] PROGMEM = "RESULT";
+const char LOGCHOICE[] PROGMEM = "CHOICE";
+const char SKIPSTEP[] PROGMEM = "Skip Step";
+const char ABORTAB[] PROGMEM = "Abort AutoBrew";
+const char LOGSPLASH[] PROGMEM = "Splash Screen";
+
+//Custom LCD Chars
+const byte CHARFIELD[] PROGMEM = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};
+const byte CHARCURSOR[] PROGMEM = {B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
+const byte BMP0[] PROGMEM = {B00000, B00000, B00000, B00000, B00011, B01111, B11111, B11111};
+const byte BMP1[] PROGMEM = {B00000, B00000, B00000, B00000, B11100, B11110, B11111, B11111};
+const byte BMP2[] PROGMEM = {B00001, B00011, B00111, B01111, B00001, B00011, B01111, B11111};
+const byte BMP3[] PROGMEM = {B11111, B11111, B10001, B00011, B01111, B11111, B11111, B11111};
+const byte BMP4[] PROGMEM = {B11111, B11111, B11111, B11111, B11111, B11111, B11111, B11111};
+const byte BMP5[] PROGMEM = {B01111, B01110, B01100, B00001, B01111, B00111, B00011, B11101};
+const byte BMP6[] PROGMEM = {B11111, B00111, B00111, B11111, B11111, B11111, B11110, B11001};
+const byte BMP7[] PROGMEM = {B11111, B11111, B11110, B11101, B11011, B00111, B11111, B11111};
+  
   
 void setup() {
-#ifdef DEBUG
+#if defined DEBUG || defined MUXBOARDS || defined PV34REMAP
   Serial.begin(9600);
+  Serial.println();
 #endif
+  logStart_P(LOGSYS);
+  logField_P(PSTR("VER"));
+  logField_P(BTVER);
+  logField(itoa(BUILD, buf, 10));
+  logEnd();
+  
   pinMode(ENCA_PIN, INPUT);
   pinMode(ENCB_PIN, INPUT);
   pinMode(ENTER_PIN, INPUT);
@@ -249,25 +300,31 @@ void setup() {
   
   //Encoder Setup
   #ifdef ENCODER_ALPS
-      attachInterrupt(2, doEncoderALPS, CHANGE);
+    attachInterrupt(2, doEncoderALPS, CHANGE);
   #endif
   #ifdef ENCODER_CUI
-      attachInterrupt(2, doEncoderCUI, RISING);
+    attachInterrupt(2, doEncoderCUI, RISING);
   #endif
   attachInterrupt(1, doEnter, CHANGE);
 
   //Memory Check
-  //char buf[6]; printLCD(0,0,itoa(availableMemory(), buf, 10)); delay (5000);
+  //printLCD(0,0,itoa(availableMemory(), buf, 10)); delay (5000);
   
   //Check for cfgVersion variable and format EEPROM if necessary
   checkConfig();
   
   //Load global variable values stored in EEPROM
   loadSetup();
-
+  
   switch(getPwrRecovery()) {
-    case 1: doAutoBrew(); break;
-    case 2: doMon(); break;
+    case 1: 
+      logString_P(LOGSYS, PWRLOSSRECOVER);
+      doAutoBrew();
+      break;
+    case 2:
+      logString_P(LOGSYS, PWRLOSSRECOVER);
+      doMon();
+      break;
     default:
       splashScreen();
       break;
@@ -280,7 +337,7 @@ void loop() {
   strcpy_P(menuopts[2], PSTR("System Setup"));
   strcpy_P(menuopts[3], PSTR("System Tests"));
  
-  switch (scrollMenu("BrewTroller", menuopts, 4, 0)) {
+  switch (scrollMenu("BrewTroller", 4, 0)) {
     case 0: doAutoBrew(); break;
     case 1: doMon(); break;
     case 2: menuSetup(); break;
@@ -289,113 +346,15 @@ void loop() {
 }
 
 void splashScreen() {
-  char buf[6];
   clearLCD();
-  { 
-    const byte bmpByte[] = {
-      B00000,
-      B00000,
-      B00000, 
-      B00000, 
-      B00011, 
-      B01111, 
-      B11111, 
-      B11111
-    }; 
-    lcdSetCustChar(0, bmpByte);
-  }
-  { 
-    const byte bmpByte[] = {
-      B00000, 
-      B00000, 
-      B00000, 
-      B00000, 
-      B11100, 
-      B11110, 
-      B11111, 
-      B11111
-    };
-    lcdSetCustChar(1, bmpByte);
-  }
-  { 
-    const byte bmpByte[] = {
-      B00001, 
-      B00011, 
-      B00111, 
-      B01111, 
-      B00001, 
-      B00011, 
-      B01111, 
-      B11111
-    }; 
-    lcdSetCustChar(2, bmpByte); 
-  }
-  { 
-    const byte bmpByte[] = {
-      B11111, 
-      B11111, 
-      B10001, 
-      B00011, 
-      B01111, 
-      B11111, 
-      B11111, 
-      B11111
-    }; 
-    lcdSetCustChar(3, bmpByte); 
-  }
-  { 
-    const byte bmpByte[] = {
-      B11111, 
-      B11111, 
-      B11111, 
-      B11111, 
-      B11111, 
-      B11111, 
-      B11111, 
-      B11111
-    }; 
-    lcdSetCustChar(4, bmpByte); 
-  }
-  { 
-    const byte bmpByte[] = {
-      B01111, 
-      B01110, 
-      B01100, 
-      B00001, 
-      B01111, 
-      B00111, 
-      B00011, 
-      B11101
-    }; 
-    lcdSetCustChar(5, bmpByte); 
-  }
-  { 
-    const byte bmpByte[] = {
-      B11111, 
-      B00111, 
-      B00111, 
-      B11111, 
-      B11111, 
-      B11111, 
-      B11110, 
-      B11001
-    }; 
-    lcdSetCustChar(6, bmpByte); 
-  }
-  { 
-    const byte bmpByte[] = {
-      B11111, 
-      B11111, 
-      B11110, 
-      B11101, 
-      B11011, 
-      B00111, 
-      B11111, 
-      B11111
-    }; 
-    lcdSetCustChar(7, bmpByte); 
-  }
-
+  lcdSetCustChar_P(0, BMP0);
+  lcdSetCustChar_P(1, BMP1);
+  lcdSetCustChar_P(2, BMP2);
+  lcdSetCustChar_P(3, BMP3);
+  lcdSetCustChar_P(4, BMP4);
+  lcdSetCustChar_P(5, BMP5);
+  lcdSetCustChar_P(6, BMP6);
+  lcdSetCustChar_P(7, BMP7);
   lcdWriteCustChar(0, 1, 0);
   lcdWriteCustChar(0, 2, 1);
   lcdWriteCustChar(1, 0, 2); 
@@ -404,10 +363,29 @@ void splashScreen() {
   lcdWriteCustChar(2, 0, 5); 
   lcdWriteCustChar(2, 1, 6); 
   lcdWriteCustChar(2, 2, 7); 
-  printLCD_P(0, 4, PSTR("BrewTroller v1.1"));
+  printLCD_P(0, 4, BT);
+  printLCD_P(0, 16, BTVER);
   printLCD_P(1, 10, PSTR("Build "));
-  printLCDPad(1, 16, itoa(BUILD, buf, 10), 4, '0');
+  printLCDLPad(1, 16, itoa(BUILD, buf, 10), 4, '0');
   printLCD_P(3, 1, PSTR("www.brewtroller.com"));
-  while(!enterStatus) delay(250);
+  logStart_P(LOGMENU);
+  logField_P(LOGSCROLLP);
+  logField_P(LOGSPLASH);
+  logField_P(PSTR("0"));
+  logEnd();
+  while(!enterStatus) {
+     if (chkMsg()) {
+      if (strcasecmp(msg[0], "SELECT") == 0) {
+        enterStatus = 1;
+        clearMsg();
+      } else rejectMsg();
+    }
+    delay(250);
+  }
   enterStatus = 0;
+  logStart_P(LOGMENU);
+  logField_P(LOGSCROLLR);
+  logField_P(LOGSPLASH);
+  logFieldI(0);
+  logEnd();
 }

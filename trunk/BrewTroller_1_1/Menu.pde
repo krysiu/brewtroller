@@ -1,11 +1,18 @@
-byte scrollMenu(char sTitle[], char menuItems[][20], byte numOpts, byte defOption) {
+byte scrollMenu(char sTitle[], byte numOpts, byte defOption) {
+  //Uses Global menuopts[][20]
   encMin = 0;
   encMax = numOpts-1;
   
   encCount = defOption;
   byte lastCount = encCount + 1;
   byte topItem = numOpts;
-
+  logStart_P(LOGMENU);
+  logField_P(LOGSCROLLP);
+  logField(sTitle);
+  logFieldI(numOpts);
+  for (byte i = 0; i < numOpts; i++)  logField(menuopts[i]);
+  logEnd();
+  
   while(1) {
     if (encCount != lastCount) {
 
@@ -13,84 +20,126 @@ byte scrollMenu(char sTitle[], char menuItems[][20], byte numOpts, byte defOptio
         clearLCD();
         if (sTitle != NULL) printLCD(0, 0, sTitle);
         topItem = encCount;
-        drawItems(menuItems, numOpts, topItem);
+        drawItems(numOpts, topItem);
       } else if (encCount > topItem + 2) {
         clearLCD();
         if (sTitle != NULL) printLCD(0, 0, sTitle);
         topItem = encCount - 2;
-        drawItems(menuItems, numOpts, topItem);
+        drawItems(numOpts, topItem);
       }
       for (int i = 1; i <= 3; i++) if (i == encCount - topItem + 1) printLCD(i, 0, ">"); else printLCD(i, 0, " ");
       lastCount = encCount;
     }
     
+    if (chkMsg()) {
+      if (strcasecmp(msg[0], "SELECT") == 0) {
+        encCount = atoi(msg[1]);
+        enterStatus = 1;
+        clearMsg();
+      } else rejectMsg();
+    }
+    
     //If Enter
-    if (enterStatus == 1) {
-      enterStatus = 0;
-      return encCount;
-    } else if (enterStatus == 2) {
-      enterStatus = 0;
-      return numOpts;
+    if (enterStatus) {
+      logStart_P(LOGMENU);
+      logField_P(LOGSCROLLR);
+      logField(sTitle);
+      if (enterStatus == 1) {
+        enterStatus = 0;
+        logFieldI(encCount);
+        logField(menuopts[encCount]);
+        logEnd();
+        return encCount;
+      } else if (enterStatus == 2) {
+        enterStatus = 0;
+        logFieldI(numOpts);
+        logField_P(CANCEL);
+        logEnd();
+        return numOpts;
+      }
     }
   }
 }
 
-void drawItems(char menuItems[][20], int numOpts, int topItem) {
+void drawItems(int numOpts, int topItem) {
+  //Uses Global menuopts[][20]
   int maxOpt = topItem + 2;
   if (maxOpt > numOpts - 1) maxOpt = numOpts - 1;
-  for (int i = topItem; i <= maxOpt; i++) printLCD(i-topItem+1, 1, menuItems[i]);
+  for (int i = topItem; i <= maxOpt; i++) printLCD(i-topItem+1, 1, menuopts[i]);
 }
 
-int getChoice(char choices[][19], int numChoices, int iRow) {
-  printLCD(iRow, 0, ">                  <");
-
+int getChoice(int numChoices, int iRow) {
+  //Uses Global menuopts[][20]
+  //Force 18 Char Limit
+  for (byte i = 0; i < numChoices; i++) menuopts[i][18] = '\0';
+  printLCD_P(iRow, 0, PSTR(">"));
+  printLCD_P(iRow, 19, PSTR("<"));
   encMin = 0;
-  encMax = numChoices-1;
+  encMax = numChoices - 1;
  
   encCount = 0;
-  int lastCount = encCount+1;
+  int lastCount = encCount + 1;
+  logStart_P(LOGSCROLLP);
+  logField_P(LOGCHOICE);
+  logFieldI(numChoices);
+  for (byte i = 0; i < numChoices; i++)  logField(menuopts[i]);
+  logEnd();
 
   while(1) {
     if (encCount != lastCount) {
-      printLCD(iRow, 1, choices[encCount]);
+      printLCDCenter(iRow, 1, menuopts[encCount], 18);
       lastCount = encCount;
     }
     
     //If Enter
-    if (enterStatus == 1) {
-      enterStatus = 0;
-      printLCD(iRow, 0, " ");
-      printLCD(iRow, 19, " ");
-      return encCount;
-    } else if (enterStatus == 2) {
-      enterStatus = 0;
-      printLCD(iRow, 0, " ");
-      printLCD(iRow, 19, " ");
-      return numChoices;
+    if (chkMsg()) {
+      if (strcasecmp(msg[0], "SELECT") == 0) {
+        encCount = atoi(msg[1]);
+        enterStatus = 1;
+        clearMsg();
+      } else rejectMsg();
+    }
+    if (enterStatus) {
+      logStart_P(LOGMENU);
+      logField_P(LOGSCROLLR);
+      logField_P(LOGCHOICE);
+      printLCD_P(iRow, 0, SPACE);
+      printLCD_P(iRow, 19, SPACE);
+      if (enterStatus == 1) {
+        enterStatus = 0;
+        logFieldI(encCount);
+        logField(menuopts[encCount]);
+        logEnd();
+        return encCount;
+      } else if (enterStatus == 2) {
+        enterStatus = 0;
+        logFieldI(numChoices);
+        logField_P(CANCEL);
+        return numChoices;
+      }
     }
   }
 }
 
 boolean confirmExit() {
+  logString_P(LOGMENU, PSTR("CONFIRM_EXIT"));
   clearLCD();
   printLCD_P(0, 0, PSTR("Exiting will reset"));
   printLCD_P(1, 0, PSTR("outputs, setpoints"));
   printLCD_P(2, 0, PSTR("and timers."));
-  
-  char choices[2][19] = {
-    "      Return      ",
-    "   Exit Program   "};
-  if(getChoice(choices, 2, 3) == 1) return 1; else return 0;
+  strcpy_P(menuopts[0], CANCEL);
+  strcpy_P(menuopts[1], PSTR("Exit Program"));
+  if(getChoice(2, 3) == 1) return 1; else return 0;
 }
 
 boolean confirmDel() {
+  logString_P(LOGMENU, PSTR("CONFIRM_DEL"));
   clearLCD();
   printLCD_P(1, 0, PSTR("Delete Item?"));
   
-  char choices[2][19] = {
-    "      Cancel      ",
-    "      Delete      "};
-  if(getChoice(choices, 2, 3) == 1) return 1; else return 0;
+  strcpy_P(menuopts[0], CANCEL);
+  strcpy_P(menuopts[1], PSTR("Delete"));
+  if(getChoice(2, 3) == 1) return 1; else return 0;
 }
 
 long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision, long maxValue, char dispUnit[]) {
@@ -102,16 +151,9 @@ long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision
   encMax = digits;
   encCount = 0;
   int lastCount = 1;
-  char buf[11];
 
-  {
-    const byte charByte[] = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};
-    lcdSetCustChar(0, charByte);
-  }
-  {
-    const byte charByte[] = {B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
-    lcdSetCustChar(1, charByte);
-  }
+  lcdSetCustChar_P(0, CHARFIELD);
+  lcdSetCustChar_P(1, CHARCURSOR);
       
   clearLCD();
   printLCD(0,0,sTitle);
@@ -123,7 +165,7 @@ long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision
     if (encCount != lastCount) {
       if (cursorState) {
         unsigned long factor = 1;
-        for (int i = 0; i < digits - cursorPos - 1; i++) factor *= 10;
+        for (byte i = 0; i < digits - cursorPos - 1; i++) factor *= 10;
         if (encCount > lastCount) retValue += (encCount-lastCount) * factor; else retValue -= (lastCount-encCount) * factor;
         if (retValue > maxValue) retValue = maxValue;
       } else {
@@ -143,10 +185,10 @@ long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision
       lastCount = encCount;
       whole = retValue / pow(10, precision);
       frac = retValue - (whole * pow(10, precision)) ;
-      printLCDPad(1, (20 - digits + 1) / 2 - 1, ltoa(whole, buf, 10), digits - precision, ' ');
+      printLCDLPad(1, (20 - digits + 1) / 2 - 1, ltoa(whole, buf, 10), digits - precision, ' ');
       if (precision) {
         printLCD(1, (20 - digits + 1) / 2 + digits - precision - 1, ".");
-        printLCDPad(1, (20 - digits + 1) / 2 + digits - precision, ltoa(frac, buf, 10), precision, '0');
+        printLCDLPad(1, (20 - digits + 1) / 2 + digits - precision, ltoa(frac, buf, 10), precision, '0');
       }
     }
     if (enterStatus == 1) {
@@ -187,7 +229,6 @@ unsigned int getTimerValue(char sTitle[], unsigned int defMins) {
   encMax = 2;
   encCount = 0;
   int lastCount = 1;
-  char buf[3];
   
   clearLCD();
   printLCD(0,0,sTitle);
@@ -222,8 +263,8 @@ unsigned int getTimerValue(char sTitle[], unsigned int defMins) {
             break;
         }
       }
-      printLCDPad(1, 7, itoa(hours, buf, 10), 2, '0');
-      printLCDPad(1, 10, itoa(mins, buf, 10), 2, '0');
+      printLCDLPad(1, 7, itoa(hours, buf, 10), 2, '0');
+      printLCDLPad(1, 10, itoa(mins, buf, 10), 2, '0');
       lastCount = encCount;
     }
     if (enterStatus == 1) {
@@ -252,7 +293,7 @@ void getString(char sTitle[], char defValue[], byte chars) {
   
   //Right-Pad with spaces
   boolean doWipe = 0;
-  for (int i = 0; i < chars; i++) {
+  for (byte i = 0; i < chars; i++) {
     if (retValue[i] < 32 || retValue[i] > 126) doWipe = 1;
     if (doWipe) retValue[i] = 32;
   }
@@ -266,14 +307,8 @@ void getString(char sTitle[], char defValue[], byte chars) {
   encCount = 0;
   int lastCount = 1;
 
-  {
-    const byte charByte[] = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};
-    lcdSetCustChar(0, charByte);
-  }
-  {
-    const byte charByte[] = {B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
-    lcdSetCustChar(1, charByte);
-  }
+  lcdSetCustChar_P(0, CHARFIELD);
+  lcdSetCustChar_P(1, CHARCURSOR);
       
   clearLCD();
   printLCD(0,0,sTitle);
@@ -323,7 +358,6 @@ void getString(char sTitle[], char defValue[], byte chars) {
     }
   }
 }
-
 
 //Next two functions used to change order of charactor scroll to (space), A-Z, a-z, 0-9, symbols
 byte ASCII2enc(byte charin) {

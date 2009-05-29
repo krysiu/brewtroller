@@ -36,8 +36,8 @@ void saveSetup() {
     
   EEPROM.write(92, evapRate);
 
-  //94 - 127 Reserved for Power Recovery
-  //128-130 ***OPEN***
+  //94 - 129 Reserved for Power Recovery
+  //130 ***OPEN***
   //131 - 135 Reserved for Power Recovery
   //136-151 ***OPEN*** (Old Valve Profiles )
   //152-154 Power Recovery
@@ -84,8 +84,8 @@ void loadSetup() {
   
   evapRate = EEPROM.read(92);
 
-  //94 - 127 Reserved for Power Recovery
-  //128-130 ***OPEN***
+  //94 - 129 Reserved for Power Recovery
+  //130 ***OPEN***
   //131 - 135 Reserved for Power Recovery
   //136-151 ***OPEN*** (Old Valve Profiles )
   //152-154 Power Recovery
@@ -98,14 +98,14 @@ void loadSetup() {
   //2047 EEPROM Version
 }
 
-void PROMwriteBytes(int addr, byte bytes[], int numBytes) {
-  for (int i = 0; i < numBytes; i++) {
+void PROMwriteBytes(int addr, byte bytes[], byte numBytes) {
+  for (byte i = 0; i < numBytes; i++) {
     EEPROM.write(addr + i, bytes[i]);
   }
 }
 
-void PROMreadBytes(int addr, byte bytes[], int numBytes) {
-  for (int i = 0; i < numBytes; i++) {
+void PROMreadBytes(int addr, byte bytes[], byte numBytes) {
+  for (byte i = 0; i < numBytes; i++) {
     bytes[i] = EEPROM.read(addr + i);
   }
 }
@@ -114,6 +114,11 @@ void checkConfig() {
 //Program memory used: 1KB (as of Build 205)
 #ifdef MODULE_EEPROMUPGRADE
   byte cfgVersion = EEPROM.read(2047);
+  logStart_P(LOGSYS);
+  logField_P(PSTR("CFGVER"));
+  logFieldI(cfgVersion);
+  logEnd();
+
   if (cfgVersion == 255) cfgVersion = 0;
   switch(cfgVersion) {
     case 0:
@@ -121,11 +126,13 @@ void checkConfig() {
       printLCD_P(0, 0, PSTR("System Configuration"));
       printLCD_P(1, 0, PSTR("Version Check Failed"));
       {
-        char choices[2][19] = {"Initialize EEPROM ", "  Ignore Version  "};
-        if (!getChoice(choices, 2, 3)) {
+        strcpy_P(menuopts[0], INIT_EEPROM);
+        strcpy_P(menuopts[1], CANCEL);
+        if (!getChoice(2, 3)) {
           clearLCD();
-          printLCD_P(1, 0, PSTR("Initializing EEPROM "));
-          printLCD_P(2, 0, PSTR("   Please Wait...   "));
+          logString_P(LOGSYS, INIT_EEPROM);
+          printLCD_P(1, 0, INIT_EEPROM);
+          printLCD_P(2, 3, PSTR("Please Wait..."));
           //Format EEPROM to 0's
           for (int i=0; i<2048; i++) EEPROM.write(i, 0);
           {
@@ -278,6 +285,9 @@ void saveABSteps(byte stepTemp[4], byte stepMins[4]) {
 void loadABVols(unsigned long tgtVol[3]) { for (int i=0; i<3; i++) { tgtVol[i] = PROMreadLong(115 + i * 4); } }
 void saveABVols(unsigned long tgtVol[3]) { for (int i=0; i<3; i++) { PROMwriteLong(115 + i * 4, tgtVol[i]); } }
 
+unsigned int getABAddsTrig() { return PROMreadInt(128); }
+void setABAddsTrig(unsigned int adds) { PROMwriteInt(128, adds); }
+
 void loadSetpoints() { for (int i=TS_HLT; i<=TS_KETTLE; i++) { setpoint[i] = EEPROM.read(131 + i); } }
 void saveSetpoints() { for (int i=TS_HLT; i<=TS_KETTLE; i++) { EEPROM.write(131 + i, setpoint[i]); } }
 
@@ -297,11 +307,11 @@ byte getABGrainTemp() { return EEPROM.read(127); }
 void setABGrainTemp(byte grainTemp) { EEPROM.write(127, grainTemp); }
 
 void setProgName(byte preset, char name[20]) {
-  for (int i = 0; i < 19; i++) EEPROM.write(preset * 55 + 156 + i, name[i]);
+  for (byte i = 0; i < 19; i++) EEPROM.write(preset * 55 + 156 + i, name[i]);
 }
 
 void getProgName(byte preset, char name[20]) {
-  for (int i = 0; i < 19; i++) name[i] = EEPROM.read(preset * 55 + 156 + i);
+  for (byte i = 0; i < 19; i++) name[i] = EEPROM.read(preset * 55 + 156 + i);
   name[19] = '\0';
 }
 
@@ -364,20 +374,22 @@ void setVolCalib(byte vessel, byte slot, unsigned long vol, unsigned int val) {
 // vol: The volume for this calibration as a long in thousandths (1000 = 1)
 // val: An int representing the analogReadValue() to pair to the given volume
 void getVolCalibs(byte vessel, unsigned long vols[10], unsigned int vals[10]) {
-  for (int i = 0; i < 10; i++) {
+#ifdef DEBUG
+  logStart_P(LOGDEBUG);
+  logField_P("VOL_CALIB");
+  logFieldI(vessel);
+#endif
+  for (byte i = 0; i < 10; i++) {
     vols[i] = PROMreadLong(1861 + i * 4 + vessel * 60);
     vals[i] = PROMreadInt(1901 + i * 2 + vessel * 60);
     #ifdef DEBUG
-      Serial.print("Vessel: ");
-      Serial.print(vessel, DEC);
-      Serial.print(" Slot: ");
-      Serial.print(i, DEC);
-      Serial.print(" Vol: ");
-      Serial.print(vols[i], DEC);
-      Serial.print(" Val: ");
-      Serial.println(vals[i], DEC);
+      logFieldI(vols[i]);
+      logFieldI(vals[i]);
     #endif
   }
+#ifdef DEBUG
+  logEnd();
+#endif
 }
 
 //Zero Volumes 2041-2046 (analogRead of Empty Vessels)
