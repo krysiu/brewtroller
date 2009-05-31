@@ -216,61 +216,61 @@ void doAutoBrew() {
     if (unit) tgtVol[TS_MASH] = round(tgtVol[TS_MASH] / 4.0);
     tgtVol[TS_HLT] -= tgtVol[TS_MASH];
 
-    {
-      //Grain-to-volume factor for mash tun capacity (1 lb = .15 gal)
-      float grain2Vol;
-      if (unit) grain2Vol = .15; else grain2Vol = 1.25;
 
-      //Check for capacity overages
-      if (tgtVol[TS_HLT] > capacity[TS_HLT]) {
-        clearLCD();
-        printLCD_P(0, 0, PSTR("HLT Capacity Issue"));
-        printLCD_P(1, 0, PSTR("Sparge Vol:"));
-        ftoa(tgtVol[TS_HLT]/1000.0, buf, 2);
-        truncFloat(buf, 5);
-        printLCD(1, 11, buf);
-        printLCD(1, 16, volUnit);
-        printLCD_P(3, 4, PSTR("> Continue <"));
-        while (!enterStatus) delay(500);
-        enterStatus = 0;
-      }
-      if (tgtVol[TS_MASH] + round(grainWeight * grain2Vol) > capacity[TS_MASH]) {
-        clearLCD();
-        printLCD_P(0, 0, PSTR("Mash Capacity Issue"));
-        printLCD_P(1, 0, PSTR("Strike Vol:"));
-        ftoa(tgtVol[TS_MASH]/1000.0, buf, 2);
-        truncFloat(buf, 5);
-        printLCD(1, 11, buf);
-        printLCD(1, 16, volUnit);
-        printLCD_P(2, 0, PSTR("Grain Vol:"));
-        ftoa(round(grainWeight * grain2Vol) / 1000.0, buf, 2);
-        truncFloat(buf, 5);
-        printLCD(2, 11, buf);
-        printLCD(2, 16, volUnit);
-        printLCD_P(3, 4, PSTR("> Continue <"));
-        while (!enterStatus) delay(500);
-        enterStatus = 0;
-      }
+    //Grain-to-volume factor for mash tun capacity (1 lb = .15 gal)
+    float grain2Vol;
+    if (unit) grain2Vol = .15; else grain2Vol = 1.25;
 
-      //Save Values to EEPROM for Recovery
-      setPwrRecovery(1);
-      setABRecovery(0);
-      saveSetpoints();
-      saveABSteps(stepTemp, stepMins);
-      setABSparge(spargeTemp);
-      setABDelay(delayMins);
-      saveABVols(tgtVol);
-      setABGrain(grainWeight);
-      setABBoil(boilMins);
-      setABRatio(mashRatio);
-      setABPitch(pitchTemp);
-      setABAdds(boilAdds);
-      setABAddsTrig(0);
-      setABGrainTemp(grainTemp);
+    //Check for capacity overages
+    if (tgtVol[TS_HLT] > capacity[TS_HLT]) {
+      clearLCD();
+      printLCD_P(0, 0, PSTR("HLT Capacity Issue"));
+      printLCD_P(1, 0, PSTR("Sparge Vol:"));
+      ftoa(tgtVol[TS_HLT]/1000.0, buf, 2);
+      truncFloat(buf, 5);
+      printLCD(1, 11, buf);
+      printLCD(1, 16, volUnit);
+      printLCD_P(3, 4, PSTR("> Continue <"));
+      while (!enterStatus) delay(500);
+      enterStatus = 0;
     }
+    if (tgtVol[TS_MASH] + round(grainWeight * grain2Vol) > capacity[TS_MASH]) {
+      clearLCD();
+      printLCD_P(0, 0, PSTR("Mash Capacity Issue"));
+      printLCD_P(1, 0, PSTR("Strike Vol:"));
+      ftoa(tgtVol[TS_MASH]/1000.0, buf, 2);
+      truncFloat(buf, 5);
+      printLCD(1, 11, buf);
+      printLCD(1, 16, volUnit);
+      printLCD_P(2, 0, PSTR("Grain Vol:"));
+      ftoa(round(grainWeight * grain2Vol) / 1000.0, buf, 2);
+      truncFloat(buf, 5);
+      printLCD(2, 11, buf);
+      printLCD(2, 16, volUnit);
+      printLCD_P(3, 4, PSTR("> Continue <"));
+      while (!enterStatus) delay(500);
+      enterStatus = 0;
+    }
+
+    //Save Values to EEPROM for Recovery
+    setPwrRecovery(1);
+    setABRecovery(0);
+    saveSetpoints();
+    saveABSteps(stepTemp, stepMins);
+    setABSparge(spargeTemp);
+    setABDelay(delayMins);
+    saveABVols(tgtVol);
+    setABGrain(grainWeight);
+    setABBoil(boilMins);
+    setABRatio(mashRatio);
+    setABPitch(pitchTemp);
+    setABAdds(boilAdds);
+    setABAddsTrig(0);
+    setABGrainTemp(grainTemp);
   }
 
   switch (recoveryStep) {
+    case 0:
     case 1:
       setABRecovery(1);
       manFill(tgtVol[TS_HLT], tgtVol[TS_MASH]);
