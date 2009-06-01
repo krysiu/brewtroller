@@ -257,7 +257,6 @@ unsigned int getTimerValue(char sTitle[], unsigned int defMins) {
             printLCD(1, 12, " ");
             printLCD(3, 7, ">");
             printLCD(3, 10, "<");
-            break;
         }
       }
       printLCDLPad(1, 7, itoa(hours, buf, 10), 2, '0');
