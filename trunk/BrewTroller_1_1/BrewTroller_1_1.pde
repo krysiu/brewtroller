@@ -1,4 +1,4 @@
-#define BUILD 211 
+#define BUILD 212 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -173,7 +173,7 @@ using LiquidCrystal Fix by Donald Weiman:
 #define SYS_STEAM 2
 
 //Heat Output Pin Array
-byte heatPin[3] = { HLTHEAT_PIN, MASHHEAT_PIN, KETTLEHEAT_PIN };
+byte heatPin[4] = { HLTHEAT_PIN, MASHHEAT_PIN, KETTLEHEAT_PIN, STEAMHEAT_PIN };
 
 //Volume Sensor Pin Array
 byte vSensor[3] = { HLTVOL_APIN, MASHVOL_APIN, KETTLEVOL_APIN};
@@ -295,6 +295,7 @@ void setup() {
   pinMode(HLTHEAT_PIN, OUTPUT);
   pinMode(MASHHEAT_PIN, OUTPUT);
   pinMode(KETTLEHEAT_PIN, OUTPUT);
+  pinMode(STEAMHEAT_PIN, OUTPUT);
   resetOutputs();
   initLCD();
   
@@ -316,19 +317,13 @@ void setup() {
   //Load global variable values stored in EEPROM
   loadSetup();
   
-  switch(getPwrRecovery()) {
-    case 1: 
-      logString_P(LOGSYS, PWRLOSSRECOVER);
-      doAutoBrew();
-      break;
-    case 2:
+  if (getPwrRecovery() == 1) {
+    logString_P(LOGSYS, PWRLOSSRECOVER);
+    doAutoBrew();
+  } else if (getPwrRecovery() == 2) {
       logString_P(LOGSYS, PWRLOSSRECOVER);
       doMon();
-      break;
-    default:
-      splashScreen();
-      break;
-  }
+  } else splashScreen();
 }
 
 void loop() {
@@ -337,12 +332,11 @@ void loop() {
   strcpy_P(menuopts[2], PSTR("System Setup"));
   strcpy_P(menuopts[3], PSTR("System Tests"));
  
-  switch (scrollMenu("BrewTroller", 4, 0)) {
-    case 0: doAutoBrew(); break;
-    case 1: doMon(); break;
-    case 2: menuSetup(); break;
-    case 3: menuTest(); break;
-  }
+  byte lastoption = scrollMenu("BrewTroller", 4, 0);
+  if (lastoption == 0) doAutoBrew();
+  else if (lastoption == 1) doMon();
+  else if (lastoption == 2) menuSetup();
+  else if (lastoption == 3) menuTest();
 }
 
 void splashScreen() {

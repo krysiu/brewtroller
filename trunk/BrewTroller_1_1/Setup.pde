@@ -15,179 +15,176 @@ void menuSetup() {
     strcpy_P(menuopts[6], PSTR("Exit Setup"));
     
     lastOption = scrollMenu("System Setup", 7, lastOption);
-    switch(lastOption) {
-      case 0:
-        unit = unit ^ 1;
-        #ifdef MODULE_UNITCONV
-        if (unit) {
-          clearLCD();
-          printLCD_P(1, 0, PSTR(" Converting System"));
-          printLCD_P(2, 0, PSTR("Settings to US Units"));
+    if (lastOption == 0) {
+      unit = unit ^ 1;
+      #ifdef MODULE_UNITCONV
+      if (unit) {
+        clearLCD();
+        printLCD_P(1, 0, PSTR(" Converting System"));
+        printLCD_P(2, 0, PSTR("Settings to US Units"));
           
-          //Convert Setup params
-          unsigned long vols[10];
-          unsigned int vals[10];
+        //Convert Setup params
+        unsigned long vols[10];
+        unsigned int vals[10];
           
-          for (int i = TS_HLT; i <= TS_KETTLE; i++) {
-            hysteresis[i] = round(hysteresis[i] * 1.8);
-            capacity[i] = round(capacity[i] * 0.26417);
-            volume[i] = round(volume[i] * 0.26417);
-            volLoss[i] = round(volLoss[i] * 0.26417);
-            getVolCalibs(i, vols, vals);
-            for (int j = 0; j < 10; j++) if(vols[j] > 0) setVolCalib(i, j, round(vols[j] * 0.26417), vals[j]);
-          }
-          //Update Stored Programs
-          clearLCD();
-          printLCD_P(1, 0, PSTR(" Converting Program"));
-          printLCD_P(2, 0, PSTR("Settings to US Units"));
-
-          byte varByte[4];
-          byte varByte2[4];
-          unsigned long varLong[3];
-          unsigned int varInt;
-            
-          for (byte i = 0; i < 30; i++) {
-            varByte[0] = getProgSparge(i);
-            if (varByte[0] > 0) setProgSparge(i, round(varByte[0] * 1.8) + 32);
-            
-            varLong[0] = getProgGrain(i);
-            if (varLong[0] > 0) setProgGrain(i, round(varLong[0] * 2.2046));
-            
-            varInt = getProgRatio(i);
-            if (varInt > 0) setProgRatio(i, round(varInt * .58));
-            
-            getProgSchedule(i, varByte, varByte2);
-            for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round(varByte[j] * 1.8) + 32;
-            setProgSchedule(i, varByte, varByte2);
-            
-            getProgVols(i, varLong);
-            for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] * 0.26417);
-            setProgVols(i, varLong);
-            
-            varByte[0] = getProgHLT(i);
-            if (varByte[0] > 0) setProgHLT(i, round(varByte[0] * 1.8) + 32);
-
-            varByte[0] = getProgPitch(i);
-            if (varByte[0] > 0) setProgPitch(i, round(varByte[0] * 1.8) + 32);
-
-            varByte[0] = getProgGrainT(i);
-            if (varByte[0] > 0) setProgGrainT(i, round(varByte[0] * 1.8) + 32);
-          }
-          //Update Recovery Settings
-          varByte[0] = getABSparge();
-          if (varByte[0] > 0) setABSparge(round(varByte[0] * 1.8) + 32);
-          
-          varLong[0] = getABGrain();
-          if (varLong[0] > 0) setABGrain(round(varLong[0] * 2.2046));
-          
-          varInt = getABRatio();
-          if (varInt > 0) setABRatio(round(varInt * .58));
-          
-          loadABSteps(varByte, varByte2);
-          for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round(varByte[j] * 1.8) + 32;
-          saveABSteps(varByte, varByte2);
-          
-          loadABVols(varLong);
-          for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] * 0.26417);
-          saveABVols(varLong);
-          
-          for (int j = 0; j < 3; j++) if (setpoint[j] > 0) setpoint[j] = round(setpoint[j] * 1.8) + 32;
-          saveSetpoints();
-          
-          varByte[0] = getABPitch();
-          if (varByte[0] > 0) setABPitch(round(varByte[0] * 1.8) + 32);
-          
-          varByte[0] = getABGrainTemp();
-          if (varByte[0] > 0) setABGrainTemp(round(varByte[0] * 1.8) + 32);
-        } else {
-          clearLCD();
-          printLCD_P(1, 0, PSTR(" Converting System"));
-          printLCD_P(2, 0, PSTR(" Settings to Metric"));
-          
-          unsigned long vols[10];
-          unsigned int vals[10];
-
-          for (int i = TS_HLT; i <= TS_KETTLE; i++) {
-            hysteresis[i] = round(hysteresis[i] / 1.8);
-            capacity[i] = round(capacity[i] / 0.26417);
-            volume[i] = round(volume[i] / 0.26417);
-            volLoss[i] = round(volLoss[i] / 0.26417);
-            getVolCalibs(i, vols, vals);
-            for (int j = 0; j < 10; j++) if(vols[j] > 0) setVolCalib(i, j, round(vols[j] / 0.26417), vals[j]);
-          }
-          //Update Stored Programs
-          clearLCD();
-          printLCD_P(1, 0, PSTR(" Converting Program"));
-          printLCD_P(2, 0, PSTR(" Settings to Metric"));
-
-          byte varByte[4];
-          byte varByte2[4];
-          unsigned long varLong[3];
-          unsigned int varInt;
-            
-          for (byte i = 0; i < 30; i++) {
-            varByte[0] = getProgSparge(i);
-            if (varByte[0] > 0) setProgSparge(i, round((varByte[0] - 32) / 1.8));
-            
-            varLong[0] = getProgGrain(i);
-            if (varLong[0] > 0) setProgGrain(i, round(varLong[0] / 2.2046));
-            
-            varInt = getProgRatio(i);
-            if (varInt > 0) setProgRatio(i, round(varInt / .58));
-            
-            getProgSchedule(i, varByte, varByte2);
-            for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round((varByte[0] - 32) / 1.8);
-            setProgSchedule(i, varByte, varByte2);
-            
-            getProgVols(i, varLong);
-            for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] / 0.26417);
-            setProgVols(i, varLong);
-            
-            varByte[0] = getProgHLT(i);
-            if (varByte[0] > 0) setProgHLT(i, round((varByte[0] - 32) / 1.8));
-
-            varByte[0] = getProgPitch(i);
-            if (varByte[0] > 0) setProgPitch(i, round((varByte[0] - 32) / 1.8));
-
-            varByte[0] = getProgGrainT(i);
-            if (varByte[0] > 0) setProgGrainT(i, round((varByte[0] - 32) / 1.8));
-          }
-           //Update Recovery Settings
-          varByte[0] = getABSparge();
-          if (varByte[0] > 0) setABSparge(round((varByte[0] - 32) / 1.8));
-          
-          varLong[0] = getABGrain();
-          if (varLong[0] > 0) setABGrain(round(varLong[0] / 2.2046));
-          
-          varInt = getABRatio();
-          if (varInt > 0) setABRatio(round(varInt / .58));
-          
-          loadABSteps(varByte, varByte2);
-          for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round((varByte[0] - 32) / 1.8);
-          saveABSteps(varByte, varByte2);
-          
-          loadABVols(varLong);
-          for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] / 0.26417);
-          saveABVols(varLong);
-          
-          for (int j = 0; j < 3; j++) if (setpoint[j] > 0) setpoint[j] = round((varByte[0] - 32) / 1.8);
-          saveSetpoints();
-          
-          varByte[0] = getABPitch();
-          if (varByte[0] > 0) setABPitch(round((varByte[0] - 32) / 1.8));
-          
-          varByte[0] = getABGrainTemp();
-          if (varByte[0] > 0) setABGrainTemp(round((varByte[0] - 32) / 1.8));
+        for (int i = TS_HLT; i <= TS_KETTLE; i++) {
+          hysteresis[i] = round(hysteresis[i] * 1.8);
+          capacity[i] = round(capacity[i] * 0.26417);
+          volume[i] = round(volume[i] * 0.26417);
+          volLoss[i] = round(volLoss[i] * 0.26417);
+          getVolCalibs(i, vols, vals);
+          for (int j = 0; j < 10; j++) if(vols[j] > 0) setVolCalib(i, j, round(vols[j] * 0.26417), vals[j]);
         }
-        #endif
-        break;
-      case 1: cfgSysType(); break;
-      case 2: assignSensor(); break;
-      case 3: cfgOutputs(); break;
-      case 4: cfgVolumes(); break;
-      case 5: cfgValves(); break;
-      default: return;
-    }
+        //Update Stored Programs
+        clearLCD();
+        printLCD_P(1, 0, PSTR(" Converting Program"));
+        printLCD_P(2, 0, PSTR("Settings to US Units"));
+
+        byte varByte[4];
+        byte varByte2[4];
+        unsigned long varLong[3];
+        unsigned int varInt;
+            
+        for (byte i = 0; i < 30; i++) {
+          varByte[0] = getProgSparge(i);
+          if (varByte[0] > 0) setProgSparge(i, round(varByte[0] * 1.8) + 32);
+            
+          varLong[0] = getProgGrain(i);
+          if (varLong[0] > 0) setProgGrain(i, round(varLong[0] * 2.2046));
+            
+          varInt = getProgRatio(i);
+          if (varInt > 0) setProgRatio(i, round(varInt * .58));
+            
+          getProgSchedule(i, varByte, varByte2);
+          for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round(varByte[j] * 1.8) + 32;
+          setProgSchedule(i, varByte, varByte2);
+            
+          getProgVols(i, varLong);
+          for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] * 0.26417);
+          setProgVols(i, varLong);
+            
+          varByte[0] = getProgHLT(i);
+          if (varByte[0] > 0) setProgHLT(i, round(varByte[0] * 1.8) + 32);
+
+          varByte[0] = getProgPitch(i);
+          if (varByte[0] > 0) setProgPitch(i, round(varByte[0] * 1.8) + 32);
+
+          varByte[0] = getProgGrainT(i);
+          if (varByte[0] > 0) setProgGrainT(i, round(varByte[0] * 1.8) + 32);
+        }
+        //Update Recovery Settings
+        varByte[0] = getABSparge();
+        if (varByte[0] > 0) setABSparge(round(varByte[0] * 1.8) + 32);
+          
+        varLong[0] = getABGrain();
+        if (varLong[0] > 0) setABGrain(round(varLong[0] * 2.2046));
+          
+        varInt = getABRatio();
+        if (varInt > 0) setABRatio(round(varInt * .58));
+          
+        loadABSteps(varByte, varByte2);
+        for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round(varByte[j] * 1.8) + 32;
+        saveABSteps(varByte, varByte2);
+          
+        loadABVols(varLong);
+        for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] * 0.26417);
+        saveABVols(varLong);
+          
+        for (int j = 0; j < 3; j++) if (setpoint[j] > 0) setpoint[j] = round(setpoint[j] * 1.8) + 32;
+        saveSetpoints();
+          
+        varByte[0] = getABPitch();
+        if (varByte[0] > 0) setABPitch(round(varByte[0] * 1.8) + 32);
+          
+        varByte[0] = getABGrainTemp();
+        if (varByte[0] > 0) setABGrainTemp(round(varByte[0] * 1.8) + 32);
+      } else {
+        clearLCD();
+        printLCD_P(1, 0, PSTR(" Converting System"));
+        printLCD_P(2, 0, PSTR(" Settings to Metric"));
+          
+        unsigned long vols[10];
+        unsigned int vals[10];
+
+        for (int i = TS_HLT; i <= TS_KETTLE; i++) {
+          hysteresis[i] = round(hysteresis[i] / 1.8);
+          capacity[i] = round(capacity[i] / 0.26417);
+          volume[i] = round(volume[i] / 0.26417);
+          volLoss[i] = round(volLoss[i] / 0.26417);
+          getVolCalibs(i, vols, vals);
+          for (int j = 0; j < 10; j++) if(vols[j] > 0) setVolCalib(i, j, round(vols[j] / 0.26417), vals[j]);
+        }
+        //Update Stored Programs
+        clearLCD();
+        printLCD_P(1, 0, PSTR(" Converting Program"));
+        printLCD_P(2, 0, PSTR(" Settings to Metric"));
+
+        byte varByte[4];
+        byte varByte2[4];
+        unsigned long varLong[3];
+        unsigned int varInt;
+            
+        for (byte i = 0; i < 30; i++) {
+          varByte[0] = getProgSparge(i);
+          if (varByte[0] > 0) setProgSparge(i, round((varByte[0] - 32) / 1.8));
+            
+          varLong[0] = getProgGrain(i);
+          if (varLong[0] > 0) setProgGrain(i, round(varLong[0] / 2.2046));
+            
+          varInt = getProgRatio(i);
+          if (varInt > 0) setProgRatio(i, round(varInt / .58));
+            
+          getProgSchedule(i, varByte, varByte2);
+          for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round((varByte[0] - 32) / 1.8);
+          setProgSchedule(i, varByte, varByte2);
+            
+          getProgVols(i, varLong);
+          for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] / 0.26417);
+          setProgVols(i, varLong);
+            
+          varByte[0] = getProgHLT(i);
+          if (varByte[0] > 0) setProgHLT(i, round((varByte[0] - 32) / 1.8));
+
+          varByte[0] = getProgPitch(i);
+          if (varByte[0] > 0) setProgPitch(i, round((varByte[0] - 32) / 1.8));
+
+          varByte[0] = getProgGrainT(i);
+          if (varByte[0] > 0) setProgGrainT(i, round((varByte[0] - 32) / 1.8));
+        }
+         //Update Recovery Settings
+        varByte[0] = getABSparge();
+        if (varByte[0] > 0) setABSparge(round((varByte[0] - 32) / 1.8));
+          
+        varLong[0] = getABGrain();
+        if (varLong[0] > 0) setABGrain(round(varLong[0] / 2.2046));
+          
+        varInt = getABRatio();
+        if (varInt > 0) setABRatio(round(varInt / .58));
+          
+        loadABSteps(varByte, varByte2);
+        for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round((varByte[0] - 32) / 1.8);
+        saveABSteps(varByte, varByte2);
+          
+        loadABVols(varLong);
+        for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] / 0.26417);
+        saveABVols(varLong);
+          
+        for (int j = 0; j < 3; j++) if (setpoint[j] > 0) setpoint[j] = round((varByte[0] - 32) / 1.8);
+        saveSetpoints();
+          
+        varByte[0] = getABPitch();
+        if (varByte[0] > 0) setABPitch(round((varByte[0] - 32) / 1.8));
+          
+        varByte[0] = getABGrainTemp();
+        if (varByte[0] > 0) setABGrainTemp(round((varByte[0] - 32) / 1.8));
+      }
+      #endif
+    } else if (lastOption == 1) cfgSysType();
+    else if (lastOption == 2) assignSensor();
+    else if (lastOption == 3) cfgOutputs();
+    else if (lastOption == 4) cfgVolumes();
+    else if (lastOption == 5) cfgValves();
+    else return;
     saveSetup();
   }
 }
@@ -225,23 +222,20 @@ void assignSensor() {
       strcpy_P(menuopts[1], PSTR("Delete Address"));
       strcpy_P(menuopts[2], PSTR("Close Menu"));
       strcpy_P(menuopts[3], PSTR("Exit"));
-      switch (scrollMenu(dispTitle[lastCount], 4, 0)) {
-        case 0:
-          clearLCD();
-          printLCDCenter(0, 0, dispTitle[lastCount], 20);
-          printLCD_P(1,0,PSTR("Disconnect all other"));
-          printLCD_P(2,2,PSTR("temp sensors now"));
-          {
-            strcpy_P(menuopts[0], PSTR("Continue"));
-            strcpy_P(menuopts[1], CANCEL);
-            if (getChoice(2, 3) == 0) getDSAddr(tSensor[lastCount]);
-          }
-          break;
-        case 1:
-          for (byte i = 0; i <8; i++) tSensor[lastCount][i] = 0; break;
-        case 2: break;
-        default: return;
-      }
+      lastCount = scrollMenu(dispTitle[lastCount], 4, 0);
+      if (lastCount == 0) {
+        clearLCD();
+        printLCDCenter(0, 0, dispTitle[lastCount], 20);
+        printLCD_P(1,0,PSTR("Disconnect all other"));
+        printLCD_P(2,2,PSTR("temp sensors now"));
+        {
+          strcpy_P(menuopts[0], PSTR("Continue"));
+          strcpy_P(menuopts[1], CANCEL);
+          if (getChoice(2, 3) == 0) getDSAddr(tSensor[lastCount]);
+        }
+      } else if (lastCount == 1) for (byte i = 0; i <8; i++) tSensor[lastCount][i] = 0;
+      else if (lastCount > 2) return;
+
       saveSetup();
       encMin = 0;
       encMax = 5;
@@ -276,25 +270,23 @@ void cfgOutputs() {
     strcpy_P(menuopts[16], PSTR("Exit"));
 
     lastOption = scrollMenu("Configure Outputs", 17, lastOption);
-    switch(lastOption) {
-      case 0: PIDEnabled[VS_HLT] = PIDEnabled[VS_HLT] ^ 1; break;
-      case 1: PIDCycle[VS_HLT] = getValue("HLT Cycle Time", PIDCycle[VS_HLT], 3, 0, 255, "s"); break;
-      case 2: setPIDGain("HLT PID Gain", &PIDp[VS_HLT], &PIDi[VS_HLT], &PIDd[VS_HLT]); break;
-      case 3: hysteresis[VS_HLT] = getValue("HLT Hysteresis", hysteresis[VS_HLT], 3, 1, 255, dispUnit); break;
-      case 4: PIDEnabled[VS_MASH] = PIDEnabled[VS_MASH] ^ 1; break;
-      case 5: PIDCycle[VS_MASH] = getValue("Mash Cycle Time", PIDCycle[VS_MASH], 3, 0, 255, "s"); break;
-      case 6: setPIDGain("Mash PID Gain", &PIDp[VS_MASH], &PIDi[VS_MASH], &PIDd[VS_MASH]); break;
-      case 7: hysteresis[VS_MASH] = getValue("Mash Hysteresis", hysteresis[VS_MASH], 3, 1, 255, dispUnit); break;
-      case 8: PIDEnabled[VS_KETTLE] = PIDEnabled[VS_KETTLE] ^ 1; break;
-      case 9: PIDCycle[VS_KETTLE] = getValue("Kettle Cycle Time", PIDCycle[VS_KETTLE], 3, 0, 255, "s"); break;
-      case 10: setPIDGain("Kettle PID Gain", &PIDp[VS_KETTLE], &PIDi[VS_KETTLE], &PIDd[VS_KETTLE]); break;
-      case 11: hysteresis[VS_KETTLE] = getValue("Kettle Hysteresis", hysteresis[VS_KETTLE], 3, 1, 255, dispUnit); break;
-      case 12: PIDEnabled[VS_STEAM] = PIDEnabled[VS_STEAM] ^ 1; break;
-      case 13: PIDCycle[VS_STEAM] = getValue("Steam Cycle Time", PIDCycle[VS_STEAM], 3, 0, 255, "s"); break;
-      case 14: setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]); break;
-      case 15: hysteresis[VS_STEAM] = getValue("Steam Hysteresis", hysteresis[VS_STEAM], 3, 1, 255, dispUnit); break;
-      default: return;
-    }
+    if (lastOption == 0) PIDEnabled[VS_HLT] = PIDEnabled[VS_HLT] ^ 1;
+    else if (lastOption == 1) PIDCycle[VS_HLT] = getValue("HLT Cycle Time", PIDCycle[VS_HLT], 3, 0, 255, "s");
+    else if (lastOption == 2) setPIDGain("HLT PID Gain", &PIDp[VS_HLT], &PIDi[VS_HLT], &PIDd[VS_HLT]);
+    else if (lastOption == 3) hysteresis[VS_HLT] = getValue("HLT Hysteresis", hysteresis[VS_HLT], 3, 1, 255, dispUnit);
+    else if (lastOption == 4) PIDEnabled[VS_MASH] = PIDEnabled[VS_MASH] ^ 1;
+    else if (lastOption == 5) PIDCycle[VS_MASH] = getValue("Mash Cycle Time", PIDCycle[VS_MASH], 3, 0, 255, "s");
+    else if (lastOption == 6) setPIDGain("Mash PID Gain", &PIDp[VS_MASH], &PIDi[VS_MASH], &PIDd[VS_MASH]);
+    else if (lastOption == 7) hysteresis[VS_MASH] = getValue("Mash Hysteresis", hysteresis[VS_MASH], 3, 1, 255, dispUnit);
+    else if (lastOption == 8) PIDEnabled[VS_KETTLE] = PIDEnabled[VS_KETTLE] ^ 1;
+    else if (lastOption == 9) PIDCycle[VS_KETTLE] = getValue("Kettle Cycle Time", PIDCycle[VS_KETTLE], 3, 0, 255, "s");
+    else if (lastOption == 10) setPIDGain("Kettle PID Gain", &PIDp[VS_KETTLE], &PIDi[VS_KETTLE], &PIDd[VS_KETTLE]);
+    else if (lastOption == 11) hysteresis[VS_KETTLE] = getValue("Kettle Hysteresis", hysteresis[VS_KETTLE], 3, 1, 255, dispUnit);
+    else if (lastOption == 12) PIDEnabled[VS_STEAM] = PIDEnabled[VS_STEAM] ^ 1;
+    else if (lastOption == 13) PIDCycle[VS_STEAM] = getValue("Steam Cycle Time", PIDCycle[VS_STEAM], 3, 0, 255, "s");
+    else if (lastOption == 14) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
+    else if (lastOption == 15) hysteresis[VS_STEAM] = getValue("Steam Hysteresis", hysteresis[VS_STEAM], 3, 1, 255, dispUnit);
+    else return;
     saveSetup();
   } 
 }
@@ -318,42 +310,35 @@ void setPIDGain(char sTitle[], byte* p, byte* i, byte* d) {
   while(1) {
     if (encCount != lastCount) {
       if (cursorState) {
-        switch (cursorPos) {
-          case 0: retP = encCount; break;
-          case 1: retI = encCount; break;
-          case 2: retD = encCount; break;
-        }
+        if (cursorPos == 0) retP = encCount;
+        else if (cursorPos == 1) retI = encCount;
+        else if (cursorPos == 2) retD = encCount;
       } else {
         cursorPos = encCount;
-        switch (cursorPos) {
-          case 0:
-            printLCD_P(1, 2, PSTR(">"));
-            printLCD_P(1, 9, PSTR(" "));
-            printLCD_P(1, 16, PSTR(" "));
-            printLCD_P(3, 7, PSTR(" "));
-            printLCD_P(3, 10, PSTR(" "));
-            break;
-          case 1:
-            printLCD_P(1, 2, PSTR(" "));
-            printLCD_P(1, 9, PSTR(">"));
-            printLCD_P(1, 16, PSTR(" "));
-            printLCD_P(3, 7, PSTR(" "));
-            printLCD_P(3, 10, PSTR(" "));
-            break;
-          case 2:
-            printLCD_P(1, 2, PSTR(" "));
-            printLCD_P(1, 9, PSTR(" "));
-            printLCD_P(1, 16, PSTR(">"));
-            printLCD_P(3, 7, PSTR(" "));
-            printLCD_P(3, 10, PSTR(" "));
-            break;
-          case 3:
-            printLCD_P(1, 2, PSTR(" "));
-            printLCD_P(1, 9, PSTR(" "));
-            printLCD_P(1, 16, PSTR(" "));
-            printLCD_P(3, 7, PSTR(">"));
-            printLCD_P(3, 10, PSTR("<"));
-            break;
+        if (cursorPos == 0) {
+          printLCD_P(1, 2, PSTR(">"));
+          printLCD_P(1, 9, PSTR(" "));
+          printLCD_P(1, 16, PSTR(" "));
+          printLCD_P(3, 7, PSTR(" "));
+          printLCD_P(3, 10, PSTR(" "));
+        } else if (cursorPos == 1) {
+          printLCD_P(1, 2, PSTR(" "));
+          printLCD_P(1, 9, PSTR(">"));
+          printLCD_P(1, 16, PSTR(" "));
+          printLCD_P(3, 7, PSTR(" "));
+          printLCD_P(3, 10, PSTR(" "));
+        } else if (cursorPos == 2) {
+          printLCD_P(1, 2, PSTR(" "));
+          printLCD_P(1, 9, PSTR(" "));
+          printLCD_P(1, 16, PSTR(">"));
+          printLCD_P(3, 7, PSTR(" "));
+          printLCD_P(3, 10, PSTR(" "));
+        } else if (cursorPos == 3) {
+          printLCD_P(1, 2, PSTR(" "));
+          printLCD_P(1, 9, PSTR(" "));
+          printLCD_P(1, 16, PSTR(" "));
+          printLCD_P(3, 7, PSTR(">"));
+          printLCD_P(3, 10, PSTR("<"));
         }
       }
       printLCDLPad(1, 3, itoa(retP, buf, 10), 3, ' ');
@@ -373,11 +358,9 @@ void setPIDGain(char sTitle[], byte* p, byte* i, byte* d) {
       if (cursorState) {
         encMin = 0;
         encMax = 255;
-        switch (cursorPos) {
-          case 0: encCount = retP; break;
-          case 1: encCount = retI; break;
-          case 2: encCount = retD; break;
-        }
+        if (cursorPos == 0) encCount = retP;
+        else if (cursorPos == 1) encCount = retI;
+        else if (cursorPos == 2) encCount = retD;
       } else {
         encMin = 0;
         encMax = 3;
@@ -408,19 +391,17 @@ void cfgVolumes() {
     char volUnit[5] = "L";
     if (unit) strcpy_P(volUnit, PSTR("Gal"));
     lastOption = scrollMenu("Volume/Capacity", 11, lastOption);
-    switch(lastOption) {
-      case 0: capacity[TS_HLT] = getValue("HLT Capacity", capacity[TS_HLT], 7, 3, 9999999, volUnit); break;
-      case 1: volLoss[TS_HLT] = getValue("HLT Dead Space", volLoss[TS_HLT], 5, 3, 65535, volUnit); break;
-      case 2: volCalibMenu(TS_HLT); break;
-      case 3: capacity[TS_MASH] = getValue("Mash Capacity", capacity[TS_MASH], 7, 3, 9999999, volUnit); break;
-      case 4: volLoss[TS_MASH] = getValue("Mash Dead Space", volLoss[TS_MASH], 5, 3, 65535, volUnit); break;
-      case 5: volCalibMenu(TS_MASH); break;
-      case 6: capacity[TS_KETTLE] = getValue("Kettle Capacity", capacity[TS_KETTLE], 7, 3, 9999999, volUnit); break;
-      case 7: volLoss[TS_KETTLE] = getValue("Kettle Dead Space", volLoss[TS_KETTLE], 5, 3, 65535, volUnit); break;
-      case 8: volCalibMenu(TS_KETTLE); break;
-      case 9: evapRate = getValue("Evaporation Rate", evapRate, 3, 0, 100, "%/hr");
-      default: return;
-    }
+    if (lastOption == 0) capacity[TS_HLT] = getValue("HLT Capacity", capacity[TS_HLT], 7, 3, 9999999, volUnit);
+    else if (lastOption == 1) volLoss[TS_HLT] = getValue("HLT Dead Space", volLoss[TS_HLT], 5, 3, 65535, volUnit);
+    else if (lastOption == 2) volCalibMenu(TS_HLT);
+    else if (lastOption == 3) capacity[TS_MASH] = getValue("Mash Capacity", capacity[TS_MASH], 7, 3, 9999999, volUnit);
+    else if (lastOption == 4) volLoss[TS_MASH] = getValue("Mash Dead Space", volLoss[TS_MASH], 5, 3, 65535, volUnit);
+    else if (lastOption == 5) volCalibMenu(TS_MASH);
+    else if (lastOption == 6) capacity[TS_KETTLE] = getValue("Kettle Capacity", capacity[TS_KETTLE], 7, 3, 9999999, volUnit);
+    else if (lastOption == 7) volLoss[TS_KETTLE] = getValue("Kettle Dead Space", volLoss[TS_KETTLE], 5, 3, 65535, volUnit);
+    else if (lastOption == 8) volCalibMenu(TS_KETTLE);
+    else if (lastOption == 9) evapRate = getValue("Evaporation Rate", evapRate, 3, 0, 100, "%/hr");
+    else return;
     saveSetup();
   } 
 }
@@ -432,11 +413,10 @@ void volCalibMenu(byte vessel) {
   char sVessel[7];
   char sTitle[20];
   unsigned int zeroVol = getZeroVol(vessel);
-  switch(vessel) {
-    case TS_HLT: strcpy_P(sVessel, PSTR("HLT")); break;
-    case TS_MASH: strcpy_P(sVessel, PSTR("Mash")); break;
-    case TS_KETTLE: strcpy_P(sVessel, PSTR("Kettle")); break;
-  }  
+  if (vessel == TS_HLT) strcpy_P(sVessel, PSTR("HLT"));
+  else if (vessel == TS_MASH) strcpy_P(sVessel, PSTR("Mash"));
+  else if (vessel == TS_KETTLE) strcpy_P(sVessel, PSTR("Kettle"));
+
   while(1) {
     getVolCalibs(vessel, vols, vals);
     for(byte i = 0; i < 10; i++) {
@@ -546,9 +526,8 @@ void cfgSysType() {
   strcpy_P(menuopts[1], PSTR("HERMS"));
   strcpy_P(menuopts[2], PSTR("Steam"));
   //Steam is not enabled yet and hidden
-  switch(scrollMenu("Select System Type:", 2, sysType)) {
-    case 0: sysType = SYS_DIRECT; break;
-    case 1: sysType = SYS_HERMS; break;
-    case 2: sysType = SYS_STEAM; break;
-  }
+  byte lastoption = scrollMenu("Select System Type:", 2, sysType);
+  if (lastoption == 0) sysType = SYS_DIRECT;
+  else if (lastoption == 1) sysType = SYS_HERMS;
+  else if (lastoption == 2) sysType = SYS_STEAM;
 }

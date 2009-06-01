@@ -10,12 +10,10 @@ void menuTest() {
     strcpy_P(menuopts[3], PSTR("Exit Test"));
     
     lastOption = scrollMenu("Test Menu", 4, lastOption);
-    switch(lastOption) {
-      case 0: volumeTest(TS_HLT); break;
-      case 1: volumeTest(TS_MASH); break;
-      case 2: volumeTest(TS_KETTLE); break;
-      default: return;
-    }
+    if (lastOption == 0) volumeTest(TS_HLT);
+    else if (encCount == 1) volumeTest(TS_MASH);
+    else if (encCount == 2) volumeTest(TS_KETTLE);
+    else return;
   }
 #endif
 }

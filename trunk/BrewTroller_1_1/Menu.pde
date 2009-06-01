@@ -242,21 +242,18 @@ unsigned int getTimerValue(char sTitle[], unsigned int defMins) {
         if (cursorPos) mins = encCount; else hours = encCount;
       } else {
         cursorPos = encCount;
-        switch (cursorPos) {
-          case 0:
+        if (cursorPos == 0) {
             printLCD(1, 6, ">");
             printLCD(1, 12, " ");
             printLCD(3, 7, " ");
             printLCD(3, 10, " ");
-            break;
-          case 1:
+        } else if (cursorPos == 1) {
             printLCD(1, 6, " ");
             printLCD(1, 12, "<");
             printLCD(3, 7, " ");
             printLCD(3, 10, " ");
-            break;
-          case 2:
-            printLCD(1, 6, " ");
+        } else if (cursorPos == 2) {
+          printLCD(1, 6, " ");
             printLCD(1, 12, " ");
             printLCD(3, 7, ">");
             printLCD(3, 10, "<");

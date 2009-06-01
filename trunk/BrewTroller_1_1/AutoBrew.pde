@@ -118,88 +118,59 @@ void doAutoBrew() {
     strcat(menuopts[8], tempUnit);
     
     lastOption = scrollMenu("AutoBrew Parameters", 15, lastOption);
-    switch(lastOption) {
-      case 0:
-        tgtVol[TS_KETTLE] = getValue("Batch Volume", tgtVol[TS_KETTLE], 7, 3, 9999999, volUnit);
-        break;
-      case 1:
-        grainWeight = getValue("Grain Weight", grainWeight, 7, 3, 9999999, wtUnit);
-        break;
-      case 2:
-        grainTemp = getValue("Grain Temp", grainTemp, 3, 0, 255, tempUnit);
-        break;
-      case 3:
-        boilMins = getTimerValue("Boil Length", boilMins);
-        break;
-      case 4:
-        if (unit) mashRatio = getValue("Mash Ratio", mashRatio, 3, 2, 999, " qts/lb"); else mashRatio = getValue("Mash Ratio", mashRatio, 3, 2, 999, " l/kg");
-        break;
-      case 5:
-        delayMins = getTimerValue("Delay Start", delayMins);
-        break;
-      case 6:
-        setpoint[TS_HLT] = getValue("HLT Setpoint", setpoint[TS_HLT], 3, 0, 255, tempUnit);
-        break;
-      case 7:
-        spargeTemp = getValue("Sparge Temp", spargeTemp, 3, 0, 255, tempUnit);
-        break;
-      case 8:
-        pitchTemp = getValue("Pitch Temp", pitchTemp, 3, 0, 255, tempUnit);
-        break;
-      case 9:
-        editMashSchedule(stepTemp, stepMins);
-        break;
-      case 10:
-        boilAdds = editHopSchedule(boilAdds);
-        break;
-      case 11:
-        inMenu = 0;
-        break;
-      case 12:
-        {
-          byte profile = 0;
-          //Display Stored Programs
-          for (byte i = 0; i < 30; i++) getProgName(i, menuopts[i]);
-          profile = scrollMenu("Load Program", 30, profile);
-          if (profile < 30) {
-            spargeTemp = getProgSparge(profile);
-            grainWeight = getProgGrain(profile);
-            delayMins = getProgDelay(profile);
-            boilMins = getProgBoil(profile);
-            mashRatio = getProgRatio(profile);
-            getProgSchedule(profile, stepTemp, stepMins);
-            getProgVols(profile, tgtVol);
-            setpoint[TS_HLT] = getProgHLT(profile);
-            pitchTemp = getProgPitch(profile);
-            boilAdds = getProgAdds(profile);
-            grainTemp = getProgGrainT(profile);
-          }
-        }
-        break;
-      case 13:
-        {
-          byte profile = 0;
-          //Display Stored Schedules
-          for (byte i = 0; i < 30; i++) getProgName(i, menuopts[i]);
-          profile = scrollMenu("Save Program", 30, profile);
-          if (profile < 30) {
-            getString("Save Program As:", menuopts[profile], 19);
-            setProgName(profile, menuopts[profile]);
-            setProgSparge(profile, spargeTemp);
-            setProgGrain(profile, grainWeight);
-            setProgDelay(profile, delayMins);
-            setProgBoil(profile, boilMins);
-            setProgRatio(profile, mashRatio);
-            setProgSchedule(profile, stepTemp, stepMins);
-            setProgVols(profile, tgtVol);
-            setProgHLT(profile, setpoint[TS_HLT]);
-            setProgPitch(profile, pitchTemp);
-            setProgAdds(profile, boilAdds);
-            setProgGrainT(profile, grainTemp);
-          }
-        }
-        break;
-      default:
+    if (lastOption == 0) tgtVol[TS_KETTLE] = getValue("Batch Volume", tgtVol[TS_KETTLE], 7, 3, 9999999, volUnit);
+    else if (lastOption == 1) grainWeight = getValue("Grain Weight", grainWeight, 7, 3, 9999999, wtUnit);
+    else if (lastOption == 2) grainTemp = getValue("Grain Temp", grainTemp, 3, 0, 255, tempUnit);
+    else if (lastOption == 3) boilMins = getTimerValue("Boil Length", boilMins);
+    else if (lastOption == 4) { if (unit) mashRatio = getValue("Mash Ratio", mashRatio, 3, 2, 999, " qts/lb"); else mashRatio = getValue("Mash Ratio", mashRatio, 3, 2, 999, " l/kg"); }
+    else if (lastOption == 5) delayMins = getTimerValue("Delay Start", delayMins);
+    else if (lastOption == 6) setpoint[TS_HLT] = getValue("HLT Setpoint", setpoint[TS_HLT], 3, 0, 255, tempUnit);
+    else if (lastOption == 7) spargeTemp = getValue("Sparge Temp", spargeTemp, 3, 0, 255, tempUnit);
+    else if (lastOption == 8) pitchTemp = getValue("Pitch Temp", pitchTemp, 3, 0, 255, tempUnit);
+    else if (lastOption == 9) editMashSchedule(stepTemp, stepMins);
+    else if (lastOption == 10) boilAdds = editHopSchedule(boilAdds);
+    else if (lastOption == 11) inMenu = 0;
+    else if (lastOption == 12) {
+      byte profile = 0;
+      //Display Stored Programs
+      for (byte i = 0; i < 30; i++) getProgName(i, menuopts[i]);
+      profile = scrollMenu("Load Program", 30, profile);
+      if (profile < 30) {
+        spargeTemp = getProgSparge(profile);
+        grainWeight = getProgGrain(profile);
+        delayMins = getProgDelay(profile);
+        boilMins = getProgBoil(profile);
+        mashRatio = getProgRatio(profile);
+        getProgSchedule(profile, stepTemp, stepMins);
+        getProgVols(profile, tgtVol);
+        setpoint[TS_HLT] = getProgHLT(profile);
+        pitchTemp = getProgPitch(profile);
+        boilAdds = getProgAdds(profile);
+        grainTemp = getProgGrainT(profile);
+      }
+    } 
+    else if (lastOption == 13) {
+      byte profile = 0;
+      //Display Stored Schedules
+      for (byte i = 0; i < 30; i++) getProgName(i, menuopts[i]);
+      profile = scrollMenu("Save Program", 30, profile);
+      if (profile < 30) {
+        getString("Save Program As:", menuopts[profile], 19);
+        setProgName(profile, menuopts[profile]);
+        setProgSparge(profile, spargeTemp);
+        setProgGrain(profile, grainWeight);
+        setProgDelay(profile, delayMins);
+        setProgBoil(profile, boilMins);
+        setProgRatio(profile, mashRatio);
+        setProgSchedule(profile, stepTemp, stepMins);
+        setProgVols(profile, tgtVol);
+        setProgHLT(profile, setpoint[TS_HLT]);
+        setProgPitch(profile, pitchTemp);
+        setProgAdds(profile, boilAdds);
+        setProgGrainT(profile, grainTemp);
+      }
+    }
+    else {
         if(confirmExit()) {
           setPwrRecovery(0);
           return;
@@ -295,7 +266,7 @@ void doAutoBrew() {
         setpoint[TS_MASH] = strikeTemp;
       }
       setABRecovery(3);
-      mashStep(" Preheat", MINS_PROMPT);  
+      mashStep("Preheat", MINS_PROMPT);  
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 4:
       inMenu = 1;
@@ -350,18 +321,23 @@ void doAutoBrew() {
       setABRecovery(9); 
       setpoint[TS_HLT] = spargeTemp;
       mashStep("Mash Complete", MINS_PROMPT);
+      if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       setpoint[TS_HLT] = 0;
       setpoint[TS_MASH] = 0;
+      
     case 10:  
       setABRecovery(10); 
       manSparge();
+      if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 11:
       setABRecovery(11); 
       setpoint[TS_KETTLE] = 212;
       boilStage(boilMins, boilAdds);
+      if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 12:
       setABRecovery(12); 
       manChill(pitchTemp);
+      if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
   }  
   enterStatus = 0;
   setABRecovery(0);
@@ -408,34 +384,15 @@ void editMashSchedule(byte stepTemp[4], byte stepMins[4]) {
     strcat(menuopts[7], tempUnit);
 
     lastOption = scrollMenu("Mash Schedule", 9, lastOption);
-    switch (lastOption) {
-      case 0:
-        stepMins[STEP_DOUGHIN] = getTimerValue("Dough In", stepMins[STEP_DOUGHIN]);
-        break;
-      case 1:
-        stepTemp[STEP_DOUGHIN] = getValue("Dough In", stepTemp[STEP_DOUGHIN], 3, 0, 255, tempUnit);
-        break;
-      case 2:
-        stepMins[STEP_PROTEIN] = getTimerValue("Protein Rest", stepMins[STEP_PROTEIN]);
-        break;
-      case 3:
-        stepTemp[STEP_PROTEIN] = getValue("Protein Rest", stepTemp[STEP_PROTEIN], 3, 0, 255, tempUnit);
-        break;
-      case 4:
-        stepMins[STEP_SACCH] = getTimerValue("Sacch Rest", stepMins[STEP_SACCH]);
-        break;
-      case 5:
-        stepTemp[STEP_SACCH] = getValue("Sacch Rest", stepTemp[STEP_SACCH], 3, 0, 255, tempUnit);
-        break;
-      case 6:
-        stepMins[STEP_MASHOUT] = getTimerValue("Mash Out", stepMins[STEP_MASHOUT]);
-        break;
-      case 7:
-        stepTemp[STEP_MASHOUT] = getValue("Mash Out", stepTemp[STEP_MASHOUT], 3, 0, 255, tempUnit);
-        break;
-      default:
-        return;
-    }
+    if (lastOption == 0) stepMins[STEP_DOUGHIN] = getTimerValue("Dough In", stepMins[STEP_DOUGHIN]);
+    else if (lastOption == 1) stepTemp[STEP_DOUGHIN] = getValue("Dough In", stepTemp[STEP_DOUGHIN], 3, 0, 255, tempUnit);
+    else if (lastOption == 2) stepMins[STEP_PROTEIN] = getTimerValue("Protein Rest", stepMins[STEP_PROTEIN]);
+    else if (lastOption == 3) stepTemp[STEP_PROTEIN] = getValue("Protein Rest", stepTemp[STEP_PROTEIN], 3, 0, 255, tempUnit);
+    else if (lastOption == 4) stepMins[STEP_SACCH] = getTimerValue("Sacch Rest", stepMins[STEP_SACCH]);
+    else if (lastOption == 5) stepTemp[STEP_SACCH] = getValue("Sacch Rest", stepTemp[STEP_SACCH], 3, 0, 255, tempUnit);
+    else if (lastOption == 6) stepMins[STEP_MASHOUT] = getTimerValue("Mash Out", stepMins[STEP_MASHOUT]);
+    else if (lastOption == 7) stepTemp[STEP_MASHOUT] = getValue("Mash Out", stepTemp[STEP_MASHOUT], 3, 0, 255, tempUnit);
+    else return;
   }
 }
 
@@ -495,41 +452,34 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
       }
       
       if (encCount != lastCount) {
-        switch(encCount) {
-          case 0: printLCD_P(3, 4, PSTR("> Continue <")); break;
-          case 1: printLCD_P(3, 4, PSTR("> Fill HLT <")); break;
-          case 2: printLCD_P(3, 4, PSTR("> Fill Mash<")); break;
-          case 3: printLCD_P(3, 4, PSTR("> Fill Both<")); break;
-          case 4: printLCD_P(3, 4, PSTR(">  All Off <")); break;
-          case 5: printLCD_P(3, 4, PSTR(">   Abort  <")); break;
-        }
         lastCount = encCount;
+        if (lastCount == 0) printLCD_P(3, 4, PSTR("> Continue <"));
+        else if (lastCount == 1) printLCD_P(3, 4, PSTR("> Fill HLT <"));
+        else if (lastCount == 2) printLCD_P(3, 4, PSTR("> Fill Mash<"));
+        else if (lastCount == 3) printLCD_P(3, 4, PSTR("> Fill Both<"));
+        else if (lastCount == 4) printLCD_P(3, 4, PSTR(">  All Off <"));
+        else if (lastCount == 5) printLCD_P(3, 4, PSTR(">   Abort  <"));
       }
       if (enterStatus == 1) {
         enterStatus = 0;
-        switch(encCount) {
-          case 0: return;
-          case 1:
+        if (encCount == 0) return;
+        else if (encCount == 1) {
             printLCD_P(3, 0, PSTR("On "));
             printLCD_P(3, 17, PSTR("Off"));
             setValves(fillHLT);
-            break;
-          case 2:
+        } else if (encCount == 2) {
             printLCD_P(3, 0, PSTR("Off"));
             printLCD_P(3, 17, PSTR(" On"));
             setValves(fillMash);
-            break;
-          case 3:
+        } else if (encCount == 3) {
             printLCD_P(3, 0, PSTR("On "));
             printLCD_P(3, 17, PSTR(" On"));
             setValves(fillBoth);
-            break;
-          case 4:
+        } else if (encCount == 4) {
             printLCD_P(3, 0, PSTR("Off"));
             printLCD_P(3, 17, PSTR("Off"));
             setValves(0);
-            break;
-          case 5:
+        } else if (encCount == 5) {
             if (confirmExit()) {
               setValves(0);
               enterStatus = 2;
@@ -560,10 +510,10 @@ void delayStart(int iMins) {
       if (enterStatus == 1) {
         //Turn off heat outputs to keep from overheating if menu is up
         popStepMenu();
-        switch (scrollMenu("AutoBrew Delay Menu", 3, 0)) {
-          case 0: redraw = 1; break;
-          case 1: return;
-          case 2:
+        byte lastOption = scrollMenu("AutoBrew Delay Menu", 3, 0);
+        if (lastOption == 0) redraw = 1;
+        else if (lastOption == 1) return;
+        else if (lastOption == 2) {
             if (confirmExit() == 1) {
               enterStatus = 2;
               return;
@@ -651,11 +601,9 @@ void mashStep(char sTitle[ ], int iMins) {
         printLCDLPad(3, i * 14 + 1, itoa(setpoint[i], buf, 10), 3, ' ');
         if (PIDEnabled[i]) {
           byte pct = PIDOutput[i] / PIDCycle[i] / 10;
-          switch (pct) {
-            case 0: strcpy_P(buf, PSTR("Off")); break;
-            case 100: strcpy_P(buf, PSTR(" On")); break;
-            default: itoa(pct, buf, 10); strcat(buf, "%"); break;
-          }
+          if (pct == 0) strcpy_P(buf, PSTR("Off"));
+          else if (pct == 100) strcpy_P(buf, PSTR(" On"));
+          else { itoa(pct, buf, 10); strcat(buf, "%"); }
         } else if (heatStatus[i]) strcpy_P(buf, PSTR(" On")); else strcpy_P(buf, PSTR("Off")); 
         printLCDLPad(3, i * 5 + 6, buf, 3, ' ');
       }
@@ -715,10 +663,10 @@ void mashStep(char sTitle[ ], int iMins) {
       if (doPrompt && preheated && enterStatus == 1) { enterStatus = 0; break; }
       else if (enterStatus == 1) {
         popStepMenu();
-        switch (scrollMenu("AutoBrew Mash Menu", 3, 0)) {
-          case 0: redraw = 1; break;
-          case 1: return;
-          case 2:
+        byte lastOption = scrollMenu("AutoBrew Mash Menu", 3, 0);
+        if (lastOption == 0) redraw = 1;
+        else if (lastOption == 1) return;
+        else if (lastOption == 2) {
             if (confirmExit() == 1) {
               enterStatus = 2;
               return;
@@ -806,15 +754,13 @@ void manSparge() {
       }
 
       if (encCount != lastCount) {
-        switch(encCount) {
-          case 0: printLCD_P(3, 4, PSTR("> Continue <")); break;
-          case 1: printLCD_P(3, 4, PSTR("> Sparge In<")); break;
-          case 2: printLCD_P(3, 4, PSTR(">Sparge Out<")); break;
-          case 3: printLCD_P(3, 4, PSTR(">Fly Sparge<")); break;
-          case 4: printLCD_P(3, 4, PSTR(">  All Off <")); break;
-          case 5: printLCD_P(3, 4, PSTR(">   Abort  <")); break;
-        }
         lastCount = encCount;
+        if (lastCount == 0) printLCD_P(3, 4, PSTR("> Continue <"));
+        else if (lastCount == 1) printLCD_P(3, 4, PSTR("> Sparge In<"));
+        else if (lastCount == 2) printLCD_P(3, 4, PSTR(">Sparge Out<"));
+        else if (lastCount == 3) printLCD_P(3, 4, PSTR(">Fly Sparge<"));
+        else if (lastCount == 4) printLCD_P(3, 4, PSTR(">  All Off <"));
+        else if (lastCount == 5) printLCD_P(3, 4, PSTR(">   Abort  <"));
       }
       if (convStart == 0) {
         convertAll();
@@ -828,29 +774,24 @@ void manSparge() {
       }
       if (enterStatus == 1) {
         enterStatus = 0;
-        switch(encCount) {
-          case 0: return;
-          case 1:
-            printLCD_P(3, 0, PSTR("On "));
-            printLCD_P(3, 17, PSTR("Off"));
-            setValves(spargeIn);
-            break;
-          case 2:
-            printLCD_P(3, 0, PSTR("Off"));
-            printLCD_P(3, 17, PSTR(" On"));
-            setValves(spargeOut);
-            break;
-          case 3:
+        if (encCount == 0) return;
+        else if (encCount == 1) {
+          printLCD_P(3, 0, PSTR("On "));
+          printLCD_P(3, 17, PSTR("Off"));
+          setValves(spargeIn);
+        } else if (encCount == 2) {
+          printLCD_P(3, 0, PSTR("Off"));
+          printLCD_P(3, 17, PSTR(" On"));
+          setValves(spargeOut);
+        } else if (encCount == 3) {
             printLCD_P(3, 0, PSTR("On "));
             printLCD_P(3, 17, PSTR(" On"));
             setValves(spargeFly);
-            break;
-          case 4:
+        } else if (encCount == 4) {
             printLCD_P(3, 0, PSTR("Off"));
             printLCD_P(3, 17, PSTR("Off"));
             setValves(0);
-            break;
-          case 5:
+        } else if (encCount == 5) {
             if (confirmExit()) {
               setValves(0);
               enterStatus = 2;
@@ -900,7 +841,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
     printLCD(3, 4, sTempUnit);
     
     while(!preheated || timerValue > 0) {
-      if (alarmStatus) printLCD_P(0, 19, PSTR("!")); else printLCD_P(0, 19, SPACE);
+      if (preheated) { if (alarmStatus) printLCD_P(0, 19, PSTR("!")); else printLCD_P(0, 19, SPACE); }
       if (!preheated && temp >= setpoint[TS_KETTLE]) {
         preheated = 1;
         printLCDRPad(0, 14, "", 6, ' ');
@@ -911,11 +852,9 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
       printLCDLPad(3, 1, itoa(setpoint[TS_KETTLE], buf, 10), 3, ' ');
       if (PIDEnabled[TS_KETTLE]) {
         byte pct = PIDOutput[TS_KETTLE] / PIDCycle[TS_KETTLE] / 10;
-        switch (pct) {
-          case 0: strcpy_P(buf, PSTR("Off")); break;
-          case 100: strcpy_P(buf, PSTR(" On")); break;
-          default: itoa(pct, buf, 10); strcat(buf, "%"); break;
-        }
+        if (pct == 0) strcpy_P(buf, PSTR("Off"));
+        else if (pct == 100) strcpy_P(buf, PSTR(" On"));
+        else { itoa(pct, buf, 10); strcat(buf, "%"); }
       } else if (heatStatus) strcpy_P(buf, PSTR(" On")); else strcpy_P(buf, PSTR("Off")); 
       printLCDLPad(3, 6, buf, 3, ' ');
 
@@ -969,10 +908,10 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
       if (enterStatus == 1 && alarmStatus) setAlarm(0);
       else if (enterStatus == 1) {
         popStepMenu();
-        switch (scrollMenu("AutoBrew Boil Menu", 3, 0)) {
-          case 0: redraw = 1; break;
-          case 1: return;
-          case 2:
+        byte lastOption = scrollMenu("AutoBrew Boil Menu", 3, 0);
+        if (lastOption == 0) redraw = 1;
+        else if (lastOption == 1) return;
+        else if (lastOption == 2) {
             if (confirmExit() == 1) {
               enterStatus = 2;
               return;
@@ -1036,50 +975,40 @@ void manChill(byte settemp) {
     boolean redraw = 0;
     while(!redraw) {
       if (encCount != lastCount) {
-        switch(encCount) {
-          case 0: printLCD_P(3, 4, PSTR("> Continue <")); break;
-          case 1: printLCD_P(3, 4, PSTR(">Chill Norm<")); break;
-          case 2: printLCD_P(3, 4, PSTR("> H2O Only <")); break;
-          case 3: printLCD_P(3, 4, PSTR("> Beer Only<")); break;
-          case 4: printLCD_P(3, 4, PSTR(">  All Off <")); break;
-          case 5: printLCD_P(3, 4, PSTR(">   Auto   <")); break;
-          case 6: printLCD_P(3, 4, PSTR(">   Abort  <")); break;
-        }
         lastCount = encCount;
+        if (lastCount == 0) printLCD_P(3, 4, PSTR("> Continue <"));
+        else if (lastCount == 1) printLCD_P(3, 4, PSTR(">Chill Norm<"));
+        else if (lastCount == 2) printLCD_P(3, 4, PSTR("> H2O Only <"));
+        else if (lastCount == 3) printLCD_P(3, 4, PSTR("> Beer Only<"));
+        else if (lastCount == 4) printLCD_P(3, 4, PSTR(">  All Off <"));
+        else if (lastCount == 5) printLCD_P(3, 4, PSTR(">   Auto   <"));
+        else if (lastCount == 6) printLCD_P(3, 4, PSTR(">   Abort  <"));
       }
       if (enterStatus == 1) {
         enterStatus = 0;
-        switch(encCount) {
-          case 0: return;
-          case 1:
+        if (encCount == 0) return;
+        else if (encCount == 1) {
             doAuto = 0;
             printLCD_P(3, 0, PSTR("On "));
             printLCD_P(3, 17, PSTR(" On"));
             setValves(chillNorm);
-            break;
-          case 2:
+        } else if (encCount == 2) {
             doAuto = 0;
             printLCD_P(3, 0, PSTR("Off"));
             printLCD_P(3, 17, PSTR(" On"));
             setValves(chillHigh);
-            break;
-          case 3:
-            doAuto = 0;
+        } else if (encCount == 3) {            doAuto = 0;
             printLCD_P(3, 0, PSTR("On "));
             printLCD_P(3, 17, PSTR("Off"));
             setValves(chillLow);
-            break;
-          case 4:
-            doAuto = 0;
+        } else if (encCount == 4) {            doAuto = 0;
             printLCD_P(3, 0, PSTR("Off"));
             printLCD_P(3, 17, PSTR("Off"));
             setValves(0);
-            break;
-          case 5:
-            doAuto = 1;
-            break;  
-          case 6: 
-            if (confirmExit()) {
+        } else if (encCount == 5) {
+          doAuto = 1;
+        } else if (encCount == 6) {
+          if (confirmExit()) {
               setValves(0);
               enterStatus = 2;
               return;
@@ -1142,22 +1071,20 @@ unsigned int editHopSchedule (unsigned int sched) {
     strcpy_P(menuopts[12], PSTR("Exit"));
 
     lastOption = scrollMenu("Boil Additions", 13, lastOption);
-    switch(lastOption) {
-      case 0: retVal = retVal ^ 1; break;      
-      case 1: retVal = retVal ^ 2; break;
-      case 2: retVal = retVal ^ 4; break;
-      case 3: retVal = retVal ^ 8; break;
-      case 4: retVal = retVal ^ 16; break;
-      case 5: retVal = retVal ^ 32; break;
-      case 6: retVal = retVal ^ 64; break;
-      case 7: retVal = retVal ^ 128; break;      
-      case 8: retVal = retVal ^ 256; break;
-      case 9: retVal = retVal ^ 512; break;
-      case 10: retVal = retVal ^ 1024; break;
-      case 11: retVal = retVal ^ 2048; break;
-      case 12: return retVal;
-      default: return sched;
-    }
+    if (lastOption == 0) retVal = retVal ^ 1;
+    else if (lastOption == 1) retVal = retVal ^ 2;
+    else if (lastOption == 2) retVal = retVal ^ 4;
+    else if (lastOption == 3) retVal = retVal ^ 8;
+    else if (lastOption == 4) retVal = retVal ^ 16;
+    else if (lastOption == 5) retVal = retVal ^ 32;
+    else if (lastOption == 6) retVal = retVal ^ 64;
+    else if (lastOption == 7) retVal = retVal ^ 128;
+    else if (lastOption == 8) retVal = retVal ^ 256;
+    else if (lastOption == 9) retVal = retVal ^ 512;
+    else if (lastOption == 10) retVal = retVal ^ 1024;
+    else if (lastOption == 11) retVal = retVal ^ 2048;
+    else if (lastOption == 12) return retVal;
+    else return sched;
   }
 }
 
