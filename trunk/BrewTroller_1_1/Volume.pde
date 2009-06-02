@@ -3,19 +3,19 @@ unsigned long readVolume( byte pin, unsigned long calibrationVols[10], unsigned 
   unsigned long retValue;
   #ifdef DEBUG
     logStart_P(LOGDEBUG);
-    logField_P("VOL_READ");
+    logField_P(PSTR("VOL_READ"));
     logFieldI(pin);
     logFieldI(aValue);
     logFieldI(zeroValue);
   #endif
-  if (aValue <= zeroValue) return 0; else aValue -= zeroValue;
+  if (aValue <= zeroValue) aValue = 0; else aValue -= zeroValue;
   
   byte upperCal = 0;
   byte lowerCal = 0;
   byte lowerCal2 = 0;
   for (byte i = 0; i < 10; i++) {
-    if (aValue == calibrationValues[i]) return calibrationVols[i];
-    if (aValue > calibrationValues[i] && calibrationValues[i] > calibrationValues[lowerCal]) { lowerCal2 = lowerCal; lowerCal = i; }
+    if (aValue == calibrationValues[i]) { upperCal = i; lowerCal = i; }
+    else if (aValue > calibrationValues[i] && calibrationValues[i] > calibrationValues[lowerCal]) { lowerCal2 = lowerCal; lowerCal = i; }
     else if (aValue > calibrationValues[i] && calibrationValues[i] > calibrationValues[lowerCal2]) lowerCal2 = i;
     else if (aValue < calibrationValues[i] && calibrationValues[i] < calibrationValues[upperCal]) upperCal = i;
   }
@@ -30,6 +30,10 @@ unsigned long readVolume( byte pin, unsigned long calibrationVols[10], unsigned 
   //If no calibrations exist return zero
   if (calibrationValues[upperCal] == 0 && calibrationValues[lowerCal] == 0) retValue = 0;
 
+  //If the value matches a calibration point return that value
+  else if (aValue == calibrationValues[lowerCal]) retValue = calibrationVols[lowerCal];
+  else if (aValue == calibrationValues[upperCal]) retValue = calibrationVols[upperCal];
+  
   //If read value is greater than all calibrations plot value based on two closest lesser values
   else if (aValue > calibrationValues[upperCal] && calibrationValues[lowerCal] > calibrationValues[lowerCal2]) retValue = round((float) (aValue - calibrationValues[lowerCal]) / (float) (calibrationValues[lowerCal] - calibrationValues[lowerCal2]) * (calibrationVols[lowerCal] - calibrationVols[lowerCal2])) + calibrationVols[lowerCal];
   

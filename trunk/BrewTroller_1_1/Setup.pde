@@ -421,9 +421,13 @@ void volCalibMenu(byte vessel) {
     getVolCalibs(vessel, vols, vals);
     for(byte i = 0; i < 10; i++) {
       if (vals[i] > 0) {
-        ftoa(vols[i] / 1000.0, buf, 3); 
+        ftoa(vols[i] / 1000.0, buf, 3);
+        truncFloat(buf, 6);
         strcpy(menuopts[i], buf);
-        if (unit) strcat(menuopts[i], " gal"); else strcat(menuopts[i], " l");
+        if (unit) strcat_P(menuopts[i], PSTR(" gal")); else strcat_P(menuopts[i], PSTR(" l"));
+        strcat_P(menuopts[i], PSTR(" ("));
+        strcat(menuopts[i], itoa(vals[i], buf, 10));
+        strcat_P(menuopts[i], PSTR(")"));
       } else strcpy_P(menuopts[i], PSTR("OPEN"));
     }
     strcpy_P(menuopts[10], PSTR("Exit"));

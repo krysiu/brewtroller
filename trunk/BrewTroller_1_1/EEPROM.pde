@@ -381,7 +381,7 @@ void setVolCalib(byte vessel, byte slot, unsigned long vol, unsigned int val) {
 void getVolCalibs(byte vessel, unsigned long vols[10], unsigned int vals[10]) {
 #ifdef DEBUG
   logStart_P(LOGDEBUG);
-  logField_P("VOL_CALIB");
+  logField_P(PSTR("VOL_CALIB"));
   logFieldI(vessel);
 #endif
   for (byte i = 0; i < 10; i++) {
