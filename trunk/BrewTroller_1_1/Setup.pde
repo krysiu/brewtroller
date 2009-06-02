@@ -27,13 +27,13 @@ void menuSetup() {
         unsigned long vols[10];
         unsigned int vals[10];
           
-        for (int i = TS_HLT; i <= TS_KETTLE; i++) {
+        for (byte i = TS_HLT; i <= TS_KETTLE; i++) {
           hysteresis[i] = round(hysteresis[i] * 1.8);
           capacity[i] = round(capacity[i] * 0.26417);
           volume[i] = round(volume[i] * 0.26417);
           volLoss[i] = round(volLoss[i] * 0.26417);
           getVolCalibs(i, vols, vals);
-          for (int j = 0; j < 10; j++) if(vols[j] > 0) setVolCalib(i, j, round(vols[j] * 0.26417), vals[j]);
+          for (byte j = 0; j < 10; j++) if(vols[j] > 0) setVolCalib(i, j, round(vols[j] * 0.26417), vals[j]);
         }
         //Update Stored Programs
         clearLCD();
@@ -56,11 +56,11 @@ void menuSetup() {
           if (varInt > 0) setProgRatio(i, round(varInt * .58));
             
           getProgSchedule(i, varByte, varByte2);
-          for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round(varByte[j] * 1.8) + 32;
+          for (byte j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round(varByte[j] * 1.8) + 32;
           setProgSchedule(i, varByte, varByte2);
             
           getProgVols(i, varLong);
-          for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] * 0.26417);
+          for (byte j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] * 0.26417);
           setProgVols(i, varLong);
             
           varByte[0] = getProgHLT(i);
@@ -83,14 +83,14 @@ void menuSetup() {
         if (varInt > 0) setABRatio(round(varInt * .58));
           
         loadABSteps(varByte, varByte2);
-        for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round(varByte[j] * 1.8) + 32;
+        for (byte j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round(varByte[j] * 1.8) + 32;
         saveABSteps(varByte, varByte2);
           
         loadABVols(varLong);
-        for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] * 0.26417);
+        for (byte j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] * 0.26417);
         saveABVols(varLong);
           
-        for (int j = 0; j < 3; j++) if (setpoint[j] > 0) setpoint[j] = round(setpoint[j] * 1.8) + 32;
+        for (byte j = 0; j < 3; j++) if (setpoint[j] > 0) setpoint[j] = round(setpoint[j] * 1.8) + 32;
         saveSetpoints();
           
         varByte[0] = getABPitch();
@@ -106,13 +106,13 @@ void menuSetup() {
         unsigned long vols[10];
         unsigned int vals[10];
 
-        for (int i = TS_HLT; i <= TS_KETTLE; i++) {
+        for (byte i = TS_HLT; i <= TS_KETTLE; i++) {
           hysteresis[i] = round(hysteresis[i] / 1.8);
           capacity[i] = round(capacity[i] / 0.26417);
           volume[i] = round(volume[i] / 0.26417);
           volLoss[i] = round(volLoss[i] / 0.26417);
           getVolCalibs(i, vols, vals);
-          for (int j = 0; j < 10; j++) if(vols[j] > 0) setVolCalib(i, j, round(vols[j] / 0.26417), vals[j]);
+          for (byte j = 0; j < 10; j++) if(vols[j] > 0) setVolCalib(i, j, round(vols[j] / 0.26417), vals[j]);
         }
         //Update Stored Programs
         clearLCD();
@@ -135,11 +135,11 @@ void menuSetup() {
           if (varInt > 0) setProgRatio(i, round(varInt / .58));
             
           getProgSchedule(i, varByte, varByte2);
-          for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round((varByte[0] - 32) / 1.8);
+          for (byte j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round((varByte[0] - 32) / 1.8);
           setProgSchedule(i, varByte, varByte2);
             
           getProgVols(i, varLong);
-          for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] / 0.26417);
+          for (byte j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] / 0.26417);
           setProgVols(i, varLong);
             
           varByte[0] = getProgHLT(i);
@@ -162,14 +162,14 @@ void menuSetup() {
         if (varInt > 0) setABRatio(round(varInt / .58));
           
         loadABSteps(varByte, varByte2);
-        for (int j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round((varByte[0] - 32) / 1.8);
+        for (byte j = 0; j < 4; j++) if (varByte[j] > 0) varByte[j] = round((varByte[0] - 32) / 1.8);
         saveABSteps(varByte, varByte2);
           
         loadABVols(varLong);
-        for (int j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] / 0.26417);
+        for (byte j = 0; j < 3; j++) if (varLong[j] > 0) varLong[j] = round(varLong[j] / 0.26417);
         saveABVols(varLong);
           
-        for (int j = 0; j < 3; j++) if (setpoint[j] > 0) setpoint[j] = round((varByte[0] - 32) / 1.8);
+        for (byte j = 0; j < 3; j++) if (setpoint[j] > 0) setpoint[j] = round((varByte[0] - 32) / 1.8);
         saveSetpoints();
           
         varByte[0] = getABPitch();
@@ -193,7 +193,7 @@ void assignSensor() {
   encMin = 0;
   encMax = 5;
   encCount = 0;
-  int lastCount = 1;
+  byte lastCount = 1;
   char dispTitle[6][21] = {
     "Hot Liquor Tank",
     "Mash Tun",
@@ -209,7 +209,7 @@ void assignSensor() {
       clearLCD();
       printLCD_P(0, 0, PSTR("Assign Temp Sensor"));
       printLCDCenter(1, 0, dispTitle[lastCount], 20);
-      for (int i=0; i<8; i++) printLCDLPad(2,i*2+2,itoa(tSensor[lastCount][i], buf, 16), 2, '0');  
+      for (byte i=0; i<8; i++) printLCDLPad(2,i*2+2,itoa(tSensor[lastCount][i], buf, 16), 2, '0');  
     }
     if (enterStatus == 2) {
       enterStatus = 0;
@@ -300,7 +300,7 @@ void setPIDGain(char sTitle[], byte* p, byte* i, byte* d) {
   encMin = 0;
   encMax = 3;
   encCount = 0;
-  int lastCount = 1;
+  byte lastCount = 1;
   
   clearLCD();
   printLCD(0,0,sTitle);
@@ -477,7 +477,7 @@ unsigned long cfgValveProfile (char sTitle[], unsigned long defValue) {
   //The left most bit being displayed (Set to MAX + 1 to force redraw)
   byte firstBit = encMax + 1;
   encCount = 0;
-  int lastCount = 1;
+  byte lastCount = 1;
 
   clearLCD();
   printLCD(0,0,sTitle);

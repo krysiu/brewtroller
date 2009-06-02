@@ -34,7 +34,7 @@ void doAutoBrew() {
     recoveryStep = getABRecovery();
   } else {
     //Set Zero Volume Calibrations on Normal AutoBrew Start (Not Power Loss Recovery)
-    for (int i = TS_HLT; i <= TS_KETTLE; i++) setZeroVol(i, analogRead(vSensor[i]));
+    for (byte i = TS_HLT; i <= TS_KETTLE; i++) setZeroVol(i, analogRead(vSensor[i]));
   }
 
   char volUnit[5] = " l";
@@ -53,13 +53,13 @@ void doAutoBrew() {
     logStart_P(LOGAB);
     logField_P(PSTR("SETTINGS"));
   
-    for (int i = STEP_DOUGHIN; i <= STEP_MASHOUT; i++) {
+    for (byte i = STEP_DOUGHIN; i <= STEP_MASHOUT; i++) {
       logFieldI(stepTemp[i]);
       logFieldI(stepMins[i]);
     }
     logFieldI(spargeTemp);
     logFieldI(delayMins);
-    for (int i = VS_HLT; i <= VS_KETTLE; i++) logFieldI(tgtVol[i]);
+    for (byte i = VS_HLT; i <= VS_KETTLE; i++) logFieldI(tgtVol[i]);
     logFieldI(grainWeight);
     logFieldI(boilMins);
     logFieldI(mashRatio);
@@ -248,19 +248,15 @@ void doAutoBrew() {
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 2:
       if(delayMins) {
-        if (recoveryStep == 2) {
-          delayStart(getTimerRecovery());
-        } else { 
-          setABRecovery(2);
-          delayStart(delayMins);
-        }
+        setABRecovery(2);
+        if (recoveryStep == 2) delayStart(getTimerRecovery()); else delayStart(delayMins);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
     case 3:
       //Find first temp and adjust for strike temp
       {
         byte strikeTemp = 0;
-        int i = 0;
+        byte i = 0;
         while (strikeTemp == 0 && i <= STEP_MASHOUT) strikeTemp = stepTemp[i++];
         if (unit) strikeTemp = round(.2 / (mashRatio / 100.0) * (strikeTemp - grainTemp)) + strikeTemp; else strikeTemp = round(.41 / (mashRatio / 100.0) * (strikeTemp - grainTemp)) + strikeTemp;
         setpoint[TS_MASH] = strikeTemp;
@@ -269,9 +265,9 @@ void doAutoBrew() {
       mashStep("Preheat", MINS_PROMPT);  
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 4:
+      setABRecovery(4);
       inMenu = 1;
       while(inMenu) {
-        setABRecovery(4);
         clearLCD();
         printLCD_P(1, 5, PSTR("Add Grain"));
         printLCD_P(2, 0, PSTR("Press Enter to Start"));
@@ -289,7 +285,7 @@ void doAutoBrew() {
         setABRecovery(5);
         setpoint[TS_MASH] = stepTemp[STEP_DOUGHIN];
         int recoverMins = getTimerRecovery();
-        if (recoveryStep == 5 && recoverMins > 0) mashStep(" Dough In", recoverMins); else mashStep("Dough In", stepMins[STEP_DOUGHIN]);
+        if (recoveryStep == 5 && recoverMins > 0) mashStep("Dough In", recoverMins); else mashStep("Dough In", stepMins[STEP_DOUGHIN]);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
     case 6:
@@ -297,7 +293,7 @@ void doAutoBrew() {
         setABRecovery(6);
         setpoint[TS_MASH] = stepTemp[STEP_PROTEIN];
         int recoverMins = getTimerRecovery();
-        if (recoveryStep == 6 && recoverMins > 0) mashStep(" Protein", recoverMins); else mashStep("Protein Rest", stepMins[STEP_PROTEIN]);
+        if (recoveryStep == 6 && recoverMins > 0) mashStep("Protein", recoverMins); else mashStep("Protein", stepMins[STEP_PROTEIN]);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
     case 7:
@@ -313,14 +309,14 @@ void doAutoBrew() {
         setABRecovery(8);
         setpoint[TS_MASH] = stepTemp[STEP_MASHOUT];
         int recoverMins = getTimerRecovery();
-        if (recoveryStep == 8 && recoverMins > 0) mashStep(" Mash Out", recoverMins); else mashStep("Mash Out", stepMins[STEP_MASHOUT]);
+        if (recoveryStep == 8 && recoverMins > 0) mashStep("Mash Out", recoverMins); else mashStep("Mash Out", stepMins[STEP_MASHOUT]);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
     case 9:
       //Hold last mash temp until user exits
       setABRecovery(9); 
       setpoint[TS_HLT] = spargeTemp;
-      mashStep("Mash Complete", MINS_PROMPT);
+      mashStep("End Mash", MINS_PROMPT);
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       setpoint[TS_HLT] = 0;
       setpoint[TS_MASH] = 0;
@@ -406,7 +402,7 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
   unsigned long vols[2];
   unsigned long lastUpdate = 0;
   
-  for (int i = TS_HLT; i <= TS_MASH; i++) {
+  for (byte i = TS_HLT; i <= TS_MASH; i++) {
     zero[i] = getZeroVol(i);
     getVolCalibs(i, calibVols[i], calibVals[i]);
   }
@@ -434,20 +430,23 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
     encMin = 0;
     encMax = 5;
     encCount = 0;
-    int lastCount = 1;
+    byte lastCount = 1;
     
     boolean redraw = 0;
     while(!redraw) {
-      for (int i = TS_HLT; i <= TS_MASH; i++) vols[i] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
+      for (byte i = VS_HLT; i <= VS_MASH; i++) vols[i] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
 
       if (millis() - lastUpdate > 500) {
-        ftoa(vols[TS_HLT]/1000.0, buf, 2);
+        ftoa(vols[VS_HLT]/1000.0, buf, 2);
         truncFloat(buf, 6);
         printLCDRPad(2, 0, buf, 7, ' ');
+        logVolume(VS_HLT, vols[VS_HLT]);
 
-        ftoa(vols[TS_MASH]/1000.0, buf, 2);
+        ftoa(vols[VS_MASH]/1000.0, buf, 2);
         truncFloat(buf, 6);
         printLCDLPad(2, 14, buf, 6, ' ');
+        logVolume(VS_MASH, vols[VS_MASH]);
+        
         lastUpdate = millis();
       }
       
@@ -551,7 +550,7 @@ void mashStep(char sTitle[ ], int iMins) {
   if (iMins == MINS_PROMPT) doPrompt = 1;
   timerValue = 0;
   
-  for (int i = TS_HLT; i <= TS_MASH; i++) {
+  for (byte i = TS_HLT; i <= TS_MASH; i++) {
     zero[i] = getZeroVol(i);
     getVolCalibs(i, calibVols[i], calibVals[i]);
 
@@ -567,7 +566,7 @@ void mashStep(char sTitle[ ], int iMins) {
     boolean redraw = 0;
     timerLastWrite = 0;
     clearLCD();
-    printLCD(0,5,sTitle);
+    printLCDCenter(0, 5, sTitle, 10);
     printLCD_P(2, 7, PSTR("(WAIT)"));
     printLCD_P(0, 0, PSTR("HLT"));
     printLCD_P(3, 0, PSTR("[    ]"));
@@ -595,7 +594,7 @@ void mashStep(char sTitle[ ], int iMins) {
         if(doPrompt) printLCD_P(2, 5, PSTR(">Continue<")); else setTimer(iMins);
       }
 
-      for (int i = TS_HLT; i <= TS_MASH; i++) {
+      for (byte i = VS_HLT; i <= VS_MASH; i++) {
         vols[i] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
         if (temp[i] == -1) printLCD_P(2, i * 16, PSTR("---")); else printLCDLPad(2, i * 16, itoa(temp[i], buf, 10), 3, ' ');
         printLCDLPad(3, i * 14 + 1, itoa(setpoint[i], buf, 10), 3, ' ');
@@ -608,13 +607,16 @@ void mashStep(char sTitle[ ], int iMins) {
         printLCDLPad(3, i * 5 + 6, buf, 3, ' ');
       }
       if (millis() - lastUpdate > 500) {
-        ftoa(vols[TS_HLT]/1000.0, buf, 2);
+        ftoa(vols[VS_HLT]/1000.0, buf, 2);
         truncFloat(buf, 6);
         printLCDRPad(1, 0, buf, 7, ' ');
-
-        ftoa(vols[TS_MASH]/1000.0, buf, 2);
+        logVolume(VS_HLT, vols[VS_HLT]);
+        
+        ftoa(vols[VS_MASH]/1000.0, buf, 2);
         truncFloat(buf, 6);
         printLCDLPad(1, 14, buf, 6, ' ');
+        logVolume(VS_MASH, vols[VS_MASH]);
+                
         lastUpdate = millis();
       }
       if (preheated && !doPrompt) printTimer(2, 7);
@@ -623,11 +625,14 @@ void mashStep(char sTitle[ ], int iMins) {
         convertAll();
         convStart = millis();
       } else if (millis() - convStart >= 750) {
-        for (int i = TS_HLT; i <= TS_MASH; i++) temp[i] = read_temp(unit, tSensor[i]);
+        for (byte i = TS_HLT; i <= TS_MASH; i++) {
+          temp[i] = read_temp(unit, tSensor[i]);
+          logTemp(i, temp[i]);
+        }
         convStart = 0;
       }
 
-      for (int i = TS_HLT; i <= TS_MASH; i++) {
+      for (byte i = TS_HLT; i <= TS_MASH; i++) {
         if (PIDEnabled[i]) {
           if (temp[i] == -1) {
             pid[i].SetMode(MANUAL);
@@ -682,7 +687,7 @@ void mashStep(char sTitle[ ], int iMins) {
     }
     if (!redraw) {
        //Turn off HLT and MASH outputs
-       for (int i = TS_HLT; i <= TS_MASH; i++) { 
+       for (byte i = TS_HLT; i <= TS_MASH; i++) { 
          if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
          digitalWrite(heatPin[i], LOW);
        }
@@ -705,7 +710,7 @@ void manSparge() {
   unsigned long vols[2];
   unsigned long lastUpdate = 0;
     
-  for (int i = TS_HLT; i <= TS_MASH; i++) {
+  for (byte i = TS_HLT; i <= TS_MASH; i++) {
     zero[i] = getZeroVol(i);
     getVolCalibs(i, calibVols[i], calibVals[i]);
   }
@@ -736,20 +741,23 @@ void manSparge() {
     encMin = 0;
     encMax = 5;
     encCount = 0;
-    int lastCount = 1;
+    byte lastCount = 1;
     
     boolean redraw = 0;
     while(!redraw) {
-      for (int i = TS_HLT; i <= TS_MASH; i++) vols[i] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
+      for (byte i = VS_HLT; i <= VS_MASH; i++) vols[i] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
 
       if (millis() - lastUpdate > 500) {
-        ftoa(vols[TS_HLT]/1000.0, buf, 2);
+        ftoa(vols[VS_HLT]/1000.0, buf, 2);
         truncFloat(buf, 6);
         printLCDRPad(2, 0, buf, 7, ' ');
-
-        ftoa(vols[TS_MASH]/1000.0, buf, 2);
+        logVolume(VS_HLT, vols[VS_HLT]);
+        
+        ftoa(vols[VS_MASH]/1000.0, buf, 2);
         truncFloat(buf, 6);
         printLCDLPad(2, 14, buf, 6, ' ');
+        logVolume(VS_MASH, vols[VS_MASH]);
+        
         lastUpdate = millis();
       }
 
@@ -766,8 +774,9 @@ void manSparge() {
         convertAll();
         convStart = millis();
       } else if (millis() - convStart >= 750) {
-        for (int i = TS_HLT; i <= TS_MASH; i++) {
+        for (byte i = TS_HLT; i <= TS_MASH; i++) {
           temp[i] = read_temp(unit, tSensor[i]);
+          logTemp(i, temp[i]);
           if (temp[i] == -1) printLCD_P(1, i * 16, PSTR("---")); else printLCDLPad(1, i * 16, itoa(temp[i], buf, 10), 3, ' ');
         }
         convStart = 0;
@@ -812,7 +821,6 @@ void manSparge() {
 
 void boilStage(unsigned int iMins, unsigned int boilAdds) {
   float temp = 0;
-  char sTempUnit[2] = "C";
   unsigned long convStart = 0;
   unsigned long cycleStart = 0;
   boolean heatStatus = 0;
@@ -820,7 +828,13 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
   unsigned int triggered = getABAddsTrig();
   setAlarm(0);
   timerValue = 0;
-  
+  unsigned int calibVals[10];
+  unsigned long calibVols[10];
+  unsigned long vol;
+  unsigned long lastUpdate = 0;
+  unsigned int zero = getZeroVol(VS_KETTLE);
+  getVolCalibs(VS_KETTLE, calibVols, calibVals);
+    
   if (PIDEnabled[TS_KETTLE]) {
     pid[TS_KETTLE].SetInputLimits(0, 255);
     pid[TS_KETTLE].SetOutputLimits(0, PIDCycle[TS_KETTLE] * 1000);
@@ -828,17 +842,24 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
     cycleStart = millis();
   }
   
-  if (unit) strcpy_P(sTempUnit, PSTR("F"));
-
   while(1) {
     boolean redraw = 0;
     timerLastWrite = 0;
     clearLCD();
+    printLCD_P(0,0,PSTR("Kettle"));
     printLCD_P(0,8,PSTR("Boil"));
-    printLCD_P(0,14,PSTR("(WAIT)"));
+    printLCD_P(2,7,PSTR("(WAIT)"));
     printLCD_P(3,0,PSTR("[    ]"));
-    printLCD(2, 4, sTempUnit);
-    printLCD(3, 4, sTempUnit);
+
+    if (unit) {
+      printLCD_P(1, 8, PSTR("Gals"));
+      printLCD_P(2, 3, PSTR("F"));
+      printLCD_P(3, 4, PSTR("F"));
+    } else {
+      printLCD_P(1, 7, PSTR("Liters"));
+      printLCD_P(2, 3, PSTR("C"));
+      printLCD_P(3, 4, PSTR("C"));
+    }
     
     while(!preheated || timerValue > 0) {
       if (preheated) { if (alarmStatus) printLCD_P(0, 19, PSTR("!")); else printLCD_P(0, 19, SPACE); }
@@ -847,8 +868,8 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         printLCDRPad(0, 14, "", 6, ' ');
         setTimer(iMins);
       }
-
-      if (temp == -1) printLCD_P(2, 1, PSTR("---")); else printLCDLPad(2, 1, itoa(temp, buf, 10), 3, ' ');
+      vol = readVolume(vSensor[VS_KETTLE], calibVols, calibVals, zero);
+      if (temp == -1) printLCD_P(2, 0, PSTR("---")); else printLCDLPad(2, 0, itoa(temp, buf, 10), 3, ' ');
       printLCDLPad(3, 1, itoa(setpoint[TS_KETTLE], buf, 10), 3, ' ');
       if (PIDEnabled[TS_KETTLE]) {
         byte pct = PIDOutput[TS_KETTLE] / PIDCycle[TS_KETTLE] / 10;
@@ -858,8 +879,17 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
       } else if (heatStatus) strcpy_P(buf, PSTR(" On")); else strcpy_P(buf, PSTR("Off")); 
       printLCDLPad(3, 6, buf, 3, ' ');
 
-      printTimer(1,7);
+     if (millis() - lastUpdate > 500) {
+        ftoa(vol/1000.0, buf, 2);
+        truncFloat(buf, 6);
+        printLCDRPad(1, 0, buf, 7, ' ');
+        logVolume(VS_KETTLE, vol);
+        
+        lastUpdate = millis();
+      }
+
       if (preheated) {
+        printTimer(2, 7);
         if ((boilAdds ^ triggered) & 1) { setAlarm(1); triggered |= 1; setABAddsTrig(triggered); }
         if (((boilAdds ^ triggered) & 2) && timerValue <= 105 * 60) { setAlarm(1); triggered |= 2; setABAddsTrig(triggered); } //105 Min
         if (((boilAdds ^ triggered) & 4) && timerValue <= 90 * 60) { setAlarm(1); triggered |= 4; setABAddsTrig(triggered); } //90 Min
@@ -877,6 +907,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         convStart = millis();
       } else if (millis() - convStart >= 750) {
         temp = read_temp(unit, tSensor[TS_KETTLE]);
+        logTemp(TS_KETTLE, temp);
         convStart = 0;
       }
 
@@ -1026,7 +1057,10 @@ void manChill(byte settemp) {
         convertAll();
         convStart = millis();
       } else if (millis() - convStart >= 750) {
-        for (int i = TS_KETTLE; i <= TS_BEEROUT; i++) temp[i] = read_temp(unit, tSensor[i]);
+        for (byte i = TS_KETTLE; i <= TS_BEEROUT; i++) {
+          temp[i] = read_temp(unit, tSensor[i]);
+          logTemp(i, temp[i]);
+        }
         convStart = 0;
       }
       if (temp[TS_KETTLE] == -1) printLCD_P(1, 0, PSTR("---")); else printLCDLPad(1, 0, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');

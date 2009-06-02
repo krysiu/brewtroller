@@ -1,3 +1,30 @@
+void logVolume (byte vessel, unsigned long value) {
+  logStart_P(PSTR("DATA"));
+  logField_P(PSTR("VOL"));
+  logFieldI(vessel);
+  ftoa(value/1000.0, buf, 3);
+  logField(buf);
+  logFieldI(unit);
+  logEnd();
+}
+
+void logTemp (byte tempSensor, float value) {
+  logStart_P(PSTR("DATA"));
+  logField_P(PSTR("TEMP"));
+  logFieldI(tempSensor);
+  ftoa(value, buf, 3);
+  logField(buf);
+  logFieldI(unit);
+  logEnd();
+}
+
+void logABStep (byte numstep) {
+  logStart_P(LOGAB);
+  logField_P(PSTR("STEP"));
+  logFieldI(numstep);
+  logEnd();
+}
+
 void logString_P (const char *sType, const char *sText) {
  logStart_P(sType);
  logField_P(sText);

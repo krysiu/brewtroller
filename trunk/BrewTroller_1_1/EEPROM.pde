@@ -4,7 +4,7 @@
 void saveSetup() {
   //Walk through the 6 tSensor elements and store 8-byte address of each
   //HLT (0-7), MASH (8-15), KETTLE (16-23), H2OIN (24-31), H2OOUT (32-39), BEEROUT (40-47)
-  for (int i = TS_HLT; i <= TS_BEEROUT; i++) PROMwriteBytes(i * 8, tSensor[i], 8);
+  for (byte i = TS_HLT; i <= TS_BEEROUT; i++) PROMwriteBytes(i * 8, tSensor[i], 8);
 
   //Option Array (48)
   byte options = B00000000;
@@ -17,7 +17,7 @@ void saveSetup() {
   
   //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
   //Volume Settings for HLT (64-71), MASH (72 - 79) and KETTLE (80 - 87)
-  for (int i = VS_HLT; i <= VS_KETTLE; i++) {
+  for (byte i = VS_HLT; i <= VS_KETTLE; i++) {
     EEPROM.write(i * 5 + 49, PIDp[i]);
     EEPROM.write(i * 5 + 50, PIDi[i]);
     EEPROM.write(i * 5 + 51, PIDd[i]);
@@ -53,7 +53,7 @@ void saveSetup() {
 void loadSetup() {
   //Walk through the 6 tSensor elements and load 8-byte address of each
   //HLT (0-7), MASH (8-15), KETTLE (16-23), H2OIN (24-31), H2OOUT (32-39), BEEROUT (40-47)
-  for (int i = TS_HLT; i <= TS_BEEROUT; i++) PROMreadBytes(i * 8, tSensor[i], 8);
+  for (byte i = TS_HLT; i <= TS_BEEROUT; i++) PROMreadBytes(i * 8, tSensor[i], 8);
  
   //Option Array (48)
   byte options = EEPROM.read(48);
@@ -65,7 +65,7 @@ void loadSetup() {
   
   //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
   //Volume Settings for HLT (64-71), MASH (72 - 79) and KETTLE (80 - 87)
-  for (int i = VS_HLT; i <= VS_KETTLE; i++) {
+  for (byte i = VS_HLT; i <= VS_KETTLE; i++) {
     PIDp[i] = EEPROM.read(i * 5 + 49);
     PIDi[i] = EEPROM.read(i * 5 + 50);
     PIDd[i] = EEPROM.read(i * 5 + 51);
@@ -217,7 +217,7 @@ void checkConfig() {
       EEPROM.write(2047, 3);
     case 3:
       //Move Valve Configs from old 2-Byte EEPROM (136-151) to new 4-Byte Locations
-      for (int i=0; i<=7; i++) setValveCfg(i, PROMreadInt(136 + i * 2));
+      for (byte i=0; i<=7; i++) setValveCfg(i, PROMreadInt(136 + i * 2));
       EEPROM.write(2047, 4);
     case 4:
       //Default Steam Output Settings
@@ -259,7 +259,12 @@ byte getPwrRecovery() { return EEPROM.read(94); }
 void setPwrRecovery(byte funcValue) {  EEPROM.write(94, funcValue); }
 
 byte getABRecovery() { return EEPROM.read(95); }
-void setABRecovery(byte recoveryStep) { EEPROM.write(95, recoveryStep); }
+
+void setABRecovery(byte recoveryStep) { 
+  logABStep(recoveryStep);
+  EEPROM.write(95, recoveryStep);
+}
+
 byte getABSparge() { return EEPROM.read(96); }
 void setABSparge(byte spargeTemp) { EEPROM.write(96, spargeTemp); }
 unsigned long getABGrain() { return PROMreadLong(97); }
@@ -271,25 +276,25 @@ void setABBoil(unsigned int boilMins) { PROMwriteInt(103, boilMins); }
 unsigned int getABRatio() { return PROMreadInt(105); }
 void setABRatio(unsigned int mashRatio) { PROMwriteInt(105, mashRatio); }
 void loadABSteps(byte stepTemp[4], byte stepMins[4]) { 
-  for (int i=0; i<4; i++) {
+  for (byte i=0; i<4; i++) {
     stepTemp[i] = EEPROM.read(107 + i);
     stepMins[i] = EEPROM.read(111 + i);
   }
 }
 void saveABSteps(byte stepTemp[4], byte stepMins[4]) {
-  for (int i=0; i<4; i++) {
+  for (byte i=0; i<4; i++) {
     EEPROM.write(107 + i, stepTemp[i]);
     EEPROM.write(111 + i, stepMins[i]);
   }  
 }
-void loadABVols(unsigned long tgtVol[3]) { for (int i=0; i<3; i++) { tgtVol[i] = PROMreadLong(115 + i * 4); } }
-void saveABVols(unsigned long tgtVol[3]) { for (int i=0; i<3; i++) { PROMwriteLong(115 + i * 4, tgtVol[i]); } }
+void loadABVols(unsigned long tgtVol[3]) { for (byte i=0; i<3; i++) { tgtVol[i] = PROMreadLong(115 + i * 4); } }
+void saveABVols(unsigned long tgtVol[3]) { for (byte i=0; i<3; i++) { PROMwriteLong(115 + i * 4, tgtVol[i]); } }
 
 unsigned int getABAddsTrig() { return PROMreadInt(128); }
 void setABAddsTrig(unsigned int adds) { PROMwriteInt(128, adds); }
 
-void loadSetpoints() { for (int i=TS_HLT; i<=TS_KETTLE; i++) { setpoint[i] = EEPROM.read(131 + i); } }
-void saveSetpoints() { for (int i=TS_HLT; i<=TS_KETTLE; i++) { EEPROM.write(131 + i, setpoint[i]); } }
+void loadSetpoints() { for (byte i=TS_HLT; i<=TS_KETTLE; i++) { setpoint[i] = EEPROM.read(131 + i); } }
+void saveSetpoints() { for (byte i=TS_HLT; i<=TS_KETTLE; i++) { EEPROM.write(131 + i, setpoint[i]); } }
 
 unsigned int getTimerRecovery() { return PROMreadInt(134); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(134, newMins); }
@@ -331,21 +336,21 @@ void setProgRatio(byte preset, unsigned int ratio) { PROMwriteInt(preset * 55 + 
 unsigned int getProgRatio(byte preset) { return PROMreadInt(preset * 55 + 184); }
 
 void setProgSchedule(byte preset, byte stepTemp[4], byte stepMins[4]) {
-  for (int i=0; i<4; i++) {
+  for (byte i=0; i<4; i++) {
      EEPROM.write(preset * 55 + 186 + i, stepTemp[i]);
      EEPROM.write(preset * 55 + 190 + i, stepMins[i]);
   }
 }
 
 void getProgSchedule(byte preset, byte stepTemp[4], byte stepMins[4]) {
-  for (int i=0; i<4; i++) {
+  for (byte i=0; i<4; i++) {
     stepTemp[i] = EEPROM.read(preset * 55 + 186 + i);
     stepMins[i] = EEPROM.read(preset * 55 + 190 + i);
   }
 }
 
-void getProgVols(byte preset, unsigned long vols[3]) { for (int i=0; i<3; i++) vols[i] = PROMreadLong(preset * 55 + 194 + i * 4); }
-void setProgVols(byte preset, unsigned long vols[3]) { for (int i=0; i<3; i++) PROMwriteLong(preset * 55 + 194 + i * 4, vols[i]); }
+void getProgVols(byte preset, unsigned long vols[3]) { for (byte i=0; i<3; i++) vols[i] = PROMreadLong(preset * 55 + 194 + i * 4); }
+void setProgVols(byte preset, unsigned long vols[3]) { for (byte i=0; i<3; i++) PROMwriteLong(preset * 55 + 194 + i * 4, vols[i]); }
 
 void setProgHLT(byte preset, byte HLT) { EEPROM.write(preset * 55 + 206, HLT); }
 byte getProgHLT(byte preset) { return EEPROM.read(preset * 55 + 206); }

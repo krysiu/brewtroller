@@ -9,7 +9,7 @@ void doMon() {
 
   clearTimer();
   
-  for (int i = TS_HLT; i <= TS_KETTLE; i++) {
+  for (byte i = TS_HLT; i <= TS_KETTLE; i++) {
     if (PIDEnabled[i]) {
       pid[i].SetInputLimits(0, 255);
       pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
@@ -22,7 +22,7 @@ void doMon() {
   encMin = 0;
   encMax = 2;
   encCount = 0;
-  int lastCount = 1;
+  byte lastCount = 1;
   if (getPwrRecovery() == 2) {
     loadSetpoints();
     unsigned int newMins = getTimerRecovery();
@@ -141,7 +141,7 @@ void doMon() {
         timerLastWrite = 0;
       }
         
-      for (int i = TS_HLT; i <= TS_MASH; i++) {
+      for (byte i = TS_HLT; i <= TS_MASH; i++) {
         if (temp[i] == -1) printLCD(2, i * 14 + 1, "---"); else printLCDLPad(2, i * 14 + 1, itoa(temp[i], buf, 10), 3, ' ');
         printLCDLPad(3, i * 14 + 1, itoa(setpoint[i], buf, 10), 3, ' ');
         if (PIDEnabled[i]) {
@@ -201,10 +201,10 @@ void doMon() {
       convertAll();
       convStart = millis();
     } else if (millis() - convStart >= 750) {
-      for (int i = TS_HLT; i <= TS_BEEROUT; i++) temp[i] = read_temp(unit, tSensor[i]);
+      for (byte i = TS_HLT; i <= TS_BEEROUT; i++) temp[i] = read_temp(unit, tSensor[i]);
       convStart = 0;
     }
-    for (int i = TS_HLT; i <= TS_KETTLE; i++) {
+    for (byte i = TS_HLT; i <= TS_KETTLE; i++) {
       if (PIDEnabled[i]) {
         if (temp[i] == -1) {
           pid[i].SetMode(MANUAL);

@@ -27,7 +27,7 @@ byte scrollMenu(char sTitle[], byte numOpts, byte defOption) {
         topItem = encCount - 2;
         drawItems(numOpts, topItem);
       }
-      for (int i = 1; i <= 3; i++) if (i == encCount - topItem + 1) printLCD(i, 0, ">"); else printLCD(i, 0, " ");
+      for (byte i = 1; i <= 3; i++) if (i == encCount - topItem + 1) printLCD(i, 0, ">"); else printLCD(i, 0, " ");
       lastCount = encCount;
     }
     
@@ -61,14 +61,14 @@ byte scrollMenu(char sTitle[], byte numOpts, byte defOption) {
   }
 }
 
-void drawItems(int numOpts, int topItem) {
+void drawItems(byte numOpts, byte topItem) {
   //Uses Global menuopts[][20]
-  int maxOpt = topItem + 2;
+  byte maxOpt = topItem + 2;
   if (maxOpt > numOpts - 1) maxOpt = numOpts - 1;
-  for (int i = topItem; i <= maxOpt; i++) printLCD(i-topItem+1, 1, menuopts[i]);
+  for (byte i = topItem; i <= maxOpt; i++) printLCD(i-topItem+1, 1, menuopts[i]);
 }
 
-int getChoice(int numChoices, int iRow) {
+byte getChoice(byte numChoices, byte iRow) {
   //Uses Global menuopts[][20]
   //Force 18 Char Limit
   for (byte i = 0; i < numChoices; i++) menuopts[i][18] = '\0';
@@ -78,7 +78,7 @@ int getChoice(int numChoices, int iRow) {
   encMax = numChoices - 1;
  
   encCount = 0;
-  int lastCount = encCount + 1;
+  byte lastCount = encCount + 1;
   logStart_P(LOGSCROLLP);
   logField_P(LOGCHOICE);
   logFieldI(numChoices);
@@ -150,7 +150,7 @@ long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision
   encMin = 0;
   encMax = digits;
   encCount = 0;
-  int lastCount = 1;
+  byte lastCount = 1;
 
   lcdSetCustChar_P(0, CHARFIELD);
   lcdSetCustChar_P(1, CHARCURSOR);
@@ -170,8 +170,8 @@ long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision
         if (retValue > maxValue) retValue = maxValue;
       } else {
         cursorPos = encCount;
-        for (int i = (20 - digits + 1) / 2 - 1; i < (20 - digits + 1) / 2 - 1 + digits - precision; i++) lcdWriteCustChar(2, i, 0);
-        if (precision) for (int i = (20 - digits + 1) / 2 + digits - precision; i < (20 - digits + 1) / 2 + digits; i++) lcdWriteCustChar(2, i, 0);
+        for (byte i = (20 - digits + 1) / 2 - 1; i < (20 - digits + 1) / 2 - 1 + digits - precision; i++) lcdWriteCustChar(2, i, 0);
+        if (precision) for (byte i = (20 - digits + 1) / 2 + digits - precision; i < (20 - digits + 1) / 2 + digits; i++) lcdWriteCustChar(2, i, 0);
         printLCD(3, 8, " ");
         printLCD(3, 11, " ");
         if (cursorPos == digits) {
@@ -228,7 +228,7 @@ unsigned int getTimerValue(char sTitle[], unsigned int defMins) {
   encMin = 0;
   encMax = 2;
   encCount = 0;
-  int lastCount = 1;
+  byte lastCount = 1;
   
   clearLCD();
   printLCD(0,0,sTitle);
@@ -301,7 +301,7 @@ void getString(char sTitle[], char defValue[], byte chars) {
   encMin = 0;
   encMax = chars;
   encCount = 0;
-  int lastCount = 1;
+  byte lastCount = 1;
 
   lcdSetCustChar_P(0, CHARFIELD);
   lcdSetCustChar_P(1, CHARCURSOR);
@@ -316,7 +316,7 @@ void getString(char sTitle[], char defValue[], byte chars) {
         retValue[cursorPos] = enc2ASCII(encCount);
       } else {
         cursorPos = encCount;
-        for (int i = (20 - chars + 1) / 2 - 1; i < (20 - chars + 1) / 2 - 1 + chars; i++) lcdWriteCustChar(2, i, 0);
+        for (byte i = (20 - chars + 1) / 2 - 1; i < (20 - chars + 1) / 2 - 1 + chars; i++) lcdWriteCustChar(2, i, 0);
         printLCD(3, 8, " ");
         printLCD(3, 11, " ");
         if (cursorPos == chars) {

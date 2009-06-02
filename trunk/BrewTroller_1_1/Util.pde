@@ -1,4 +1,4 @@
-void ftoa(float val, char retStr[], int precision) {
+void ftoa(float val, char retStr[], byte precision) {
   char lbuf[11];
   itoa(val, retStr, 10);  
   if(val < 0) val = -val;
@@ -30,7 +30,7 @@ int availableMemory() {
 }
 
 void resetOutputs() {
-  for (int i = VS_HLT; i <= VS_STEAM; i++) {
+  for (byte i = VS_HLT; i <= VS_STEAM; i++) {
     setpoint[i] = 0;
     if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
   }
@@ -64,7 +64,7 @@ void clearTimer() {
   timerStatus = 0;
 }
 
-void printTimer(int iRow, int iCol) {
+void printTimer(byte iRow, byte iCol) {
   if (alarmStatus || timerValue > 0) {
     if (timerStatus) {
       unsigned long now = millis();
@@ -102,11 +102,20 @@ void printTimer(int iRow, int iCol) {
 }
 
 void setAlarm(boolean value) {
+  logStart_P(PSTR("DATA"));
+  logField_P(PSTR("ALARM"));
+  logFieldI(value);
+  logEnd();
   alarmStatus = value;
   digitalWrite(ALARM_PIN, value);
 }
 
 void setValves (unsigned long valveBits) {
+  logStart_P(PSTR("DATA"));
+  logField_P(PSTR("SETVLV"));
+  logFieldI(valveBits);
+  logEnd();
+  
 #ifdef MUXBOARDS
 //New MUX Valve Code
   //ground latchPin and hold low for as long as you are transmitting

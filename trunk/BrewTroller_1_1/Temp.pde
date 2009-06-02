@@ -14,7 +14,7 @@ void getDSAddr(byte addrRet[8]){
       return;
     }
     boolean found = 0;
-    for (int i = TS_HLT; i <= TS_BEEROUT; i++) {
+    for (byte i = TS_HLT; i <= TS_BEEROUT; i++) {
       if (scanAddr[0] == tSensor[i][0] &&
           scanAddr[1] == tSensor[i][1] &&
           scanAddr[2] == tSensor[i][2] &&
@@ -42,15 +42,14 @@ void convertAll() {
   ds.write(0x44,1);         // start conversion, with parasite power on at the end
 }
 
-float read_temp(int tUnit, byte* addr) { //Unit 1 for F and 0 for C
+float read_temp(boolean tUnit, byte* addr) { //Unit 1 for F and 0 for C
   float temp;
   int rawtemp;
-  byte i;
   byte data[12];
   ds.reset();
   ds.select(addr);   
   ds.write(0xBE);         // Read Scratchpad
-  for ( i = 0; i < 9; i++) data[i] = ds.read();
+  for (byte i = 0; i < 9; i++) data[i] = ds.read();
   if ( OneWire::crc8( data, 8) != data[8]) return -1;
   
   rawtemp = (data[1] << 8) + data[0];

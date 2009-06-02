@@ -40,7 +40,7 @@ void volumeTest(byte vessel) {
     if (millis() - lastUpdate > 750) {
       vol = readVolume(vSensor[vessel], calibVols, calibVals, zero);
       printLCDRPad(1, 11, itoa(analogRead(vSensor[vessel]), buf, 10), 8, ' ');
-      printLCDRPad(2, 11, itoa(analogRead(vSensor[vessel] - zero), buf, 10), 8, ' ');
+      printLCDRPad(2, 11, itoa(analogRead(vSensor[vessel]) - zero, buf, 10), 8, ' ');
       ftoa(vol/1000.0, buf, 2);
       printLCDRPad(3, 11, buf, 8, ' ');
       lastUpdate = millis();

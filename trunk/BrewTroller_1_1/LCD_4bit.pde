@@ -48,7 +48,7 @@ char printLCDRPad(byte iRow, byte iCol, char sText[], byte length, char pad) {
  lcd.setCursor(iCol, iRow);
  lcd.print(sText);
  if (strlen(sText) < length) {
-   for (int i=0; i < length-strlen(sText) ; i++) lcd.print(pad);
+   for (byte i=0; i < length-strlen(sText) ; i++) lcd.print(pad);
  }
 }  
 
