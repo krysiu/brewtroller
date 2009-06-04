@@ -327,7 +327,7 @@ void doAutoBrew() {
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 11:
       setABRecovery(11); 
-      setpoint[TS_KETTLE] = 212;
+      setpoint[TS_KETTLE] = getBoilTemp();
       boilStage(boilMins, boilAdds);
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 12:
@@ -508,15 +508,25 @@ void delayStart(int iMins) {
       printTimer(1,7);
       if (enterStatus == 1) {
         //Turn off heat outputs to keep from overheating if menu is up
-        popStepMenu();
-        byte lastOption = scrollMenu("AutoBrew Delay Menu", 3, 0);
-        if (lastOption == 0) redraw = 1;
-        else if (lastOption == 1) return;
-        else if (lastOption == 2) {
+        resetOutputs();
+        enterStatus = 0;
+        redraw = 1;
+        strcpy_P(menuopts[0], CANCEL);
+        strcpy_P(menuopts[1], PSTR("Reset Timer"));
+        strcpy_P(menuopts[2], PSTR("Pause Timer"));
+        strcpy_P(menuopts[3], SKIPSTEP);
+        strcpy_P(menuopts[4], ABORTAB);
+        byte lastOption = scrollMenu("AutoBrew Delay Menu", 5, 0);
+        if (lastOption == 1) {
+          printLCDRPad(0, 14, "", 6, ' ');
+          setTimer(iMins);
+        } else if (lastOption == 2) pauseTimer();
+        else if (lastOption == 3) return;
+        else if (lastOption == 4) {
             if (confirmExit() == 1) {
               enterStatus = 2;
               return;
-            } else redraw = 1; break;
+            }
         }
         if (redraw) break;
       }
@@ -667,15 +677,27 @@ void mashStep(char sTitle[ ], int iMins) {
 
       if (doPrompt && preheated && enterStatus == 1) { enterStatus = 0; break; }
       else if (enterStatus == 1) {
-        popStepMenu();
-        byte lastOption = scrollMenu("AutoBrew Mash Menu", 3, 0);
-        if (lastOption == 0) redraw = 1;
-        else if (lastOption == 1) return;
-        else if (lastOption == 2) {
+        resetOutputs();
+        enterStatus = 0;
+        redraw = 1;
+        strcpy_P(menuopts[0], CANCEL);
+        if (timerValue > 0) strcpy_P(menuopts[1], PSTR("Reset Timer"));
+        else strcpy_P(menuopts[1], PSTR("Start Timer"));
+        strcpy_P(menuopts[2], PSTR("Pause Timer"));
+        strcpy_P(menuopts[3], SKIPSTEP);
+        strcpy_P(menuopts[4], ABORTAB);
+        byte lastOption = scrollMenu("AutoBrew Mash Menu", 5, 0);
+        if (lastOption == 1) {
+          preheated = 1;
+          printLCDRPad(0, 14, "", 6, ' ');
+          setTimer(iMins);
+        } else if (lastOption == 2) pauseTimer();
+        else if (lastOption == 3) return;
+        else if (lastOption == 4) {
             if (confirmExit() == 1) {
               enterStatus = 2;
               return;
-            } else redraw = 1; break;
+            }
         }
         if (redraw) break;
       }
@@ -848,7 +870,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
     clearLCD();
     printLCD_P(0,0,PSTR("Kettle"));
     printLCD_P(0,8,PSTR("Boil"));
-    printLCD_P(2,7,PSTR("(WAIT)"));
+    if (setpoint[TS_KETTLE] > 0) printLCD_P(2,7,PSTR("(WAIT)"));
     printLCD_P(3,0,PSTR("[    ]"));
 
     if (unit) {
@@ -863,7 +885,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
     
     while(!preheated || timerValue > 0) {
       if (preheated) { if (alarmStatus) printLCD_P(0, 19, PSTR("!")); else printLCD_P(0, 19, SPACE); }
-      if (!preheated && temp >= setpoint[TS_KETTLE]) {
+      if (!preheated && temp >= setpoint[TS_KETTLE] && setpoint[TS_KETTLE] > 0) {
         preheated = 1;
         printLCDRPad(0, 14, "", 6, ' ');
         setTimer(iMins);
@@ -938,15 +960,27 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
 
       if (enterStatus == 1 && alarmStatus) setAlarm(0);
       else if (enterStatus == 1) {
-        popStepMenu();
-        byte lastOption = scrollMenu("AutoBrew Boil Menu", 3, 0);
-        if (lastOption == 0) redraw = 1;
-        else if (lastOption == 1) return;
-        else if (lastOption == 2) {
+        redraw = 1;
+        resetOutputs();
+        enterStatus = 0;
+        strcpy_P(menuopts[0], CANCEL);
+        if (timerValue > 0) strcpy_P(menuopts[1], PSTR("Reset Timer"));
+        else strcpy_P(menuopts[1], PSTR("Start Timer"));
+        strcpy_P(menuopts[2], PSTR("Pause Timer"));
+        strcpy_P(menuopts[3], SKIPSTEP);
+        strcpy_P(menuopts[4], ABORTAB);
+        byte lastOption = scrollMenu("AutoBrew Boil Menu", 5, 0);
+        if (lastOption == 1) {
+          preheated = 1;
+          printLCDRPad(0, 14, "", 6, ' ');
+          setTimer(iMins);
+        } else if (lastOption == 2) pauseTimer();
+        else if (lastOption == 3) return;
+        else if (lastOption == 4) {
             if (confirmExit() == 1) {
               enterStatus = 2;
               return;
-            } else redraw = 1; break;
+            }
         }
         if (redraw) break;
       }
@@ -1120,12 +1154,4 @@ unsigned int editHopSchedule (unsigned int sched) {
     else if (lastOption == 12) return retVal;
     else return sched;
   }
-}
-
-void popStepMenu() {
-        resetOutputs();
-        enterStatus = 0;
-        strcpy_P(menuopts[0], CANCEL);
-        strcpy_P(menuopts[1], SKIPSTEP);
-        strcpy_P(menuopts[2], ABORTAB);
 }

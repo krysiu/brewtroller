@@ -263,13 +263,16 @@ void cfgOutputs() {
     strcpy_P(menuopts[9], PSTR("Kettle PID Cycle"));
     strcpy_P(menuopts[10], PSTR("Kettle PID Gain"));
     strcpy_P(menuopts[11], PSTR("Kettle Hysteresis"));
-    if (PIDEnabled[VS_STEAM]) strcpy_P(menuopts[12], PSTR("Steam Mode: PID")); else strcpy_P(menuopts[12], PSTR("Steam Mode: On/Off"));
-    strcpy_P(menuopts[13], PSTR("Steam PID Cycle"));
-    strcpy_P(menuopts[14], PSTR("Steam PID Gain"));
-    strcpy_P(menuopts[15], PSTR("Steam Hysteresis"));
-    strcpy_P(menuopts[16], PSTR("Exit"));
+    strcpy_P(menuopts[12], PSTR("Boil Temp: "));
+    strcat(menuopts[12], itoa(getBoilTemp(), buf, 10));
+    if (unit) strcat_P(menuopts[12], PSTR("F")); else strcat_P(menuopts[12], PSTR("C"));
+    if (PIDEnabled[VS_STEAM]) strcpy_P(menuopts[13], PSTR("Steam Mode: PID")); else strcpy_P(menuopts[12], PSTR("Steam Mode: On/Off"));
+    strcpy_P(menuopts[14], PSTR("Steam PID Cycle"));
+    strcpy_P(menuopts[15], PSTR("Steam PID Gain"));
+    strcpy_P(menuopts[16], PSTR("Steam Hysteresis"));
+    strcpy_P(menuopts[17], PSTR("Exit"));
 
-    lastOption = scrollMenu("Configure Outputs", 17, lastOption);
+    lastOption = scrollMenu("Configure Outputs", 18, lastOption);
     if (lastOption == 0) PIDEnabled[VS_HLT] = PIDEnabled[VS_HLT] ^ 1;
     else if (lastOption == 1) PIDCycle[VS_HLT] = getValue("HLT Cycle Time", PIDCycle[VS_HLT], 3, 0, 255, "s");
     else if (lastOption == 2) setPIDGain("HLT PID Gain", &PIDp[VS_HLT], &PIDi[VS_HLT], &PIDd[VS_HLT]);
@@ -282,10 +285,11 @@ void cfgOutputs() {
     else if (lastOption == 9) PIDCycle[VS_KETTLE] = getValue("Kettle Cycle Time", PIDCycle[VS_KETTLE], 3, 0, 255, "s");
     else if (lastOption == 10) setPIDGain("Kettle PID Gain", &PIDp[VS_KETTLE], &PIDi[VS_KETTLE], &PIDd[VS_KETTLE]);
     else if (lastOption == 11) hysteresis[VS_KETTLE] = getValue("Kettle Hysteresis", hysteresis[VS_KETTLE], 3, 1, 255, dispUnit);
-    else if (lastOption == 12) PIDEnabled[VS_STEAM] = PIDEnabled[VS_STEAM] ^ 1;
-    else if (lastOption == 13) PIDCycle[VS_STEAM] = getValue("Steam Cycle Time", PIDCycle[VS_STEAM], 3, 0, 255, "s");
-    else if (lastOption == 14) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
-    else if (lastOption == 15) hysteresis[VS_STEAM] = getValue("Steam Hysteresis", hysteresis[VS_STEAM], 3, 1, 255, dispUnit);
+    else if (lastOption == 12) setBoilTemp(getValue("Boil Temp", getBoilTemp(), 3, 0, 255, dispUnit));
+    else if (lastOption == 13) PIDEnabled[VS_STEAM] = PIDEnabled[VS_STEAM] ^ 1;
+    else if (lastOption == 14) PIDCycle[VS_STEAM] = getValue("Steam Cycle Time", PIDCycle[VS_STEAM], 3, 0, 255, "s");
+    else if (lastOption == 15) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
+    else if (lastOption == 16) hysteresis[VS_STEAM] = getValue("Steam Hysteresis", hysteresis[VS_STEAM], 3, 1, 255, dispUnit);
     else return;
     saveSetup();
   } 

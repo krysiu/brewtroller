@@ -37,7 +37,7 @@ void saveSetup() {
   EEPROM.write(92, evapRate);
 
   //94 - 129 Reserved for Power Recovery
-  //130 ***OPEN***
+  //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
   //136-151 ***OPEN*** (Old Valve Profiles )
   //152-154 Power Recovery
@@ -85,7 +85,7 @@ void loadSetup() {
   evapRate = EEPROM.read(92);
 
   //94 - 129 Reserved for Power Recovery
-  //130 ***OPEN***
+  //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
   //136-151 ***OPEN*** (Old Valve Profiles )
   //152-154 Power Recovery
@@ -228,6 +228,10 @@ void checkConfig() {
       //If F else C
       if (EEPROM.read(48) & 1) EEPROM.write(93, 5); else EEPROM.write(93, 3);
       EEPROM.write(2047, 5);
+    case 5:
+      //Set Default Boil temp 212F/100C
+      if (EEPROM.read(48) & 1) setBoilTemp(212); else setBoilTemp(100);
+      EEPROM.write(2047, 6);
     default:
       //No EEPROM Upgrade Required
       return;
@@ -292,6 +296,9 @@ void saveABVols(unsigned long tgtVol[3]) { for (byte i=0; i<3; i++) { PROMwriteL
 
 unsigned int getABAddsTrig() { return PROMreadInt(128); }
 void setABAddsTrig(unsigned int adds) { PROMwriteInt(128, adds); }
+
+byte getBoilTemp() { return EEPROM.read(130); }
+void setBoilTemp(byte boilTemp) { EEPROM.write(130, boilTemp); }
 
 void loadSetpoints() { for (byte i=TS_HLT; i<=TS_KETTLE; i++) { setpoint[i] = EEPROM.read(131 + i); } }
 void saveSetpoints() { for (byte i=TS_HLT; i<=TS_KETTLE; i++) { EEPROM.write(131 + i, setpoint[i]); } }
