@@ -401,6 +401,7 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
   unsigned int zero[2];
   unsigned long vols[2];
   unsigned long lastUpdate = 0;
+  boolean fillAuto = 0;
   
   for (byte i = TS_HLT; i <= TS_MASH; i++) {
     zero[i] = getZeroVol(i);
@@ -428,13 +429,33 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
     printLCD_P(3, 17, PSTR("Off"));
 
     encMin = 0;
-    encMax = 5;
+    encMax = 6;
     encCount = 0;
     byte lastCount = 1;
     
     boolean redraw = 0;
     while(!redraw) {
       for (byte i = VS_HLT; i <= VS_MASH; i++) vols[i] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
+
+      if (fillAuto) {
+        if (vols[VS_HLT] < hltVol && vols[VS_MASH] < mashVol) {
+          printLCD_P(3, 0, PSTR("On "));
+          printLCD_P(3, 17, PSTR(" On"));
+          setValves(fillBoth);
+        } else if (vols[VS_HLT] < hltVol) {
+          printLCD_P(3, 0, PSTR("On "));
+          printLCD_P(3, 17, PSTR("Off"));
+          setValves(fillHLT);
+        } else if (vols[VS_MASH] < mashVol) {
+          printLCD_P(3, 0, PSTR("Off"));
+          printLCD_P(3, 17, PSTR(" On"));
+          setValves(fillMash);
+        } else {
+          printLCD_P(3, 0, PSTR("Off"));
+          printLCD_P(3, 17, PSTR("Off"));
+          setValves(0);
+        }
+      }
 
       if (millis() - lastUpdate > 500) {
         ftoa(vols[VS_HLT]/1000.0, buf, 2);
@@ -453,34 +474,37 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
       if (encCount != lastCount) {
         lastCount = encCount;
         if (lastCount == 0) printLCD_P(3, 4, PSTR("> Continue <"));
-        else if (lastCount == 1) printLCD_P(3, 4, PSTR("> Fill HLT <"));
-        else if (lastCount == 2) printLCD_P(3, 4, PSTR("> Fill Mash<"));
-        else if (lastCount == 3) printLCD_P(3, 4, PSTR("> Fill Both<"));
-        else if (lastCount == 4) printLCD_P(3, 4, PSTR(">  All Off <"));
-        else if (lastCount == 5) printLCD_P(3, 4, PSTR(">   Abort  <"));
+        else if (lastCount == 1) printLCD_P(3, 4, PSTR("> Auto Fill<"));
+        else if (lastCount == 2) printLCD_P(3, 4, PSTR("> Fill HLT <"));
+        else if (lastCount == 3) printLCD_P(3, 4, PSTR("> Fill Mash<"));
+        else if (lastCount == 4) printLCD_P(3, 4, PSTR("> Fill Both<"));
+        else if (lastCount == 5) printLCD_P(3, 4, PSTR(">  All Off <"));
+        else if (lastCount == 6) printLCD_P(3, 4, PSTR(">   Abort  <"));
       }
       if (enterStatus == 1) {
         enterStatus = 0;
+        fillAuto = 0;
         if (encCount == 0) return;
-        else if (encCount == 1) {
+        else if (encCount == 1) fillAuto = 1;
+        else if (encCount == 2) {
             printLCD_P(3, 0, PSTR("On "));
             printLCD_P(3, 17, PSTR("Off"));
             setValves(fillHLT);
-        } else if (encCount == 2) {
+        } else if (encCount == 3) {
             printLCD_P(3, 0, PSTR("Off"));
             printLCD_P(3, 17, PSTR(" On"));
             setValves(fillMash);
-        } else if (encCount == 3) {
+        } else if (encCount == 4) {
             printLCD_P(3, 0, PSTR("On "));
             printLCD_P(3, 17, PSTR(" On"));
             setValves(fillBoth);
-        } else if (encCount == 4) {
+        } else if (encCount == 5) {
             printLCD_P(3, 0, PSTR("Off"));
             printLCD_P(3, 17, PSTR("Off"));
             setValves(0);
-        } else if (encCount == 5) {
-            if (confirmExit()) {
-              setValves(0);
+        } else if (encCount == 6) {
+          setValves(0);
+          if (confirmExit()) {
               enterStatus = 2;
               return;
             } else redraw = 1;
