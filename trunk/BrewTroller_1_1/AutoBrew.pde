@@ -402,6 +402,8 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
   unsigned long vols[2];
   unsigned long lastUpdate = 0;
   boolean fillAuto = 0;
+  unsigned long volReadings[2][5];
+  byte volCount = 0;
   
   for (byte i = TS_HLT; i <= TS_MASH; i++) {
     zero[i] = getZeroVol(i);
@@ -435,7 +437,25 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
     
     boolean redraw = 0;
     while(!redraw) {
-      for (byte i = VS_HLT; i <= VS_MASH; i++) vols[i] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
+      //Check volume every 200 ms and update screen with average of 5 readings (once per second)      
+      if (millis() - lastUpdate > 200 * volCount) {
+        for (byte i = VS_HLT; i <= VS_MASH; i++) volReadings[i][volCount] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
+        volCount++;
+        for (byte i = VS_HLT; i <= VS_MASH; i++) vols[i] = (volReadings[i][0] + volReadings[i][1] + volReadings[i][2] + volReadings[i][3] + volReadings[i][4]) / 5;
+        if (volCount > 4) {
+          volCount = 0;
+          ftoa(vols[VS_HLT]/1000.0, buf, 2);
+          truncFloat(buf, 6);
+          printLCDRPad(2, 0, buf, 7, ' ');
+          logVolume(VS_HLT, vols[VS_HLT]);
+
+          ftoa(vols[VS_MASH]/1000.0, buf, 2);
+          truncFloat(buf, 6);
+          printLCDLPad(2, 14, buf, 6, ' ');
+          logVolume(VS_MASH, vols[VS_MASH]);
+          lastUpdate = millis();
+        }
+      }
 
       if (fillAuto) {
         if (vols[VS_HLT] < hltVol && vols[VS_MASH] < mashVol) {
@@ -457,20 +477,6 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
         }
       }
 
-      if (millis() - lastUpdate > 500) {
-        ftoa(vols[VS_HLT]/1000.0, buf, 2);
-        truncFloat(buf, 6);
-        printLCDRPad(2, 0, buf, 7, ' ');
-        logVolume(VS_HLT, vols[VS_HLT]);
-
-        ftoa(vols[VS_MASH]/1000.0, buf, 2);
-        truncFloat(buf, 6);
-        printLCDLPad(2, 14, buf, 6, ' ');
-        logVolume(VS_MASH, vols[VS_MASH]);
-        
-        lastUpdate = millis();
-      }
-      
       if (encCount != lastCount) {
         lastCount = encCount;
         if (lastCount == 0) printLCD_P(3, 4, PSTR("> Continue <"));
@@ -579,6 +585,8 @@ void mashStep(char sTitle[ ], int iMins) {
   unsigned long lastUpdate = 0;
   boolean heatStatus[2] = { 0, 0 };
   boolean preheated = 0;
+  unsigned long volReadings[2][5];
+  byte volCount = 0;
   setAlarm(0);
   boolean doPrompt = 0;
   if (iMins == MINS_PROMPT) doPrompt = 1;
@@ -628,8 +636,9 @@ void mashStep(char sTitle[ ], int iMins) {
         if(doPrompt) printLCD_P(2, 5, PSTR(">Continue<")); else setTimer(iMins);
       }
 
+
+
       for (byte i = VS_HLT; i <= VS_MASH; i++) {
-        vols[i] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
         if (temp[i] == -1) printLCD_P(2, i * 16, PSTR("---")); else printLCDLPad(2, i * 16, itoa(temp[i], buf, 10), 3, ' ');
         printLCDLPad(3, i * 14 + 1, itoa(setpoint[i], buf, 10), 3, ' ');
         if (PIDEnabled[i]) {
@@ -640,19 +649,27 @@ void mashStep(char sTitle[ ], int iMins) {
         } else if (heatStatus[i]) strcpy_P(buf, PSTR(" On")); else strcpy_P(buf, PSTR("Off")); 
         printLCDLPad(3, i * 5 + 6, buf, 3, ' ');
       }
-      if (millis() - lastUpdate > 500) {
-        ftoa(vols[VS_HLT]/1000.0, buf, 2);
-        truncFloat(buf, 6);
-        printLCDRPad(1, 0, buf, 7, ' ');
-        logVolume(VS_HLT, vols[VS_HLT]);
+
+      //Check volume every 200 ms and update screen with average of 5 readings (once per second)      
+      if (millis() - lastUpdate > 200 * volCount) {
+        for (byte i = VS_HLT; i <= VS_MASH; i++) volReadings[i][volCount] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
+        volCount++;
+        for (byte i = VS_HLT; i <= VS_MASH; i++) vols[i] = (volReadings[i][0] + volReadings[i][1] + volReadings[i][2] + volReadings[i][3] + volReadings[i][4]) / 5;
+        if (volCount > 4) {
+          volCount = 0;
+          ftoa(vols[VS_HLT]/1000.0, buf, 2);
+          truncFloat(buf, 6);
+          printLCDRPad(1, 0, buf, 7, ' ');
+          logVolume(VS_HLT, vols[VS_HLT]);
         
-        ftoa(vols[VS_MASH]/1000.0, buf, 2);
-        truncFloat(buf, 6);
-        printLCDLPad(1, 14, buf, 6, ' ');
-        logVolume(VS_MASH, vols[VS_MASH]);
-                
-        lastUpdate = millis();
+          ftoa(vols[VS_MASH]/1000.0, buf, 2);
+          truncFloat(buf, 6);
+          printLCDLPad(1, 14, buf, 6, ' ');
+          logVolume(VS_MASH, vols[VS_MASH]);
+          lastUpdate = millis();
+        }
       }
+
       if (preheated && !doPrompt) printTimer(2, 7);
 
       if (convStart == 0) {
@@ -755,7 +772,9 @@ void manSparge() {
   unsigned int zero[2];
   unsigned long vols[2];
   unsigned long lastUpdate = 0;
-    
+  unsigned long volReadings[2][5];
+  byte volCount = 0;
+  
   for (byte i = TS_HLT; i <= TS_MASH; i++) {
     zero[i] = getZeroVol(i);
     getVolCalibs(i, calibVols[i], calibVals[i]);
@@ -791,20 +810,24 @@ void manSparge() {
     
     boolean redraw = 0;
     while(!redraw) {
-      for (byte i = VS_HLT; i <= VS_MASH; i++) vols[i] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
-
-      if (millis() - lastUpdate > 500) {
-        ftoa(vols[VS_HLT]/1000.0, buf, 2);
-        truncFloat(buf, 6);
-        printLCDRPad(2, 0, buf, 7, ' ');
-        logVolume(VS_HLT, vols[VS_HLT]);
+      //Check volume every 200 ms and update screen with average of 5 readings (once per second)      
+      if (millis() - lastUpdate > 200 * volCount) {
+        for (byte i = VS_HLT; i <= VS_MASH; i++) volReadings[i][volCount] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
+        volCount++;
+        for (byte i = VS_HLT; i <= VS_MASH; i++) vols[i] = (volReadings[i][0] + volReadings[i][1] + volReadings[i][2] + volReadings[i][3] + volReadings[i][4]) / 5;
+        if (volCount > 4) {
+          volCount = 0;
+          ftoa(vols[VS_HLT]/1000.0, buf, 2);
+          truncFloat(buf, 6);
+          printLCDRPad(2, 0, buf, 7, ' ');
+          logVolume(VS_HLT, vols[VS_HLT]);
         
-        ftoa(vols[VS_MASH]/1000.0, buf, 2);
-        truncFloat(buf, 6);
-        printLCDLPad(2, 14, buf, 6, ' ');
-        logVolume(VS_MASH, vols[VS_MASH]);
-        
-        lastUpdate = millis();
+          ftoa(vols[VS_MASH]/1000.0, buf, 2);
+          truncFloat(buf, 6);
+          printLCDLPad(2, 14, buf, 6, ' ');
+          logVolume(VS_MASH, vols[VS_MASH]);
+          lastUpdate = millis();
+        }
       }
 
       if (encCount != lastCount) {
@@ -878,6 +901,9 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
   unsigned long calibVols[10];
   unsigned long vol;
   unsigned long lastUpdate = 0;
+  unsigned long volReadings[5];
+  byte volCount = 0;
+  
   unsigned int zero = getZeroVol(VS_KETTLE);
   getVolCalibs(VS_KETTLE, calibVols, calibVals);
     
@@ -914,7 +940,22 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         printLCDRPad(0, 14, "", 6, ' ');
         setTimer(iMins);
       }
-      vol = readVolume(vSensor[VS_KETTLE], calibVols, calibVals, zero);
+
+      //Check volume every 200 ms and update screen with average of 5 readings (once per second)      
+      if (millis() - lastUpdate > 200 * volCount) {
+        volReadings[volCount] = readVolume(vSensor[VS_KETTLE], calibVols, calibVals, zero);
+        volCount++;
+        vol = (volReadings[0] + volReadings[1] + volReadings[2] + volReadings[3] + volReadings[4]) / 5;
+        if (volCount > 4) {
+          volCount = 0;
+          ftoa(vol/1000.0, buf, 2);
+          truncFloat(buf, 6);
+          printLCDRPad(1, 0, buf, 7, ' ');
+          logVolume(VS_KETTLE, vol);
+          lastUpdate = millis();
+        }
+      }
+      
       if (temp == -1) printLCD_P(2, 0, PSTR("---")); else printLCDLPad(2, 0, itoa(temp, buf, 10), 3, ' ');
       printLCDLPad(3, 1, itoa(setpoint[TS_KETTLE], buf, 10), 3, ' ');
       if (PIDEnabled[TS_KETTLE]) {
@@ -924,15 +965,6 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         else { itoa(pct, buf, 10); strcat(buf, "%"); }
       } else if (heatStatus) strcpy_P(buf, PSTR(" On")); else strcpy_P(buf, PSTR("Off")); 
       printLCDLPad(3, 6, buf, 3, ' ');
-
-     if (millis() - lastUpdate > 500) {
-        ftoa(vol/1000.0, buf, 2);
-        truncFloat(buf, 6);
-        printLCDRPad(1, 0, buf, 7, ' ');
-        logVolume(VS_KETTLE, vol);
-        
-        lastUpdate = millis();
-      }
 
       if (preheated) {
         printTimer(2, 7);
