@@ -284,7 +284,7 @@ void doAutoBrew() {
       if (stepTemp[STEP_DOUGHIN]) {
         setABRecovery(5);
         setpoint[TS_MASH] = stepTemp[STEP_DOUGHIN];
-        int recoverMins = getTimerRecovery();
+        unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 5 && recoverMins > 0) mashStep("Dough In", recoverMins); else mashStep("Dough In", stepMins[STEP_DOUGHIN]);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
@@ -292,7 +292,7 @@ void doAutoBrew() {
       if (stepTemp[STEP_PROTEIN]) {
         setABRecovery(6);
         setpoint[TS_MASH] = stepTemp[STEP_PROTEIN];
-        int recoverMins = getTimerRecovery();
+        unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 6 && recoverMins > 0) mashStep("Protein", recoverMins); else mashStep("Protein", stepMins[STEP_PROTEIN]);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
@@ -300,7 +300,7 @@ void doAutoBrew() {
       if (stepTemp[STEP_SACCH]) {
         setABRecovery(7);
         setpoint[TS_MASH] = stepTemp[STEP_SACCH];
-        int recoverMins = getTimerRecovery();
+        unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 7 && recoverMins > 0) mashStep("Sacch Rest", recoverMins); else mashStep("Sacch Rest", stepMins[STEP_SACCH]);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
@@ -308,7 +308,7 @@ void doAutoBrew() {
       if (stepTemp[STEP_MASHOUT]) {
         setABRecovery(8);
         setpoint[TS_MASH] = stepTemp[STEP_MASHOUT];
-        int recoverMins = getTimerRecovery();
+        unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 8 && recoverMins > 0) mashStep("Mash Out", recoverMins); else mashStep("Mash Out", stepMins[STEP_MASHOUT]);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
@@ -326,10 +326,13 @@ void doAutoBrew() {
       manSparge();
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 11:
-      setABRecovery(11); 
-      setpoint[TS_KETTLE] = getBoilTemp();
-      boilStage(boilMins, boilAdds);
-      if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
+      {
+        setABRecovery(11); 
+        setpoint[TS_KETTLE] = getBoilTemp();
+        unsigned int recoverMins = getTimerRecovery();
+        if (recoveryStep == 11 && recoverMins > 0) boilStage(recoverMins, boilAdds); else boilStage(boilMins, boilAdds);
+        if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
+      }
     case 12:
       setABRecovery(12); 
       manChill(pitchTemp);
