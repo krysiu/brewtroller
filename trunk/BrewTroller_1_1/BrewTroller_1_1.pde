@@ -1,4 +1,4 @@
-#define BUILD 222 
+#define BUILD 223 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -74,6 +74,9 @@ using LiquidCrystal Fix by Donald Weiman:
 #define MODULE_SYSTEST
 #define MODULE_EEPROMUPGRADE
 
+//MODULE SERIALIO Requires that MUXBOARDS or PV34REMAP be set and automatically disables Brew Monitor regardless of the MODULE_BREWMONITOR setting
+#define MODULE_SERIALIO
+
 //The following module converts all EEPROM settings between US and Metric when system unit setting is altered (5.6KB)
 #define MODULE_UNITCONV
 //**********************************************************************************
@@ -93,6 +96,17 @@ using LiquidCrystal Fix by Donald Weiman:
 //*****************************************************************************************************************************
 #include <avr/pgmspace.h>
 #include <PID_Beta6.h>
+
+//Compile Dependencies
+#if defined MODULE_SERIALIO
+#if defined DEBUG || defined MUXBOARDS || defined PV34REMAP
+#define __LOGGING
+#endif
+#else
+#ifdef MODULE_BREWMONITOR
+#define __BREWMON
+#endif
+#endif
 
 //Pin and Interrupt Definitions
 #define ENCA_PIN 2
@@ -226,6 +240,9 @@ char msg[20][21];
 byte msgField = 0;
 boolean msgQueued = 0;
 
+const char BT[] PROGMEM = "BrewTroller";
+const char BTVER[] PROGMEM = "v1.1";
+
 //Log Message Classes
 const char LOGAB[] PROGMEM = "AB";
 const char LOGCMD[] PROGMEM = "CMD";
@@ -235,8 +252,6 @@ const char LOGSYS[] PROGMEM = "SYSTEM";
 
 //Other PROGMEM Repeated Strings
 const char PWRLOSSRECOVER[] PROGMEM = "PLR";
-const char BT[] PROGMEM = "BrewTroller";
-const char BTVER[] PROGMEM = "v1.1";
 const char CANCEL[] PROGMEM = "Cancel";
 const char SPACE[] PROGMEM = " ";
 const char INIT_EEPROM[] PROGMEM = "Initialize EEPROM";
@@ -245,7 +260,8 @@ const char LOGSCROLLR[] PROGMEM = "RESULT";
 const char LOGCHOICE[] PROGMEM = "CHOICE";
 const char SKIPSTEP[] PROGMEM = "Skip Step";
 const char ABORTAB[] PROGMEM = "Abort AutoBrew";
-const char LOGSPLASH[] PROGMEM = "Splash Screen";
+const char LOGSPLASH[] PROGMEM = "SPLASH";
+
 
 //Custom LCD Chars
 const byte CHARFIELD[] PROGMEM = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};

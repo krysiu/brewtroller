@@ -969,16 +969,16 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
       if (preheated) {
         printTimer(2, 7);
         if ((boilAdds ^ triggered) & 1) { setAlarm(1); triggered |= 1; setABAddsTrig(triggered); }
-        if (((boilAdds ^ triggered) & 2) && timerValue <= 105 * 60) { setAlarm(1); triggered |= 2; setABAddsTrig(triggered); } //105 Min
-        if (((boilAdds ^ triggered) & 4) && timerValue <= 90 * 60) { setAlarm(1); triggered |= 4; setABAddsTrig(triggered); } //90 Min
-        if (((boilAdds ^ triggered) & 8) && timerValue <= 75 * 60) { setAlarm(1); triggered |= 8; setABAddsTrig(triggered); } //75 Min
-        if (((boilAdds ^ triggered) & 16) && timerValue <= 60 * 60) { setAlarm(1); triggered |= 16; setABAddsTrig(triggered); } //60 Min
-        if (((boilAdds ^ triggered) & 32) && timerValue <= 45 * 60) { setAlarm(1); triggered |= 32; setABAddsTrig(triggered); } //45 Min
-        if (((boilAdds ^ triggered) & 64) && timerValue <= 30 * 60) { setAlarm(1); triggered |= 64; setABAddsTrig(triggered); } //30 Min
-        if (((boilAdds ^ triggered) & 128) && timerValue <= 20 * 60) { setAlarm(1); triggered |= 128; setABAddsTrig(triggered); } //20 Min
-        if (((boilAdds ^ triggered) & 256) && timerValue <= 15 * 60) { setAlarm(1); triggered |= 256; setABAddsTrig(triggered); } //15 Min
-        if (((boilAdds ^ triggered) & 512) && timerValue <= 10 * 60) { setAlarm(1); triggered |= 512; setABAddsTrig(triggered); } //10 Min
-        if (((boilAdds ^ triggered) & 1024) && timerValue <= 5 * 60) { setAlarm(1); triggered |= 1024; setABAddsTrig(triggered); } //5 Min
+        if (((boilAdds ^ triggered) & 2) && timerValue <= 105 * 60000) { setAlarm(1); triggered |= 2; setABAddsTrig(triggered); } //105 Min
+        if (((boilAdds ^ triggered) & 4) && timerValue <= 90 * 60000) { setAlarm(1); triggered |= 4; setABAddsTrig(triggered); } //90 Min
+        if (((boilAdds ^ triggered) & 8) && timerValue <= 75 * 60000) { setAlarm(1); triggered |= 8; setABAddsTrig(triggered); } //75 Min
+        if (((boilAdds ^ triggered) & 16) && timerValue <= 60 * 60000) { setAlarm(1); triggered |= 16; setABAddsTrig(triggered); } //60 Min
+        if (((boilAdds ^ triggered) & 32) && timerValue <= 45 * 60000) { setAlarm(1); triggered |= 32; setABAddsTrig(triggered); } //45 Min
+        if (((boilAdds ^ triggered) & 64) && timerValue <= 30 * 60000) { setAlarm(1); triggered |= 64; setABAddsTrig(triggered); } //30 Min
+        if (((boilAdds ^ triggered) & 128) && timerValue <= 20 * 60000) { setAlarm(1); triggered |= 128; setABAddsTrig(triggered); } //20 Min
+        if (((boilAdds ^ triggered) & 256) && timerValue <= 15 * 60000) { setAlarm(1); triggered |= 256; setABAddsTrig(triggered); } //15 Min
+        if (((boilAdds ^ triggered) & 512) && timerValue <= 10 * 60000) { setAlarm(1); triggered |= 512; setABAddsTrig(triggered); } //10 Min
+        if (((boilAdds ^ triggered) & 1024) && timerValue <= 5 * 60000) { setAlarm(1); triggered |= 1024; setABAddsTrig(triggered); } //5 Min
       }
       if (convStart == 0) {
         convertAll();
@@ -1014,8 +1014,10 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         }
       }
 
-      if (enterStatus == 1 && alarmStatus) setAlarm(0);
-      else if (enterStatus == 1) {
+      if (enterStatus == 1 && alarmStatus) {
+        enterStatus = 0;
+        setAlarm(0);
+      } else if (enterStatus == 1) {
         redraw = 1;
         resetOutputs();
         enterStatus = 0;
