@@ -21,14 +21,14 @@ void assignSensor() {
   encMax = 5;
   encCount = 0;
   byte lastCount = 1;
-  char dispTitle[6][21] = {
-    "Hot Liquor Tank",
-    "Mash Tun",
-    "Brew Kettle",
-    "H2O In",
-    "H2O Out",
-    "Beer Out"
-  };
+  
+  char dispTitle[6][21];
+  strcpy_P(dispTitle[0], PSTR("Hot Liquor Tank"));
+  strcpy_P(dispTitle[1], PSTR("Mash Tun"));
+  strcpy_P(dispTitle[2], PSTR("Brew Kettle"));
+  strcpy_P(dispTitle[3], PSTR("H2O In"));
+  strcpy_P(dispTitle[4], PSTR("H2O Out"));
+  strcpy_P(dispTitle[5], PSTR("Beer Out"));
   
   while (1) {
     if (encCount != lastCount) {
@@ -49,8 +49,8 @@ void assignSensor() {
       strcpy_P(menuopts[1], PSTR("Delete Address"));
       strcpy_P(menuopts[2], PSTR("Close Menu"));
       strcpy_P(menuopts[3], PSTR("Exit"));
-      lastCount = scrollMenu(dispTitle[lastCount], 4, 0);
-      if (lastCount == 0) {
+      byte selected = scrollMenu(dispTitle[lastCount], 4, 0);
+      if (selected == 0) {
         clearLCD();
         printLCDCenter(0, 0, dispTitle[lastCount], 20);
         printLCD_P(1,0,PSTR("Disconnect all other"));
@@ -60,8 +60,8 @@ void assignSensor() {
           strcpy_P(menuopts[1], CANCEL);
           if (getChoice(2, 3) == 0) getDSAddr(tSensor[lastCount]);
         }
-      } else if (lastCount == 1) for (byte i = 0; i <8; i++) tSensor[lastCount][i] = 0;
-      else if (lastCount > 2) return;
+      } else if (selected == 1) for (byte i = 0; i <8; i++) tSensor[lastCount][i] = 0;
+      else if (selected > 2) return;
 
       saveSetup();
       encMin = 0;
@@ -318,7 +318,7 @@ unsigned long cfgValveProfile (char sTitle[], unsigned long defValue) {
       lastCount = encCount;
       
       if (lastCount < firstBit || lastCount > firstBit + 17) {
-        if (lastCount < firstBit) firstBit = lastCount; else if (lastCount < encMax) firstBit = lastCount - 17;
+        if (lastCount < firstBit) firstBit = lastCount; else if (lastCount < encMax ) firstBit = lastCount - 17;
         for (byte i = firstBit; i < min(encMax, firstBit + 18); i++) if (retValue & ((unsigned long)1<<i)) printLCD_P(1, i - firstBit + 1, PSTR("1")); else printLCD_P(1, i - firstBit + 1, PSTR("0"));
       }
 
@@ -327,6 +327,7 @@ unsigned long cfgValveProfile (char sTitle[], unsigned long defValue) {
         buf[1] = '\0';
         printLCD(2, i - firstBit + 1, buf);
       }
+
       if (firstBit > 0) printLCD_P(2, 0, PSTR("<")); else printLCD_P(2, 0, PSTR(" "));
       if (firstBit + 18 < encMax) printLCD_P(2, 19, PSTR(">")); else printLCD_P(2, 19, PSTR(" "));
       if (lastCount == encMax) {

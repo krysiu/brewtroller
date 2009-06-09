@@ -31,8 +31,8 @@ void clearLCD(){ lcd.clear(); }
 
 void printLCDCenter(byte iRow, byte iCol, char sText[], byte fieldWidth){
  printLCDRPad(iRow, iCol, "", fieldWidth, ' ');
- lcd.setCursor(iCol, iRow);
- if (strlen(sText) < fieldWidth) for (byte i = 0; i < (fieldWidth - strlen(sText)) / 2; i++) lcd.print(pgm_read_byte(SPACE));
+ if (strlen(sText) < fieldWidth) lcd.setCursor(iCol + ((fieldWidth - strlen(sText)) / 2), iRow);
+ else lcd.setCursor(iCol, iRow);
  lcd.print(sText);
 } 
 
