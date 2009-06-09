@@ -1,4 +1,4 @@
-#define BUILD 224 
+#define BUILD 225 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -19,6 +19,15 @@ using LiquidCrystal Fix by Donald Weiman:
 //*****************************************************************************************************************************
 // USER COMPILE OPTIONS
 //*****************************************************************************************************************************
+
+//**********************************************************************************
+// UNIT (Metric/US)
+//**********************************************************************************
+// By default BrewTroller will use US Units
+// Uncomment USEMETRIC below to use metric instead
+//
+//#define USEMETRIC
+//**********************************************************************************
 
 
 //**********************************************************************************
@@ -71,14 +80,10 @@ using LiquidCrystal Fix by Donald Weiman:
 // how much space these chunks of code use.
 //
 #define MODULE_BREWMONITOR
-#define MODULE_SYSTEST
-#define MODULE_EEPROMUPGRADE
 
-//MODULE SERIALIO Requires that MUXBOARDS or PV34REMAP be set and automatically disables Brew Monitor regardless of the MODULE_BREWMONITOR setting
-#define MODULE_SERIALIO
+//Include default Single Infusion and Multi-Rest AutoBrew Saved programs
+#define MODULE_DEFAULTABPROGS
 
-//The following module converts all EEPROM settings between US and Metric when system unit setting is altered (5.6KB)
-#define MODULE_UNITCONV
 //**********************************************************************************
 
 
@@ -96,17 +101,6 @@ using LiquidCrystal Fix by Donald Weiman:
 //*****************************************************************************************************************************
 #include <avr/pgmspace.h>
 #include <PID_Beta6.h>
-
-//Compile Dependencies
-#if defined MODULE_SERIALIO
-#if defined DEBUG || defined MUXBOARDS || defined PV34REMAP
-#define __LOGGING
-#endif
-#else
-#ifdef MODULE_BREWMONITOR
-#define __BREWMON
-#endif
-#endif
 
 //Pin and Interrupt Definitions
 #define ENCA_PIN 2
@@ -175,17 +169,6 @@ using LiquidCrystal Fix by Donald Weiman:
 #define VLV_CHILLH2O 6
 #define VLV_CHILLBEER 7
 
-//Unit Definitions
-//International: Celcius, Liter, Kilogram
-//US: Fahrenheit, Gallon, US Pound
-#define UNIT_INTL 0
-#define UNIT_US 1
-
-//System Types
-#define SYS_DIRECT 0
-#define SYS_HERMS 1
-#define SYS_STEAM 2
-
 //Heat Output Pin Array
 byte heatPin[4] = { HLTHEAT_PIN, MASHHEAT_PIN, KETTLEHEAT_PIN, STEAMHEAT_PIN };
 
@@ -202,7 +185,6 @@ byte enterStatus = 0;
 byte tSensor[6][8];
 
 //Unit Globals (Volume in thousandths)
-boolean unit;
 unsigned long capacity[3];
 unsigned long volume[3];
 unsigned int volLoss[3];
@@ -210,7 +192,7 @@ unsigned int volLoss[3];
 byte evapRate;
 
 //Output Globals
-byte sysType = SYS_DIRECT;
+//byte sysType = SYS_DIRECT;
 boolean PIDEnabled[4] = { 0, 0, 0, 0 };
 
 //Shared menuOptions Array
@@ -236,7 +218,7 @@ unsigned long timerLastWrite = 0;
 boolean timerStatus = 0;
 boolean alarmStatus = 0;
 
-char msg[20][21];
+char msg[25][21];
 byte msgField = 0;
 boolean msgQueued = 0;
 
@@ -249,6 +231,8 @@ const char LOGCMD[] PROGMEM = "CMD";
 const char LOGDEBUG[] PROGMEM = "DEBUG";
 const char LOGMENU[] PROGMEM = "MENU";
 const char LOGSYS[] PROGMEM = "SYSTEM";
+const char LOGGLB[] PROGMEM = "GLOBAL";
+const char LOGDATA[] PROGMEM = "DATA";
 
 //Other PROGMEM Repeated Strings
 const char PWRLOSSRECOVER[] PROGMEM = "PLR";
@@ -258,10 +242,32 @@ const char INIT_EEPROM[] PROGMEM = "Initialize EEPROM";
 const char LOGSCROLLP[] PROGMEM = "PROMPT";
 const char LOGSCROLLR[] PROGMEM = "RESULT";
 const char LOGCHOICE[] PROGMEM = "CHOICE";
+const char LOGGETVAL[] PROGMEM = "GETVAL";
 const char SKIPSTEP[] PROGMEM = "Skip Step";
-const char ABORTAB[] PROGMEM = "Abort AutoBrew";
 const char LOGSPLASH[] PROGMEM = "SPLASH";
-
+const char CONTINUE[] PROGMEM = "Continue";
+const char AUTOFILL[] PROGMEM = "Auto";
+const char FILLHLT[] PROGMEM = "Fill HLT";
+const char FILLMASH[] PROGMEM = "Fill Mash";
+const char FILLBOTH[] PROGMEM = "Fill Both";
+const char ALLOFF[] PROGMEM = "All Off";
+const char ABORT[] PROGMEM = "Abort";
+const char SPARGEIN[] PROGMEM = "Sparge In";
+const char SPARGEOUT[] PROGMEM = "Sparge Out";
+const char FLYSPARGE[] PROGMEM = "Fly Sparge";
+const char CHILLNORM[] PROGMEM = "Chill Norm";
+const char CHILLH2O[] PROGMEM = "H2O Only";
+const char CHILLBEER[] PROGMEM = "Beer Only";
+        
+#ifdef USEMETRIC
+const char VOLUNIT[] PROGMEM = "l";
+const char WTUNIT[] PROGMEM = "kg";
+const char TUNIT[] PROGMEM = "C";
+#else
+const char VOLUNIT[] PROGMEM = "gal";
+const char WTUNIT[] PROGMEM = "lb";
+const char TUNIT[] PROGMEM = "F";
+#endif
 
 //Custom LCD Chars
 const byte CHARFIELD[] PROGMEM = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};
@@ -349,13 +355,11 @@ void loop() {
   strcpy_P(menuopts[0], PSTR("AutoBrew"));
   strcpy_P(menuopts[1], PSTR("Brew Monitor"));
   strcpy_P(menuopts[2], PSTR("System Setup"));
-  strcpy_P(menuopts[3], PSTR("System Tests"));
  
-  byte lastoption = scrollMenu("BrewTroller", 4, 0);
+  byte lastoption = scrollMenu("BrewTroller", 3, 0);
   if (lastoption == 0) doAutoBrew();
   else if (lastoption == 1) doMon();
   else if (lastoption == 2) menuSetup();
-  else if (lastoption == 3) menuTest();
 }
 
 void splashScreen() {
@@ -391,7 +395,7 @@ void splashScreen() {
       if (strcasecmp(msg[0], "SELECT") == 0) {
         enterStatus = 1;
         clearMsg();
-      } else rejectMsg();
+      } else rejectMsg(LOGSCROLLP);
     }
     delay(250);
   }

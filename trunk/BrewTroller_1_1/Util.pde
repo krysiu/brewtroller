@@ -87,6 +87,10 @@ void printTimer(byte iRow, byte iCol) {
     if (timerLastWrite/60 != timerValue/60000) setTimerRecovery(timerValue/60000 + 1);
     //Update LCD once per second
     if (timerLastWrite != timerValue/1000) {
+      logStart_P(LOGDATA);
+      logField_P(PSTR("TIMER"));
+      logFieldI(timerValue);
+      logEnd();
       printLCDRPad(iRow, iCol, "", 6, ' ');
       printLCD_P(iRow, iCol+2, PSTR(":"));
       if (timerHours > 0) {
@@ -102,7 +106,7 @@ void printTimer(byte iRow, byte iCol) {
 }
 
 void setAlarm(boolean value) {
-  logStart_P(PSTR("DATA"));
+  logStart_P(LOGDATA);
   logField_P(PSTR("ALARM"));
   logFieldI(value);
   logEnd();
@@ -111,7 +115,7 @@ void setAlarm(boolean value) {
 }
 
 void setValves (unsigned long valveBits) {
-  logStart_P(PSTR("DATA"));
+  logStart_P(LOGDATA);
   logField_P(PSTR("SETVLV"));
   logFieldI(valveBits);
   logEnd();
@@ -153,4 +157,3 @@ void setValves (unsigned long valveBits) {
   if (valveBits & 1024) digitalWrite(VALVEB_PIN, HIGH); else digitalWrite(VALVEB_PIN, LOW);
 #endif
 }
-

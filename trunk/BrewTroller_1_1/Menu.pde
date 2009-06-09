@@ -33,10 +33,13 @@ byte scrollMenu(char sTitle[], byte numOpts, byte defOption) {
     
     if (chkMsg()) {
       if (strcasecmp(msg[0], "SELECT") == 0) {
-        encCount = atoi(msg[1]);
-        enterStatus = 1;
-        clearMsg();
-      } else rejectMsg();
+        byte val = atoi(msg[1]);
+        if (msgField == 1 && val  >= 0 && val <= numOpts) {
+          encCount = val;
+          enterStatus = 1;
+          clearMsg();
+        } else rejectParam(LOGSCROLLP);
+      } else rejectMsg(LOGSCROLLP);
     }
     
     //If Enter
@@ -79,7 +82,8 @@ byte getChoice(byte numChoices, byte iRow) {
  
   encCount = 0;
   byte lastCount = encCount + 1;
-  logStart_P(LOGSCROLLP);
+  logStart_P(LOGMENU);
+  logField_P(LOGSCROLLP);
   logField_P(LOGCHOICE);
   logFieldI(numChoices);
   for (byte i = 0; i < numChoices; i++)  logField(menuopts[i]);
@@ -94,10 +98,13 @@ byte getChoice(byte numChoices, byte iRow) {
     //If Enter
     if (chkMsg()) {
       if (strcasecmp(msg[0], "SELECT") == 0) {
-        encCount = atoi(msg[1]);
-        enterStatus = 1;
-        clearMsg();
-      } else rejectMsg();
+        byte val = atoi(msg[1]);
+        if (msgField == 1 && val  >= 0 && val <= numChoices) {
+          encCount = val;
+          enterStatus = 1;
+          clearMsg();
+        } else rejectParam(LOGSCROLLP);
+      } else rejectMsg(LOGSCROLLP);
     }
     if (enterStatus) {
       logStart_P(LOGMENU);
@@ -142,7 +149,7 @@ boolean confirmDel() {
   if(getChoice(2, 3) == 1) return 1; else return 0;
 }
 
-long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision, long maxValue, char dispUnit[]) {
+long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision, long maxValue, const char *dispUnit) {
   unsigned long retValue = defValue;
   byte cursorPos = 0; 
   boolean cursorState = 0; //0 = Unselected, 1 = Selected
@@ -157,7 +164,7 @@ long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision
       
   clearLCD();
   printLCD(0,0,sTitle);
-  printLCD(1, (20 - digits + 1) / 2 + digits + 1, dispUnit);
+  printLCD_P(1, (20 - digits + 1) / 2 + digits + 1, dispUnit);
   printLCD(3, 9, "OK");
   unsigned long whole, frac;
   
@@ -193,7 +200,7 @@ long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision
     }
     if (enterStatus == 1) {
       enterStatus = 0;
-      if (cursorPos == digits) return retValue;
+      if (cursorPos == digits) break;
       else {
         cursorState = cursorState ^ 1;
         if (cursorState) {
@@ -215,9 +222,11 @@ long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision
       }
     } else if (enterStatus == 2) {
       enterStatus = 0;
-      return defValue;
+      retValue = defValue;
+      break;
     }
   }
+  return retValue;
 }
 
 unsigned int getTimerValue(char sTitle[], unsigned int defMins) {

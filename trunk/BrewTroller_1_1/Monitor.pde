@@ -2,7 +2,6 @@ void doMon() {
 //Program memory used: 4KB (as of Build 205)
 #ifdef MODULE_BREWMONITOR
   float temp[6] = { 0, 0, 0, 0, 0, 0 };
-  char sTempUnit[2] = "C";
   unsigned long convStart = 0;
   unsigned long cycleStart[3];
   boolean heatStatus[3] = { 0, 0, 0 };
@@ -18,7 +17,6 @@ void doMon() {
     }
   }
   
-  if (unit) strcpy(sTempUnit, "F");
   encMin = 0;
   encMax = 2;
   encCount = 0;
@@ -66,31 +64,42 @@ void doMon() {
         boolean inMenu = 1;
         byte lastOption = 0;
         while(inMenu) {
-          char dispUnit[2] = "C"; if (unit) strcpy(dispUnit, "F");
           lastOption = scrollMenu("Brew Monitor Menu   ", 11, lastOption);
           if (lastOption == 0) {
-            byte defHLTTemp = 180;
-            if (!unit) defHLTTemp = round(defHLTTemp / 1.8) + 32;
-            if (setpoint[TS_HLT] > 0) setpoint[TS_HLT] = getValue("Enter HLT Temp:", setpoint[TS_HLT], 3, 0, 255, dispUnit);
-            else setpoint[TS_HLT] = getValue("Enter HLT Temp:", defHLTTemp, 3, 0, 255, dispUnit);
+            if (setpoint[TS_HLT] > 0) setpoint[TS_HLT] = getValue("Enter HLT Temp:", setpoint[TS_HLT], 3, 0, 255, TUNIT);
+            else {
+              #ifdef USEMETRIC
+                setpoint[TS_HLT] = getValue("Enter HLT Temp:", 82, 3, 0, 255, TUNIT);
+              #else
+                setpoint[TS_HLT] = getValue("Enter HLT Temp:", 180, 3, 0, 255, TUNIT);
+              #endif
+            }
             inMenu = 0;
           } else if (lastOption == 1) {
             setpoint[TS_HLT] = 0;
             inMenu = 0;
           } else if (lastOption == 2) {
-            byte defMashTemp = 152;
-            if (!unit) defMashTemp = round(defMashTemp / 1.8) + 32;
-            if (setpoint[TS_MASH] > 0) setpoint[TS_MASH] = getValue("Enter Mash Temp:", setpoint[TS_MASH], 3, 0, 255, dispUnit);
-            else setpoint[TS_MASH] = getValue("Enter Mash Temp:", defMashTemp, 3, 0, 255, dispUnit);
+            if (setpoint[TS_MASH] > 0) setpoint[TS_MASH] = getValue("Enter Mash Temp:", setpoint[TS_MASH], 3, 0, 255, TUNIT);
+            else {
+              #ifdef USEMETRIC
+                setpoint[TS_MASH] = getValue("Enter Mash Temp:", 67, 3, 0, 255, TUNIT);
+              #else
+                setpoint[TS_MASH] = getValue("Enter Mash Temp:", 152, 3, 0, 255, TUNIT);
+              #endif
+            }
             inMenu = 0;
           } else if (lastOption == 3) {
             setpoint[TS_MASH] = 0;
             inMenu = 0;
           } else if (lastOption == 4) {
-            byte defKettleTemp = 212;
-            if (!unit) defKettleTemp = round(defKettleTemp / 1.8) + 32;
-            if (setpoint[TS_KETTLE] > 0) setpoint[TS_KETTLE] = getValue("Enter Kettle Temp:", setpoint[TS_KETTLE], 3, 0, 255, dispUnit);
-            else setpoint[TS_KETTLE] = getValue("Enter Kettle Temp:", defKettleTemp, 3, 0, 255, dispUnit);
+            if (setpoint[TS_KETTLE] > 0) setpoint[TS_KETTLE] = getValue("Enter Kettle Temp:", setpoint[TS_KETTLE], 3, 0, 255, TUNIT);
+            else {
+              #ifdef USEMETRIC
+                setpoint[TS_KETTLE] = getValue("Enter Kettle Temp:", 100, 3, 0, 255, TUNIT);
+              #else
+                setpoint[TS_KETTLE] = getValue("Enter Kettle Temp:", 212, 3, 0, 255, TUNIT);
+              #endif
+            }
             inMenu = 0;
           } else if (lastOption == 5) {
             setpoint[TS_KETTLE] = 0;
@@ -126,32 +135,36 @@ void doMon() {
     if (encCount == 0) {
       if (encCount != lastCount) {
         clearLCD();
-        printLCD(0,4,"Brew Monitor");
-        printLCD(1,2,"HLT");
-        printLCD(3,0,"[");
-        printLCD(3,5,"]");
-        printLCD(2, 4, sTempUnit);
-        printLCD(3, 4, sTempUnit);
-        printLCD(1,15,"Mash");
-        printLCD(3,14,"[");
-        printLCD(3,19,"]");
-        printLCD(2, 18, sTempUnit);
-        printLCD(3, 18, sTempUnit);
+        printLCD_P(0,4,PSTR("Brew Monitor"));
+        printLCD_P(1,2,PSTR("HLT"));
+        printLCD_P(3,0,PSTR("["));
+        printLCD_P(3,5,PSTR("]"));
+        printLCD_P(2, 4, TUNIT);
+        printLCD_P(3, 4, TUNIT);
+        printLCD_P(1,15,PSTR("Mash"));
+        printLCD_P(3,14,PSTR("["));
+        printLCD_P(3,19,PSTR("]"));
+        printLCD_P(2, 18, TUNIT);
+        printLCD_P(3, 18, TUNIT);
         lastCount = encCount;
         timerLastWrite = 0;
       }
-        
-      for (byte i = TS_HLT; i <= TS_MASH; i++) {
-        if (temp[i] == -1) printLCD(2, i * 14 + 1, "---"); else printLCDLPad(2, i * 14 + 1, itoa(temp[i], buf, 10), 3, ' ');
-        printLCDLPad(3, i * 14 + 1, itoa(setpoint[i], buf, 10), 3, ' ');
-        if (PIDEnabled[i]) {
-          byte pct = PIDOutput[i] / PIDCycle[i] / 10;
-          if (pct == 0) strcpy(buf, "Off");
-          else if (pct == 100) strcpy(buf, " On");
+
+      byte vcount = VS_HLT;
+      while (1) {
+        if (temp[vcount] == -1) printLCD_P(2, vcount * 16, PSTR("---")); else printLCDLPad(2, vcount * 16, itoa(temp[vcount], buf, 10), 3, ' ');
+        printLCDLPad(3, vcount * 14 + 1, itoa(setpoint[vcount], buf, 10), 3, ' ');
+        if (PIDEnabled[vcount]) {
+          byte pct = PIDOutput[vcount] / PIDCycle[vcount] / 10;
+          if (pct == 0) strcpy_P(buf, PSTR("Off"));
+          else if (pct == 100) strcpy_P(buf, PSTR(" On"));
           else { itoa(pct, buf, 10); strcat(buf, "%"); }
-        } else if (heatStatus[i]) strcpy(buf, " On"); else strcpy(buf, "Off"); 
-        printLCDLPad(3, i * 5 + 6, buf, 3, ' ');
+        } else if (heatStatus[vcount]) strcpy_P(buf, PSTR(" On")); else strcpy_P(buf, PSTR("Off")); 
+        printLCDLPad(3, vcount * 5 + 6, buf, 3, ' ');
+        vcount++;
+        if (vcount > VS_MASH) break;
       }
+
     } else if (encCount == 1) {
       if (encCount != lastCount) {
         clearLCD();
@@ -159,8 +172,8 @@ void doMon() {
         printLCD(1,0,"Kettle");
         printLCD(3,0,"[");
         printLCD(3,5,"]");
-        printLCD(2, 4, sTempUnit);
-        printLCD(3, 4, sTempUnit);
+        printLCD_P(2, 4, TUNIT);
+        printLCD_P(3, 4, TUNIT);
         lastCount = encCount;
         timerLastWrite = 0;
       }
@@ -182,10 +195,10 @@ void doMon() {
         printLCD(1,16,"Out");
         printLCD(2,8,"Beer");
         printLCD(3,8,"H2O");
-        printLCD(2, 3, sTempUnit);
-        printLCD(2, 19, sTempUnit);
-        printLCD(3, 3, sTempUnit);
-        printLCD(3, 19, sTempUnit);
+        printLCD_P(2, 3, TUNIT);
+        printLCD_P(2, 19, TUNIT);
+        printLCD_P(3, 3, TUNIT);
+        printLCD_P(3, 19, TUNIT);
         lastCount = encCount;
         timerLastWrite = 0;
       }
@@ -201,7 +214,7 @@ void doMon() {
       convertAll();
       convStart = millis();
     } else if (millis() - convStart >= 750) {
-      for (byte i = TS_HLT; i <= TS_BEEROUT; i++) temp[i] = read_temp(unit, tSensor[i]);
+      for (byte i = TS_HLT; i <= TS_BEEROUT; i++) temp[i] = read_temp(tSensor[i]);
       convStart = 0;
     }
     for (byte i = TS_HLT; i <= TS_KETTLE; i++) {

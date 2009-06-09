@@ -8,7 +8,6 @@ void saveSetup() {
 
   //Option Array (48)
   byte options = B00000000;
-  if (unit) options |= 1;
   if (PIDEnabled[VS_HLT]) options |= 2;
   if (PIDEnabled[VS_MASH]) options |= 4;
   if (PIDEnabled[VS_KETTLE]) options |= 8;
@@ -42,7 +41,7 @@ void saveSetup() {
   //136-151 ***OPEN*** (Old Valve Profiles )
   //152-154 Power Recovery
   //155 System Type (Direct, HERMS, Steam)
-  EEPROM.write(155, sysType);
+//  EEPROM.write(155, sysType);
   //156-1805 Saved Programs
   //1806-1837 Valve Config
   //1861-2040 Volume Calibrations
@@ -57,7 +56,6 @@ void loadSetup() {
  
   //Option Array (48)
   byte options = EEPROM.read(48);
-  if (options & 1) unit = 1;
   if (options & 2) PIDEnabled[VS_HLT] = 1;
   if (options & 4) PIDEnabled[VS_MASH] = 1;
   if (options & 8) PIDEnabled[VS_KETTLE] = 1;
@@ -90,7 +88,7 @@ void loadSetup() {
   //136-151 ***OPEN*** (Old Valve Profiles )
   //152-154 Power Recovery
   //155 System Type (Direct, HERMS, Steam)
-  sysType = EEPROM.read(155);
+//  sysType = EEPROM.read(155);
   //156-1805 Saved Programs
   //1806-1837 Valve Config
   //1861-2040 Volume Calibrations
@@ -111,20 +109,20 @@ void PROMreadBytes(int addr, byte bytes[], byte numBytes) {
 }
 
 void checkConfig() {
-//Program memory used: 1KB (as of Build 205)
-#ifdef MODULE_EEPROMUPGRADE
   byte cfgVersion = EEPROM.read(2047);
-  logStart_P(LOGSYS);
+
+#ifdef DEBUG
+  logStart_P(LOGDEBUG);
   logField_P(PSTR("CFGVER"));
   logFieldI(cfgVersion);
   logEnd();
+#endif
 
   if (cfgVersion == 255) cfgVersion = 0;
   switch(cfgVersion) {
     case 0:
       clearLCD();
-      printLCD_P(0, 0, PSTR("System Configuration"));
-      printLCD_P(1, 0, PSTR("Version Check Failed"));
+      printLCD_P(0, 0, PSTR("Missing Config"));
       {
         strcpy_P(menuopts[0], INIT_EEPROM);
         strcpy_P(menuopts[1], CANCEL);
@@ -137,7 +135,11 @@ void checkConfig() {
           for (int i=0; i<2048; i++) EEPROM.write(i, 0);
           {
             //Default Output Settings: p: 3, i: 4, d: 2, cycle: 4s, Hysteresis 0.3C(0.5F)
-            byte defOutputSettings[5] = {3, 4, 2, 4, 3};
+            #ifdef USEMETRIC
+              byte defOutputSettings[5] = {3, 4, 2, 4, 3};
+            #else
+              byte defOutputSettings[5] = {3, 4, 2, 4, 5};
+            #endif
             PROMwriteBytes(49, defOutputSettings, 5);
             PROMwriteBytes(54, defOutputSettings, 5);
             PROMwriteBytes(59, defOutputSettings, 5);
@@ -149,71 +151,73 @@ void checkConfig() {
     case 1:
       //Default Grain Temp = 60F/16C
       //If F else C
-      if(EEPROM.read(48) & 1) EEPROM.write(156, 60); else EEPROM.write(156, 16);
+      #ifdef USEMETRIC
+        EEPROM.write(156, 16);
+      #else
+        EEPROM.write(156, 60);
+      #endif
       EEPROM.write(2047, 2);
     case 2:
       //Default Programs
-      setProgName(0, "Single Infusion");
-      //If F else C
-      if (EEPROM.read(48) & 1) {
-        byte temps[4] = {0, 0, 153, 0};
-        byte mins[4] = {0, 0, 60, 0};
-        setProgSchedule(0, temps, mins);
-        setProgSparge(0, 168);
-        setProgHLT(0, 180);
-        setProgRatio(0, 133);
-        setProgPitch(0, 70);
-        setProgGrainT(0, 60);
-      } else {
-        byte temps[4] = {0, 0, 67, 0};
-        byte mins[4] = {0, 0, 60, 0};
-        setProgSchedule(0, temps, mins);
-        setProgSparge(0, 76);
-        setProgHLT(0, 82);
-        setProgRatio(0, 277);
-        setProgPitch(0, 21);
-        setProgGrainT(0, 16);
-      }
-      setProgBoil(0, 60);
-      setProgGrain(0, 0);
-      setProgDelay(0, 0);
+#ifdef MODULE_DEFAULTABPROGS
       {
+        setProgName(0, "Single Infusion");
+        #ifdef USEMETRIC
+          byte temps[4] = {0, 0, 67, 0};
+          byte mins[4] = {0, 0, 60, 0};
+          setProgSchedule(0, temps, mins);
+          setProgSparge(0, 76);
+          setProgHLT(0, 82);
+          setProgRatio(0, 277);
+          setProgPitch(0, 21);
+          setProgGrainT(0, 16);
+        #else
+          byte temps[4] = {0, 0, 153, 0};
+          byte mins[4] = {0, 0, 60, 0};
+          setProgSchedule(0, temps, mins);
+          setProgSparge(0, 168);
+          setProgHLT(0, 180);
+          setProgRatio(0, 133);
+          setProgPitch(0, 70);
+          setProgGrainT(0, 60);
+        #endif
+        setProgBoil(0, 60);
+        setProgGrain(0, 0);
+        setProgDelay(0, 0);
         unsigned long vols[3] = {0, 0, 0};
         setProgVols(0, vols);
+        setProgAdds(0, 0);
       }
-      setProgAdds(0, 0);
-
-            
-      setProgName(1, "Multi-Rest");
-      //If F else C
-      if (EEPROM.read(48) & 1) {
-        byte temps[4] = {104, 122, 153, 0};
-        byte mins[4] = {20, 20, 60, 0};
-        setProgSchedule(1, temps, mins);
-        setProgSparge(1, 168);
-        setProgHLT(1, 180);
-        setProgRatio(1, 133);
-        setProgPitch(1, 70);
-        setProgGrainT(1, 60);
-      } else {
-        byte temps[4] = {40, 50, 67, 0};
-        byte mins[4] = {20, 20, 60, 0};
-        setProgSchedule(1, temps, mins);
-        setProgSparge(1, 76);
-        setProgHLT(1, 82);
-        setProgRatio(1, 277);
-        setProgPitch(1, 21);
-        setProgGrainT(1, 16);
-      }
-      setProgBoil(1, 60);
-      setProgGrain(1, 0);
-      setProgDelay(1, 0);
       {
+        setProgName(1, "Multi-Rest");
+        #ifdef USEMETRIC
+          byte temps[4] = {40, 50, 67, 0};
+          byte mins[4] = {20, 20, 60, 0};
+          setProgSchedule(1, temps, mins);
+          setProgSparge(1, 76);
+          setProgHLT(1, 82);
+          setProgRatio(1, 277);
+          setProgPitch(1, 21);
+          setProgGrainT(1, 16);
+        #else
+          byte temps[4] = {104, 122, 153, 0};
+          byte mins[4] = {20, 20, 60, 0};
+          setProgSchedule(1, temps, mins);
+          setProgSparge(1, 168);
+          setProgHLT(1, 180);
+          setProgRatio(1, 133);
+          setProgPitch(1, 70);
+          setProgGrainT(1, 60);
+        #endif
+
+        setProgBoil(1, 60);
+        setProgGrain(1, 0);
+        setProgDelay(1, 0);
         unsigned long vols[3] = {0, 0, 0};
         setProgVols(1, vols);
+        setProgAdds(1, 0);
       }
-      setProgAdds(1, 0);
-      
+#endif
       EEPROM.write(2047, 3);
     case 3:
       //Move Valve Configs from old 2-Byte EEPROM (136-151) to new 4-Byte Locations
@@ -225,18 +229,24 @@ void checkConfig() {
       EEPROM.write(89, 4);
       EEPROM.write(90, 2);
       EEPROM.write(91, 4);
-      //If F else C
-      if (EEPROM.read(48) & 1) EEPROM.write(93, 5); else EEPROM.write(93, 3);
+      #ifdef USEMETRIC
+        EEPROM.write(93, 3);
+      #else
+        EEPROM.write(93, 5);
+      #endif
       EEPROM.write(2047, 5);
     case 5:
       //Set Default Boil temp 212F/100C
-      if (EEPROM.read(48) & 1) setBoilTemp(212); else setBoilTemp(100);
+      #ifdef USEMETRIC
+        setBoilTemp(100);
+      #else
+        setBoilTemp(212);
+      #endif
       EEPROM.write(2047, 6);
     default:
       //No EEPROM Upgrade Required
       return;
   }
-#endif
 }
 
 long PROMreadLong(int address) {
@@ -302,6 +312,9 @@ void setBoilTemp(byte boilTemp) { EEPROM.write(130, boilTemp); }
 
 void loadSetpoints() { for (byte i=TS_HLT; i<=TS_KETTLE; i++) { setpoint[i] = EEPROM.read(131 + i); } }
 void saveSetpoints() { for (byte i=TS_HLT; i<=TS_KETTLE; i++) { EEPROM.write(131 + i, setpoint[i]); } }
+
+byte getABSetpoint(byte vessel) { return EEPROM.read(131 + vessel); }
+void setABSetpoint(byte vessel, byte temp) { EEPROM.write(131 + vessel, temp); }
 
 unsigned int getTimerRecovery() { return PROMreadInt(134); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(134, newMins); }
@@ -386,22 +399,10 @@ void setVolCalib(byte vessel, byte slot, unsigned long vol, unsigned int val) {
 // vol: The volume for this calibration as a long in thousandths (1000 = 1)
 // val: An int representing the analogReadValue() to pair to the given volume
 void getVolCalibs(byte vessel, unsigned long vols[10], unsigned int vals[10]) {
-#ifdef DEBUG
-  logStart_P(LOGDEBUG);
-  logField_P(PSTR("VOL_CALIB"));
-  logFieldI(vessel);
-#endif
   for (byte i = 0; i < 10; i++) {
     vols[i] = PROMreadLong(1861 + i * 4 + vessel * 60);
     vals[i] = PROMreadInt(1901 + i * 2 + vessel * 60);
-    #ifdef DEBUG
-      logFieldI(vols[i]);
-      logFieldI(vals[i]);
-    #endif
   }
-#ifdef DEBUG
-  logEnd();
-#endif
 }
 
 //Zero Volumes 2041-2046 (analogRead of Empty Vessels)

@@ -39,7 +39,7 @@ void printLCDCenter(byte iRow, byte iCol, char sText[], byte fieldWidth){
 char printLCDLPad(byte iRow, byte iCol, char sText[], byte length, char pad) {
  lcd.setCursor(iCol, iRow);
  if (strlen(sText) < length) {
-   for (byte i=0; i < length-strlen(sText) ; i++) lcd.print(pad);
+   for (byte i=0; i < length-strlen(sText); i++) lcd.print(pad);
  }
  lcd.print(sText);
 }  

@@ -42,7 +42,7 @@ void convertAll() {
   ds.write(0x44,1);         // start conversion, with parasite power on at the end
 }
 
-float read_temp(boolean tUnit, byte* addr) { //Unit 1 for F and 0 for C
+float read_temp(byte* addr) {
   float temp;
   int rawtemp;
   byte data[12];
@@ -54,6 +54,9 @@ float read_temp(boolean tUnit, byte* addr) { //Unit 1 for F and 0 for C
   
   rawtemp = (data[1] << 8) + data[0];
   if ( addr[0] != 0x28) temp = (float)rawtemp * 0.5; else temp = (float)rawtemp * 0.0625;
-  if (tUnit) temp = (temp * 1.8) + 32.0;
-  return temp;
+  #ifdef USEMETRIC
+    return temp;  
+  #else
+    return (temp * 1.8) + 32.0;
+  #endif
 }
