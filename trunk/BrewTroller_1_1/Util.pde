@@ -30,14 +30,12 @@ int availableMemory() {
 }
 
 void resetOutputs() {
-  for (byte i = VS_HLT; i <= VS_STEAM; i++) {
-    setpoint[i] = 0;
-    if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
-  }
+  for (byte i = VS_HLT; i <= VS_STEAM; i++) setpoint[i] = 0;
   digitalWrite(HLTHEAT_PIN, LOW);
   digitalWrite(MASHHEAT_PIN, LOW);
   digitalWrite(KETTLEHEAT_PIN, LOW);
   digitalWrite(STEAMHEAT_PIN, LOW);
+  autoValve = 0;
   setValves(0);
 }
 
@@ -87,10 +85,6 @@ void printTimer(byte iRow, byte iCol) {
     if (timerLastWrite/60 != timerValue/60000) setTimerRecovery(timerValue/60000 + 1);
     //Update LCD once per second
     if (timerLastWrite != timerValue/1000) {
-      logStart_P(LOGDATA);
-      logField_P(PSTR("TIMER"));
-      logFieldI(timerValue);
-      logEnd();
       printLCDRPad(iRow, iCol, "", 6, ' ');
       printLCD_P(iRow, iCol+2, PSTR(":"));
       if (timerHours > 0) {
@@ -106,19 +100,12 @@ void printTimer(byte iRow, byte iCol) {
 }
 
 void setAlarm(boolean value) {
-  logStart_P(LOGDATA);
-  logField_P(PSTR("ALARM"));
-  logFieldI(value);
-  logEnd();
   alarmStatus = value;
   digitalWrite(ALARM_PIN, value);
 }
 
-void setValves (unsigned long valveBits) {
-  logStart_P(LOGDATA);
-  logField_P(PSTR("SETVLV"));
-  logFieldI(valveBits);
-  logEnd();
+void setValves (unsigned long vlvBitMask) {
+  vlvBits = vlvBitMask;
   
 #ifdef MUXBOARDS
 //New MUX Valve Code
@@ -132,7 +119,7 @@ void setValves (unsigned long valveBits) {
   for (byte i = 0; i < 32; i++)  {
     digitalWrite(MUX_CLOCK_PIN, 0);
     //create bitmask to grab the bit associated with our counter i and set data pin accordingly (NOTE: 32 - i causes bits to be sent most significant to least significant)
-    if ( valveBits & ((unsigned long)1<<(32 - i)) ) digitalWrite(MUX_DATA_PIN, 1); else  digitalWrite(MUX_DATA_PIN, 0);
+    if ( vlvBitMask & ((unsigned long)1<<(32 - i)) ) digitalWrite(MUX_DATA_PIN, 1); else  digitalWrite(MUX_DATA_PIN, 0);
     //register shifts bits on upstroke of clock pin  
     digitalWrite(MUX_CLOCK_PIN, 1);
     //zero the data pin after shift to prevent bleed through
@@ -144,16 +131,16 @@ void setValves (unsigned long valveBits) {
   digitalWrite(MUX_LATCH_PIN, 1);
 #else
 //Original 11 Valve Code
-  if (valveBits & 1) digitalWrite(VALVE1_PIN, HIGH); else digitalWrite(VALVE1_PIN, LOW);
-  if (valveBits & 2) digitalWrite(VALVE2_PIN, HIGH); else digitalWrite(VALVE2_PIN, LOW);
-  if (valveBits & 4) digitalWrite(VALVE3_PIN, HIGH); else digitalWrite(VALVE3_PIN, LOW);
-  if (valveBits & 8) digitalWrite(VALVE4_PIN, HIGH); else digitalWrite(VALVE4_PIN, LOW);
-  if (valveBits & 16) digitalWrite(VALVE5_PIN, HIGH); else digitalWrite(VALVE5_PIN, LOW);
-  if (valveBits & 32) digitalWrite(VALVE6_PIN, HIGH); else digitalWrite(VALVE6_PIN, LOW);
-  if (valveBits & 64) digitalWrite(VALVE7_PIN, HIGH); else digitalWrite(VALVE7_PIN, LOW);
-  if (valveBits & 128) digitalWrite(VALVE8_PIN, HIGH); else digitalWrite(VALVE8_PIN, LOW);
-  if (valveBits & 256) digitalWrite(VALVE9_PIN, HIGH); else digitalWrite(VALVE9_PIN, LOW);
-  if (valveBits & 512) digitalWrite(VALVEA_PIN, HIGH); else digitalWrite(VALVEA_PIN, LOW);
-  if (valveBits & 1024) digitalWrite(VALVEB_PIN, HIGH); else digitalWrite(VALVEB_PIN, LOW);
+  if (vlvBitMask & 1) digitalWrite(VALVE1_PIN, HIGH); else digitalWrite(VALVE1_PIN, LOW);
+  if (vlvBitMask & 2) digitalWrite(VALVE2_PIN, HIGH); else digitalWrite(VALVE2_PIN, LOW);
+  if (vlvBitMask & 4) digitalWrite(VALVE3_PIN, HIGH); else digitalWrite(VALVE3_PIN, LOW);
+  if (vlvBitMask & 8) digitalWrite(VALVE4_PIN, HIGH); else digitalWrite(VALVE4_PIN, LOW);
+  if (vlvBitMask & 16) digitalWrite(VALVE5_PIN, HIGH); else digitalWrite(VALVE5_PIN, LOW);
+  if (vlvBitMask & 32) digitalWrite(VALVE6_PIN, HIGH); else digitalWrite(VALVE6_PIN, LOW);
+  if (vlvBitMask & 64) digitalWrite(VALVE7_PIN, HIGH); else digitalWrite(VALVE7_PIN, LOW);
+  if (vlvBitMask & 128) digitalWrite(VALVE8_PIN, HIGH); else digitalWrite(VALVE8_PIN, LOW);
+  if (vlvBitMask & 256) digitalWrite(VALVE9_PIN, HIGH); else digitalWrite(VALVE9_PIN, LOW);
+  if (vlvBitMask & 512) digitalWrite(VALVEA_PIN, HIGH); else digitalWrite(VALVEA_PIN, LOW);
+  if (vlvBitMask & 1024) digitalWrite(VALVEB_PIN, HIGH); else digitalWrite(VALVEB_PIN, LOW);
 #endif
 }

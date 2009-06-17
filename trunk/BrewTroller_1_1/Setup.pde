@@ -234,26 +234,22 @@ void cfgVolumes() {
 
 void volCalibMenu(byte vessel) {
   byte lastOption = 0;
-  unsigned long vols[10];
-  unsigned int vals[10];
   char sVessel[7];
   char sTitle[20];
-  unsigned int zeroVol = getZeroVol(vessel);
   if (vessel == TS_HLT) strcpy_P(sVessel, PSTR("HLT"));
   else if (vessel == TS_MASH) strcpy_P(sVessel, PSTR("Mash"));
   else if (vessel == TS_KETTLE) strcpy_P(sVessel, PSTR("Kettle"));
 
   while(1) {
-    getVolCalibs(vessel, vols, vals);
     for(byte i = 0; i < 10; i++) {
-      if (vals[i] > 0) {
-        ftoa(vols[i] / 1000.0, buf, 3);
+      if (calibVals[vessel][i] > 0) {
+        ftoa(calibVols[vessel][i] / 1000.0, buf, 3);
         truncFloat(buf, 6);
         strcpy(menuopts[i], buf);
         strcat_P(menuopts[i], SPACE);
         strcat_P(menuopts[i], VOLUNIT);
         strcat_P(menuopts[i], PSTR(" ("));
-        strcat(menuopts[i], itoa(vals[i], buf, 10));
+        strcat(menuopts[i], itoa(calibVals[vessel][i], buf, 10));
         strcat_P(menuopts[i], PSTR(")"));
       } else strcpy_P(menuopts[i], PSTR("OPEN"));
     }
@@ -261,16 +257,21 @@ void volCalibMenu(byte vessel) {
     strcpy(sTitle, sVessel);
     strcat_P(sTitle, PSTR(" Calibration"));
     lastOption = scrollMenu(sTitle, 11, lastOption);
-    if (lastOption > 9) return; else {
-      if (vols[lastOption]) {
-        if(confirmDel()) setVolCalib(vessel, lastOption, 0, 0);
+    if (lastOption > 9) return; 
+    else {
+      if (calibVols[vessel][lastOption] > 0) {
+        if(confirmDel()) {
+          calibVals[vessel][lastOption] = 0;
+          calibVols[vessel][lastOption] = 0;
+          saveSetup();
+        }
       } else {
         strcpy_P(sTitle, PSTR("Current "));
         strcat(sTitle, sVessel);
         strcat_P(sTitle, PSTR(" Vol:"));
-        vols[lastOption] = getValue(sTitle, 0, 7, 3, 9999999, VOLUNIT);
-        //Check for Value and save to EEPROM
-        if (vols[lastOption] > 0) setVolCalib(vessel, lastOption, vols[lastOption], analogRead(vSensor[vessel]) - zeroVol);
+        calibVols[vessel][lastOption] = getValue(sTitle, 0, 7, 3, 9999999, VOLUNIT);
+        calibVals[vessel][lastOption] = analogRead(vSensor[vessel]) - zeroVol[vessel];
+        saveSetup();
       }
     }
   }
@@ -290,7 +291,9 @@ void cfgValves() {
     strcpy_P(menuopts[8], PSTR("Exit               "));
     
     lastOption = scrollMenu("Valve Configuration", 9, lastOption);
-    if (lastOption > 7) return; else setValveCfg(lastOption, cfgValveProfile(menuopts[lastOption], getValveCfg(lastOption)));
+    if (lastOption > 7) return;
+    vlvConfig[lastOption] = cfgValveProfile(menuopts[lastOption], vlvConfig[lastOption]);
+    saveSetup();
   }
 }
 

@@ -40,11 +40,22 @@ void saveSetup() {
   //131 - 135 Reserved for Power Recovery
   //136-151 ***OPEN*** (Old Valve Profiles )
   //152-154 Power Recovery
-  //155 System Type (Direct, HERMS, Steam)
-//  EEPROM.write(155, sysType);
+  //155 ***OPEN***
   //156-1805 Saved Programs
-  //1806-1837 Valve Config
-  //1861-2040 Volume Calibrations
+
+  for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) PROMwriteLong(1806 + (profile) * 4, vlvConfig[profile]);
+
+  //Set all Volume Calibrations for a given vessel (EEPROM Bytes 1861 - 2040)
+  // vessel: 0-2 Corresponding to TS_HLT, TS_MASH, TS_KETTLE
+  // slot: 0-9 Individual slots representing a single volume/value pairing
+  // vol: The volume for this calibration as a long in thousandths (1000 = 1)
+  // val: An int representing the analogReadValue() to pair to the given volume
+  for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) {
+    for (byte slot = 0; slot < 10; slot++) {
+      PROMwriteLong(1861 + slot * 4 + vessel * 60, calibVols[vessel][slot]);
+      PROMwriteInt(1901 + slot * 2 + vessel * 60, calibVals[vessel][slot]);
+    }
+  }
   //2041-2046 Zero Volumes
   //2047 EEPROM Version
 }
@@ -81,17 +92,29 @@ void loadSetup() {
   hysteresis[VS_STEAM] = EEPROM.read(93);
   
   evapRate = EEPROM.read(92);
-
+  pwrRecovery = EEPROM.read(94); 
+  recoveryStep = EEPROM.read(95); 
   //94 - 129 Reserved for Power Recovery
   //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
   //136-151 ***OPEN*** (Old Valve Profiles )
   //152-154 Power Recovery
-  //155 System Type (Direct, HERMS, Steam)
-//  sysType = EEPROM.read(155);
+  //155 ***OPEN***
   //156-1805 Saved Programs
-  //1806-1837 Valve Config
-  //1861-2040 Volume Calibrations
+
+  for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) vlvConfig[profile] = PROMreadLong(1806 + (profile) * 4);
+
+  //Get all Volume Calibrations for a given vessel (EEPROM Bytes 1861 - 2040)
+  // vessel: 0-2 Corresponding to TS_HLT, TS_MASH, TS_KETTLE
+  // vol: The volume for this calibration as a long in thousandths (1000 = 1)
+  // val: An int representing the analogReadValue() to pair to the given volume
+  for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) {
+    for (byte slot = 0; slot < 10; slot++) {
+      calibVols[vessel][slot] = PROMreadLong(1861 + slot * 4 + vessel * 60);
+      calibVals[vessel][slot] = PROMreadInt(1901 + slot * 2 + vessel * 60);
+    }
+  }
+  
   //2041-2046 Zero Volumes
   //2047 EEPROM Version
 }
@@ -221,7 +244,7 @@ void checkConfig() {
       EEPROM.write(2047, 3);
     case 3:
       //Move Valve Configs from old 2-Byte EEPROM (136-151) to new 4-Byte Locations
-      for (byte i=0; i<=7; i++) setValveCfg(i, PROMreadInt(136 + i * 2));
+      for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) PROMwriteLong(1806 + (profile) * 4, PROMreadInt(136 + profile * 2));
       EEPROM.write(2047, 4);
     case 4:
       //Default Steam Output Settings
@@ -269,14 +292,14 @@ void PROMwriteInt(int address, int value) {
   eeprom_write_block((void *) &value, (unsigned char *) address, 2);
 }
 
-byte getPwrRecovery() { return EEPROM.read(94); }
-void setPwrRecovery(byte funcValue) {  EEPROM.write(94, funcValue); }
+void setPwrRecovery(byte funcValue) {
+  pwrRecovery = funcValue;
+  EEPROM.write(94, funcValue);
+}
 
-byte getABRecovery() { return EEPROM.read(95); }
-
-void setABRecovery(byte recoveryStep) { 
-  logABStep(recoveryStep);
-  EEPROM.write(95, recoveryStep);
+void setABRecovery(byte ABStep) { 
+  recoveryStep = ABStep;
+  EEPROM.write(95, ABStep);
 }
 
 byte getABSparge() { return EEPROM.read(96); }
@@ -318,9 +341,6 @@ void setABSetpoint(byte vessel, byte temp) { EEPROM.write(131 + vessel, temp); }
 
 unsigned int getTimerRecovery() { return PROMreadInt(134); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(134, newMins); }
-
-unsigned long getValveCfg(byte profile) { return PROMreadLong(1806 + (profile) * 4); }
-void setValveCfg(byte profile, unsigned long value) { PROMwriteLong(1806 + (profile) * 4, value); }
 
 byte getABPitch() { return EEPROM.read(152); }
 void setABPitch(byte pitchTemp) { EEPROM.write(152, pitchTemp); }
@@ -384,27 +404,11 @@ unsigned int getProgAdds(byte preset) { return PROMreadInt(preset * 55 + 208); }
 void setProgGrainT(byte preset, byte grain) { EEPROM.write(preset * 55 + 210, grain); }
 byte getProgGrainT(byte preset) { return EEPROM.read(preset * 55 + 210); }
 
-//Set a single Volume Calibration (EEPROM Bytes 1861 - 2040)
-// vessel: 0-2 Corresponding to TS_HLT, TS_MASH, TS_KETTLE
-// slot: 0-9 Individual slots representing a single volume/value pairing
-// vol: The volume for this calibration as a long in thousandths (1000 = 1)
-// val: An int representing the analogReadValue() to pair to the given volume
-void setVolCalib(byte vessel, byte slot, unsigned long vol, unsigned int val) {
-  PROMwriteLong(1861 + slot * 4 + vessel * 60, vol);
-  PROMwriteInt(1901 + slot * 2 + vessel * 60, val);
-}
-
-//Get all Volume Calibrations for a given vessel (EEPROM Bytes 1861 - 2040)
-// vessel: 0-2 Corresponding to TS_HLT, TS_MASH, TS_KETTLE
-// vol: The volume for this calibration as a long in thousandths (1000 = 1)
-// val: An int representing the analogReadValue() to pair to the given volume
-void getVolCalibs(byte vessel, unsigned long vols[10], unsigned int vals[10]) {
-  for (byte i = 0; i < 10; i++) {
-    vols[i] = PROMreadLong(1861 + i * 4 + vessel * 60);
-    vals[i] = PROMreadInt(1901 + i * 2 + vessel * 60);
+//Zero Volumes 2041-2046 (analogRead of Empty Vessels)
+unsigned int loadZeroVols() { for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) zeroVol[vessel] = PROMreadInt(2041 + vessel * 2); }
+void saveZeroVols() { 
+  for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) {
+    zeroVol[vessel] = analogRead(vSensor[vessel]);
+    PROMwriteInt(2041 + vessel * 2, zeroVol[vessel]);
   }
 }
-
-//Zero Volumes 2041-2046 (analogRead of Empty Vessels)
-unsigned int getZeroVol(byte vessel) { return PROMreadInt(2041 + vessel * 2); }
-void setZeroVol(byte vessel, unsigned int zeroVal) { PROMwriteInt(2041 + vessel * 2, zeroVal); }

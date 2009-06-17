@@ -1,80 +1,16 @@
 void(* softReset) (void) = 0;
 
-void logVolume (byte vessel, unsigned long value) {
+void logPLR() {
+  logStart_P(LOGGLB);
+  logField_P(PSTR("PLR"));
+  logFieldI(pwrRecovery);
+  logEnd();
+}
+
+void logPgm() {
   logStart_P(LOGDATA);
-  logField_P(PSTR("VOL"));
-  logFieldI(vessel);
-  ftoa(value/1000.0, buf, 3);
-  logField(buf);
-  #ifdef USEMETRIC
-    logFieldI(0);
-  #else
-    logFieldI(1);
-  #endif
-  logEnd();
-}
-
-void logTemp (byte tempSensor, float value) {
-  logStart_P(LOGDATA);
-  logField_P(PSTR("TEMP"));
-  logFieldI(tempSensor);
-  ftoa(value, buf, 3);
-  logField(buf);
-  #ifdef USEMETRIC
-    logFieldI(0);
-  #else
-    logFieldI(1);
-  #endif
-  logEnd();
-}
-
-void logABStep (byte numstep) {
-  logStart_P(LOGAB);
-  logField_P(PSTR("STEP"));
-  logFieldI(numstep);
-  logEnd();
-}
-
-void logABFillMenu () {
-  logStart_P(LOGMENU);
-  logField_P(LOGSCROLLP);
-  logField_P(PSTR("AB_FILL"));
-  logFieldI(7);
-  logField_P(CONTINUE);
-  logField_P(AUTOFILL);
-  logField_P(FILLHLT);
-  logField_P(FILLMASH);
-  logField_P(FILLBOTH);
-  logField_P(ALLOFF);
-  logField_P(ABORT);
-  logEnd();
-}
-
-void logABSpargeMenu () {
-  logStart_P(LOGMENU);
-  logField_P(LOGSCROLLP);
-  logField_P(PSTR("AB_SPARGE"));
-  logFieldI(6);
-  logField_P(CONTINUE);
-  logField_P(SPARGEIN);
-  logField_P(SPARGEOUT);
-  logField_P(FLYSPARGE);
-  logField_P(ALLOFF);
-  logField_P(ABORT);
-  logEnd();
-}
-
-void logABChillMenu () {
-  logStart_P(LOGMENU);
-  logField_P(LOGSCROLLP);
-  logField_P(PSTR("AB_CHILL"));
-  logFieldI(6);
-  logField_P(CONTINUE);
-  logField_P(CHILLNORM);
-  logField_P(CHILLH2O);
-  logField_P(CHILLBEER);
-  logField_P(ALLOFF);
-  logField_P(ABORT);
+  logField_P(PSTR("PGM"));
+  logFieldI(pwrRecovery);
   logEnd();
 }
 
@@ -195,7 +131,11 @@ boolean chkMsg() {
         } else if(strcasecmp(msg[0], "SET_CAL") == 0) {
           byte vessel = atoi(msg[1]);
           if (msgField == 21 && vessel >= VS_HLT && vessel <= VS_KETTLE) {
-            for (byte i = 0; i < 10; i++) setVolCalib(vessel, i, atol(msg[i * 2 + 2]), atoi(msg[i * 2 + 3]));
+            for (byte i = 0; i < 10; i++) {
+              calibVols[vessel][i] = atol(msg[i * 2 + 2]);
+              calibVals[vessel][i] = atoi(msg[i * 2 + 3]);
+              saveSetup();
+            }
             clearMsg();
             logVolCalib(vessel);
           } else rejectParam(LOGGLB);
@@ -219,7 +159,8 @@ boolean chkMsg() {
         } else if(strcasecmp(msg[0], "SET_VLVP") == 0) {
           byte profile = atoi(msg[1]);
           if (msgField == 2 && profile >= VS_HLT && profile <= VS_KETTLE) {
-            setValveCfg(profile, atol(msg[2]));
+            vlvConfig[profile] = atol(msg[2]);
+            saveSetup();
             clearMsg();
             logVlvProfile(profile);
           } else rejectParam(LOGGLB);
@@ -406,15 +347,13 @@ void logBoil() {
 }
 
 void logVolCalib(byte vessel) {
-  unsigned int vals[10];
-  unsigned long vols[10];
   logStart_P(LOGGLB);
   logField_P(PSTR("VOL_CALIB"));
   logFieldI(vessel);
-  getVolCalibs(vessel, vols, vals);
+
   for (byte i = 0; i < 10; i++) {
-      logFieldI(vols[i]);
-      logFieldI(vals[i]);
+      logFieldI(calibVols[vessel][i]);
+      logFieldI(calibVals[vessel][i]);
   }
   logEnd();
 }
@@ -435,18 +374,17 @@ void logEvap() {
   logEnd();
 }
 
-void logVlvProfile (byte vessel) {
+void logVlvProfile (byte profile) {
   logStart_P(LOGGLB);
   logField_P(PSTR("VLV_PROFILE"));
-  logFieldI(vessel);
-  logFieldI(getValveCfg(vessel));  
+  logFieldI(profile);
+  logFieldI(vlvConfig[profile]);  
   logEnd();
 }
 
 void logABSettings() {
   byte stepTemp[4], stepMins[4];
   loadABSteps(stepTemp, stepMins);
-  unsigned long tgtVol[3];
   loadABVols(tgtVol);
   
   logStart_P(LOGGLB);
@@ -500,15 +438,7 @@ void logProgram(byte program) {
 void logABStep() {
   logStart_P(LOGGLB);
   logField_P(PSTR("AB_STEP"));
-  logFieldI(getABRecovery());
+  logFieldI(recoveryStep);
   logEnd();
 }
-
-void logPLR() {
-  logStart_P(LOGGLB);
-  logField_P(PSTR("PLR"));
-  logFieldI(getPwrRecovery());
-  logEnd();
-}
-
 #endif

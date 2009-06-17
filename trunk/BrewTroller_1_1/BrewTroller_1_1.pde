@@ -1,4 +1,4 @@
-#define BUILD 226 
+#define BUILD 227 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -159,6 +159,12 @@ using LiquidCrystal Fix by Donald Weiman:
 #define VS_KETTLE 2
 #define VS_STEAM 3
 
+//Auto-Valve Modes
+#define AV_FILL 1
+#define AV_MASH 2
+#define AV_SPARGE 3
+#define AV_CHILL 4
+
 //Valve Array Element Constants and Variables
 #define VLV_FILLHLT 0
 #define VLV_FILLMASH 1
@@ -183,17 +189,29 @@ byte enterStatus = 0;
 
 //8-byte Temperature Sensor Address x6 Sensors
 byte tSensor[6][8];
+float temp[6];
+unsigned long convStart = 0;
 
-//Unit Globals (Volume in thousandths)
+//Volume
 unsigned long capacity[3];
 unsigned long volume[3];
 unsigned int volLoss[3];
+unsigned long tgtVol[3];
+unsigned int calibVals[3][10];
+unsigned long calibVols[3][10];
+unsigned int zeroVol[3];
+unsigned long volAvg[3];
+unsigned long volReadings[3][5];
+byte volCount;
+unsigned long lastVolChk;
+
+//Valve Variables
+unsigned long vlvConfig[8];
+unsigned long vlvBits;
+byte autoValve;
+
 //Rate of Evaporation (Percent per hour)
 byte evapRate;
-
-//Output Globals
-//byte sysType = SYS_DIRECT;
-boolean PIDEnabled[4] = { 0, 0, 0, 0 };
 
 //Shared menuOptions Array
 char menuopts[30][20];
@@ -201,8 +219,13 @@ char menuopts[30][20];
 //Common Buffer
 char buf[11];
 
+//Output Globals
 double PIDInput[4], PIDOutput[4], setpoint[4];
 byte PIDp[4], PIDi[4], PIDd[4], PIDCycle[4], hysteresis[4];
+unsigned long cycleStart[3];
+boolean heatStatus[2];
+boolean PIDEnabled[4];
+byte pitchTemp;
 
 PID pid[4] = {
   PID(&PIDInput[VS_HLT], &PIDOutput[VS_HLT], &setpoint[VS_HLT], 3, 4, 1),
@@ -221,6 +244,12 @@ boolean alarmStatus = 0;
 char msg[25][21];
 byte msgField = 0;
 boolean msgQueued = 0;
+
+byte pwrRecovery;
+byte recoveryStep;
+
+unsigned long lastLog;
+byte logCount;
 
 const char BT[] PROGMEM = "BrewTroller";
 const char BTVER[] PROGMEM = "v1.1";
@@ -281,7 +310,6 @@ const byte BMP5[] PROGMEM = {B01111, B01110, B01100, B00001, B01111, B00111, B00
 const byte BMP6[] PROGMEM = {B11111, B00111, B00111, B11111, B11111, B11111, B11110, B11001};
 const byte BMP7[] PROGMEM = {B11111, B11111, B11110, B11101, B11011, B00111, B11111, B11111};
   
-  
 void setup() {
 #if defined DEBUG || defined MUXBOARDS || defined PV34REMAP
   Serial.begin(9600);
@@ -319,6 +347,14 @@ void setup() {
   pinMode(KETTLEHEAT_PIN, OUTPUT);
   pinMode(STEAMHEAT_PIN, OUTPUT);
   resetOutputs();
+  
+  for (byte i = VS_HLT; i <= VS_KETTLE; i++) {
+    if (PIDEnabled[i]) {
+      pid[i].SetInputLimits(0, 255);
+      pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
+    }
+  }
+  
   initLCD();
   
   //Encoder Setup
@@ -339,14 +375,16 @@ void setup() {
   //Load global variable values stored in EEPROM
   loadSetup();
   
-  if (getPwrRecovery() == 1) {
-    logString_P(LOGSYS, PWRLOSSRECOVER);
+  if (pwrRecovery == 1) {
+    loadZeroVols();
+    logPLR();
     doAutoBrew();
-  } else if (getPwrRecovery() == 2) {
-      logString_P(LOGSYS, PWRLOSSRECOVER);
-      doMon();
+  } else if (pwrRecovery == 2) {
+    loadZeroVols();
+    logPLR();
+    doMon();
   } else {
-    for (byte i = VS_HLT; i <= VS_KETTLE; i++) setZeroVol(i, analogRead(vSensor[i]));
+    saveZeroVols();
     splashScreen();
   }
 }

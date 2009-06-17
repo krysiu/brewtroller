@@ -5,19 +5,14 @@
 #define STEP_MASHOUT 3
 
 void doAutoBrew() {
-  logString_P(LOGAB, PSTR("START"));
   unsigned int delayMins = 0;
   byte stepTemp[4], stepMins[4], spargeTemp;
-  unsigned long tgtVol[3];
   unsigned long grainWeight = 0;
   unsigned int boilMins;
   unsigned int mashRatio;
-  byte pitchTemp;
   unsigned int boilAdds = 0;
   byte grainTemp;
   
-  byte recoveryStep = 0;
-
   loadSetpoints();
   loadABSteps(stepTemp, stepMins);
   spargeTemp = getABSparge();
@@ -30,11 +25,11 @@ void doAutoBrew() {
   boilAdds = getABAdds();
   grainTemp = getABGrainTemp();
   
-  if (getPwrRecovery() == 1) {
-    recoveryStep = getABRecovery();
-  } else {
+  if (pwrRecovery == 0) {
+    recoveryStep = 0;
     //Set Zero Volume Calibrations on Normal AutoBrew Start (Not Power Loss Recovery)
-    for (byte i = TS_HLT; i <= TS_KETTLE; i++) setZeroVol(i, analogRead(vSensor[i]));
+    for (byte i = TS_HLT; i <= TS_KETTLE; i++) zeroVol[i] = analogRead(vSensor[i]);
+    saveZeroVols();
   }
 
   boolean inMenu = 1;
@@ -253,7 +248,7 @@ void doAutoBrew() {
     case 0:
     case 1:
       setABRecovery(1);
-      manFill(tgtVol[TS_HLT], tgtVol[TS_MASH]);
+      manFill();
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 2:
       if(delayMins) {
@@ -348,7 +343,7 @@ void doAutoBrew() {
       }
     case 12:
       setABRecovery(12); 
-      manChill(pitchTemp);
+      manChill();
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
   }  
   enterStatus = 0;
@@ -406,23 +401,8 @@ void editMashSchedule(byte stepTemp[4], byte stepMins[4]) {
   }
 }
 
-void manFill(unsigned long hltVol, unsigned long mashVol) {
-  unsigned long fillHLT = getValveCfg(VLV_FILLHLT);
-  unsigned long fillMash = getValveCfg(VLV_FILLMASH);
-  unsigned long fillBoth = fillHLT | fillMash;
-  unsigned int calibVals[2][10];
-  unsigned long calibVols[2][10];
-  unsigned int zero[2];
-  unsigned long vols[2];
-  unsigned long lastUpdate = 0;
-  boolean fillAuto = 0;
-  unsigned long volReadings[2][5];
-  byte volCount = 0;
-  
-  for (byte i = TS_HLT; i <= TS_MASH; i++) {
-    zero[i] = getZeroVol(i);
-    getVolCalibs(i, calibVols[i], calibVals[i]);
-  }
+void manFill() {
+  autoValve = 0;
   
   while (1) {
     clearLCD();
@@ -437,66 +417,31 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
     printLCD_P(2, 7, PSTR("Actual"));
     printLCD_P(3, 4, PSTR(">"));
     printLCD_P(3, 15, PSTR("<"));
-    ftoa(hltVol/1000.0, buf, 2);
+    ftoa(tgtVol[VS_HLT]/1000.0, buf, 2);
     truncFloat(buf, 6);
     printLCD(1, 0, buf);
 
-    ftoa(mashVol/1000.0, buf, 2);
+    ftoa(tgtVol[VS_MASH]/1000.0, buf, 2);
     truncFloat(buf, 6);
     printLCDLPad(1, 14, buf, 6, ' ');
 
     setValves(0);
-    printLCD_P(3, 0, PSTR("Off"));
-    printLCD_P(3, 17, PSTR("Off"));
 
     encMin = 0;
     encMax = 6;
     encCount = 0;
     byte lastCount = 1;
-    logABFillMenu();
             
     boolean redraw = 0;
     while(!redraw) {
-      //Check volume every 200 ms and update screen with average of 5 readings (once per second)      
-      if (millis() - lastUpdate > 200 * volCount) {
-        for (byte i = VS_HLT; i <= VS_MASH; i++) volReadings[i][volCount] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
-        volCount++;
-        for (byte i = VS_HLT; i <= VS_MASH; i++) vols[i] = (volReadings[i][0] + volReadings[i][1] + volReadings[i][2] + volReadings[i][3] + volReadings[i][4]) / 5;
-        if (volCount > 4) {
-          volCount = 0;
-          ftoa(vols[VS_HLT]/1000.0, buf, 2);
-          truncFloat(buf, 6);
-          printLCDRPad(2, 0, buf, 7, ' ');
-          logVolume(VS_HLT, vols[VS_HLT]);
+      brewCore();
+      ftoa(volAvg[VS_HLT]/1000.0, buf, 2);
+      truncFloat(buf, 6);
+      printLCDRPad(2, 0, buf, 7, ' ');
 
-          ftoa(vols[VS_MASH]/1000.0, buf, 2);
-          truncFloat(buf, 6);
-          printLCDLPad(2, 14, buf, 6, ' ');
-          logVolume(VS_MASH, vols[VS_MASH]);
-          lastUpdate = millis();
-          
-        }
-      }
-
-      if (fillAuto) {
-        if (vols[VS_HLT] < hltVol && vols[VS_MASH] < mashVol) {
-          printLCD_P(3, 0, PSTR("On "));
-          printLCD_P(3, 17, PSTR(" On"));
-          setValves(fillBoth);
-        } else if (vols[VS_HLT] < hltVol) {
-          printLCD_P(3, 0, PSTR("On "));
-          printLCD_P(3, 17, PSTR("Off"));
-          setValves(fillHLT);
-        } else if (vols[VS_MASH] < mashVol) {
-          printLCD_P(3, 0, PSTR("Off"));
-          printLCD_P(3, 17, PSTR(" On"));
-          setValves(fillMash);
-        } else {
-          printLCD_P(3, 0, PSTR("Off"));
-          printLCD_P(3, 17, PSTR("Off"));
-          setValves(0);
-        }
-      }
+      ftoa(volAvg[VS_MASH]/1000.0, buf, 2);
+      truncFloat(buf, 6);
+      printLCDLPad(2, 14, buf, 6, ' ');
 
       if (encCount != lastCount) {
         lastCount = encCount;
@@ -522,51 +467,19 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
       }
       if (enterStatus == 1) {
         enterStatus = 0;
-        fillAuto = 0;
-        logStart_P(LOGMENU);
-        logField_P(LOGSCROLLR);
-        logField_P(PSTR("AB_FILL"));
-        logFieldI(encCount);
-
-        if (encCount == 0) {
-          logField_P(CONTINUE);
-          logEnd();
-          return;
-        } else if (encCount == 1) {
-          logField_P(AUTOFILL);          
-          fillAuto = 1;
-        } else if (encCount == 2) {
-          logField_P(FILLHLT);
-          printLCD_P(3, 0, PSTR("On "));
-          printLCD_P(3, 17, PSTR("Off"));
-          setValves(fillHLT);
-        } else if (encCount == 3) {
-          logField_P(FILLMASH);
-          printLCD_P(3, 0, PSTR("Off"));
-          printLCD_P(3, 17, PSTR(" On"));
-          setValves(fillMash);
-        } else if (encCount == 4) {
-          logField_P(FILLBOTH);
-          printLCD_P(3, 0, PSTR("On "));
-          printLCD_P(3, 17, PSTR(" On"));
-          setValves(fillBoth);
-        } else if (encCount == 5) {
-          logField_P(ALLOFF);
-          printLCD_P(3, 0, PSTR("Off"));
-          printLCD_P(3, 17, PSTR("Off"));
-          setValves(0);
-        } else if (encCount == 6) {
-          logField_P(ABORT);          
-          logEnd();
+        autoValve = 0;
+        if (encCount == 0) return;
+        else if (encCount == 1) autoValve = AV_FILL;
+        else if (encCount == 2) setValves(vlvConfig[VLV_FILLHLT]);
+        else if (encCount == 3) setValves(vlvConfig[VLV_FILLMASH]);
+        else if (encCount == 4) setValves(vlvConfig[VLV_FILLHLT] | vlvConfig[VLV_FILLMASH]);
+        else if (encCount == 5) setValves(0);
+        else if (encCount == 6) {
           setValves(0);
           if (confirmExit()) {
             enterStatus = 2;
             return;
           } else redraw = 1;
-        }
-        if (!redraw) {
-          logEnd();
-          logABFillMenu();
         }
       } else if (enterStatus == 2) {
         enterStatus = 0;
@@ -575,6 +488,19 @@ void manFill(unsigned long hltVol, unsigned long mashVol) {
           enterStatus = 2;
           return;
         } else redraw = 1;
+      }
+      if (vlvBits == vlvConfig[VLV_FILLMASH]) {
+        printLCD_P(3, 0, PSTR("Off"));
+        printLCD_P(3, 17, PSTR(" On"));
+      } else if (vlvBits == vlvConfig[VLV_FILLHLT]) {
+        printLCD_P(3, 0, PSTR("On "));
+        printLCD_P(3, 17, PSTR("Off"));
+      } else if (vlvBits == (vlvConfig[VLV_FILLHLT] | vlvConfig[VLV_FILLMASH])) {
+        printLCD_P(3, 0, PSTR("On "));
+        printLCD_P(3, 17, PSTR(" On"));
+      } else {
+        printLCD_P(3, 0, PSTR("Off"));
+        printLCD_P(3, 17, PSTR("Off"));
       }
     }
   }
@@ -588,7 +514,9 @@ void delayStart(int iMins) {
     printLCD_P(0,0,PSTR("Delay Start"));
     printLCD_P(0,14,PSTR("(WAIT)"));
     while(timerValue > 0) { 
+      brewCore();
       printTimer(1,7);
+
       if (chkMsg()) {
         if (strcasecmp(msg[0], "POPMENU") == 0) {
           enterStatus = 1;
@@ -596,8 +524,6 @@ void delayStart(int iMins) {
         } else rejectMsg(LOGAB);
       }
       if (enterStatus == 1) {
-        //Turn off heat outputs to keep from overheating if menu is up
-        resetOutputs();
         enterStatus = 0;
         redraw = 1;
         strcpy_P(menuopts[0], CANCEL);
@@ -632,37 +558,13 @@ void delayStart(int iMins) {
 }
 
 void mashStep(char sTitle[ ], int iMins) {
-  float temp[2] = { 0, 0 };
-  unsigned long convStart = 0;
-  unsigned long cycleStart[2] = { 0, 0 };
-  unsigned long mashHeat = getValveCfg(VLV_MASHHEAT);
-  unsigned long mashIdle = getValveCfg(VLV_MASHIDLE);
-  unsigned int calibVals[2][10];
-  unsigned long calibVols[2][10];
-  unsigned int zero[2];
-  unsigned long vols[2];
-  unsigned long lastUpdate = 0;
-  boolean heatStatus[2] = { 0, 0 };
   boolean preheated = 0;
-  unsigned long volReadings[2][5];
-  byte volCount = 0;
   setAlarm(0);
   boolean doPrompt = 0;
   if (iMins == MINS_PROMPT) doPrompt = 1;
   timerValue = 0;
+  autoValve = AV_MASH;
   
-  for (byte i = TS_HLT; i <= TS_MASH; i++) {
-    zero[i] = getZeroVol(i);
-    getVolCalibs(i, calibVols[i], calibVals[i]);
-
-    if (PIDEnabled[i]) {
-      pid[i].SetInputLimits(0, 255);
-      pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
-      PIDOutput[i] = 0;
-      cycleStart[i] = millis();
-    }
-  }
-
   while(1) {
     boolean redraw = 0;
     timerLastWrite = 0;
@@ -686,6 +588,7 @@ void mashStep(char sTitle[ ], int iMins) {
     printLCD_P(3, 18, TUNIT);
     
     while(!preheated || timerValue > 0 || doPrompt) {
+      brewCore();
       if (!preheated && temp[TS_MASH] >= setpoint[TS_MASH]) {
         preheated = 1;
         printLCDRPad(2, 7, "", 6, ' ');
@@ -700,83 +603,35 @@ void mashStep(char sTitle[ ], int iMins) {
         } else setTimer(iMins);
       }
 
+      ftoa(volAvg[VS_HLT]/1000.0, buf, 2);
+      truncFloat(buf, 6);
+      printLCDRPad(1, 0, buf, 7, ' ');
+        
+      ftoa(volAvg[VS_MASH]/1000.0, buf, 2);
+      truncFloat(buf, 6);
+      printLCDLPad(1, 14, buf, 6, ' ');
+
       for (byte i = VS_HLT; i <= VS_MASH; i++) {
         if (temp[i] == -1) printLCD_P(2, i * 16, PSTR("---")); else printLCDLPad(2, i * 16, itoa(temp[i], buf, 10), 3, ' ');
         printLCDLPad(3, i * 14 + 1, itoa(setpoint[i], buf, 10), 3, ' ');
+        byte pct;
         if (PIDEnabled[i]) {
-          byte pct = PIDOutput[i] / PIDCycle[i] / 10;
+          pct = PIDOutput[i] / PIDCycle[i] / 10;
           if (pct == 0) strcpy_P(buf, PSTR("Off"));
           else if (pct == 100) strcpy_P(buf, PSTR(" On"));
           else { itoa(pct, buf, 10); strcat(buf, "%"); }
-        } else if (heatStatus[i]) strcpy_P(buf, PSTR(" On")); else strcpy_P(buf, PSTR("Off")); 
-        printLCDLPad(3, i * 5 + 6, buf, 3, ' ');
-      }
-
-      //Check volume every 200 ms and update screen with average of 5 readings (once per second)      
-      if (millis() - lastUpdate > 200 * volCount) {
-        for (byte i = VS_HLT; i <= VS_MASH; i++) volReadings[i][volCount] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
-        volCount++;
-        for (byte i = VS_HLT; i <= VS_MASH; i++) vols[i] = (volReadings[i][0] + volReadings[i][1] + volReadings[i][2] + volReadings[i][3] + volReadings[i][4]) / 5;
-        if (volCount > 4) {
-          volCount = 0;
-          ftoa(vols[VS_HLT]/1000.0, buf, 2);
-          truncFloat(buf, 6);
-          printLCDRPad(1, 0, buf, 7, ' ');
-          logVolume(VS_HLT, vols[VS_HLT]);
-        
-          ftoa(vols[VS_MASH]/1000.0, buf, 2);
-          truncFloat(buf, 6);
-          printLCDLPad(1, 14, buf, 6, ' ');
-          logVolume(VS_MASH, vols[VS_MASH]);
-          lastUpdate = millis();
+        } else if (heatStatus[i]) {
+          strcpy_P(buf, PSTR(" On")); 
+          pct = 100;
+        } else {
+          strcpy_P(buf, PSTR("Off"));
+          pct = 0;
         }
+        printLCDLPad(3, i * 5 + 6, buf, 3, ' ');
       }
 
       if (preheated && !doPrompt) printTimer(2, 7);
 
-      if (convStart == 0) {
-        convertAll();
-        convStart = millis();
-      } else if (millis() - convStart >= 750) {
-        for (byte i = TS_HLT; i <= TS_MASH; i++) {
-          temp[i] = read_temp(tSensor[i]);
-          logTemp(i, temp[i]);
-        }
-        convStart = 0;
-      }
-
-      for (byte i = TS_HLT; i <= TS_MASH; i++) {
-        if (PIDEnabled[i]) {
-          if (temp[i] == -1) {
-            pid[i].SetMode(MANUAL);
-            PIDOutput[i] = 0;
-          } else {
-            pid[i].SetMode(AUTO);
-            PIDInput[i] = temp[i];
-            pid[i].Compute();
-          }
-          if (millis() - cycleStart[i] > PIDCycle[i] * 1000) cycleStart[i] += PIDCycle[i] * 1000;
-          if (PIDOutput[i] > millis() - cycleStart[i]) digitalWrite(heatPin[i], HIGH); else digitalWrite(heatPin[i], LOW);
-        } 
-
-        if (heatStatus[i]) {
-          if (temp[i] == -1 || temp[i] >= setpoint[i]) {
-            if (!PIDEnabled[i]) digitalWrite(heatPin[i], LOW);
-            heatStatus[i] = 0;
-          } else {
-            if (!PIDEnabled[i]) digitalWrite(heatPin[i], HIGH);
-          }
-        } else { 
-          if (temp[i] != -1 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
-            if (!PIDEnabled[i]) digitalWrite(heatPin[i], HIGH);
-            heatStatus[i] = 1;
-          } else {
-            if (!PIDEnabled[i]) digitalWrite(heatPin[i], LOW);
-          }
-        }
-      }    
-      //Do Valves
-      if (heatStatus[TS_MASH]) setValves(mashHeat); else setValves(mashIdle); 
       if (chkMsg()) {
         if ((!(doPrompt && preheated) && strcasecmp(msg[0], "POPMENU") == 0) || (doPrompt && preheated && strcasecmp(msg[0], "SELECT") == 0)) {
           enterStatus = 1;
@@ -794,7 +649,6 @@ void mashStep(char sTitle[ ], int iMins) {
         break; 
       }
       else if (enterStatus == 1) {
-        resetOutputs();
         enterStatus = 0;
         redraw = 1;
         strcpy_P(menuopts[0], CANCEL);
@@ -825,37 +679,14 @@ void mashStep(char sTitle[ ], int iMins) {
       }
     }
     if (!redraw) {
-       //Turn off HLT and MASH outputs
-       for (byte i = TS_HLT; i <= TS_MASH; i++) { 
-         if (PIDEnabled[i]) pid[i].SetMode(MANUAL);
-         digitalWrite(heatPin[i], LOW);
-       }
-       setValves(0);
-       //Exit
+      resetOutputs();
+      //Exit
       return;
     }
   }
 }
 
 void manSparge() {
-  float temp[2] = { 0, 0 };
-  unsigned long convStart = 0;
-  unsigned long spargeIn = getValveCfg(VLV_SPARGEIN);
-  unsigned long spargeOut = getValveCfg(VLV_SPARGEOUT);
-  unsigned long spargeFly = spargeIn | spargeOut;
-  unsigned int calibVals[2][10];
-  unsigned long calibVols[2][10];
-  unsigned int zero[2];
-  unsigned long vols[2];
-  unsigned long lastUpdate = 0;
-  unsigned long volReadings[2][5];
-  byte volCount = 0;
-  
-  for (byte i = TS_HLT; i <= TS_MASH; i++) {
-    zero[i] = getZeroVol(i);
-    getVolCalibs(i, calibVols[i], calibVals[i]);
-  }
-  
   while (1) {
     clearLCD();
     printLCD_P(0, 7, PSTR("Sparge"));
@@ -883,31 +714,20 @@ void manSparge() {
     encMax = 5;
     encCount = 0;
     byte lastCount = 1;
-    logABSpargeMenu();
     
     boolean redraw = 0;
     while(!redraw) {
-      //Check volume every 200 ms and update screen with average of 5 readings (once per second)      
-      if (millis() - lastUpdate > 200 * volCount) {
-        for (byte i = VS_HLT; i <= VS_MASH; i++) volReadings[i][volCount] = readVolume(vSensor[i], calibVols[i], calibVals[i], zero[i]);
-        volCount++;
-        for (byte i = VS_HLT; i <= VS_MASH; i++) vols[i] = (volReadings[i][0] + volReadings[i][1] + volReadings[i][2] + volReadings[i][3] + volReadings[i][4]) / 5;
-        if (volCount > 4) {
-          volCount = 0;
-          ftoa(vols[VS_HLT]/1000.0, buf, 2);
-          truncFloat(buf, 6);
-          printLCDRPad(2, 0, buf, 7, ' ');
-          logVolume(VS_HLT, vols[VS_HLT]);
+      brewCore();
+      ftoa(volAvg[VS_HLT]/1000.0, buf, 2);
+      truncFloat(buf, 6);
+      printLCDRPad(2, 0, buf, 7, ' ');
         
-          ftoa(vols[VS_MASH]/1000.0, buf, 2);
-          truncFloat(buf, 6);
-          printLCDLPad(2, 14, buf, 6, ' ');
-          logVolume(VS_MASH, vols[VS_MASH]);
-          lastUpdate = millis();
-        }
-      }
+      ftoa(volAvg[VS_MASH]/1000.0, buf, 2);
+      truncFloat(buf, 6);
+      printLCDLPad(2, 14, buf, 6, ' ');
 
       if (encCount != lastCount) {
+        printLCDRPad(3, 5, "", 10, ' ');
         lastCount = encCount;
         if (lastCount == 0) printLCD_P(3, 6, CONTINUE);
         else if (lastCount == 1) printLCD_P(3, 6, SPARGEIN);
@@ -916,17 +736,9 @@ void manSparge() {
         else if (lastCount == 4) printLCD_P(3, 7, ALLOFF);
         else if (lastCount == 5) printLCD_P(3, 8, ABORT);
       }
-      if (convStart == 0) {
-        convertAll();
-        convStart = millis();
-      } else if (millis() - convStart >= 750) {
-        for (byte i = TS_HLT; i <= TS_MASH; i++) {
-          temp[i] = read_temp(tSensor[i]);
-          logTemp(i, temp[i]);
-          if (temp[i] == -1) printLCD_P(1, i * 16, PSTR("---")); else printLCDLPad(1, i * 16, itoa(temp[i], buf, 10), 3, ' ');
-        }
-        convStart = 0;
-      }
+
+      for (byte i = TS_HLT; i <= TS_MASH; i++) if (temp[i] == -1) printLCD_P(1, i * 16, PSTR("---")); else printLCDLPad(1, i * 16, itoa(temp[i], buf, 10), 3, ' ');
+
       if (chkMsg()) {
         if (strcasecmp(msg[0], "SELECT") == 0) {
           byte val = atoi(msg[1]);
@@ -939,46 +751,30 @@ void manSparge() {
       }
       if (enterStatus == 1) {
         enterStatus = 0;
-        logStart_P(LOGMENU);
-        logField_P(LOGSCROLLR);
-        logField_P(PSTR("AB_SPARGE"));
-        logFieldI(encCount);
         if (encCount == 0) {
-          logField_P(CONTINUE);
-          logEnd();
           return;
         } else if (encCount == 1) {
-          logField_P(SPARGEIN);
           printLCD_P(3, 0, PSTR("On "));
           printLCD_P(3, 17, PSTR("Off"));
-          setValves(spargeIn);
+          setValves(vlvConfig[VLV_SPARGEIN]);
         } else if (encCount == 2) {
-          logField_P(SPARGEOUT);
           printLCD_P(3, 0, PSTR("Off"));
           printLCD_P(3, 17, PSTR(" On"));
-          setValves(spargeOut);
+          setValves(vlvConfig[VLV_SPARGEOUT]);
         } else if (encCount == 3) {
-          logField_P(FLYSPARGE);
           printLCD_P(3, 0, PSTR("On "));
           printLCD_P(3, 17, PSTR(" On"));
-          setValves(spargeFly);
+          setValves(vlvConfig[VLV_SPARGEIN] | vlvConfig[VLV_SPARGEOUT]);
         } else if (encCount == 4) {
-          logField_P(ALLOFF);
           printLCD_P(3, 0, PSTR("Off"));
           printLCD_P(3, 17, PSTR("Off"));
           setValves(0);
         } else if (encCount == 5) {
-          logField_P(ABORT);
-          logEnd();
             if (confirmExit()) {
               setValves(0);
               enterStatus = 2;
               return;
             } else redraw = 1;
-        }
-        if (!redraw) {
-          logEnd();
-          logABSpargeMenu();
         }
       } else if (enterStatus == 2) {
         enterStatus = 0;
@@ -993,30 +789,10 @@ void manSparge() {
 }
 
 void boilStage(unsigned int iMins, unsigned int boilAdds) {
-  float temp = 0;
-  unsigned long convStart = 0;
-  unsigned long cycleStart = 0;
-  boolean heatStatus = 0;
   boolean preheated = 0;
   unsigned int triggered = getABAddsTrig();
   setAlarm(0);
   timerValue = 0;
-  unsigned int calibVals[10];
-  unsigned long calibVols[10];
-  unsigned long vol;
-  unsigned long lastUpdate = 0;
-  unsigned long volReadings[5];
-  byte volCount = 0;
-  
-  unsigned int zero = getZeroVol(VS_KETTLE);
-  getVolCalibs(VS_KETTLE, calibVols, calibVals);
-    
-  if (PIDEnabled[TS_KETTLE]) {
-    pid[TS_KETTLE].SetInputLimits(0, 255);
-    pid[TS_KETTLE].SetOutputLimits(0, PIDCycle[TS_KETTLE] * 1000);
-    PIDOutput[TS_KETTLE] = 0;
-    cycleStart = millis();
-  }
   
   while(1) {
     boolean redraw = 0;
@@ -1036,37 +812,32 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
     printLCD_P(3, 4, TUNIT);
     
     while(!preheated || timerValue > 0) {
+      brewCore();
       if (preheated) { if (alarmStatus) printLCD_P(0, 19, PSTR("!")); else printLCD_P(0, 19, SPACE); }
-      if (!preheated && temp >= setpoint[TS_KETTLE] && setpoint[TS_KETTLE] > 0) {
+      if (!preheated && temp[TS_KETTLE] >= setpoint[TS_KETTLE] && setpoint[TS_KETTLE] > 0) {
         preheated = 1;
         printLCDRPad(0, 14, "", 6, ' ');
         setTimer(iMins);
       }
 
-      //Check volume every 200 ms and update screen with average of 5 readings (once per second)      
-      if (millis() - lastUpdate > 200 * volCount) {
-        volReadings[volCount] = readVolume(vSensor[VS_KETTLE], calibVols, calibVals, zero);
-        volCount++;
-        vol = (volReadings[0] + volReadings[1] + volReadings[2] + volReadings[3] + volReadings[4]) / 5;
-        if (volCount > 4) {
-          volCount = 0;
-          ftoa(vol/1000.0, buf, 2);
-          truncFloat(buf, 6);
-          printLCDRPad(1, 0, buf, 7, ' ');
-          logVolume(VS_KETTLE, vol);
-          lastUpdate = millis();
-        }
-      }
-      
-      if (temp == -1) printLCD_P(2, 0, PSTR("---")); else printLCDLPad(2, 0, itoa(temp, buf, 10), 3, ' ');
-      printLCDLPad(3, 1, itoa(setpoint[TS_KETTLE], buf, 10), 3, ' ');
+      ftoa(volAvg[VS_KETTLE]/1000.0, buf, 2);
+      truncFloat(buf, 6);
+      printLCDRPad(1, 0, buf, 7, ' ');
+
       if (PIDEnabled[TS_KETTLE]) {
         byte pct = PIDOutput[TS_KETTLE] / PIDCycle[TS_KETTLE] / 10;
         if (pct == 0) strcpy_P(buf, PSTR("Off"));
         else if (pct == 100) strcpy_P(buf, PSTR(" On"));
         else { itoa(pct, buf, 10); strcat(buf, "%"); }
-      } else if (heatStatus) strcpy_P(buf, PSTR(" On")); else strcpy_P(buf, PSTR("Off")); 
+      } else if (heatStatus) {
+        strcpy_P(buf, PSTR(" On")); 
+      } else {
+        strcpy_P(buf, PSTR("Off"));
+      }
       printLCDLPad(3, 6, buf, 3, ' ');
+      
+      if (temp[TS_KETTLE] == -1) printLCD_P(2, 0, PSTR("---")); else printLCDLPad(2, 0, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
+      printLCDLPad(3, 1, itoa(setpoint[TS_KETTLE], buf, 10), 3, ' ');
 
       if (preheated) {
         printTimer(2, 7);
@@ -1082,39 +853,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         if (((boilAdds ^ triggered) & 512) && timerValue <= 10 * 60000) { setAlarm(1); triggered |= 512; setABAddsTrig(triggered); } //10 Min
         if (((boilAdds ^ triggered) & 1024) && timerValue <= 5 * 60000) { setAlarm(1); triggered |= 1024; setABAddsTrig(triggered); } //5 Min
       }
-      if (convStart == 0) {
-        convertAll();
-        convStart = millis();
-      } else if (millis() - convStart >= 750) {
-        temp = read_temp(tSensor[TS_KETTLE]);
-        logTemp(TS_KETTLE, temp);
-        convStart = 0;
-      }
 
-      if (PIDEnabled[TS_KETTLE]) {
-        if (temp == -1) {
-          pid[TS_KETTLE].SetMode(MANUAL);
-          PIDOutput[TS_KETTLE] = 0;
-        } else {
-          pid[TS_KETTLE].SetMode(AUTO);
-          PIDInput[TS_KETTLE] = temp;
-          pid[TS_KETTLE].Compute();
-        }
-        if (millis() - cycleStart > PIDCycle[TS_KETTLE] * 1000) cycleStart += PIDCycle[TS_KETTLE] * 1000;
-        if (PIDOutput[TS_KETTLE] > millis() - cycleStart) digitalWrite(KETTLEHEAT_PIN, HIGH); else digitalWrite(KETTLEHEAT_PIN, LOW);
-      } else {
-        if (heatStatus) {
-          if (temp == -1 || temp >= setpoint[TS_KETTLE]) {
-            digitalWrite(KETTLEHEAT_PIN, LOW);
-            heatStatus = 0;
-          } else digitalWrite(KETTLEHEAT_PIN, HIGH);
-        } else { 
-          if (temp != -1 && (float)(setpoint[TS_KETTLE] - temp) >= (float) hysteresis[TS_KETTLE] / 10.0) {
-            digitalWrite(KETTLEHEAT_PIN, HIGH);
-            heatStatus = 1;
-          } else digitalWrite(KETTLEHEAT_PIN, LOW);
-        }
-      }
       if (chkMsg()) {
         if ((!alarmStatus && strcasecmp(msg[0], "POPMENU") == 0) || (alarmStatus && strcasecmp(msg[0], "SELECT") == 0)) {
           enterStatus = 1;
@@ -1126,7 +865,6 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         setAlarm(0);
       } else if (enterStatus == 1) {
         redraw = 1;
-        resetOutputs();
         enterStatus = 0;
         strcpy_P(menuopts[0], CANCEL);
         if (timerValue > 0) strcpy_P(menuopts[1], PSTR("Reset Timer"));
@@ -1158,22 +896,14 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
     if (!redraw) {
       if ((boilAdds ^ triggered) & 2048) { setAlarm(1); triggered |= 2048; setABAddsTrig(triggered); } //0 Min
       //Turn off output
-       if (PIDEnabled[TS_KETTLE]) pid[TS_KETTLE].SetMode(MANUAL);
-       digitalWrite(KETTLEHEAT_PIN, LOW);
-       //Exit
+      resetOutputs();
+      //Exit
       return;
     }
   }
 }
 
-void manChill(byte settemp) {
-  boolean doAuto = 0;
-  unsigned long chillLow = getValveCfg(VLV_CHILLBEER);
-  unsigned long chillHigh = getValveCfg(VLV_CHILLH2O);
-  unsigned long chillNorm = chillLow | chillHigh;
-  unsigned long convStart = 0;
-  float temp[6];
-  
+void manChill() {
   while (1) {
     clearLCD();
     printLCD_P(0, 8, PSTR("Chill"));
@@ -1190,19 +920,18 @@ void manChill(byte settemp) {
     printLCD_P(3, 15, PSTR("<"));    
     
     setValves(0);
-    printLCD_P(3, 0, PSTR("Off"));
-    printLCD_P(3, 17, PSTR("Off"));
 
     encMin = 0;
     encMax = 6;
     encCount = 0;
     int lastCount = 1;
-    logABChillMenu(); 
     
     boolean redraw = 0;
     while(!redraw) {
+      brewCore();
       if (encCount != lastCount) {
         lastCount = encCount;
+        printLCDRPad(3, 5, "", 10, ' ');
         if (lastCount == 0) printLCD_P(3, 6, CONTINUE);
         else if (lastCount == 1) printLCD_P(3, 5, CHILLNORM);
         else if (lastCount == 2) printLCD_P(3, 6, CHILLH2O);
@@ -1211,6 +940,7 @@ void manChill(byte settemp) {
         else if (lastCount == 5) printLCD_P(3, 8, AUTOFILL);
         else if (lastCount == 6) printLCD_P(3, 8, ABORT);
       }
+      
       if (chkMsg()) {
         if (strcasecmp(msg[0], "SELECT") == 0) {
           byte val = atoi(msg[1]);
@@ -1221,56 +951,24 @@ void manChill(byte settemp) {
           } else rejectParam(LOGSCROLLP);
         } else rejectMsg(LOGSCROLLP);
       }
-      if (enterStatus == 1) {
+      if (enterStatus == 1 && alarmStatus) {
         enterStatus = 0;
-        logStart_P(LOGMENU);
-        logField_P(LOGSCROLLR);
-        logField_P(PSTR("AB_CHILL"));
-        logFieldI(encCount);
-
-        if (encCount == 0) {
-          logField_P(CONTINUE);
-          logEnd();
-          return;
-        } else if (encCount == 1) {
-          logField_P(CHILLNORM);
-          doAuto = 0;
-          printLCD_P(3, 0, PSTR("On "));
-          printLCD_P(3, 17, PSTR(" On"));
-          setValves(chillNorm);
-        } else if (encCount == 2) {
-          logField_P(CHILLH2O);
-          doAuto = 0;
-          printLCD_P(3, 0, PSTR("Off"));
-          printLCD_P(3, 17, PSTR(" On"));
-          setValves(chillHigh);
-        } else if (encCount == 3) {
-          logField_P(CHILLBEER);
-          doAuto = 0;
-          printLCD_P(3, 0, PSTR("On "));
-          printLCD_P(3, 17, PSTR("Off"));
-          setValves(chillLow);
-        } else if (encCount == 4) {
-          logField_P(ALLOFF);
-          doAuto = 0;
-          printLCD_P(3, 0, PSTR("Off"));
-          printLCD_P(3, 17, PSTR("Off"));
-          setValves(0);
-        } else if (encCount == 5) {
-          logField_P(AUTOFILL);
-          doAuto = 1;
-        } else if (encCount == 6) {
-          logField_P(ABORT);
-          logEnd();
+        setAlarm(0);
+      } else if (enterStatus == 1) {
+        autoValve = 0;
+        enterStatus = 0;
+        if (encCount == 0) return;
+        else if (encCount == 1) setValves(vlvConfig[VLV_CHILLH2O] | vlvConfig[VLV_CHILLBEER]);
+        else if (encCount == 2) setValves(vlvConfig[VLV_CHILLH2O]);
+        else if (encCount == 3) setValves(vlvConfig[VLV_CHILLBEER]);
+        else if (encCount == 4) setValves(0);
+        else if (encCount == 5) autoValve = AV_CHILL;
+        else if (encCount == 6) {
           if (confirmExit()) {
             setValves(0);
             enterStatus = 2;
             return;
           } else redraw = 1;
-        }
-        if (!redraw) {
-          logEnd();
-          logABChillMenu();
         }
       } else if (enterStatus == 2) {
         enterStatus = 0;
@@ -1280,34 +978,23 @@ void manChill(byte settemp) {
           return;
         } else redraw = 1;
       }
-      if (convStart == 0) {
-        convertAll();
-        convStart = millis();
-      } else if (millis() - convStart >= 750) {
-        for (byte i = TS_KETTLE; i <= TS_BEEROUT; i++) {
-          temp[i] = read_temp(tSensor[i]);
-          logTemp(i, temp[i]);
-        }
-        convStart = 0;
-      }
       if (temp[TS_KETTLE] == -1) printLCD_P(1, 0, PSTR("---")); else printLCDLPad(1, 0, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
       if (temp[TS_BEEROUT] == -1) printLCD_P(2, 0, PSTR("---")); else printLCDLPad(2, 0, itoa(temp[TS_BEEROUT], buf, 10), 3, ' ');
       if (temp[TS_H2OIN] == -1) printLCD_P(1, 16, PSTR("---")); else printLCDLPad(1, 16, itoa(temp[TS_H2OIN], buf, 10), 3, ' ');
       if (temp[TS_H2OOUT] == -1) printLCD_P(2, 16, PSTR("---")); else printLCDLPad(2, 16, itoa(temp[TS_H2OOUT], buf, 10), 3, ' ');
-      if (doAuto) {
-        if (temp[TS_BEEROUT] > settemp + 1.0) {
-            printLCD_P(3, 0, PSTR("Off"));
-            printLCD_P(3, 17, PSTR(" On"));
-            setValves(chillHigh);
-        } else if (temp[TS_BEEROUT] < settemp - 1.0) {
-            printLCD_P(3, 0, PSTR("On "));
-            printLCD_P(3, 17, PSTR("Off"));
-            setValves(chillLow);
-        } else {
-            printLCD_P(3, 0, PSTR("On "));
-            printLCD_P(3, 17, PSTR(" On"));
-            setValves(chillNorm);
-        }
+
+      if (vlvBits == vlvConfig[VLV_CHILLH2O]) {
+        printLCD_P(3, 0, PSTR("Off"));
+        printLCD_P(3, 17, PSTR(" On"));
+      } else if (vlvBits == vlvConfig[VLV_CHILLBEER]) {
+        printLCD_P(3, 0, PSTR("On "));
+        printLCD_P(3, 17, PSTR("Off"));
+      } else if (vlvBits == vlvConfig[VLV_CHILLH2O] | vlvConfig[VLV_CHILLBEER]) {
+        printLCD_P(3, 0, PSTR("On "));
+        printLCD_P(3, 17, PSTR(" On"));
+      } else {
+        printLCD_P(3, 0, PSTR("Off"));
+        printLCD_P(3, 17, PSTR("Off"));
       }
     }
   }  

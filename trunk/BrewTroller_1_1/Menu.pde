@@ -61,6 +61,7 @@ byte scrollMenu(char sTitle[], byte numOpts, byte defOption) {
         return numOpts;
       }
     }
+    brewCore();
   }
 }
 
@@ -125,6 +126,7 @@ byte getChoice(byte numChoices, byte iRow) {
         return numChoices;
       }
     }
+    brewCore();
   }
 }
 
@@ -149,10 +151,11 @@ boolean confirmDel() {
   if(getChoice(2, 3) == 1) return 1; else return 0;
 }
 
-long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision, long maxValue, const char *dispUnit) {
+unsigned long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision, unsigned long maxValue, const char *dispUnit) {
   unsigned long retValue = defValue;
   byte cursorPos = 0; 
   boolean cursorState = 0; //0 = Unselected, 1 = Selected
+
 
   encMin = 0;
   encMax = digits;
@@ -163,7 +166,9 @@ long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision
   lcdSetCustChar_P(1, CHARCURSOR);
       
   clearLCD();
-  printLCD(0,0,sTitle);
+  //This resolves an odd memory issue. Needs more work.
+  printLCD(0, 0, itoa(availableMemory(), buf, 10));
+  printLCD(0, 0, sTitle);
   printLCD_P(1, (20 - digits + 1) / 2 + digits + 1, dispUnit);
   printLCD(3, 9, "OK");
   unsigned long whole, frac;
@@ -225,6 +230,7 @@ long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision
       retValue = defValue;
       break;
     }
+    brewCore();
   }
   return retValue;
 }
@@ -289,6 +295,7 @@ unsigned int getTimerValue(char sTitle[], unsigned int defMins) {
       enterStatus = 0;
       return NULL;
     }
+    brewCore();
   }
 }
 
@@ -361,6 +368,7 @@ void getString(char sTitle[], char defValue[], byte chars) {
       enterStatus = 0;
       return;
     }
+    brewCore();
   }
 }
 

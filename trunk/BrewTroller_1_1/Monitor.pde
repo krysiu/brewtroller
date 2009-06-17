@@ -1,27 +1,13 @@
 void doMon() {
 //Program memory used: 4KB (as of Build 205)
 #ifdef MODULE_BREWMONITOR
-  float temp[6] = { 0, 0, 0, 0, 0, 0 };
-  unsigned long convStart = 0;
-  unsigned long cycleStart[3];
-  boolean heatStatus[3] = { 0, 0, 0 };
-
   clearTimer();
-  
-  for (byte i = TS_HLT; i <= TS_KETTLE; i++) {
-    if (PIDEnabled[i]) {
-      pid[i].SetInputLimits(0, 255);
-      pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
-      PIDOutput[i] = 0;
-      cycleStart[i] = millis();
-    }
-  }
   
   encMin = 0;
   encMax = 2;
   encCount = 0;
   byte lastCount = 1;
-  if (getPwrRecovery() == 2) {
+  if (pwrRecovery == 2) {
     loadSetpoints();
     unsigned int newMins = getTimerRecovery();
     if (newMins > 0) setTimer(newMins);
@@ -132,6 +118,7 @@ void doMon() {
         lastCount += 1;
       }
     }
+    brewCore();
     if (encCount == 0) {
       if (encCount != lastCount) {
         clearLCD();
@@ -150,19 +137,16 @@ void doMon() {
         timerLastWrite = 0;
       }
 
-      byte vcount = VS_HLT;
-      while (1) {
-        if (temp[vcount] == -1) printLCD_P(2, vcount * 16, PSTR("---")); else printLCDLPad(2, vcount * 16, itoa(temp[vcount], buf, 10), 3, ' ');
-        printLCDLPad(3, vcount * 14 + 1, itoa(setpoint[vcount], buf, 10), 3, ' ');
-        if (PIDEnabled[vcount]) {
-          byte pct = PIDOutput[vcount] / PIDCycle[vcount] / 10;
+      for (byte i = VS_HLT; i <= VS_MASH; i++) {
+        if (temp[i] == -1) printLCD_P(2, i * 16, PSTR("---")); else printLCDLPad(2, i * 16, itoa(temp[i], buf, 10), 3, ' ');
+        printLCDLPad(3, i * 14 + 1, itoa(setpoint[i], buf, 10), 3, ' ');
+        if (PIDEnabled[i]) {
+          byte pct = PIDOutput[i] / PIDCycle[i] / 10;
           if (pct == 0) strcpy_P(buf, PSTR("Off"));
           else if (pct == 100) strcpy_P(buf, PSTR(" On"));
           else { itoa(pct, buf, 10); strcat(buf, "%"); }
-        } else if (heatStatus[vcount]) strcpy_P(buf, PSTR(" On")); else strcpy_P(buf, PSTR("Off")); 
-        printLCDLPad(3, vcount * 5 + 6, buf, 3, ' ');
-        vcount++;
-        if (vcount > VS_MASH) break;
+        } else if (heatStatus[i]) strcpy_P(buf, PSTR(" On")); else strcpy_P(buf, PSTR("Off")); 
+        printLCDLPad(3, i * 5 + 6, buf, 3, ' ');
       }
 
     } else if (encCount == 1) {
@@ -209,40 +193,6 @@ void doMon() {
       if (temp[TS_H2OOUT] == -1) printLCD(3, 16, "---"); else printLCDLPad(3, 16, itoa(temp[TS_H2OOUT], buf, 10), 3, ' ');
     }
     printTimer(1,7);
-
-    if (convStart == 0) {
-      convertAll();
-      convStart = millis();
-    } else if (millis() - convStart >= 750) {
-      for (byte i = TS_HLT; i <= TS_BEEROUT; i++) temp[i] = read_temp(tSensor[i]);
-      convStart = 0;
-    }
-    for (byte i = TS_HLT; i <= TS_KETTLE; i++) {
-      if (PIDEnabled[i]) {
-        if (temp[i] == -1) {
-          pid[i].SetMode(MANUAL);
-          PIDOutput[i] = 0;
-        } else {
-          pid[i].SetMode(AUTO);
-          PIDInput[i] = temp[i];
-          pid[i].Compute();
-        }
-        if (millis() - cycleStart[i] > PIDCycle[i] * 1000) cycleStart[i] += PIDCycle[i] * 1000;
-        if (PIDOutput[i] > millis() - cycleStart[i]) digitalWrite(heatPin[i], HIGH); else digitalWrite(heatPin[i], LOW);
-      } else {
-        if (heatStatus[i]) {
-          if (temp[i] == -1 || temp[i] >= setpoint[i]) {
-            digitalWrite(heatPin[i], LOW);
-            heatStatus[i] = 0;
-          } else digitalWrite(heatPin[i], HIGH);
-        } else { 
-          if (temp[i] != -1 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
-            digitalWrite(heatPin[i], HIGH);
-            heatStatus[i] = 1;
-          } else digitalWrite(heatPin[i], LOW);
-        }
-      }
-    }
   }
 #endif
 }
