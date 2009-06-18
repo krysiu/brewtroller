@@ -1,4 +1,4 @@
-#define BUILD 227 
+#define BUILD 228 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -292,10 +292,12 @@ const char CHILLBEER[] PROGMEM = "Beer Only";
 const char VOLUNIT[] PROGMEM = "l";
 const char WTUNIT[] PROGMEM = "kg";
 const char TUNIT[] PROGMEM = "C";
+const char PUNIT[] PROGMEM = "kPa";
 #else
 const char VOLUNIT[] PROGMEM = "gal";
 const char WTUNIT[] PROGMEM = "lb";
 const char TUNIT[] PROGMEM = "F";
+const char PUNIT[] PROGMEM = "psi";
 #endif
 
 //Custom LCD Chars

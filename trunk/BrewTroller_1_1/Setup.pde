@@ -93,10 +93,11 @@ void cfgOutputs() {
     if (PIDEnabled[VS_STEAM]) strcpy_P(menuopts[13], PSTR("Steam Mode: PID")); else strcpy_P(menuopts[12], PSTR("Steam Mode: On/Off"));
     strcpy_P(menuopts[14], PSTR("Steam PID Cycle"));
     strcpy_P(menuopts[15], PSTR("Steam PID Gain"));
-    strcpy_P(menuopts[16], PSTR("Steam Hysteresis"));
-    strcpy_P(menuopts[17], PSTR("Exit"));
+    strcpy_P(menuopts[16], PSTR("Steam Pressure"));
+    strcpy_P(menuopts[17], PSTR("Steam Sensor Sens"));
+    strcpy_P(menuopts[18], PSTR("Exit"));
 
-    lastOption = scrollMenu("Configure Outputs", 18, lastOption);
+    lastOption = scrollMenu("Configure Outputs", 19, lastOption);
     if (lastOption == 0) PIDEnabled[VS_HLT] = PIDEnabled[VS_HLT] ^ 1;
     else if (lastOption == 1) PIDCycle[VS_HLT] = getValue("HLT Cycle Time", PIDCycle[VS_HLT], 3, 0, 255, "s");
     else if (lastOption == 2) setPIDGain("HLT PID Gain", &PIDp[VS_HLT], &PIDi[VS_HLT], &PIDd[VS_HLT]);
@@ -113,7 +114,7 @@ void cfgOutputs() {
     else if (lastOption == 13) PIDEnabled[VS_STEAM] = PIDEnabled[VS_STEAM] ^ 1;
     else if (lastOption == 14) PIDCycle[VS_STEAM] = getValue("Steam Cycle Time", PIDCycle[VS_STEAM], 3, 0, 255, "s");
     else if (lastOption == 15) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
-    else if (lastOption == 16) hysteresis[VS_STEAM] = getValue("Steam Hysteresis", hysteresis[VS_STEAM], 3, 1, 255, TUNIT);
+    else if (lastOption == 16) hysteresis[VS_STEAM] = getValue("Steam Pressure", hysteresis[VS_STEAM], 3, 0, 255, PUNIT);
     else return;
     saveSetup();
   } 
