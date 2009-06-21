@@ -65,25 +65,25 @@ void doMon() {
         clearLCD();
         printLCD_P(0, 5, PSTR("FermTroller"));
         printLCD_P(1, 4, PSTR("Ambient:"));
-        printLCD_P(1, 15, TUNIT);
+        printLCD_P(1, 16, TUNIT);
 
-        printLCD_P(2, 3, TUNIT);
-        printLCD_P(2, 19, TUNIT);
-        printLCD_P(3, 3, TUNIT);
-        printLCD_P(3, 19, TUNIT);
+        printLCD_P(2, 5, TUNIT);
+        printLCD_P(2, 16, TUNIT);
+        printLCD_P(3, 5, TUNIT);
+        printLCD_P(3, 16, TUNIT);
         
-        printLCD(2, 4, "[");
-        printLCD(2, 6, "]");
-        printLCD(2, 13, "[");
-        printLCD(2, 15, "]");
-        printLCD(3, 4, "[");
-        printLCD(3, 6, "]");
-        printLCD(3, 13, "[");
-        printLCD(3, 15, "]");
+        printLCD(2, 6, "[");
+        printLCD(2, 8, "]");
+        printLCD(2, 17, "[");
+        printLCD(2, 19, "]");
+        printLCD(3, 6, "[");
+        printLCD(3, 8, "]");
+        printLCD(3, 17, "[");
+        printLCD(3, 19, "]");
         
-        printLCD(2, 7, "<1");
+        printLCD(2, 0, "1>");
         printLCD(2, 11, "2>");
-        printLCD(3, 7, "<3");
+        printLCD(3, 0, "3>");
         printLCD(3, 11, "4>");
         
         lastCount = encCount;
@@ -98,11 +98,11 @@ void doMon() {
         } 
       }
       
-      printLCDLPad(1, 12, menuopts[4], 3, ' ');
-      printLCDLPad(2,  0, menuopts[0], 3, ' ');
-      printLCDLPad(2, 16, menuopts[1], 3, ' ');
-      printLCDLPad(3,  0, menuopts[2], 3, ' ');
-      printLCDLPad(3, 16, menuopts[3], 3, ' ');
+      printLCDLPad(1, 13, menuopts[4], 3, ' ');
+      printLCDLPad(2,  2, menuopts[0], 3, ' ');
+      printLCDLPad(2, 13, menuopts[1], 3, ' ');
+      printLCDLPad(3,  2, menuopts[2], 3, ' ');
+      printLCDLPad(3, 13, menuopts[3], 3, ' ');
 
       for (byte i = 0; i < 4; i++) {
         if (coolStatus[i]) strcpy_P(menuopts[i], PSTR("C"));
@@ -110,10 +110,10 @@ void doMon() {
         else strcpy_P(menuopts[i], PSTR(" "));
       }
       
-      printLCD(2,  5, menuopts[0]);
-      printLCD(2, 14, menuopts[1]);
-      printLCD(3,  5, menuopts[2]);
-      printLCD(3, 14, menuopts[3]);
+      printLCD(2,  7, menuopts[0]);
+      printLCD(2, 18, menuopts[1]);
+      printLCD(3,  7, menuopts[2]);
+      printLCD(3, 18, menuopts[3]);
       
     } else if (encCount == 1) {
       if (encCount != lastCount) {

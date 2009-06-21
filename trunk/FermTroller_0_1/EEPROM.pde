@@ -69,6 +69,7 @@ void PROMreadBytes(int addr, byte bytes[], byte numBytes) {
 
 void checkConfig() {
   byte cfgVersion = EEPROM.read(2047);
+  byte FTfingerprint = EEPROM.read(2046); //253 = FermTroller
 
 #ifdef DEBUG
   logStart_P(LOGDEBUG);
@@ -77,7 +78,7 @@ void checkConfig() {
   logEnd();
 #endif
 
-  if (cfgVersion == 255) cfgVersion = 0;
+  if (cfgVersion == 255 || FTfingerprint != 253) cfgVersion = 0;
   switch(cfgVersion) {
     case 0:
       clearLCD();
@@ -106,6 +107,8 @@ void checkConfig() {
           }
         }
       }
+      //Set FermTroller Fingerprint
+      EEPROM.write(2046, 253);
       //Set cfgVersion = 1
       EEPROM.write(2047, 1);
     default:
