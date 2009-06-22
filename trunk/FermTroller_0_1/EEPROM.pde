@@ -111,6 +111,11 @@ void checkConfig() {
       EEPROM.write(2046, 253);
       //Set cfgVersion = 1
       EEPROM.write(2047, 1);
+    case 1:
+      //Bump cfgVersion up to 7 to resolve EEPROM mismatch with BT
+      EEPROM.write(2047, 7);
+    case 7:
+      //Next Update
     default:
       //No EEPROM Upgrade Required
       return;

@@ -3,12 +3,23 @@ void menuSetup() {
   while(1) {
     strcpy_P(menuopts[0], PSTR("Assign Temp Sensor"));
     strcpy_P(menuopts[1], PSTR("Configure Outputs"));
-    strcpy_P(menuopts[2], PSTR("Exit Setup"));
+    strcpy_P(menuopts[2], INIT_EEPROM);
+    strcpy_P(menuopts[3], PSTR("Exit Setup"));
     
-    lastOption = scrollMenu("System Setup", 3, lastOption);
+    lastOption = scrollMenu("System Setup", 4, lastOption);
     if (lastOption == 0) assignSensor();
     else if (lastOption == 1) cfgOutputs();
-    else return;
+    else if (lastOption == 2) {
+      clearLCD();
+      printLCD_P(0, 0, PSTR("Reset Configuration?"));
+      strcpy_P(menuopts[0], INIT_EEPROM);
+        strcpy_P(menuopts[1], CANCEL);
+        if (getChoice(2, 3) == 0) {
+          EEPROM.write(2047, 0);
+          checkConfig();
+          loadSetup();
+        }
+    } else return;
   }
 }
 
