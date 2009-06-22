@@ -5,14 +5,25 @@ void menuSetup() {
     strcpy_P(menuopts[1], PSTR("Configure Outputs"));
     strcpy_P(menuopts[2], PSTR("Volume/Capacity"));
     strcpy_P(menuopts[3], PSTR("Configure Valves"));
-    strcpy_P(menuopts[4], PSTR("Exit Setup"));
+    strcpy_P(menuopts[4], INIT_EEPROM);
+    strcpy_P(menuopts[5], PSTR("Exit Setup"));
     
-    lastOption = scrollMenu("System Setup", 5, lastOption);
+    lastOption = scrollMenu("System Setup", 6, lastOption);
     if (lastOption == 0) assignSensor();
     else if (lastOption == 1) cfgOutputs();
     else if (lastOption == 2) cfgVolumes();
     else if (lastOption == 3) cfgValves();
-    else return;
+    else if (lastOption == 4) {
+      clearLCD();
+      printLCD_P(0, 0, PSTR("Reset Configuration?"));
+      strcpy_P(menuopts[0], INIT_EEPROM);
+        strcpy_P(menuopts[1], CANCEL);
+        if (getChoice(2, 3) == 0) {
+          EEPROM.write(2047, 0);
+          checkConfig();
+          loadSetup();
+        }
+    } else return;
   }
 }
 
@@ -76,45 +87,44 @@ void cfgOutputs() {
   byte lastOption = 0;
   while(1) {
     if (PIDEnabled[VS_HLT]) strcpy_P(menuopts[0], PSTR("HLT Mode: PID")); else strcpy_P(menuopts[0], PSTR("HLT Mode: On/Off"));
-    strcpy_P(menuopts[1], PSTR("HLT PID Cycle"));
-    strcpy_P(menuopts[2], PSTR("HLT PID Gain"));
-    strcpy_P(menuopts[3], PSTR("HLT Hysteresis"));
+    strcpy_P(menuopts[1], HLTCYCLE);
+    strcpy_P(menuopts[2], HLTGAIN);
+    strcpy_P(menuopts[3], HLTHY);
     if (PIDEnabled[VS_MASH]) strcpy_P(menuopts[4], PSTR("Mash Mode: PID")); else strcpy_P(menuopts[4], PSTR("Mash Mode: On/Off"));
-    strcpy_P(menuopts[5], PSTR("Mash PID Cycle"));
-    strcpy_P(menuopts[6], PSTR("Mash PID Gain"));
-    strcpy_P(menuopts[7], PSTR("Mash Hysteresis"));
+    strcpy_P(menuopts[5], MASHCYCLE);
+    strcpy_P(menuopts[6], MASHGAIN);
+    strcpy_P(menuopts[7], MASHHY);
     if (PIDEnabled[VS_KETTLE]) strcpy_P(menuopts[8], PSTR("Kettle Mode: PID")); else strcpy_P(menuopts[8], PSTR("Kettle Mode: On/Off"));
-    strcpy_P(menuopts[9], PSTR("Kettle PID Cycle"));
-    strcpy_P(menuopts[10], PSTR("Kettle PID Gain"));
-    strcpy_P(menuopts[11], PSTR("Kettle Hysteresis"));
+    strcpy_P(menuopts[9], KETTLECYCLE);
+    strcpy_P(menuopts[10], KETTLEGAIN);
+    strcpy_P(menuopts[11], KETTLEHY);
     strcpy_P(menuopts[12], PSTR("Boil Temp: "));
     strcat(menuopts[12], itoa(getBoilTemp(), buf, 10));
     strcat_P(menuopts[12], TUNIT);
-    if (PIDEnabled[VS_STEAM]) strcpy_P(menuopts[13], PSTR("Steam Mode: PID")); else strcpy_P(menuopts[12], PSTR("Steam Mode: On/Off"));
-    strcpy_P(menuopts[14], PSTR("Steam PID Cycle"));
-    strcpy_P(menuopts[15], PSTR("Steam PID Gain"));
+    if (PIDEnabled[VS_STEAM]) strcpy_P(menuopts[13], PSTR("Steam Mode: PID")); else strcpy_P(menuopts[13], PSTR("Steam Mode: On/Off"));
+    strcpy_P(menuopts[14], STEAMCYCLE);
+    strcpy_P(menuopts[15], STEAMGAIN);
     strcpy_P(menuopts[16], PSTR("Steam Pressure"));
     strcpy_P(menuopts[17], PSTR("Steam Sensor Sens"));
     strcpy_P(menuopts[18], PSTR("Exit"));
 
     lastOption = scrollMenu("Configure Outputs", 19, lastOption);
     if (lastOption == 0) PIDEnabled[VS_HLT] = PIDEnabled[VS_HLT] ^ 1;
-    else if (lastOption == 1) PIDCycle[VS_HLT] = getValue("HLT Cycle Time", PIDCycle[VS_HLT], 3, 0, 255, "s");
+    else if (lastOption == 1) PIDCycle[VS_HLT] = getValue(HLTCYCLE, PIDCycle[VS_HLT], 3, 0, 255, SEC);
     else if (lastOption == 2) setPIDGain("HLT PID Gain", &PIDp[VS_HLT], &PIDi[VS_HLT], &PIDd[VS_HLT]);
-    else if (lastOption == 3) hysteresis[VS_HLT] = getValue("HLT Hysteresis", hysteresis[VS_HLT], 3, 1, 255, TUNIT);
+    else if (lastOption == 3) hysteresis[VS_HLT] = getValue(HLTHY, hysteresis[VS_HLT], 3, 1, 255, TUNIT);
     else if (lastOption == 4) PIDEnabled[VS_MASH] = PIDEnabled[VS_MASH] ^ 1;
-    else if (lastOption == 5) PIDCycle[VS_MASH] = getValue("Mash Cycle Time", PIDCycle[VS_MASH], 3, 0, 255, "s");
+    else if (lastOption == 5) PIDCycle[VS_MASH] = getValue(MASHCYCLE, PIDCycle[VS_MASH], 3, 0, 255, SEC);
     else if (lastOption == 6) setPIDGain("Mash PID Gain", &PIDp[VS_MASH], &PIDi[VS_MASH], &PIDd[VS_MASH]);
-    else if (lastOption == 7) hysteresis[VS_MASH] = getValue("Mash Hysteresis", hysteresis[VS_MASH], 3, 1, 255, TUNIT);
+    else if (lastOption == 7) hysteresis[VS_MASH] = getValue(MASHHY, hysteresis[VS_MASH], 3, 1, 255, TUNIT);
     else if (lastOption == 8) PIDEnabled[VS_KETTLE] = PIDEnabled[VS_KETTLE] ^ 1;
-    else if (lastOption == 9) PIDCycle[VS_KETTLE] = getValue("Kettle Cycle Time", PIDCycle[VS_KETTLE], 3, 0, 255, "s");
+    else if (lastOption == 9) PIDCycle[VS_KETTLE] = getValue(KETTLECYCLE, PIDCycle[VS_KETTLE], 3, 0, 255, SEC);
     else if (lastOption == 10) setPIDGain("Kettle PID Gain", &PIDp[VS_KETTLE], &PIDi[VS_KETTLE], &PIDd[VS_KETTLE]);
-    else if (lastOption == 11) hysteresis[VS_KETTLE] = getValue("Kettle Hysteresis", hysteresis[VS_KETTLE], 3, 1, 255, TUNIT);
-    else if (lastOption == 12) setBoilTemp(getValue("Boil Temp", getBoilTemp(), 3, 0, 255, TUNIT));
+    else if (lastOption == 11) hysteresis[VS_KETTLE] = getValue(KETTLEHY, hysteresis[VS_KETTLE], 3, 1, 255, TUNIT);
+    else if (lastOption == 12) setBoilTemp(getValue(PSTR("Boil Temp"), getBoilTemp(), 3, 0, 255, TUNIT));
     else if (lastOption == 13) PIDEnabled[VS_STEAM] = PIDEnabled[VS_STEAM] ^ 1;
-    else if (lastOption == 14) PIDCycle[VS_STEAM] = getValue("Steam Cycle Time", PIDCycle[VS_STEAM], 3, 0, 255, "s");
+    else if (lastOption == 14) PIDCycle[VS_STEAM] = getValue(STEAMCYCLE, PIDCycle[VS_STEAM], 3, 0, 255, SEC);
     else if (lastOption == 15) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
-    else if (lastOption == 16) hysteresis[VS_STEAM] = getValue("Steam Pressure", hysteresis[VS_STEAM], 3, 0, 255, PUNIT);
     else return;
     saveSetup();
   } 
@@ -218,16 +228,16 @@ void cfgVolumes() {
     strcpy_P(menuopts[10], PSTR("Exit               "));
 
     lastOption = scrollMenu("Volume/Capacity", 11, lastOption);
-    if (lastOption == 0) capacity[TS_HLT] = getValue("HLT Capacity", capacity[TS_HLT], 7, 3, 9999999, VOLUNIT);
-    else if (lastOption == 1) volLoss[TS_HLT] = getValue("HLT Dead Space", volLoss[TS_HLT], 5, 3, 65535, VOLUNIT);
+    if (lastOption == 0) capacity[TS_HLT] = getValue(PSTR("HLT Capacity"), capacity[TS_HLT], 7, 3, 9999999, VOLUNIT);
+    else if (lastOption == 1) volLoss[TS_HLT] = getValue(PSTR("HLT Dead Space"), volLoss[TS_HLT], 5, 3, 65535, VOLUNIT);
     else if (lastOption == 2) volCalibMenu(TS_HLT);
-    else if (lastOption == 3) capacity[TS_MASH] = getValue("Mash Capacity", capacity[TS_MASH], 7, 3, 9999999, VOLUNIT);
-    else if (lastOption == 4) volLoss[TS_MASH] = getValue("Mash Dead Space", volLoss[TS_MASH], 5, 3, 65535, VOLUNIT);
+    else if (lastOption == 3) capacity[TS_MASH] = getValue(PSTR("Mash Capacity"), capacity[TS_MASH], 7, 3, 9999999, VOLUNIT);
+    else if (lastOption == 4) volLoss[TS_MASH] = getValue(PSTR("Mash Dead Space"), volLoss[TS_MASH], 5, 3, 65535, VOLUNIT);
     else if (lastOption == 5) volCalibMenu(TS_MASH);
-    else if (lastOption == 6) capacity[TS_KETTLE] = getValue("Kettle Capacity", capacity[TS_KETTLE], 7, 3, 9999999, VOLUNIT);
-    else if (lastOption == 7) volLoss[TS_KETTLE] = getValue("Kettle Dead Space", volLoss[TS_KETTLE], 5, 3, 65535, VOLUNIT);
+    else if (lastOption == 6) capacity[TS_KETTLE] = getValue(PSTR("Kettle Capacity"), capacity[TS_KETTLE], 7, 3, 9999999, VOLUNIT);
+    else if (lastOption == 7) volLoss[TS_KETTLE] = getValue(PSTR("Kettle Dead Space"), volLoss[TS_KETTLE], 5, 3, 65535, VOLUNIT);
     else if (lastOption == 8) volCalibMenu(TS_KETTLE);
-    else if (lastOption == 9) evapRate = getValue("Evaporation Rate", evapRate, 3, 0, 100, PSTR("%/hr"));
+    else if (lastOption == 9) evapRate = getValue(PSTR("Evaporation Rate"), evapRate, 3, 0, 100, PSTR("%/hr"));
     else return;
     saveSetup();
   } 
@@ -267,10 +277,7 @@ void volCalibMenu(byte vessel) {
           saveSetup();
         }
       } else {
-        strcpy_P(sTitle, PSTR("Current "));
-        strcat(sTitle, sVessel);
-        strcat_P(sTitle, PSTR(" Vol:"));
-        calibVols[vessel][lastOption] = getValue(sTitle, 0, 7, 3, 9999999, VOLUNIT);
+        calibVols[vessel][lastOption] = getValue(PSTR("Current Volume:"), 0, 7, 3, 9999999, VOLUNIT);
         calibVals[vessel][lastOption] = analogRead(vSensor[vessel]) - zeroVol[vessel];
         saveSetup();
       }

@@ -38,7 +38,8 @@ void saveSetup() {
   //94 - 129 Reserved for Power Recovery
   //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
-  //136-151 ***OPEN*** (Old Valve Profiles )
+  //136 - 141 Zero Volumes
+  //142 - 151 ***OPEN***
   //152-154 Power Recovery
   //155 ***OPEN***
   //156-1805 Saved Programs
@@ -56,7 +57,8 @@ void saveSetup() {
       PROMwriteInt(1901 + slot * 2 + vessel * 60, calibVals[vessel][slot]);
     }
   }
-  //2041-2046 Zero Volumes
+  //2041-2045 ***OPEN***
+  //2046 BrewTroller Fingerprint
   //2047 EEPROM Version
 }
 
@@ -97,7 +99,8 @@ void loadSetup() {
   //94 - 129 Reserved for Power Recovery
   //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
-  //136-151 ***OPEN*** (Old Valve Profiles )
+  //136 - 141 Zero Volumes
+  //142 - 151 ***OPEN***
   //152-154 Power Recovery
   //155 ***OPEN***
   //156-1805 Saved Programs
@@ -115,7 +118,8 @@ void loadSetup() {
     }
   }
   
-  //2041-2046 Zero Volumes
+  //2041-2045 ***OPEN***
+  //2046 BrewTroller Fingerprint
   //2047 EEPROM Version
 }
 
@@ -133,7 +137,8 @@ void PROMreadBytes(int addr, byte bytes[], byte numBytes) {
 
 void checkConfig() {
   byte cfgVersion = EEPROM.read(2047);
-
+  byte BTFinger = EEPROM.read(2046);
+  
 #ifdef DEBUG
   logStart_P(LOGDEBUG);
   logField_P(PSTR("CFGVER"));
@@ -141,6 +146,9 @@ void checkConfig() {
   logEnd();
 #endif
 
+  //If the cfgVersion is newer than 6 and the BT fingerprint is missing force a init of EEPROM
+  //FermTroller will bump to a cfgVersion starting at 7
+  if (BTFinger != 254 && cfgVersion > 6) cfgVersion = 0;
   if (cfgVersion == 255) cfgVersion = 0;
   switch(cfgVersion) {
     case 0:
@@ -266,6 +274,10 @@ void checkConfig() {
         setBoilTemp(212);
       #endif
       EEPROM.write(2047, 6);
+    case 6:
+      //Add BT Fingerprint (254)
+      EEPROM.write(2046, 254);
+      EEPROM.write(2047, 7);
     default:
       //No EEPROM Upgrade Required
       return;
@@ -342,6 +354,15 @@ void setABSetpoint(byte vessel, byte temp) { EEPROM.write(131 + vessel, temp); }
 unsigned int getTimerRecovery() { return PROMreadInt(134); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(134, newMins); }
 
+//Zero Volumes 136-141 (analogRead of Empty Vessels)
+unsigned int loadZeroVols() { for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) zeroVol[vessel] = PROMreadInt(136 + vessel * 2); }
+void saveZeroVols() { 
+  for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) {
+    zeroVol[vessel] = analogRead(vSensor[vessel]);
+    PROMwriteInt(136 + vessel * 2, zeroVol[vessel]);
+  }
+}
+
 byte getABPitch() { return EEPROM.read(152); }
 void setABPitch(byte pitchTemp) { EEPROM.write(152, pitchTemp); }
 
@@ -404,11 +425,3 @@ unsigned int getProgAdds(byte preset) { return PROMreadInt(preset * 55 + 208); }
 void setProgGrainT(byte preset, byte grain) { EEPROM.write(preset * 55 + 210, grain); }
 byte getProgGrainT(byte preset) { return EEPROM.read(preset * 55 + 210); }
 
-//Zero Volumes 2041-2046 (analogRead of Empty Vessels)
-unsigned int loadZeroVols() { for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) zeroVol[vessel] = PROMreadInt(2041 + vessel * 2); }
-void saveZeroVols() { 
-  for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) {
-    zeroVol[vessel] = analogRead(vSensor[vessel]);
-    PROMwriteInt(2041 + vessel * 2, zeroVol[vessel]);
-  }
-}

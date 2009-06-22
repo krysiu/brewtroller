@@ -35,29 +35,29 @@ void doMon() {
         setAlarm(0);
       } else {
         //Pop-Up Menu
-        strcpy(menuopts[0], "Set HLT Temp");
-        strcpy(menuopts[1], "Clear HLT Temp");
-        strcpy(menuopts[2], "Set Mash Temp");
-        strcpy(menuopts[3], "Clear Mash Temp");
-        strcpy(menuopts[4], "Set Kettle Temp");
-        strcpy(menuopts[5], "Clear Kettle Temp");
-        strcpy(menuopts[6], "Set Timer");
-        strcpy(menuopts[7], "Pause Timer");
-        strcpy(menuopts[8], "Clear Timer");
-        strcpy(menuopts[9], "Close Menu");
-        strcpy(menuopts[10], "Quit Brew Monitor");
+        strcpy_P(menuopts[0], PSTR("Set HLT Temp"));
+        strcpy_P(menuopts[1], PSTR("Clear HLT Temp"));
+        strcpy_P(menuopts[2], PSTR("Set Mash Temp"));
+        strcpy_P(menuopts[3], PSTR("Clear Mash Temp"));
+        strcpy_P(menuopts[4], PSTR("Set Kettle Temp"));
+        strcpy_P(menuopts[5], PSTR("Clear Kettle Temp"));
+        strcpy_P(menuopts[6], PSTR("Set Timer"));
+        strcpy_P(menuopts[7], PSTR("Pause Timer"));
+        strcpy_P(menuopts[8], PSTR("Clear Timer"));
+        strcpy_P(menuopts[9], PSTR("Close Menu"));
+        strcpy_P(menuopts[10], PSTR("Quit Brew Monitor"));
 
         boolean inMenu = 1;
         byte lastOption = 0;
         while(inMenu) {
-          lastOption = scrollMenu("Brew Monitor Menu   ", 11, lastOption);
+          lastOption = scrollMenu("Brew Monitor Menu", 11, lastOption);
           if (lastOption == 0) {
-            if (setpoint[TS_HLT] > 0) setpoint[TS_HLT] = getValue("Enter HLT Temp:", setpoint[TS_HLT], 3, 0, 255, TUNIT);
+            if (setpoint[TS_HLT] > 0) setpoint[TS_HLT] = getValue(PSTR("Enter HLT Temp:"), setpoint[TS_HLT], 3, 0, 255, TUNIT);
             else {
               #ifdef USEMETRIC
-                setpoint[TS_HLT] = getValue("Enter HLT Temp:", 82, 3, 0, 255, TUNIT);
+                setpoint[TS_HLT] = getValue(PSTR("Enter HLT Temp:"), 82, 3, 0, 255, TUNIT);
               #else
-                setpoint[TS_HLT] = getValue("Enter HLT Temp:", 180, 3, 0, 255, TUNIT);
+                setpoint[TS_HLT] = getValue(PSTR("Enter HLT Temp:"), 180, 3, 0, 255, TUNIT);
               #endif
             }
             inMenu = 0;
@@ -65,12 +65,12 @@ void doMon() {
             setpoint[TS_HLT] = 0;
             inMenu = 0;
           } else if (lastOption == 2) {
-            if (setpoint[TS_MASH] > 0) setpoint[TS_MASH] = getValue("Enter Mash Temp:", setpoint[TS_MASH], 3, 0, 255, TUNIT);
+            if (setpoint[TS_MASH] > 0) setpoint[TS_MASH] = getValue(PSTR("Enter Mash Temp:"), setpoint[TS_MASH], 3, 0, 255, TUNIT);
             else {
               #ifdef USEMETRIC
-                setpoint[TS_MASH] = getValue("Enter Mash Temp:", 67, 3, 0, 255, TUNIT);
+                setpoint[TS_MASH] = getValue(PSTR("Enter Mash Temp:"), 67, 3, 0, 255, TUNIT);
               #else
-                setpoint[TS_MASH] = getValue("Enter Mash Temp:", 152, 3, 0, 255, TUNIT);
+                setpoint[TS_MASH] = getValue(PSTR("Enter Mash Temp:"), 152, 3, 0, 255, TUNIT);
               #endif
             }
             inMenu = 0;
@@ -78,12 +78,12 @@ void doMon() {
             setpoint[TS_MASH] = 0;
             inMenu = 0;
           } else if (lastOption == 4) {
-            if (setpoint[TS_KETTLE] > 0) setpoint[TS_KETTLE] = getValue("Enter Kettle Temp:", setpoint[TS_KETTLE], 3, 0, 255, TUNIT);
+            if (setpoint[TS_KETTLE] > 0) setpoint[TS_KETTLE] = getValue(PSTR("Enter Kettle Temp:"), setpoint[TS_KETTLE], 3, 0, 255, TUNIT);
             else {
               #ifdef USEMETRIC
-                setpoint[TS_KETTLE] = getValue("Enter Kettle Temp:", 100, 3, 0, 255, TUNIT);
+                setpoint[TS_KETTLE] = getValue(PSTR("Enter Kettle Temp:"), 100, 3, 0, 255, TUNIT);
               #else
-                setpoint[TS_KETTLE] = getValue("Enter Kettle Temp:", 212, 3, 0, 255, TUNIT);
+                setpoint[TS_KETTLE] = getValue(PSTR("Enter Kettle Temp:"), 212, 3, 0, 255, TUNIT);
               #endif
             }
             inMenu = 0;
@@ -92,7 +92,7 @@ void doMon() {
             inMenu = 0;
           } else if (lastOption == 6) {
             unsigned int newMins;
-            newMins = getTimerValue("Enter Timer Value:", timerValue/60000);
+            newMins = getTimerValue(PSTR("Enter Timer Value:"), timerValue/60000);
             if (newMins > 0) {
               setTimer(newMins);
               inMenu = 0;
@@ -152,33 +152,33 @@ void doMon() {
     } else if (encCount == 1) {
       if (encCount != lastCount) {
         clearLCD();
-        printLCD(0,4,"Brew Monitor");
-        printLCD(1,0,"Kettle");
-        printLCD(3,0,"[");
-        printLCD(3,5,"]");
+        printLCD_P(0,4,PSTR("Brew Monitor"));
+        printLCD_P(1,0,PSTR("Kettle"));
+        printLCD_P(3,0,PSTR("["));
+        printLCD_P(3,5,PSTR("]"));
         printLCD_P(2, 4, TUNIT);
         printLCD_P(3, 4, TUNIT);
         lastCount = encCount;
         timerLastWrite = 0;
       }
 
-      if (temp[TS_KETTLE] == -1) printLCD(2, 1, "---"); else printLCDLPad(2, 1, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
+      if (temp[TS_KETTLE] == -1) printLCD_P(2, 1, PSTR("---")); else printLCDLPad(2, 1, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
       printLCDLPad(3, 1, itoa(setpoint[TS_KETTLE], buf, 10), 3, ' ');
       if (PIDEnabled[TS_KETTLE]) {
         byte pct = PIDOutput[TS_KETTLE] / PIDCycle[TS_KETTLE] / 10;
-        if (pct == 0) strcpy(buf, "Off");
-        else if (pct == 100) strcpy(buf, " On");
-        else { itoa(pct, buf, 10); strcat(buf, "%"); }
-      } else { if (heatStatus[TS_KETTLE]) strcpy(buf, " On"); else strcpy(buf, "Off"); }
+        if (pct == 0) strcpy_P(buf, PSTR("Off"));
+        else if (pct == 100) strcpy_P(buf, PSTR(" On"));
+        else { itoa(pct, buf, 10); strcat_P(buf, PSTR("%")); }
+      } else { if (heatStatus[TS_KETTLE]) strcpy_P(buf, PSTR(" On")); else strcpy_P(buf, PSTR("Off")); }
       printLCDLPad(3, 6, buf, 3, ' ');
     } else if (encCount == 2) {
       if (encCount != lastCount) {
         clearLCD();
-        printLCD(0,4,"Brew Monitor");
-        printLCD(1,1,"In");
-        printLCD(1,16,"Out");
-        printLCD(2,8,"Beer");
-        printLCD(3,8,"H2O");
+        printLCD_P(0,4,PSTR("Brew Monitor"));
+        printLCD_P(1,1,PSTR("In"));
+        printLCD_P(1,16,PSTR("Out"));
+        printLCD_P(2,8,PSTR("Beer"));
+        printLCD_P(3,8,PSTR("H2O"));
         printLCD_P(2, 3, TUNIT);
         printLCD_P(2, 19, TUNIT);
         printLCD_P(3, 3, TUNIT);
@@ -187,10 +187,10 @@ void doMon() {
         timerLastWrite = 0;
       }
         
-      if (temp[TS_KETTLE] == -1) printLCD(2, 0, "---"); else printLCDLPad(2, 0, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
-      if (temp[TS_BEEROUT] == -1) printLCD(2, 16, "---"); else printLCDLPad(2, 16, itoa(temp[TS_BEEROUT], buf, 10), 3, ' ');
-      if (temp[TS_H2OIN] == -1) printLCD(3, 0, "---"); else printLCDLPad(3, 0, itoa(temp[TS_H2OIN], buf, 10), 3, ' ');
-      if (temp[TS_H2OOUT] == -1) printLCD(3, 16, "---"); else printLCDLPad(3, 16, itoa(temp[TS_H2OOUT], buf, 10), 3, ' ');
+      if (temp[TS_KETTLE] == -1) printLCD_P(2, 0, PSTR("---")); else printLCDLPad(2, 0, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
+      if (temp[TS_BEEROUT] == -1) printLCD_P(2, 16, PSTR("---")); else printLCDLPad(2, 16, itoa(temp[TS_BEEROUT], buf, 10), 3, ' ');
+      if (temp[TS_H2OIN] == -1) printLCD_P(3, 0, PSTR("---")); else printLCDLPad(3, 0, itoa(temp[TS_H2OIN], buf, 10), 3, ' ');
+      if (temp[TS_H2OOUT] == -1) printLCD_P(3, 16, PSTR("---")); else printLCDLPad(3, 16, itoa(temp[TS_H2OOUT], buf, 10), 3, ' ');
     }
     printTimer(1,7);
   }

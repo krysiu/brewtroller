@@ -151,11 +151,13 @@ boolean confirmDel() {
   if(getChoice(2, 3) == 1) return 1; else return 0;
 }
 
-unsigned long getValue(char sTitle[], unsigned long defValue, byte digits, byte precision, unsigned long maxValue, const char *dispUnit) {
+unsigned long getValue(const char *sTitle, unsigned long defValue, byte digits, byte precision, unsigned long maxValue, const char *dispUnit) {
   unsigned long retValue = defValue;
   byte cursorPos = 0; 
   boolean cursorState = 0; //0 = Unselected, 1 = Selected
 
+  //Workaround for odd memory issue
+  availableMemory();
 
   encMin = 0;
   encMax = digits;
@@ -166,9 +168,7 @@ unsigned long getValue(char sTitle[], unsigned long defValue, byte digits, byte 
   lcdSetCustChar_P(1, CHARCURSOR);
       
   clearLCD();
-  //This resolves an odd memory issue. Needs more work.
-  printLCD(0, 0, itoa(availableMemory(), buf, 10));
-  printLCD(0, 0, sTitle);
+  printLCD_P(0, 0, sTitle);
   printLCD_P(1, (20 - digits + 1) / 2 + digits + 1, dispUnit);
   printLCD(3, 9, "OK");
   unsigned long whole, frac;
@@ -235,7 +235,7 @@ unsigned long getValue(char sTitle[], unsigned long defValue, byte digits, byte 
   return retValue;
 }
 
-unsigned int getTimerValue(char sTitle[], unsigned int defMins) {
+unsigned int getTimerValue(const char *sTitle, unsigned int defMins) {
   unsigned int hours = defMins / 60;
   unsigned int mins = defMins - hours * 60;
   byte cursorPos = 0; //0 = Hours, 1 = Mins, 2 = OK
@@ -246,7 +246,7 @@ unsigned int getTimerValue(char sTitle[], unsigned int defMins) {
   byte lastCount = 1;
   
   clearLCD();
-  printLCD(0,0,sTitle);
+  printLCD_P(0,0,sTitle);
   printLCD(1, 9, ":");
   printLCD(1, 13, "(hh:mm)");
   printLCD(3, 8, "OK");
@@ -299,7 +299,7 @@ unsigned int getTimerValue(char sTitle[], unsigned int defMins) {
   }
 }
 
-void getString(char sTitle[], char defValue[], byte chars) {
+void getString(const char *sTitle, char defValue[], byte chars) {
   char retValue[20];
   strcpy(retValue, defValue);
   
@@ -323,7 +323,7 @@ void getString(char sTitle[], char defValue[], byte chars) {
   lcdSetCustChar_P(1, CHARCURSOR);
       
   clearLCD();
-  printLCD(0,0,sTitle);
+  printLCD_P(0,0,sTitle);
   printLCD(3, 9, "OK");
   
   while(1) {

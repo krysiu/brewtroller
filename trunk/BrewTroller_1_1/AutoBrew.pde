@@ -105,30 +105,30 @@ void doAutoBrew() {
     strcat_P(menuopts[8], TUNIT);
     
     lastOption = scrollMenu("AutoBrew Parameters", 15, lastOption);
-    if (lastOption == 0) tgtVol[TS_KETTLE] = getValue("Batch Volume", tgtVol[TS_KETTLE], 7, 3, 9999999, VOLUNIT);
-    else if (lastOption == 1) grainWeight = getValue("Grain Weight", grainWeight, 7, 3, 9999999, WTUNIT);
-    else if (lastOption == 2) grainTemp = getValue("Grain Temp", grainTemp, 3, 0, 255, TUNIT);
-    else if (lastOption == 3) boilMins = getTimerValue("Boil Length", boilMins);
+    if (lastOption == 0) tgtVol[TS_KETTLE] = getValue(PSTR("Batch Volume"), tgtVol[TS_KETTLE], 7, 3, 9999999, VOLUNIT);
+    else if (lastOption == 1) grainWeight = getValue(PSTR("Grain Weight"), grainWeight, 7, 3, 9999999, WTUNIT);
+    else if (lastOption == 2) grainTemp = getValue(PSTR("Grain Temp"), grainTemp, 3, 0, 255, TUNIT);
+    else if (lastOption == 3) boilMins = getTimerValue(PSTR("Boil Length"), boilMins);
     else if (lastOption == 4) { 
       #ifdef USEMETRIC
-        mashRatio = getValue("Mash Ratio", mashRatio, 3, 2, 999, PSTR(" l/kg")); 
+        mashRatio = getValue(PSTR("Mash Ratio"), mashRatio, 3, 2, 999, PSTR(" l/kg")); 
       #else
-        mashRatio = getValue("Mash Ratio", mashRatio, 3, 2, 999, PSTR(" qts/lb"));
+        mashRatio = getValue(PSTR("Mash Ratio"), mashRatio, 3, 2, 999, PSTR(" qts/lb"));
       #endif
     }
-    else if (lastOption == 5) delayMins = getTimerValue("Delay Start", delayMins);
-    else if (lastOption == 6) setpoint[TS_HLT] = getValue("HLT Setpoint", setpoint[TS_HLT], 3, 0, 255, TUNIT);
-    else if (lastOption == 7) spargeTemp = getValue("Sparge Temp", spargeTemp, 3, 0, 255, TUNIT);
-    else if (lastOption == 8) pitchTemp = getValue("Pitch Temp", pitchTemp, 3, 0, 255, TUNIT);
+    else if (lastOption == 5) delayMins = getTimerValue(PSTR("Delay Start"), delayMins);
+    else if (lastOption == 6) setpoint[TS_HLT] = getValue(PSTR("HLT Setpoint"), setpoint[TS_HLT], 3, 0, 255, TUNIT);
+    else if (lastOption == 7) spargeTemp = getValue(PSTR("Sparge Temp"), spargeTemp, 3, 0, 255, TUNIT);
+    else if (lastOption == 8) pitchTemp = getValue(PSTR("Pitch Temp"), pitchTemp, 3, 0, 255, TUNIT);
     else if (lastOption == 9) editMashSchedule(stepTemp, stepMins);
     else if (lastOption == 10) boilAdds = editHopSchedule(boilAdds);
     else if (lastOption == 11) inMenu = 0;
     else if (lastOption == 12) {
       byte profile = 0;
       //Display Stored Programs
-      for (byte i = 0; i < 30; i++) getProgName(i, menuopts[i]);
-      profile = scrollMenu("Load Program", 30, profile);
-      if (profile < 30) {
+      for (byte i = 0; i < 20; i++) getProgName(i, menuopts[i]);
+      profile = scrollMenu("Load Program", 20, profile);
+      if (profile < 20) {
         spargeTemp = getProgSparge(profile);
         grainWeight = getProgGrain(profile);
         delayMins = getProgDelay(profile);
@@ -145,10 +145,10 @@ void doAutoBrew() {
     else if (lastOption == 13) {
       byte profile = 0;
       //Display Stored Schedules
-      for (byte i = 0; i < 30; i++) getProgName(i, menuopts[i]);
-      profile = scrollMenu("Save Program", 30, profile);
-      if (profile < 30) {
-        getString("Save Program As:", menuopts[profile], 19);
+      for (byte i = 0; i < 20; i++) getProgName(i, menuopts[i]);
+      profile = scrollMenu("Save Program", 20, profile);
+      if (profile < 20) {
+        getString(PSTR("Save Program As:"), menuopts[profile], 19);
         setProgName(profile, menuopts[profile]);
         setProgSparge(profile, spargeTemp);
         setProgGrain(profile, grainWeight);
@@ -389,14 +389,14 @@ void editMashSchedule(byte stepTemp[4], byte stepMins[4]) {
     strcat_P(menuopts[7], TUNIT);
 
     lastOption = scrollMenu("Mash Schedule", 9, lastOption);
-    if (lastOption == 0) stepMins[STEP_DOUGHIN] = getTimerValue("Dough In", stepMins[STEP_DOUGHIN]);
-    else if (lastOption == 1) stepTemp[STEP_DOUGHIN] = getValue("Dough In", stepTemp[STEP_DOUGHIN], 3, 0, 255, TUNIT);
-    else if (lastOption == 2) stepMins[STEP_PROTEIN] = getTimerValue("Protein Rest", stepMins[STEP_PROTEIN]);
-    else if (lastOption == 3) stepTemp[STEP_PROTEIN] = getValue("Protein Rest", stepTemp[STEP_PROTEIN], 3, 0, 255, TUNIT);
-    else if (lastOption == 4) stepMins[STEP_SACCH] = getTimerValue("Sacch Rest", stepMins[STEP_SACCH]);
-    else if (lastOption == 5) stepTemp[STEP_SACCH] = getValue("Sacch Rest", stepTemp[STEP_SACCH], 3, 0, 255, TUNIT);
-    else if (lastOption == 6) stepMins[STEP_MASHOUT] = getTimerValue("Mash Out", stepMins[STEP_MASHOUT]);
-    else if (lastOption == 7) stepTemp[STEP_MASHOUT] = getValue("Mash Out", stepTemp[STEP_MASHOUT], 3, 0, 255, TUNIT);
+    if (lastOption == 0) stepMins[STEP_DOUGHIN] = getTimerValue(PSTR("Dough In"), stepMins[STEP_DOUGHIN]);
+    else if (lastOption == 1) stepTemp[STEP_DOUGHIN] = getValue(PSTR("Dough In"), stepTemp[STEP_DOUGHIN], 3, 0, 255, TUNIT);
+    else if (lastOption == 2) stepMins[STEP_PROTEIN] = getTimerValue(PSTR("Protein Rest"), stepMins[STEP_PROTEIN]);
+    else if (lastOption == 3) stepTemp[STEP_PROTEIN] = getValue(PSTR("Protein Rest"), stepTemp[STEP_PROTEIN], 3, 0, 255, TUNIT);
+    else if (lastOption == 4) stepMins[STEP_SACCH] = getTimerValue(PSTR("Sacch Rest"), stepMins[STEP_SACCH]);
+    else if (lastOption == 5) stepTemp[STEP_SACCH] = getValue(PSTR("Sacch Rest"), stepTemp[STEP_SACCH], 3, 0, 255, TUNIT);
+    else if (lastOption == 6) stepMins[STEP_MASHOUT] = getTimerValue(PSTR("Mash Out"), stepMins[STEP_MASHOUT]);
+    else if (lastOption == 7) stepTemp[STEP_MASHOUT] = getValue(PSTR("Mash Out"), stepTemp[STEP_MASHOUT], 3, 0, 255, TUNIT);
     else return;
   }
 }

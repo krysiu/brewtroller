@@ -1,4 +1,4 @@
-#define BUILD 228 
+#define BUILD 232 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -6,7 +6,7 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 
 Documentation, Forums and more information available at http://www.brewtroller.com
 
-Compiled on Arduino-0015 (http://arduino.cc/en/Main/Software)
+Compiled on Arduino-0016 (http://arduino.cc/en/Main/Software)
 With Sanguino Software v1.4 (http://code.google.com/p/sanguino/downloads/list)
 using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrary)
 using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
@@ -54,7 +54,7 @@ using LiquidCrystal Fix by Donald Weiman:
 // pins, uncomment the following line. 
 // Note: This option is not used when MUXBOARDS is enabled.
 //
-//#define PV34REMAP
+#define PV34REMAP
 //**********************************************************************************
 
 
@@ -214,7 +214,7 @@ byte autoValve;
 byte evapRate;
 
 //Shared menuOptions Array
-char menuopts[30][20];
+char menuopts[20][20];
 
 //Common Buffer
 char buf[11];
@@ -287,7 +287,19 @@ const char FLYSPARGE[] PROGMEM = "Fly Sparge";
 const char CHILLNORM[] PROGMEM = "Chill Norm";
 const char CHILLH2O[] PROGMEM = "H2O Only";
 const char CHILLBEER[] PROGMEM = "Beer Only";
-        
+const char HLTCYCLE[] PROGMEM = "HLT PID Cycle";
+const char HLTGAIN[] PROGMEM = "HLT PID Gain";
+const char HLTHY[] PROGMEM = "HLT Hysteresis";
+const char MASHCYCLE[] PROGMEM = "Mash PID Cycle";
+const char MASHGAIN[] PROGMEM = "Mash PID Gain";
+const char MASHHY[] PROGMEM = "Mash Hysteresis";
+const char KETTLECYCLE[] PROGMEM = "Kettle PID Cycle";
+const char KETTLEGAIN[] PROGMEM = "Kettle PID Gain";
+const char KETTLEHY[] PROGMEM = "Kettle Hysteresis";
+const char STEAMCYCLE[] PROGMEM = "Steam PID Cycle";
+const char STEAMGAIN[] PROGMEM = "Steam PID Gain";
+
+
 #ifdef USEMETRIC
 const char VOLUNIT[] PROGMEM = "l";
 const char WTUNIT[] PROGMEM = "kg";
@@ -299,6 +311,8 @@ const char WTUNIT[] PROGMEM = "lb";
 const char TUNIT[] PROGMEM = "F";
 const char PUNIT[] PROGMEM = "psi";
 #endif
+
+const char SEC[] PROGMEM = "s";
 
 //Custom LCD Chars
 const byte CHARFIELD[] PROGMEM = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};
