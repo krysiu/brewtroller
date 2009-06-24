@@ -40,8 +40,7 @@ void saveSetup() {
   //131 - 135 Reserved for Power Recovery
   //136 - 141 Zero Volumes
   //142 - 151 ***OPEN***
-  //152-154 Power Recovery
-  //155 ***OPEN***
+  //152-155 Power Recovery
   //156-1805 Saved Programs
 
   for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) PROMwriteLong(1806 + (profile) * 4, vlvConfig[profile]);
@@ -101,8 +100,7 @@ void loadSetup() {
   //131 - 135 Reserved for Power Recovery
   //136 - 141 Zero Volumes
   //142 - 151 ***OPEN***
-  //152-154 Power Recovery
-  //155 ***OPEN***
+  //152-155 Power Recovery
   //156-1805 Saved Programs
 
   for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) vlvConfig[profile] = PROMreadLong(1806 + (profile) * 4);
@@ -348,9 +346,6 @@ void setBoilTemp(byte boilTemp) { EEPROM.write(130, boilTemp); }
 void loadSetpoints() { for (byte i=TS_HLT; i<=TS_KETTLE; i++) { setpoint[i] = EEPROM.read(131 + i); } }
 void saveSetpoints() { for (byte i=TS_HLT; i<=TS_KETTLE; i++) { EEPROM.write(131 + i, setpoint[i]); } }
 
-byte getABSetpoint(byte vessel) { return EEPROM.read(131 + vessel); }
-void setABSetpoint(byte vessel, byte temp) { EEPROM.write(131 + vessel, temp); }
-
 unsigned int getTimerRecovery() { return PROMreadInt(134); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(134, newMins); }
 
@@ -371,6 +366,10 @@ void setABAdds(unsigned int adds) { PROMwriteInt(153, adds); }
 
 byte getABGrainTemp() { return EEPROM.read(127); }
 void setABGrainTemp(byte grainTemp) { EEPROM.write(127, grainTemp); }
+
+byte getABHLTTemp() { return EEPROM.read(155); }
+void setABHLTTemp(byte grainTemp) { EEPROM.write(155, grainTemp); }
+
 
 void setProgName(byte preset, char name[20]) {
   for (byte i = 0; i < 19; i++) EEPROM.write(preset * 55 + 156 + i, name[i]);

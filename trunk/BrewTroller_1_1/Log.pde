@@ -177,7 +177,7 @@ boolean chkMsg() {
             saveABSteps(stepTemp, stepMins);
             setABSparge(atoi(msg[10]));
             setABDelay(atoi(msg[11]));
-            setABSetpoint(VS_HLT, atoi(msg[12]));
+            setABHLTTemp(atoi(msg[12]));
             
             unsigned long tgtVol[3];
             for (byte i = VS_HLT; i <= VS_KETTLE; i++) tgtVol[i] = atoi(msg[13 + i]);
@@ -395,7 +395,7 @@ void logABSettings() {
   }
   logFieldI(getABSparge());
   logFieldI(getABDelay());
-  logFieldI(getABSetpoint(VS_HLT));
+  logFieldI(getABHLTTemp());
   for (byte i = VS_HLT; i <= VS_KETTLE; i++) logFieldI(tgtVol[i]);
   logFieldI(getABGrain());
   logFieldI(getABBoil());

@@ -12,8 +12,9 @@ void doAutoBrew() {
   unsigned int mashRatio;
   unsigned int boilAdds = 0;
   byte grainTemp;
+  byte HLTTemp;
   
-  loadSetpoints();
+  HLTTemp = getABHLTTemp();
   loadABSteps(stepTemp, stepMins);
   spargeTemp = getABSparge();
   delayMins = getABDelay();
@@ -45,7 +46,7 @@ void doAutoBrew() {
     }
     logFieldI(spargeTemp);
     logFieldI(delayMins);
-    logFieldI(setpoint[VS_HLT]);
+    logFieldI(HLTTemp);
     for (byte i = VS_HLT; i <= VS_KETTLE; i++) logFieldI(tgtVol[i]);
     logFieldI(grainWeight);
     logFieldI(boilMins);
@@ -95,7 +96,7 @@ void doAutoBrew() {
     strncat(menuopts[5], itoa(delayMins/60, buf, 10), 4);
     strcat_P(menuopts[5], PSTR(" hr"));
     
-    strncat(menuopts[6], itoa(setpoint[TS_HLT], buf, 10), 3);
+    strncat(menuopts[6], itoa(HLTTemp, buf, 10), 3);
     strcat_P(menuopts[6], TUNIT);
     
     strncat(menuopts[7], itoa(spargeTemp, buf, 10), 3);
@@ -117,7 +118,7 @@ void doAutoBrew() {
       #endif
     }
     else if (lastOption == 5) delayMins = getTimerValue(PSTR("Delay Start"), delayMins);
-    else if (lastOption == 6) setpoint[TS_HLT] = getValue(PSTR("HLT Setpoint"), setpoint[TS_HLT], 3, 0, 255, TUNIT);
+    else if (lastOption == 6) HLTTemp = getValue(PSTR("HLT Setpoint"), HLTTemp, 3, 0, 255, TUNIT);
     else if (lastOption == 7) spargeTemp = getValue(PSTR("Sparge Temp"), spargeTemp, 3, 0, 255, TUNIT);
     else if (lastOption == 8) pitchTemp = getValue(PSTR("Pitch Temp"), pitchTemp, 3, 0, 255, TUNIT);
     else if (lastOption == 9) editMashSchedule(stepTemp, stepMins);
@@ -136,7 +137,7 @@ void doAutoBrew() {
         mashRatio = getProgRatio(profile);
         getProgSchedule(profile, stepTemp, stepMins);
         getProgVols(profile, tgtVol);
-        setpoint[TS_HLT] = getProgHLT(profile);
+        HLTTemp = getProgHLT(profile);
         pitchTemp = getProgPitch(profile);
         boilAdds = getProgAdds(profile);
         grainTemp = getProgGrainT(profile);
@@ -157,7 +158,7 @@ void doAutoBrew() {
         setProgRatio(profile, mashRatio);
         setProgSchedule(profile, stepTemp, stepMins);
         setProgVols(profile, tgtVol);
-        setProgHLT(profile, setpoint[TS_HLT]);
+        setProgHLT(profile, HLTTemp);
         setProgPitch(profile, pitchTemp);
         setProgAdds(profile, boilAdds);
         setProgGrainT(profile, grainTemp);
@@ -230,7 +231,7 @@ void doAutoBrew() {
     //Save Values to EEPROM for Recovery
     setPwrRecovery(1);
     setABRecovery(0);
-    saveSetpoints();
+    setABHLTTemp(HLTTemp);
     saveABSteps(stepTemp, stepMins);
     setABSparge(spargeTemp);
     setABDelay(delayMins);
@@ -267,19 +268,30 @@ void doAutoBrew() {
         #else
           strikeTemp = round(.2 / (mashRatio / 100.0) * (strikeTemp - grainTemp)) + strikeTemp;
         #endif
+        setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = strikeTemp;
       }
       setABRecovery(3);
       mashStep("Preheat", MINS_PROMPT);  
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 4:
+      setpoint[TS_HLT] = 0;
+      setpoint[TS_MASH] = 0;
       setABRecovery(4);
       inMenu = 1;
       while(inMenu) {
         clearLCD();
         printLCD_P(1, 5, PSTR("Add Grain"));
         printLCD_P(2, 0, PSTR("Press Enter to Start"));
-        while(enterStatus == 0) delay(500);
+        while(enterStatus == 0) {
+          brewCore();
+          if (chkMsg()) {
+            if (strcasecmp(msg[0], "SELECT") == 0) {
+              enterStatus = 1;
+              clearMsg();
+            } else rejectMsg(LOGSCROLLP);
+          }
+        }
         if (enterStatus == 1) {
           enterStatus = 0;
           inMenu = 0;
@@ -291,6 +303,7 @@ void doAutoBrew() {
     case 5:
       if (stepTemp[STEP_DOUGHIN]) {
         setABRecovery(5);
+        setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_DOUGHIN];
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 5 && recoverMins > 0) mashStep("Dough In", recoverMins); else mashStep("Dough In", stepMins[STEP_DOUGHIN]);
@@ -299,6 +312,7 @@ void doAutoBrew() {
     case 6:
       if (stepTemp[STEP_PROTEIN]) {
         setABRecovery(6);
+        setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_PROTEIN];
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 6 && recoverMins > 0) mashStep("Protein", recoverMins); else mashStep("Protein", stepMins[STEP_PROTEIN]);
@@ -307,6 +321,7 @@ void doAutoBrew() {
     case 7:
       if (stepTemp[STEP_SACCH]) {
         setABRecovery(7);
+        setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_SACCH];
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 7 && recoverMins > 0) mashStep("Sacch Rest", recoverMins); else mashStep("Sacch Rest", stepMins[STEP_SACCH]);
@@ -315,6 +330,7 @@ void doAutoBrew() {
     case 8:
       if (stepTemp[STEP_MASHOUT]) {
         setABRecovery(8);
+        setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_MASHOUT];
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 8 && recoverMins > 0) mashStep("Mash Out", recoverMins); else mashStep("Mash Out", stepMins[STEP_MASHOUT]);
@@ -663,8 +679,10 @@ void mashStep(char sTitle[ ], int iMins) {
           printLCDRPad(0, 14, "", 6, ' ');
           setTimer(iMins);
         } else if (lastOption == 2) pauseTimer();
-        else if (lastOption == 3) return;
-        else if (lastOption == 4) {
+        else if (lastOption == 3) {
+          resetOutputs();
+          return;
+        } else if (lastOption == 4) {
             if (confirmExit() == 1) {
               enterStatus = 2;
               return;

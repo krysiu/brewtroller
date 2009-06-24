@@ -148,8 +148,9 @@ void brewCore() {
       if (vlvBits != vlvConfig[VLV_FILLMASH]) setValves(vlvConfig[VLV_FILLMASH]);
     } else if (vlvBits != 0) setValves(0);
   } else if (autoValve == AV_MASH) {
-    if (heatStatus[TS_MASH] && vlvBits != vlvConfig[VLV_MASHHEAT]) setValves(vlvConfig[VLV_MASHHEAT]);
-    else if (vlvBits != vlvConfig[VLV_MASHIDLE]) setValves(vlvConfig[VLV_MASHIDLE]); 
+    if (heatStatus[TS_MASH]) {
+      if (vlvBits != vlvConfig[VLV_MASHHEAT]) setValves(vlvConfig[VLV_MASHHEAT]);
+    } else if (vlvBits != vlvConfig[VLV_MASHIDLE]) setValves(vlvConfig[VLV_MASHIDLE]); 
   } else if (autoValve == AV_CHILL) {
     if (temp[TS_BEEROUT] > pitchTemp + 1.0) {
      if (vlvBits != vlvConfig[VLV_CHILLH2O]) setValves(vlvConfig[VLV_CHILLH2O]);
