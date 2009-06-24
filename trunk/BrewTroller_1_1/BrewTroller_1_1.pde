@@ -1,4 +1,4 @@
-#define BUILD 233 
+#define BUILD 234 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -29,6 +29,14 @@ using LiquidCrystal Fix by Donald Weiman:
 //#define USEMETRIC
 //**********************************************************************************
 
+//**********************************************************************************
+// BrewTroller Board Version
+//**********************************************************************************
+// The Brewtroller 3.0 board moved the LCD RS line to a new pin. If you are using a 
+// BrewTroller 3.0 or newer board uncomment this line to enable the correct pins.
+//
+//#define BTBOARD_3
+//**********************************************************************************
 
 //**********************************************************************************
 // ENCODER TYPE
@@ -116,6 +124,7 @@ using LiquidCrystal Fix by Donald Weiman:
   #define MUX_LATCH_PIN 12
   #define MUX_CLOCK_PIN 13
   #define MUX_DATA_PIN 14
+  #define MUX_OE_PIN 10
 #else
   #define VALVE1_PIN 6
   #define VALVE2_PIN 7
@@ -140,7 +149,7 @@ using LiquidCrystal Fix by Donald Weiman:
 #define HLTHEAT_PIN 0
 #define MASHHEAT_PIN 1
 #define KETTLEHEAT_PIN 3
-#define STEAMHEAT_PIN 27
+#define STEAMHEAT_PIN 25
 #define HLTVOL_APIN 0
 #define MASHVOL_APIN 1
 #define KETTLEVOL_APIN 2
@@ -345,6 +354,7 @@ void setup() {
   pinMode(MUX_LATCH_PIN, OUTPUT);
   pinMode(MUX_CLOCK_PIN, OUTPUT);
   pinMode(MUX_DATA_PIN, OUTPUT);
+  pinMode(MUX_OE_PIN, OUTPUT);
 #else
   pinMode(VALVE1_PIN, OUTPUT);
   pinMode(VALVE2_PIN, OUTPUT);

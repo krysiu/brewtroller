@@ -109,6 +109,8 @@ void setValves (unsigned long vlvBitMask) {
   
 #ifdef MUXBOARDS
 //New MUX Valve Code
+  //Disable outputs
+  digitalWrite(MUX_OE_PIN, HIGH);
   //ground latchPin and hold low for as long as you are transmitting
   digitalWrite(MUX_LATCH_PIN, 0);
   //clear everything out just in case to prepare shift register for bit shifting
@@ -129,6 +131,8 @@ void setValves (unsigned long vlvBitMask) {
   //stop shifting
   digitalWrite(MUX_CLOCK_PIN, 0);
   digitalWrite(MUX_LATCH_PIN, 1);
+  //Enable outputs
+  digitalWrite(MUX_OE_PIN, LOW);
 #else
 //Original 11 Valve Code
   if (vlvBitMask & 1) digitalWrite(VALVE1_PIN, HIGH); else digitalWrite(VALVE1_PIN, LOW);
