@@ -1,4 +1,4 @@
-#define BUILD 235 
+#define BUILD 236 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -39,7 +39,6 @@ using LiquidCrystal Fix by Donald Weiman:
 //#define MODE_6+6
 //**********************************************************************************
 
-
 //**********************************************************************************
 // UNIT (Metric/US)
 //**********************************************************************************
@@ -49,6 +48,14 @@ using LiquidCrystal Fix by Donald Weiman:
 //#define USEMETRIC
 //**********************************************************************************
 
+//**********************************************************************************
+// BrewTroller Board Version
+//**********************************************************************************
+// The Brewtroller 3.0 board moved the LCD RS line to a new pin. If you are using a 
+// BrewTroller 3.0 or newer board uncomment this line to enable the correct pins.
+//
+//#define BTBOARD_3
+//**********************************************************************************
 
 //**********************************************************************************
 // ENCODER TYPE
