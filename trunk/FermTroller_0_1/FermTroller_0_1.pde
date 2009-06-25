@@ -1,4 +1,4 @@
-#define BUILD 231 
+#define BUILD 235 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -19,6 +19,26 @@ using LiquidCrystal Fix by Donald Weiman:
 //*****************************************************************************************************************************
 // USER COMPILE OPTIONS
 //*****************************************************************************************************************************
+
+//**********************************************************************************
+// MODE
+//**********************************************************************************
+// You must uncomment one and only one of the following MODE_ definitions.
+// FermTroller supports six onboard outputs plus six additional output on an
+// optional MUX board.
+//
+// MODE_3+3 supports three zones each with its own heat and cool outputs
+// MODE_6COOL supports six zones with cool outputs only
+// MODE_6HEAT supports six zones with heat outputs only
+// MODE_6+6 supports six zones each with its own heat output onboard 
+//          and a cool output provided through an optional MUX board
+
+#define MODE_3+3
+//#define MODE_6COOL
+//#define MODE_6HEAT
+//#define MODE_6+6
+//**********************************************************************************
+
 
 //**********************************************************************************
 // UNIT (Metric/US)
@@ -66,9 +86,27 @@ using LiquidCrystal Fix by Donald Weiman:
 #define ENTER_INT 1
 #define ENCA_INT 2
 
-//Heat Output Pin Array
-byte heatPin[4] = { 0, 3, 28, 30 };
-byte coolPin[4] = { 1, 27, 29, 31 };
+//Output Pin Array
+//In 3 + 3 mode the first three pins are heat outputs and the last three are cool outputs for Zones 1 - 3
+//In 6 Cool Mode these are cool outputs for Zones 1 - 6
+//In 6 Heat Mode these are heat outputs for Zones 1 - 6
+//In 6 + 6 Mode these pins are used for heat output and MUX is used for cool
+byte outputPin[6] = { 0, 1, 3, 25, 26, 27 };
+
+#ifdef MODE_3+3
+  #define NUM_ZONES 3
+  #define COOLPIN_OFFSET 3
+#else
+  #define NUM_ZONES 6
+  #define COOLPIN_OFFSET 0
+#endif
+
+#ifdef MODE_6+6
+  #define MUX_LATCH_PIN 12
+  #define MUX_CLOCK_PIN 13
+  #define MUX_DATA_PIN 14
+  #define MUX_OE_PIN 10
+#endif
 
 //Encoder Globals
 int encCount;
@@ -77,8 +115,8 @@ byte encMax;
 byte enterStatus = 0;
 
 //8-byte Temperature Sensor Address x6 Sensors
-byte tSensor[5][8];
-float temp[5];
+byte tSensor[7][8];
+float temp[7];
 unsigned long convStart = 0;
 
 //Shared menuOptions Array
@@ -88,18 +126,20 @@ char menuopts[30][20];
 char buf[11];
 
 //Output Globals
-double PIDInput[4], PIDOutput[4], setpoint[4];
-byte PIDp[4], PIDi[4], PIDd[4], PIDCycle[4], hysteresis[4];
-unsigned long cycleStart[4];
-boolean heatStatus[4];
-boolean coolStatus[4];
-boolean PIDEnabled[4];
+double PIDInput[6], PIDOutput[6], setpoint[6];
+byte PIDp[6], PIDi[6], PIDd[6], PIDCycle[6], hysteresis[6];
+unsigned long cycleStart[6];
+boolean heatStatus[6];
+boolean coolStatus[6];
+boolean PIDEnabled[6];
 
-PID pid[4] = {
+PID pid[6] = {
   PID(&PIDInput[0], &PIDOutput[0], &setpoint[0], 3, 4, 1),
   PID(&PIDInput[1], &PIDOutput[1], &setpoint[1], 3, 4, 1),
   PID(&PIDInput[2], &PIDOutput[2], &setpoint[2], 3, 4, 1),
-  PID(&PIDInput[3], &PIDOutput[3], &setpoint[3], 3, 4, 1)
+  PID(&PIDInput[3], &PIDOutput[3], &setpoint[3], 3, 4, 1),
+  PID(&PIDInput[4], &PIDOutput[4], &setpoint[4], 3, 4, 1),
+  PID(&PIDInput[5], &PIDOutput[5], &setpoint[5], 3, 4, 1)
 };
 
 //Timer Globals
@@ -180,18 +220,21 @@ void setup() {
   pinMode(ENCB_PIN, INPUT);
   pinMode(ENTER_PIN, INPUT);
   pinMode(ALARM_PIN, OUTPUT);
-  for (byte i = 0; i < 4; i++) {
-    pinMode(heatPin[i], OUTPUT);
-    pinMode(coolPin[i], OUTPUT);
-  }
+  for (byte i = 0; i < 6; i++) pinMode(outputPin[i], OUTPUT);
   resetOutputs();
   
-  for (byte i = 0; i < 4; i++) {
+  for (byte i = 0; i < 6; i++) {
     if (PIDEnabled[i]) {
       pid[i].SetInputLimits(0, 255);
       pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
     }
   }
+  #ifdef MODE_6+6
+    pinMode(MUX_LATCH_PIN, OUTPUT);
+    pinMode(MUX_CLOCK_PIN, OUTPUT);
+    pinMode(MUX_DATA_PIN, OUTPUT);
+    pinMode(MUX_OE_PIN, OUTPUT);
+  #endif
   
   initLCD();
   

@@ -3,25 +3,25 @@
 
 void saveSetup() {
   //Walk through the 5 tSensor elements and store 8-byte address of each
-  //Zone 0 - Zone 4 (0-39)
-  for (byte i = 0; i < 5; i++) PROMwriteBytes(i * 8, tSensor[i], 8);
+  //Zone 0 - Zone 4 (0-55)
+  for (byte i = 0; i < 7; i++) PROMwriteBytes(i * 8, tSensor[i], 8);
 
-   //Option Array (40)
+   //Option Array (57)
   byte options = B00000000;
-  //Bits 1, 2, 4, 8 = Pid Enabled for Zones 1-4
-  for (byte i = 0; i < 4; i++) if (PIDEnabled[i]) options |= 1<<i;
-  EEPROM.write(40, options);
+  //Bits 1, 2, 4, 8, 16, 32 = Pid Enabled for Zones 1-6
+  for (byte i = 0; i < 6; i++) if (PIDEnabled[i]) options |= 1<<i;
+  EEPROM.write(57, options);
   
-  //Output Settings for Zones (41-60)
-  for (byte i = 0; i < 4; i++) {
-    EEPROM.write(i * 5 + 41, PIDp[i]);
-    EEPROM.write(i * 5 + 42, PIDi[i]);
-    EEPROM.write(i * 5 + 43, PIDd[i]);
-    EEPROM.write(i * 5 + 44, PIDCycle[i]);
-    EEPROM.write(i * 5 + 45, hysteresis[i]);
+  //Output Settings for Zones (58-87)
+  for (byte i = 0; i < 6; i++) {
+    EEPROM.write(i * 5 + 58, PIDp[i]);
+    EEPROM.write(i * 5 + 59, PIDi[i]);
+    EEPROM.write(i * 5 + 60, PIDd[i]);
+    EEPROM.write(i * 5 + 61, PIDCycle[i]);
+    EEPROM.write(i * 5 + 62, hysteresis[i]);
   }
   
-  //61 - 67 Reserved for Power Recovery
+  //88-96 Reserved for Power Recovery
 
   //2046 FermTroller FingerPrint
   //2047 EEPROM Version
@@ -29,27 +29,30 @@ void saveSetup() {
 
 void loadSetup() {
   //Walk through the 5 tSensor elements and store 8-byte address of each
-  //Zone 0 - Zone 4 (0-39)
-  for (byte i = 0; i < 5; i++) PROMreadBytes(i * 8, tSensor[i], 8);
+  //Zone 0 - Zone 4 (0-55)
+  for (byte i = 0; i < 7; i++) PROMreadBytes(i * 8, tSensor[i], 8);
  
-  //Option Array (40)
-  byte options = EEPROM.read(40);
-  //Bits 1, 2, 4, 8 = Pid Enabled for Zones 1-4
-  for (byte i = 0; i < 4; i++) if (options | 1<<i) PIDEnabled[i] = 1;
+  //Option Array (57)
+  byte options = EEPROM.read(57);
+  //Bits 1, 2, 4, 8, 16, 32 = Pid Enabled for Zones 1-6
+  for (byte i = 0; i < 6; i++) if (options & 1<<i) PIDEnabled[i] = 1;
   
-  //Output Settings for Zones (41-60)
-  for (byte i = 0; i < 4; i++) {
-    PIDp[i] = EEPROM.read(i * 5 + 41);
-    PIDi[i] = EEPROM.read(i * 5 + 42);
-    PIDd[i] = EEPROM.read(i * 5 + 43);
-    PIDCycle[i] = EEPROM.read(i * 5 + 44);
-    hysteresis[i] = EEPROM.read(i * 5 + 45);
+  //Output Settings for Zones (58-87)
+  for (byte i = 0; i < 6; i++) {
+    PIDp[i] = EEPROM.read(i * 5 + 58);
+    PIDi[i] = EEPROM.read(i * 5 + 59);
+    PIDd[i] = EEPROM.read(i * 5 + 60);
+    PIDCycle[i] = EEPROM.read(i * 5 + 61);
+    hysteresis[i] = EEPROM.read(i * 5 + 62);
   }
 
-  pwrRecovery = EEPROM.read(61); 
-  for (byte i = 0; i < 4; i++) setpoint[i] = EEPROM.read(62 + i);
+  //Power Recovery(88)
+  pwrRecovery = EEPROM.read(88);
   
-  //61 - 67 Reserved for Power Recovery
+  //Setpoints (89-94)
+  for (byte i = 0; i < 6; i++) setpoint[i] = EEPROM.read(89 + i);
+  
+  //95 - 96 Timer Recovery
 
   //2046 FermTroller FingerPrint
   //2047 EEPROM Version
@@ -144,10 +147,10 @@ void PROMwriteInt(int address, int value) {
 
 void setPwrRecovery(byte funcValue) {
   pwrRecovery = funcValue;
-  EEPROM.write(61, funcValue);
+  EEPROM.write(88, funcValue);
 }
 
-void saveSetpoints() { for (byte i = 0; i < 4; i++) { EEPROM.write(62 + i, setpoint[i]); } }
+void saveSetpoints() { for (byte i = 0; i < 6; i++) { EEPROM.write(89 + i, setpoint[i]); } }
 
-unsigned int getTimerRecovery() { return PROMreadInt(66); }
-void setTimerRecovery(unsigned int newMins) { PROMwriteInt(66, newMins); }
+unsigned int getTimerRecovery() { return PROMreadInt(95); }
+void setTimerRecovery(unsigned int newMins) { PROMwriteInt(95, newMins); }

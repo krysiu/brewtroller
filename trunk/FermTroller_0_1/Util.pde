@@ -30,10 +30,9 @@ int availableMemory() {
 }
 
 void resetOutputs() {
-  for (byte i = 0; i < 4; i++) {
+  for (byte i = 0; i < 6; i++) {
     setpoint[i] = 0;
-    digitalWrite(heatPin[i], LOW);
-    digitalWrite(coolPin[i], LOW);
+    digitalWrite(outputPin[i], LOW);
   }
 }
 

@@ -167,7 +167,7 @@ unsigned long getValue(char sTitle[], unsigned long defValue, byte digits, byte 
       
   clearLCD();
   //This resolves an odd memory issue. Needs more work.
-  printLCD(0, 0, itoa(availableMemory(), buf, 10));
+  availableMemory();
   printLCD(0, 0, sTitle);
   printLCD_P(1, (20 - digits + 1) / 2 + digits + 1, dispUnit);
   printLCD(3, 9, "OK");

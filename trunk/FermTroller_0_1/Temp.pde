@@ -14,7 +14,7 @@ void getDSAddr(byte addrRet[8]){
       return;
     }
     boolean found = 0;
-    for (byte i = 0; i < 5; i++) {
+    for (byte i = 0; i < 7; i++) {
       if (scanAddr[0] == tSensor[i][0] &&
           scanAddr[1] == tSensor[i][1] &&
           scanAddr[2] == tSensor[i][2] &&

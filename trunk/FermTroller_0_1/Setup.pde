@@ -20,24 +20,30 @@ void menuSetup() {
           loadSetup();
         }
     } else return;
+    saveSetup();
   }
 }
 
 void assignSensor() {
   encMin = 0;
-  encMax = 4;
+  encMax = 6;
   encCount = 0;
   byte lastCount = 1;
   
-  char dispTitle[5][21];
+  char dispTitle[7][21];
   strcpy_P(dispTitle[0], PSTR("Zone 1"));
   strcpy_P(dispTitle[1], PSTR("Zone 2"));
   strcpy_P(dispTitle[2], PSTR("Zone 3"));
   strcpy_P(dispTitle[3], PSTR("Zone 4"));
-  strcpy_P(dispTitle[4], PSTR("Ambient"));
+  strcpy_P(dispTitle[4], PSTR("Zone 5"));
+  strcpy_P(dispTitle[5], PSTR("Zone 6"));
+  strcpy_P(dispTitle[6], PSTR("Ambient"));
   
   while (1) {
     if (encCount != lastCount) {
+      #ifdef MODE_3+3
+        if (encCount > 2) { if (lastCount < encCount) encCount = 6; else encCount = 2; }
+      #endif
       lastCount = encCount;
       clearLCD();
       printLCD_P(0, 0, PSTR("Assign Temp Sensor"));
@@ -71,7 +77,7 @@ void assignSensor() {
 
       saveSetup();
       encMin = 0;
-      encMax = 4;
+      encMax = 6;
       encCount = lastCount;
       lastCount += 1;
     }
@@ -81,43 +87,41 @@ void assignSensor() {
 void cfgOutputs() {
   byte lastOption = 0;
   while(1) {
-    if (PIDEnabled[0]) strcpy_P(menuopts[0], PSTR("Zone 1 Mode: PID")); else strcpy_P(menuopts[0], PSTR("Zone 1 Mode: On/Off"));
-    strcpy_P(menuopts[1], PSTR("Zone 1 PID Cycle"));
-    strcpy_P(menuopts[2], PSTR("Zone 1 PID Gain"));
-    strcpy_P(menuopts[3], PSTR("Zone 1 Hysteresis"));
-    if (PIDEnabled[1]) strcpy_P(menuopts[4], PSTR("Zone 2 Mode: PID")); else strcpy_P(menuopts[4], PSTR("Zone 2 Mode: On/Off"));
-    strcpy_P(menuopts[5], PSTR("Zone 2 PID Cycle"));
-    strcpy_P(menuopts[6], PSTR("Zone 2 PID Gain"));
-    strcpy_P(menuopts[7], PSTR("Zone 2 Hysteresis"));
-    if (PIDEnabled[2]) strcpy_P(menuopts[8], PSTR("Zone 3 Mode: PID")); else strcpy_P(menuopts[8], PSTR("Zone 3 Mode: On/Off"));
-    strcpy_P(menuopts[9], PSTR("Zone 3 PID Cycle"));
-    strcpy_P(menuopts[10], PSTR("Zone 3 PID Gain"));
-    strcpy_P(menuopts[11], PSTR("Zone 3 Hysteresis"));
-    if (PIDEnabled[3]) strcpy_P(menuopts[12], PSTR("Zone 4 Mode: PID")); else strcpy_P(menuopts[12], PSTR("Zone 4 Mode: On/Off"));
-    strcpy_P(menuopts[13], PSTR("Zone 4 PID Cycle"));
-    strcpy_P(menuopts[14], PSTR("Zone 4 PID Gain"));
-    strcpy_P(menuopts[15], PSTR("Zone 4 Hysteresis"));
-    strcpy_P(menuopts[16], PSTR("Exit"));
+    for (byte i = 0; i < NUM_ZONES; i++) {
+      for (byte j = 0; j < 4; j++) {
+        strcpy_P(menuopts[i * 4 + j], PSTR("Zone "));
+        strcat(menuopts[i * 4 + j], itoa(i + 1, buf, 10));
+      }
+      strcat_P(menuopts[i * 4], PSTR(" Mode: "));
+      if (PIDEnabled[i]) strcat_P(menuopts[i * 4], PSTR("PID")); else strcat_P(menuopts[i * 4], PSTR("On/Off"));
+      
+      strcat_P(menuopts[i * 4 + 1], PSTR(" PID Cycle"));
+      strcat_P(menuopts[i * 4 + 2], PSTR(" PID Gain"));
+      strcat_P(menuopts[i * 4 + 3], PSTR(" Hysteresis"));
+    }
+    strcpy_P(menuopts[NUM_ZONES * 4], PSTR("Exit"));
 
-    lastOption = scrollMenu("Configure Outputs", 17, lastOption);
-    if (lastOption == 0) PIDEnabled[0] = PIDEnabled[0] ^ 1;
-    else if (lastOption == 1) PIDCycle[0] = getValue("Zone 1 Cycle Time", PIDCycle[0], 3, 0, 255, "s");
-    else if (lastOption == 2) setPIDGain("Zone 1 PID Gain", &PIDp[0], &PIDi[0], &PIDd[0]);
-    else if (lastOption == 3) hysteresis[0] = getValue("Zone 1 Hysteresis", hysteresis[0], 3, 1, 255, TUNIT);
-    else if (lastOption == 4) PIDEnabled[1] = PIDEnabled[1] ^ 1;
-    else if (lastOption == 5) PIDCycle[1] = getValue("Zone 2 Cycle Time", PIDCycle[1], 3, 0, 255, "s");
-    else if (lastOption == 6) setPIDGain("Zone 2 PID Gain", &PIDp[1], &PIDi[1], &PIDd[1]);
-    else if (lastOption == 7) hysteresis[1] = getValue("Zone 2 Hysteresis", hysteresis[1], 3, 1, 255, TUNIT);
-    else if (lastOption == 8) PIDEnabled[2] = PIDEnabled[2] ^ 1;
-    else if (lastOption == 9) PIDCycle[2] = getValue("Zone 3 Cycle Time", PIDCycle[2], 3, 0, 255, "s");
-    else if (lastOption == 10) setPIDGain("Zone 3 PID Gain", &PIDp[2], &PIDi[2], &PIDd[2]);
-    else if (lastOption == 11) hysteresis[2] = getValue("Zone 3 Hysteresis", hysteresis[2], 3, 1, 255, TUNIT);
-    else if (lastOption == 12) PIDEnabled[3] = PIDEnabled[3] ^ 1;
-    else if (lastOption == 13) PIDCycle[3] = getValue("Zone 4 Cycle Time", PIDCycle[3], 3, 0, 255, "s");
-    else if (lastOption == 14) setPIDGain("Zone 4 PID Gain", &PIDp[3], &PIDi[3], &PIDd[3]);
-    else if (lastOption == 15) hysteresis[3] = getValue("Zone 4 Hysteresis", hysteresis[3], 3, 0, 255, PUNIT);
-    else return;
-    saveSetup();
+    lastOption = scrollMenu("Configure Outputs", NUM_ZONES * 4 + 1, lastOption);
+    char zone[2];
+    itoa(lastOption/4 + 1, zone, 10);
+    if (lastOption == NUM_ZONES * 4) return;
+    else if ((lastOption / 4) * 4 == lastOption) PIDEnabled[lastOption/4] = PIDEnabled[lastOption/4] ^ 1;
+    else if ((lastOption / 4) * 4 + 1 == lastOption) {
+      strcpy_P(buf, PSTR("Zone "));
+      strcat(buf, zone);
+      strcat_P(buf, PSTR(" Cycle Time"));
+      PIDCycle[lastOption/4] = getValue(buf, PIDCycle[lastOption/4], 3, 0, 255, PSTR("s"));
+    } else if ((lastOption / 4) * 4 + 2 == lastOption) {
+      strcpy_P(buf, PSTR("Zone "));
+      strcat(buf, zone);
+      strcat_P(buf, PSTR(" PID Gain"));
+      setPIDGain(buf, &PIDp[lastOption/4], &PIDi[lastOption/4], &PIDd[lastOption/4]);
+    } else if ((lastOption / 4) * 4 + 3 == lastOption) {
+      strcpy_P(buf, PSTR("Zone "));
+      strcat(buf, zone);
+      strcat_P(buf, PSTR(" Hysteresis"));
+      hysteresis[lastOption/4] = getValue(buf, hysteresis[lastOption/4], 3, 1, 255, TUNIT);
+    }
   } 
 }
 
