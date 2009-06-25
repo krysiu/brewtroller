@@ -484,8 +484,10 @@ void manFill() {
       if (enterStatus == 1) {
         enterStatus = 0;
         autoValve = 0;
-        if (encCount == 0) return;
-        else if (encCount == 1) autoValve = AV_FILL;
+        if (encCount == 0) {
+          resetOutputs();
+          return;
+        } else if (encCount == 1) autoValve = AV_FILL;
         else if (encCount == 2) setValves(vlvConfig[VLV_FILLHLT]);
         else if (encCount == 3) setValves(vlvConfig[VLV_FILLMASH]);
         else if (encCount == 4) setValves(vlvConfig[VLV_FILLHLT] | vlvConfig[VLV_FILLMASH]);
@@ -494,13 +496,14 @@ void manFill() {
           setValves(0);
           if (confirmExit()) {
             enterStatus = 2;
+            resetOutputs();
             return;
           } else redraw = 1;
         }
       } else if (enterStatus == 2) {
         enterStatus = 0;
         if (confirmExit()) { 
-          setValves(0);
+          resetOutputs();
           enterStatus = 2;
           return;
         } else redraw = 1;
@@ -684,6 +687,7 @@ void mashStep(char sTitle[ ], int iMins) {
           return;
         } else if (lastOption == 4) {
             if (confirmExit() == 1) {
+              resetOutputs();
               enterStatus = 2;
               return;
             }
@@ -692,7 +696,12 @@ void mashStep(char sTitle[ ], int iMins) {
       }
       if (enterStatus == 2) {
         enterStatus = 0;
-        if (confirmExit() == 1) enterStatus = 2; else redraw = 1;
+        if (confirmExit() == 1) {
+          resetOutputs();
+          enterStatus = 2;
+          return;
+        }
+        redraw = 1;
         break;
       }
     }
@@ -770,6 +779,7 @@ void manSparge() {
       if (enterStatus == 1) {
         enterStatus = 0;
         if (encCount == 0) {
+          resetOutputs();
           return;
         } else if (encCount == 1) {
           printLCD_P(3, 0, PSTR("On "));
@@ -789,7 +799,7 @@ void manSparge() {
           setValves(0);
         } else if (encCount == 5) {
             if (confirmExit()) {
-              setValves(0);
+              resetOutputs();
               enterStatus = 2;
               return;
             } else redraw = 1;
@@ -797,7 +807,7 @@ void manSparge() {
       } else if (enterStatus == 2) {
         enterStatus = 0;
         if (confirmExit()) {
-          setValves(0);
+          resetOutputs();
           enterStatus = 2;
           return;
         } else redraw = 1;
@@ -896,10 +906,13 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
           printLCDRPad(0, 14, "", 6, ' ');
           setTimer(iMins);
         } else if (lastOption == 2) pauseTimer();
-        else if (lastOption == 3) return;
-        else if (lastOption == 4) {
+        else if (lastOption == 3) {
+          resetOutputs();
+          return;
+        } else if (lastOption == 4) {
             if (confirmExit() == 1) {
               enterStatus = 2;
+              resetOutputs();
               return;
             }
         }
@@ -907,7 +920,12 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
       }
       if (enterStatus == 2) {
         enterStatus = 0;
-        if (confirmExit() == 1) enterStatus = 2; else redraw = 1;
+        if (confirmExit() == 1) {
+          enterStatus = 2;
+          resetOutputs();
+          return;
+        } 
+        redraw = 1;
         break;
       }
     }
@@ -975,15 +993,17 @@ void manChill() {
       } else if (enterStatus == 1) {
         autoValve = 0;
         enterStatus = 0;
-        if (encCount == 0) return;
-        else if (encCount == 1) setValves(vlvConfig[VLV_CHILLH2O] | vlvConfig[VLV_CHILLBEER]);
+        if (encCount == 0) {
+          resetOutputs();
+          return;
+        } else if (encCount == 1) setValves(vlvConfig[VLV_CHILLH2O] | vlvConfig[VLV_CHILLBEER]);
         else if (encCount == 2) setValves(vlvConfig[VLV_CHILLH2O]);
         else if (encCount == 3) setValves(vlvConfig[VLV_CHILLBEER]);
         else if (encCount == 4) setValves(0);
         else if (encCount == 5) autoValve = AV_CHILL;
         else if (encCount == 6) {
           if (confirmExit()) {
-            setValves(0);
+            resetOutputs();
             enterStatus = 2;
             return;
           } else redraw = 1;
@@ -991,7 +1011,7 @@ void manChill() {
       } else if (enterStatus == 2) {
         enterStatus = 0;
         if (confirmExit()) { 
-          setValves(0);
+          resetOutputs();
           enterStatus = 2;
           return;
         } else redraw = 1;
