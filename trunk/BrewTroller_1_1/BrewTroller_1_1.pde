@@ -1,4 +1,4 @@
-#define BUILD 237 
+#define BUILD 238 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -62,7 +62,7 @@ using LiquidCrystal Fix by Donald Weiman:
 // pins, uncomment the following line. 
 // Note: This option is not used when MUXBOARDS is enabled.
 //
-//#define PV34REMAP
+#define PV34REMAP
 //**********************************************************************************
 
 
@@ -231,8 +231,8 @@ char buf[11];
 //Output Globals
 double PIDInput[4], PIDOutput[4], setpoint[4];
 byte PIDp[4], PIDi[4], PIDd[4], PIDCycle[4], hysteresis[4];
-unsigned long cycleStart[3];
-boolean heatStatus[2];
+unsigned long cycleStart[4];
+boolean heatStatus[4];
 boolean PIDEnabled[4];
 byte pitchTemp;
 

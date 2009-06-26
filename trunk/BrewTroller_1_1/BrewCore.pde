@@ -106,7 +106,7 @@ void brewCore() {
   }
 
   //Process Heat Outputs
-  for (byte i = TS_HLT; i <= TS_KETTLE; i++) {
+  for (byte i = VS_HLT; i <= VS_KETTLE; i++) {
     if (PIDEnabled[i]) {
       if (temp[i] == -1) {
         pid[i].SetMode(MANUAL);
@@ -123,17 +123,17 @@ void brewCore() {
 
     if (heatStatus[i]) {
       if (temp[i] == -1 || temp[i] >= setpoint[i]) {
-        if (!PIDEnabled[i]) digitalWrite(heatPin[i], LOW);
+        if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
         heatStatus[i] = 0;
       } else {
-        if (!PIDEnabled[i]) digitalWrite(heatPin[i], HIGH);
+        if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
       }
     } else { 
       if (temp[i] != -1 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
-        if (!PIDEnabled[i]) digitalWrite(heatPin[i], HIGH);
+        if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
         heatStatus[i] = 1;
       } else {
-        if (!PIDEnabled[i]) digitalWrite(heatPin[i], LOW);
+        if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
       }
     }
   }    
@@ -158,4 +158,5 @@ void brewCore() {
       if (vlvBits != vlvConfig[VLV_CHILLBEER]) setValves(vlvConfig[VLV_CHILLBEER]);
     } else if (vlvBits != (vlvConfig[VLV_CHILLBEER] | vlvConfig[VLV_CHILLH2O])) setValves(vlvConfig[VLV_CHILLBEER] | vlvConfig[VLV_CHILLH2O]);
   }
+
 }

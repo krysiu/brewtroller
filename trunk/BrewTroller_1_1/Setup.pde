@@ -24,6 +24,7 @@ void menuSetup() {
           loadSetup();
         }
     } else return;
+    saveSetup();
   }
 }
 
@@ -74,7 +75,6 @@ void assignSensor() {
       } else if (selected == 1) for (byte i = 0; i <8; i++) tSensor[lastCount][i] = 0;
       else if (selected > 2) return;
 
-      saveSetup();
       encMin = 0;
       encMax = 5;
       encCount = lastCount;
@@ -126,7 +126,6 @@ void cfgOutputs() {
     else if (lastOption == 14) PIDCycle[VS_STEAM] = getValue(STEAMCYCLE, PIDCycle[VS_STEAM], 3, 0, 255, SEC);
     else if (lastOption == 15) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
     else return;
-    saveSetup();
   } 
 }
 
@@ -239,7 +238,6 @@ void cfgVolumes() {
     else if (lastOption == 8) volCalibMenu(TS_KETTLE);
     else if (lastOption == 9) evapRate = getValue(PSTR("Evaporation Rate"), evapRate, 3, 0, 100, PSTR("%/hr"));
     else return;
-    saveSetup();
   } 
 }
 
@@ -274,12 +272,10 @@ void volCalibMenu(byte vessel) {
         if(confirmDel()) {
           calibVals[vessel][lastOption] = 0;
           calibVols[vessel][lastOption] = 0;
-          saveSetup();
         }
       } else {
         calibVols[vessel][lastOption] = getValue(PSTR("Current Volume:"), 0, 7, 3, 9999999, VOLUNIT);
         calibVals[vessel][lastOption] = analogRead(vSensor[vessel]) - zeroVol[vessel];
-        saveSetup();
       }
     }
   }
@@ -301,7 +297,6 @@ void cfgValves() {
     lastOption = scrollMenu("Valve Configuration", 9, lastOption);
     if (lastOption > 7) return;
     vlvConfig[lastOption] = cfgValveProfile(menuopts[lastOption], vlvConfig[lastOption]);
-    saveSetup();
   }
 }
 
