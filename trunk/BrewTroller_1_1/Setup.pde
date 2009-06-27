@@ -126,6 +126,7 @@ void cfgOutputs() {
     else if (lastOption == 14) PIDCycle[VS_STEAM] = getValue(STEAMCYCLE, PIDCycle[VS_STEAM], 3, 0, 255, SEC);
     else if (lastOption == 15) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
     else return;
+    for (byte i = VS_HLT; i <= VS_STEAM; i++) pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
   } 
 }
 

@@ -1,4 +1,4 @@
-#define BUILD 239 
+#define BUILD 240 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -394,11 +394,9 @@ void setup() {
   //Load global variable values stored in EEPROM
   loadSetup();
 
-  for (byte i = VS_HLT; i <= VS_KETTLE; i++) {
-    if (PIDEnabled[i]) {
-      pid[i].SetInputLimits(0, 255);
-      pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
-    }
+  for (byte i = VS_HLT; i <= VS_STEAM; i++) {
+    pid[i].SetInputLimits(0, 255);
+    pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
   }
   
   if (pwrRecovery == 1) {
