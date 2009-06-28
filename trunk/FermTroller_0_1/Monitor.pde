@@ -29,7 +29,7 @@ void doMon() {
           strcpy_P(menuopts[pos++], PSTR("Clear Set Point"));
         }
         strcpy_P(menuopts[pos++], PSTR("Close Menu"));
-        strcpy_P(menuopts[pos++], PSTR("Quit Brew Monitor"));
+        strcpy_P(menuopts[pos++], PSTR("Quit"));
 
         boolean inMenu = 1;
         byte lastOption = 0;
@@ -100,7 +100,7 @@ void doMon() {
       for (byte i = 0; i < 7; i++) {
         if (temp[i] == -1) strcpy_P(menuopts[i], PSTR("---"));
         else { 
-          itoa(temp[4], buf, 10); 
+          itoa(temp[i], buf, 10); 
           strcpy(menuopts[i], buf); 
         } 
       }
