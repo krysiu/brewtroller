@@ -1,4 +1,4 @@
-#define BUILD 240 
+#define BUILD 241 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -55,19 +55,19 @@ using LiquidCrystal Fix by Donald Weiman:
 //**********************************************************************************
 // BrewTroller 1.0 - 2.0 boards share the output pins used for pump/valve outputs
 // 3 and 4 with the serial connection used to flash the board with new software. 
-// Newer boards use pins xx and xx for P/V 3 & 4 to avoid a conflict that causes
+// Newer boards use pins 26 and 25 for P/V 3 & 4 to avoid a conflict that causes
 // these outputs to be momentarily switched on during boot up causing unexpected
 // results.
-// If you are using a newer board or have implemented a fix to connect P/V to the new
-// pins, uncomment the following line. 
-// Note: This option is not used when MUXBOARDS is enabled.
+// If you are using an older board or have not implemented a fix to connect P/V to the new
+// pins, comment out the following line by prefacing it with //. 
+// Note: This option is ignored when MUXBOARDS is enabled.
 //
 #define PV34REMAP
 //**********************************************************************************
 
 
 //**********************************************************************************
-// USEMUX
+// MUX Boards
 //**********************************************************************************
 // Uncomment one of the following lines to enable MUX'ing of Pump/Valve Outputs
 // Note: MUX'ing requires 1-4 expansion boards providing 8-32 pump/valve outputs
@@ -110,10 +110,18 @@ using LiquidCrystal Fix by Donald Weiman:
 #include <avr/pgmspace.h>
 #include <PID_Beta6.h>
 
+#ifdef BTBOARD_3
+  #define PV34REMAP
+#endif
+
 //Pin and Interrupt Definitions
 #define ENCA_PIN 2
 #define ENCB_PIN 4
-#define TEMP_PIN 5
+#ifdef BTBOARD_3
+  #define TEMP_PIN 24
+#else
+  #define TEMP_PIN 5
+#endif
 #define ENTER_PIN 11
 #define ALARM_PIN 15
 #define ENTER_INT 1
