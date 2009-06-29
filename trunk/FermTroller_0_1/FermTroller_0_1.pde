@@ -1,4 +1,4 @@
-#define BUILD 242 
+#define BUILD 243 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -87,7 +87,11 @@ using LiquidCrystal Fix by Donald Weiman:
 //Pin and Interrupt Definitions
 #define ENCA_PIN 2
 #define ENCB_PIN 4
-#define TEMP_PIN 5
+#ifdef BTBOARD_3
+  #define TEMP_PIN 24
+#else
+  #define TEMP_PIN 5
+#endif
 #define ENTER_PIN 11
 #define ALARM_PIN 15
 #define ENTER_INT 1
