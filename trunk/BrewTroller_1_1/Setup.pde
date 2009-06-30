@@ -110,25 +110,38 @@ void cfgOutputs() {
 
     lastOption = scrollMenu("Configure Outputs", 19, lastOption);
     if (lastOption == 0) PIDEnabled[VS_HLT] = PIDEnabled[VS_HLT] ^ 1;
-    else if (lastOption == 1) PIDCycle[VS_HLT] = getValue(HLTCYCLE, PIDCycle[VS_HLT], 3, 0, 255, SEC);
-    else if (lastOption == 2) setPIDGain("HLT PID Gain", &PIDp[VS_HLT], &PIDi[VS_HLT], &PIDd[VS_HLT]);
+    else if (lastOption == 1) {
+      PIDCycle[VS_HLT] = getValue(HLTCYCLE, PIDCycle[VS_HLT], 3, 0, 255, SEC);
+      pid[VS_HLT].SetOutputLimits(0, PIDCycle[VS_HLT] * 1000);
+    } else if (lastOption == 2) setPIDGain("HLT PID Gain", &PIDp[VS_HLT], &PIDi[VS_HLT], &PIDd[VS_HLT]);
     else if (lastOption == 3) hysteresis[VS_HLT] = getValue(HLTHY, hysteresis[VS_HLT], 3, 1, 255, TUNIT);
     else if (lastOption == 4) PIDEnabled[VS_MASH] = PIDEnabled[VS_MASH] ^ 1;
-    else if (lastOption == 5) PIDCycle[VS_MASH] = getValue(MASHCYCLE, PIDCycle[VS_MASH], 3, 0, 255, SEC);
-    else if (lastOption == 6) setPIDGain("Mash PID Gain", &PIDp[VS_MASH], &PIDi[VS_MASH], &PIDd[VS_MASH]);
+    else if (lastOption == 5) {
+      PIDCycle[VS_MASH] = getValue(MASHCYCLE, PIDCycle[VS_MASH], 3, 0, 255, SEC);
+      pid[VS_MASH].SetOutputLimits(0, PIDCycle[VS_MASH] * 1000);
+    } else if (lastOption == 6) setPIDGain("Mash PID Gain", &PIDp[VS_MASH], &PIDi[VS_MASH], &PIDd[VS_MASH]);
     else if (lastOption == 7) hysteresis[VS_MASH] = getValue(MASHHY, hysteresis[VS_MASH], 3, 1, 255, TUNIT);
     else if (lastOption == 8) PIDEnabled[VS_KETTLE] = PIDEnabled[VS_KETTLE] ^ 1;
-    else if (lastOption == 9) PIDCycle[VS_KETTLE] = getValue(KETTLECYCLE, PIDCycle[VS_KETTLE], 3, 0, 255, SEC);
-    else if (lastOption == 10) setPIDGain("Kettle PID Gain", &PIDp[VS_KETTLE], &PIDi[VS_KETTLE], &PIDd[VS_KETTLE]);
+    else if (lastOption == 9) {
+      PIDCycle[VS_KETTLE] = getValue(KETTLECYCLE, PIDCycle[VS_KETTLE], 3, 0, 255, SEC);
+      pid[VS_KETTLE].SetOutputLimits(0, PIDCycle[VS_KETTLE] * 1000);
+    } else if (lastOption == 10) setPIDGain("Kettle PID Gain", &PIDp[VS_KETTLE], &PIDi[VS_KETTLE], &PIDd[VS_KETTLE]);
     else if (lastOption == 11) hysteresis[VS_KETTLE] = getValue(KETTLEHY, hysteresis[VS_KETTLE], 3, 1, 255, TUNIT);
     else if (lastOption == 12) setBoilTemp(getValue(PSTR("Boil Temp"), getBoilTemp(), 3, 0, 255, TUNIT));
     else if (lastOption == 13) PIDEnabled[VS_STEAM] = PIDEnabled[VS_STEAM] ^ 1;
-    else if (lastOption == 14) PIDCycle[VS_STEAM] = getValue(STEAMCYCLE, PIDCycle[VS_STEAM], 3, 0, 255, SEC);
-    else if (lastOption == 15) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
+    else if (lastOption == 14) {
+      PIDCycle[VS_STEAM] = getValue(STEAMCYCLE, PIDCycle[VS_STEAM], 3, 0, 255, SEC);
+      pid[VS_STEAM].SetOutputLimits(0, PIDCycle[VS_STEAM] * 1000);
+    } else if (lastOption == 15) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
     else if (lastOption == 16) steamTgt = getValue(STEAMPRESS, steamTgt, 3, 0, 255, PUNIT);
-    else if (lastOption == 17) steamPSens = getValue(STEAMSENSOR, steamPSens, 4, 1, 9999, PSTR("mV/kPa"));
-    else return;
-    for (byte i = VS_HLT; i <= VS_STEAM; i++) pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
+    else if (lastOption == 17) {
+      steamPSens = getValue(STEAMSENSOR, steamPSens, 4, 1, 9999, PSTR("mV/kPa"));
+      #ifdef USEMETRIC
+        pid[VS_STEAM].SetInputLimits(0, 50000 / steamPSens);
+      #else
+        pid[VS_STEAM].SetInputLimits(0, 7250 / steamPSens);
+      #endif
+    } else return;
   } 
 }
 

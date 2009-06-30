@@ -278,7 +278,7 @@ void doAutoBrew() {
     case 4:
       setpoint[TS_HLT] = 0;
       setpoint[TS_MASH] = 0;
-      setpoint[VS_STEAM] = 0;
+      setpoint[VS_STEAM] = steamTgt;
       setABRecovery(4);
       inMenu = 1;
       while(inMenu) {
