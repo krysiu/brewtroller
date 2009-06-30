@@ -57,7 +57,18 @@ void brewCore() {
         logFieldI(1);
       #endif
       logEnd();
-    } else if (logCount >= 11 && logCount <= 13) {
+    } else if (logCount == 11) {
+      logStart_P(LOGDATA);
+      logField_P(PSTR("STEAM"));
+      ftoa(steamPressure, buf, 3);
+      logField(buf);
+      #ifdef USEMETRIC
+        logFieldI(0);
+      #else
+        logFieldI(1);
+      #endif
+      logEnd();
+    } else if (logCount >= 12 && logCount <= 14) {
       byte pct;
       byte i = logCount - 11;
       if (PIDEnabled[i]) pct = PIDOutput[i] / PIDCycle[i] / 10;
@@ -68,7 +79,7 @@ void brewCore() {
       logFieldI(i);
       logFieldI(pct);
       logEnd();
-    } else if (logCount >= 14 && logCount <= 16) {
+    } else if (logCount >= 15 && logCount <= 17) {
       byte i = logCount - 14;
       logStart_P(LOGDATA);
       logField_P(PSTR("SETPOINT"));
@@ -81,7 +92,7 @@ void brewCore() {
         logFieldI(1);
       #endif
       logEnd();
-    } else if (logCount == 17) {
+    } else if (logCount == 18) {
       logStart_P(LOGDATA);
       logField_P(PSTR("AUTOVLV"));
       logFieldI(autoValve);
@@ -93,7 +104,7 @@ void brewCore() {
       if (millis() - lastLog > 5000) lastLog = millis(); else lastLog += 1000;
     }
     logCount++;
-    if (logCount > 17) logCount = 0;
+    if (logCount > 18) logCount = 0;
   }
 
   //Check Temps
@@ -105,15 +116,18 @@ void brewCore() {
     convStart = 0;
   }
 
+  //Check steam Pressure
+  steamPressure = readPressure(STEAMPRESS_APIN, steamPSens);
+
   //Process Heat Outputs
-  for (byte i = VS_HLT; i <= VS_KETTLE; i++) {
+  for (byte i = VS_HLT; i <= VS_STEAM; i++) {
     if (PIDEnabled[i]) {
-      if (temp[i] == -1) {
+      if (i != VS_STEAM && temp[i] == -1) {
         pid[i].SetMode(MANUAL);
         PIDOutput[i] = 0;
       } else {
         pid[i].SetMode(AUTO);
-        PIDInput[i] = temp[i];
+        if (i == VS_STEAM) PIDInput[i] = steamPressure; else PIDInput[i] = temp[i];
         pid[i].Compute();
       }
       if (cycleStart[i] == 0) cycleStart[i] = millis();
@@ -122,19 +136,37 @@ void brewCore() {
     } 
 
     if (heatStatus[i]) {
-      if (temp[i] == -1 || temp[i] >= setpoint[i]) {
-        if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
-        heatStatus[i] = 0;
+      if (i == VS_STEAM) {
+        if (steamPressure >= setpoint[i]) {
+          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
+          heatStatus[i] = 0;
+        } else {
+          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
+        }
       } else {
-        if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
+        if (temp[i] == -1 || temp[i] >= setpoint[i]) {
+          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
+          heatStatus[i] = 0;
+        } else {
+          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
+        }
       }
-    } else { 
-      if (temp[i] != -1 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
-        if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
-        heatStatus[i] = 1;
+    } else {
+      if (i == VS_STEAM) {
+        if ((float)(setpoint[i] - steamPressure) >= (float) hysteresis[i] / 10.0) {
+          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
+          heatStatus[i] = 1;
+        } else {
+          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
+        }
       } else {
-        if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
-      }
+        if (temp[i] != -1 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
+          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
+          heatStatus[i] = 1;
+        } else {
+          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
+        }
+      }        
     }
   }    
 

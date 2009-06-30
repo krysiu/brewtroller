@@ -270,6 +270,7 @@ void doAutoBrew() {
         #endif
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = strikeTemp;
+        setpoint[VS_STEAM] = steamTgt;
       }
       setABRecovery(3);
       mashStep("Preheat", MINS_PROMPT);  
@@ -277,6 +278,7 @@ void doAutoBrew() {
     case 4:
       setpoint[TS_HLT] = 0;
       setpoint[TS_MASH] = 0;
+      setpoint[VS_STEAM] = 0;
       setABRecovery(4);
       inMenu = 1;
       while(inMenu) {
@@ -305,6 +307,7 @@ void doAutoBrew() {
         setABRecovery(5);
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_DOUGHIN];
+        setpoint[VS_STEAM] = steamTgt;
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 5 && recoverMins > 0) mashStep("Dough In", recoverMins); else mashStep("Dough In", stepMins[STEP_DOUGHIN]);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
@@ -314,6 +317,7 @@ void doAutoBrew() {
         setABRecovery(6);
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_PROTEIN];
+        setpoint[VS_STEAM] = steamTgt;
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 6 && recoverMins > 0) mashStep("Protein", recoverMins); else mashStep("Protein", stepMins[STEP_PROTEIN]);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
@@ -323,6 +327,7 @@ void doAutoBrew() {
         setABRecovery(7);
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_SACCH];
+        setpoint[VS_STEAM] = steamTgt;
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 7 && recoverMins > 0) mashStep("Sacch Rest", recoverMins); else mashStep("Sacch Rest", stepMins[STEP_SACCH]);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
@@ -332,6 +337,7 @@ void doAutoBrew() {
         setABRecovery(8);
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_MASHOUT];
+        setpoint[VS_STEAM] = steamTgt;
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 8 && recoverMins > 0) mashStep("Mash Out", recoverMins); else mashStep("Mash Out", stepMins[STEP_MASHOUT]);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
@@ -340,10 +346,14 @@ void doAutoBrew() {
       //Hold last mash temp until user exits
       setABRecovery(9); 
       setpoint[TS_HLT] = spargeTemp;
+      //Cycle through steps and use last non-zero step for mash
+      for (byte i = STEP_DOUGHIN; i <= STEP_MASHOUT; i++) if (stepTemp[i]) setpoint[TS_MASH] = stepTemp[i];
+      setpoint[VS_STEAM] = steamTgt;
       mashStep("End Mash", MINS_PROMPT);
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       setpoint[TS_HLT] = 0;
       setpoint[TS_MASH] = 0;
+      setpoint[VS_STEAM] = 0;
       
     case 10:  
       setABRecovery(10); 

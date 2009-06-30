@@ -1,4 +1,4 @@
-#define BUILD 241 
+#define BUILD 244 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -243,6 +243,9 @@ unsigned long cycleStart[4];
 boolean heatStatus[4];
 boolean PIDEnabled[4];
 byte pitchTemp;
+byte steamTgt;
+unsigned int steamPSens;
+float steamPressure;
 
 PID pid[4] = {
   PID(&PIDInput[VS_HLT], &PIDOutput[VS_HLT], &setpoint[VS_HLT], 3, 4, 1),
@@ -315,7 +318,8 @@ const char KETTLEGAIN[] PROGMEM = "Kettle PID Gain";
 const char KETTLEHY[] PROGMEM = "Kettle Hysteresis";
 const char STEAMCYCLE[] PROGMEM = "Steam PID Cycle";
 const char STEAMGAIN[] PROGMEM = "Steam PID Gain";
-
+const char STEAMPRESS[] PROGMEM = "Steam Pressure";
+const char STEAMSENSOR[] PROGMEM = "Steam Sensor";
 
 #ifdef USEMETRIC
 const char VOLUNIT[] PROGMEM = "l";

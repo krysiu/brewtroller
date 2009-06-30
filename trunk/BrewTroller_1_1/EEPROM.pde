@@ -39,7 +39,11 @@ void saveSetup() {
   //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
   //136 - 141 Zero Volumes
-  //142 - 151 ***OPEN***
+
+  EEPROM.write(142, steamTgt);
+  PROMwriteInt(143, steamPSens);
+  
+  //145 - 151 ***OPEN***
   //152-155 Power Recovery
   //156-1805 Saved Programs
 
@@ -99,7 +103,11 @@ void loadSetup() {
   //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
   //136 - 141 Zero Volumes
-  //142 - 151 ***OPEN***
+
+  steamTgt = EEPROM.read(142);
+  steamPSens = PROMreadInt(143);
+
+  //145 - 151 ***OPEN***
   //152-155 Power Recovery
   //156-1805 Saved Programs
 

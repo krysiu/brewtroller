@@ -104,8 +104,8 @@ void cfgOutputs() {
     if (PIDEnabled[VS_STEAM]) strcpy_P(menuopts[13], PSTR("Steam Mode: PID")); else strcpy_P(menuopts[13], PSTR("Steam Mode: On/Off"));
     strcpy_P(menuopts[14], STEAMCYCLE);
     strcpy_P(menuopts[15], STEAMGAIN);
-    strcpy_P(menuopts[16], PSTR("Steam Pressure"));
-    strcpy_P(menuopts[17], PSTR("Steam Sensor Sens"));
+    strcpy_P(menuopts[16], STEAMPRESS);
+    strcpy_P(menuopts[17], STEAMSENSOR);
     strcpy_P(menuopts[18], PSTR("Exit"));
 
     lastOption = scrollMenu("Configure Outputs", 19, lastOption);
@@ -125,6 +125,8 @@ void cfgOutputs() {
     else if (lastOption == 13) PIDEnabled[VS_STEAM] = PIDEnabled[VS_STEAM] ^ 1;
     else if (lastOption == 14) PIDCycle[VS_STEAM] = getValue(STEAMCYCLE, PIDCycle[VS_STEAM], 3, 0, 255, SEC);
     else if (lastOption == 15) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
+    else if (lastOption == 16) steamTgt = getValue(STEAMPRESS, steamTgt, 3, 0, 255, PUNIT);
+    else if (lastOption == 17) steamPSens = getValue(STEAMSENSOR, steamPSens, 4, 1, 9999, PSTR("mV/kPa"));
     else return;
     for (byte i = VS_HLT; i <= VS_STEAM; i++) pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
   } 
