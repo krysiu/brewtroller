@@ -1,4 +1,4 @@
-#define BUILD 245 
+#define BUILD 246 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -157,7 +157,11 @@ using LiquidCrystal Fix by Donald Weiman:
 #define HLTHEAT_PIN 0
 #define MASHHEAT_PIN 1
 #define KETTLEHEAT_PIN 3
-#define STEAMHEAT_PIN 25
+#if defined PV34REMAP && !defined MUXBOARDS
+  #define STEAMHEAT_PIN 27
+#else
+  #define STEAMHEAT_PIN 25
+#endif
 #define HLTVOL_APIN 0
 #define MASHVOL_APIN 1
 #define KETTLEVOL_APIN 2
