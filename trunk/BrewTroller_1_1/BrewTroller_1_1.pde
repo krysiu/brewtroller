@@ -1,4 +1,4 @@
-#define BUILD 246 
+#define BUILD 247 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -32,9 +32,14 @@ using LiquidCrystal Fix by Donald Weiman:
 //**********************************************************************************
 // BrewTroller Board Version
 //**********************************************************************************
-// The Brewtroller 3.0 board moved the LCD RS line to a new pin. If you are using a 
-// BrewTroller 3.0 or newer board uncomment this line to enable the correct pins.
+// Certain pins have moved from one board version to the next. Uncomment one of the
+// following definitions to to indifty what board you are using.
+// Use BTBOARD_1 for 1.0 - 2.1 boards without the pump/valve 3 & 4 remapping fix
+// Use BTBOARD_2.2 for 2.2 boards and earlier boards that have the PV 3-4 remapping
+// Use BTBOARD_3 for 3.0 boards
 //
+//#define BTBOARD_1
+#define BTBOARD_2.2
 //#define BTBOARD_3
 //**********************************************************************************
 
@@ -48,23 +53,6 @@ using LiquidCrystal Fix by Donald Weiman:
 #define ENCODER_ALPS
 //#define ENCODER_CUI
 //**********************************************************************************
-
-
-//**********************************************************************************
-// P/V 3-4 Serial Fix
-//**********************************************************************************
-// BrewTroller 1.0 - 2.0 boards share the output pins used for pump/valve outputs
-// 3 and 4 with the serial connection used to flash the board with new software. 
-// Newer boards use pins 26 and 25 for P/V 3 & 4 to avoid a conflict that causes
-// these outputs to be momentarily switched on during boot up causing unexpected
-// results.
-// If you are using an older board or have not implemented a fix to connect P/V to the new
-// pins, comment out the following line by prefacing it with //. 
-// Note: This option is ignored when MUXBOARDS is enabled.
-//
-#define PV34REMAP
-//**********************************************************************************
-
 
 //**********************************************************************************
 // MUX Boards
@@ -80,6 +68,14 @@ using LiquidCrystal Fix by Donald Weiman:
 //#define MUXBOARDS 4
 //**********************************************************************************
 
+//**********************************************************************************
+// Steam Mash Infusion Support
+//**********************************************************************************
+// Uncomment the following line to enable steam mash infusion support. Note: Steam
+// support will disable onboard pump/valve outputs requiring the use of MUX boards
+//
+//#define USESTEAM
+//**********************************************************************************
 
 //**********************************************************************************
 // OPTIONAL MODULES
@@ -89,7 +85,7 @@ using LiquidCrystal Fix by Donald Weiman:
 //
 #define MODULE_BREWMONITOR
 
-//Include default Single Infusion and Multi-Rest AutoBrew Saved programs
+// Include default Single Infusion and Multi-Rest AutoBrew Saved programs
 #define MODULE_DEFAULTABPROGS
 
 //**********************************************************************************
@@ -110,18 +106,36 @@ using LiquidCrystal Fix by Donald Weiman:
 #include <avr/pgmspace.h>
 #include <PID_Beta6.h>
 
-#ifdef BTBOARD_3
-  #define PV34REMAP
+
+//**********************************************************************************
+//Compile Time Logic
+//**********************************************************************************
+
+// Disable On board pump/valve outputs for BT Board 3.0 and older boards using steam
+// Set MUXBOARDS 0 for boards without on board or MUX Pump/valve outputs
+#if !defined BTBOARD_3 && !defined USESTEAM
+  #define ONBOARDPV
+#else
+  #if !defined MUXBOARDS
+    #define MUXBOARDS 0
+  #endif
+#endif
+
+//Enable Serial on BTBOARD_2.2+ boards or if DEBUG is set
+#if !defined BTBOARD_1 || defined DEBUG
+  #define USESERIAL
 #endif
 
 //Pin and Interrupt Definitions
 #define ENCA_PIN 2
 #define ENCB_PIN 4
+
 #ifdef BTBOARD_3
   #define TEMP_PIN 24
 #else
   #define TEMP_PIN 5
 #endif
+
 #define ENTER_PIN 11
 #define ALARM_PIN 15
 #define ENTER_INT 1
@@ -137,7 +151,7 @@ using LiquidCrystal Fix by Donald Weiman:
   #define VALVE1_PIN 6
   #define VALVE2_PIN 7
 
-#ifdef PV34REMAP
+#ifdef BTBOARD_2.2
   #define VALVE3_PIN 26
   #define VALVE4_PIN 25
 #else
@@ -157,11 +171,15 @@ using LiquidCrystal Fix by Donald Weiman:
 #define HLTHEAT_PIN 0
 #define MASHHEAT_PIN 1
 #define KETTLEHEAT_PIN 3
-#if defined PV34REMAP && !defined MUXBOARDS
-  #define STEAMHEAT_PIN 27
-#else
+
+
+#if defined BTBOARD_3
   #define STEAMHEAT_PIN 25
+#else
+  #define STEAMHEAT_PIN 6
 #endif
+
+
 #define HLTVOL_APIN 0
 #define MASHVOL_APIN 1
 #define KETTLEVOL_APIN 2
@@ -352,7 +370,7 @@ const byte BMP6[] PROGMEM = {B11111, B00111, B00111, B11111, B11111, B11111, B11
 const byte BMP7[] PROGMEM = {B11111, B11111, B11110, B11101, B11011, B00111, B11111, B11111};
   
 void setup() {
-#if defined DEBUG || defined MUXBOARDS || defined PV34REMAP
+#if defined USESERIAL
   Serial.begin(9600);
   Serial.println();
 #endif

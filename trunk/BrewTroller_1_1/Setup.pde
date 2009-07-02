@@ -320,10 +320,10 @@ unsigned long cfgValveProfile (char sTitle[], unsigned long defValue) {
   unsigned long retValue = defValue;
   encMin = 0;
 
-#ifdef MUXBOARDS
-  encMax = MUXBOARDS * 8;
-#else
+#ifdef ONBOARDPV
   encMax = 11;
+#else
+  encMax = MUXBOARDS * 8;
 #endif
 
   //The left most bit being displayed (Set to MAX + 1 to force redraw)

@@ -116,11 +116,17 @@ void brewCore() {
     convStart = 0;
   }
 
+#ifdef USESTEAM
   //Check steam Pressure
   steamPressure = readPressure(STEAMPRESS_APIN, steamPSens);
+#endif
 
   //Process Heat Outputs
+#ifdef USESTEAM
   for (byte i = VS_HLT; i <= VS_STEAM; i++) {
+#else
+  for (byte i = VS_HLT; i <= VS_KETTLE; i++) {
+#endif
     if (PIDEnabled[i]) {
       if (i != VS_STEAM && temp[i] == -1) {
         pid[i].SetMode(MANUAL);

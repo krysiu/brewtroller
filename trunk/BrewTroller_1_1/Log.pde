@@ -21,7 +21,7 @@ void logString_P (const char *sType, const char *sText) {
 }
 
 void logStart_P (const char *sType) {
-#if defined DEBUG || defined MUXBOARDS || defined PV34REMAP
+#if defined USESERIAL
  Serial.print(millis(),DEC);
  Serial.print("\t");
  while (pgm_read_byte(sType) != 0) Serial.print(pgm_read_byte(sType++)); 
@@ -30,34 +30,34 @@ void logStart_P (const char *sType) {
 }
 
 void logEnd () {
-#if defined DEBUG || defined MUXBOARDS || defined PV34REMAP
+#if defined USESERIAL
  Serial.println();
 #endif
 }
 
 void logField (char sText[]) {
-#if defined DEBUG || defined MUXBOARDS || defined PV34REMAP
+#if defined USESERIAL
   Serial.print(sText);
   Serial.print("\t");
 #endif
 }
 
 void logFieldI (unsigned long value) {
-#if defined DEBUG || defined MUXBOARDS || defined PV34REMAP
+#if defined USESERIAL
   Serial.print(value, DEC);
   Serial.print("\t");
 #endif
 }
 
 void logField_P (const char *sText) {
-#if defined DEBUG || defined MUXBOARDS || defined PV34REMAP
+#if defined USESERIAL
   while (pgm_read_byte(sText) != 0) Serial.print(pgm_read_byte(sText++));
   Serial.print("\t");
 #endif
 }
 
 boolean chkMsg() {
-#if defined DEBUG || defined MUXBOARDS || defined PV34REMAP
+#if defined USESERIAL
   if (!msgQueued) {
     while (Serial.available()) {
       byte byteIn = Serial.read();
@@ -317,7 +317,7 @@ void rejectParam(const char *handler) {
   clearMsg();
 }
 
-#if defined DEBUG || defined MUXBOARDS || defined PV34REMAP
+#if defined USESERIAL
 void logTSensor(byte sensor) {
   logStart_P(LOGGLB);
   logField_P(PSTR("TS_ADDR"));
