@@ -1,4 +1,4 @@
-#define BUILD 243 
+#define BUILD 248 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -102,7 +102,13 @@ using LiquidCrystal Fix by Donald Weiman:
 //In 6 Cool Mode these are cool outputs for Zones 1 - 6
 //In 6 Heat Mode these are heat outputs for Zones 1 - 6
 //In 6 + 6 Mode these pins are used for heat output and MUX is used for cool
-byte outputPin[6] = { 0, 1, 3, 25, 26, 27 };
+
+byte outputPin[6] = { 0, 1, 3, 24, 18, 16 };
+#ifdef BTBOARD_3
+  outputPin[3] = 25;
+  outputPin[4] = 27;
+  outputPin[5] = 26;
+#endif
 
 #ifdef MODE_3+3
   #define NUM_ZONES 3
