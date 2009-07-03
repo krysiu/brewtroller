@@ -44,18 +44,17 @@ void fermCore() {
       logStart_P(LOGDATA);
       logField_P(PSTR("SETPOINT"));
       logFieldI(i);
-      ftoa(setpoint[i], buf, 0);
-      logField(buf);
+      //ftoa(setpoint[i], buf, 0);
+      //logField(buf);
       #ifdef USEMETRIC
         logFieldI(0);
       #else
         logFieldI(1);
       #endif
       logEnd();
-      if (millis() - lastLog > 5000) lastLog = millis(); else lastLog += 1000;
-    }
-    logCount++;
+    } else if (logCount == 21) { if (millis() - lastLog > 5000) lastLog = millis(); else lastLog += 1000; }
     if (logCount > 20) logCount = 0;
+    logCount++;
   }
 
   //Check Temps
@@ -105,12 +104,12 @@ void fermCore() {
     #if !defined MODE_6HEAT && !defined MODE_6+6
       //Process Non-MUX Cool
       if (coolStatus[i]) {
-        if (temp[i] == -1 || temp[i] <= setpoint[i]) {
+        if (temp[i] == -1 || temp[i] <= setpoint[i] || setpoint[i] == 0) {
           digitalWrite(outputPin[i + COOLPIN_OFFSET], LOW);
           coolStatus[i] = 0;
         } else digitalWrite(outputPin[i + COOLPIN_OFFSET], HIGH);
       } else { 
-        if (temp[i] != -1 && (float)(temp[i] - setpoint[i]) >= (float) hysteresis[i] / 10.0) {
+        if (temp[i] != -1 && setpoint[i] != 0 && (float)(temp[i] - setpoint[i]) >= (float) hysteresis[i] / 10.0) {
           digitalWrite(outputPin[i + COOLPIN_OFFSET], HIGH);
           coolStatus[i] = 1;
         } else digitalWrite(outputPin[i + COOLPIN_OFFSET], LOW);

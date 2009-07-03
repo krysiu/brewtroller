@@ -1,4 +1,4 @@
-#define BUILD 249 
+#define BUILD 250 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -248,12 +248,6 @@ void setup() {
   for (byte i = 0; i < 6; i++) pinMode(outputPin[i], OUTPUT);
   resetOutputs();
   
-  for (byte i = 0; i < 6; i++) {
-    if (PIDEnabled[i]) {
-      pid[i].SetInputLimits(0, 255);
-      pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
-    }
-  }
   #ifdef MODE_6+6
     pinMode(MUX_LATCH_PIN, OUTPUT);
     pinMode(MUX_CLOCK_PIN, OUTPUT);
@@ -280,6 +274,11 @@ void setup() {
   
   //Load global variable values stored in EEPROM
   loadSetup();
+
+  for (byte i = 0; i < 6; i++) {
+      pid[i].SetInputLimits(0, 255);
+      pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
+  }
   
   if (pwrRecovery == 1) {
     logPLR();

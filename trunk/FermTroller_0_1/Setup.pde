@@ -111,6 +111,7 @@ void cfgOutputs() {
       strcat(buf, zone);
       strcat_P(buf, PSTR(" Cycle Time"));
       PIDCycle[lastOption/4] = getValue(buf, PIDCycle[lastOption/4], 3, 0, 255, PSTR("s"));
+      pid[lastOption/4].SetOutputLimits(0, PIDCycle[lastOption/4] * 1000);
     } else if ((lastOption / 4) * 4 + 2 == lastOption) {
       strcpy_P(buf, PSTR("Zone "));
       strcat(buf, zone);

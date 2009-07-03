@@ -160,7 +160,7 @@ void doMon() {
         }
       } else if (heatStatus[lastCount - 1]) strcpy_P(buf, PSTR("Heat On")); else strcpy_P(buf, PSTR("Off"));
       if (coolStatus[lastCount - 1]) strcpy_P(buf, PSTR("Cool On"));
-      printLCD(3, 8, buf);
+      printLCDRPad(3, 8, buf, 7, ' ');
     }
   }
 }
