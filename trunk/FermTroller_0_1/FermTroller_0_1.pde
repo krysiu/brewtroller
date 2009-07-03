@@ -1,4 +1,4 @@
-#define BUILD 250 
+#define BUILD 251 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)

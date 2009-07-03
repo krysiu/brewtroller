@@ -29,23 +29,26 @@ void fermCore() {
       #endif
       logEnd();
     } else if (logCount >= 9 && logCount <= 14) {
-      byte pct;
-      byte i = logCount - 7;
-      if (PIDEnabled[i]) pct = PIDOutput[i] / PIDCycle[i] / 10;
-      else if (heatStatus[i]) pct = 100;
-      else pct = 0;
+      int pct;
+      byte i = logCount - 9;
+      if (coolStatus[i]) pct = -1;
+      else {
+        if (PIDEnabled[i]) pct = PIDOutput[i] / PIDCycle[i] / 10;
+        else if (heatStatus[i]) pct = 100;
+        else pct = 0;
+      }
       logStart_P(LOGDATA);
-      logField_P(PSTR("HEATPWR"));
+      logField_P(PSTR("ZONEPWR"));
       logFieldI(i);
       logFieldI(pct);
       logEnd();
     } else if (logCount >= 15 && logCount <= 20) {
-      byte i = logCount - 11;
+      byte i = logCount - 15;
       logStart_P(LOGDATA);
       logField_P(PSTR("SETPOINT"));
       logFieldI(i);
-      //ftoa(setpoint[i], buf, 0);
-      //logField(buf);
+      ftoa(setpoint[i], buf, 0);
+      logField(buf);
       #ifdef USEMETRIC
         logFieldI(0);
       #else
@@ -70,7 +73,7 @@ void fermCore() {
   for (byte i = 0; i < NUM_ZONES; i++) {
     #ifndef MODE_6COOL
       if (PIDEnabled[i]) {
-        if (temp[i] == -1) {
+        if (temp[i] == -1 || coolStatus[i]) {
           pid[i].SetMode(MANUAL);
           PIDOutput[i] = 0;
         } else {
