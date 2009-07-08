@@ -886,7 +886,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
       printLCDLPad(3, 1, itoa(setpoint[TS_KETTLE], buf, 10), 3, ' ');
 
       //Turn off hop valve profile after 5s
-      if (lastHop > 0 && millis() - lastHop > 5000) {
+      if (lastHop > 0 && millis() - lastHop > HOPADD_DELAY) {
         if (vlvBits & vlvConfig[VLV_HOPADD]) setValves(vlvBits ^ vlvConfig[VLV_HOPADD]);
         lastHop = 0;
       }
@@ -969,7 +969,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         setAlarm(1);
         triggered |= 2048;
         setABAddsTrig(triggered);
-        delay(5000);
+        delay(HOPADD_DELAY);
         setValves(0);
       }
       //Exit
