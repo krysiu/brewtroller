@@ -969,7 +969,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         setAlarm(1);
         triggered |= 2048;
         setABAddsTrig(triggered);
-        delay(1000);
+        delay(5000);
         setValves(0);
       }
       //Exit
