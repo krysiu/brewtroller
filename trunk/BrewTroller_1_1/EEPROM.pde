@@ -47,8 +47,11 @@ void saveSetup() {
   //152-155 Power Recovery
   //156-1805 Saved Programs
 
+  //1806-1849 Valve Profiles
   for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) PROMwriteLong(1806 + (profile) * 4, vlvConfig[profile]);
-
+  
+  //1850-1860 ***OPEN***
+  
   //Set all Volume Calibrations for a given vessel (EEPROM Bytes 1861 - 2040)
   // vessel: 0-2 Corresponding to TS_HLT, TS_MASH, TS_KETTLE
   // slot: 0-9 Individual slots representing a single volume/value pairing
@@ -111,7 +114,10 @@ void loadSetup() {
   //152-155 Power Recovery
   //156-1805 Saved Programs
 
+  //1806-1849 Valve Profiles
   for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) vlvConfig[profile] = PROMreadLong(1806 + (profile) * 4);
+
+  //1850-1860 ***OPEN***
 
   //Get all Volume Calibrations for a given vessel (EEPROM Bytes 1861 - 2040)
   // vessel: 0-2 Corresponding to TS_HLT, TS_MASH, TS_KETTLE
@@ -284,6 +290,20 @@ void checkConfig() {
       //Add BT Fingerprint (254)
       EEPROM.write(2046, 254);
       EEPROM.write(2047, 7);
+    case 7:
+      //Move Profiles 6 & 7 +12 
+      PROMwriteLong(1846, PROMreadLong(1834));
+      PROMwriteLong(1842, PROMreadLong(1830));
+      //Move Profiles 2 - 5 +4
+      PROMwriteLong(1830, PROMreadLong(1826));
+      PROMwriteLong(1826, PROMreadLong(1822));
+      PROMwriteLong(1822, PROMreadLong(1818));
+      PROMwriteLong(1818, PROMreadLong(1814));
+      //Zero out new profiles
+      PROMwriteLong(1814, 0);
+      PROMwriteLong(1834, 0);
+      PROMwriteLong(1838, 0);
+      EEPROM.write(2047, 8);
     default:
       //No EEPROM Upgrade Required
       return;

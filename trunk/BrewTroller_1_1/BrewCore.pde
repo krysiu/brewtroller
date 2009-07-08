@@ -68,9 +68,9 @@ void brewCore() {
         logFieldI(1);
       #endif
       logEnd();
-    } else if (logCount >= 12 && logCount <= 14) {
+    } else if (logCount >= 12 && logCount <= 15) {
       byte pct;
-      byte i = logCount - 11;
+      byte i = logCount - 12;
       if (PIDEnabled[i]) pct = PIDOutput[i] / PIDCycle[i] / 10;
       else if (heatStatus[i]) pct = 100;
       else pct = 0;
@@ -79,8 +79,8 @@ void brewCore() {
       logFieldI(i);
       logFieldI(pct);
       logEnd();
-    } else if (logCount >= 15 && logCount <= 17) {
-      byte i = logCount - 14;
+    } else if (logCount >= 16 && logCount <= 19) {
+      byte i = logCount - 16;
       logStart_P(LOGDATA);
       logField_P(PSTR("SETPOINT"));
       logFieldI(i);
@@ -92,7 +92,7 @@ void brewCore() {
         logFieldI(1);
       #endif
       logEnd();
-    } else if (logCount == 18) {
+    } else if (logCount == 20) {
       logStart_P(LOGDATA);
       logField_P(PSTR("AUTOVLV"));
       logFieldI(autoValve);
@@ -101,10 +101,15 @@ void brewCore() {
       logField_P(PSTR("SETVLV"));
       logFieldI(vlvBits);
       logEnd();
+    } else if (logCount == 21) {
+      logStart_P(LOGDATA);
+      logField_P(PSTR("VLVPRF"));
+      for (byte i = VLV_FILLHLT; i <= VLV_CHILLBEER; i++) { if ((vlvBits & vlvConfig[i]) == vlvConfig[i]) logFieldI(1); else logFieldI(0); }
+      logEnd();
       if (millis() - lastLog > 5000) lastLog = millis(); else lastLog += 1000;
     }
     logCount++;
-    if (logCount > 18) logCount = 0;
+    if (logCount > 21) logCount = 0;
   }
 
   //Check Temps

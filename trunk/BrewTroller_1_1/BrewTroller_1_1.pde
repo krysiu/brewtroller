@@ -1,4 +1,4 @@
-#define BUILD 247 
+#define BUILD 252 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -78,14 +78,40 @@ using LiquidCrystal Fix by Donald Weiman:
 //**********************************************************************************
 
 //**********************************************************************************
+// PID Output Power Limit
+//**********************************************************************************
+// These settings can be used to limit the PID output of the the specified heat
+// output. Enter a percentage (0-100)
+//
+#define PIDLIMIT_HLT 100
+#define PIDLIMIT_MASH 100
+#define PIDLIMIT_KETTLE 100
+#define PIDLIMIT_STEAM 100
+//**********************************************************************************
+
+//**********************************************************************************
+// Kettle Lid Control
+//**********************************************************************************
+// The kettle lid Valve Profile can be used to automate covering of the boil kettle.
+// The kettle lid profile is activated in the Chill stage of AutoBrew when the
+// kettle temperature is less than the threshhold specified below.
+//
+#ifdef USEMETRIC
+  //Celcius
+  #define KETTLELID_THRESH 80
+#else
+  //Fahrenheit
+  #define KETTLELID_THRESH 176
+#endif
+//**********************************************************************************
+
+//**********************************************************************************
 // OPTIONAL MODULES
 //**********************************************************************************
 // Comment out any of the following lines to disable a module. This is handy to see
 // how much space these chunks of code use.
 //
 #define MODULE_BREWMONITOR
-
-// Include default Single Infusion and Multi-Rest AutoBrew Saved programs
 #define MODULE_DEFAULTABPROGS
 
 //**********************************************************************************
@@ -207,12 +233,16 @@ using LiquidCrystal Fix by Donald Weiman:
 //Valve Array Element Constants and Variables
 #define VLV_FILLHLT 0
 #define VLV_FILLMASH 1
-#define VLV_MASHHEAT 2
-#define VLV_MASHIDLE 3
-#define VLV_SPARGEIN 4
-#define VLV_SPARGEOUT 5
-#define VLV_CHILLH2O 6
-#define VLV_CHILLBEER 7
+#define VLV_ADDGRAIN 2
+#define VLV_MASHHEAT 3
+#define VLV_MASHIDLE 4
+#define VLV_SPARGEIN 5
+#define VLV_SPARGEOUT 6
+#define VLV_HOPADD 7
+#define VLV_KETTLELID 8
+#define VLV_CHILLH2O 9
+#define VLV_CHILLBEER 10
+
 
 //Heat Output Pin Array
 byte heatPin[4] = { HLTHEAT_PIN, MASHHEAT_PIN, KETTLEHEAT_PIN, STEAMHEAT_PIN };
@@ -245,7 +275,7 @@ byte volCount;
 unsigned long lastVolChk;
 
 //Valve Variables
-unsigned long vlvConfig[8];
+unsigned long vlvConfig[11];
 unsigned long vlvBits;
 byte autoValve;
 
@@ -428,16 +458,22 @@ void setup() {
   //Load global variable values stored in EEPROM
   loadSetup();
 
-  for (byte i = VS_HLT; i <= VS_KETTLE; i++) {
-    pid[i].SetInputLimits(0, 255);
-    pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
-  }
+
+  pid[VS_HLT].SetInputLimits(0, 255);
+  pid[VS_HLT].SetOutputLimits(0, PIDCycle[VS_HLT] * 10 * PIDLIMIT_HLT);
+
+  pid[VS_MASH].SetInputLimits(0, 255);
+  pid[VS_MASH].SetOutputLimits(0, PIDCycle[VS_MASH] * 10 * PIDLIMIT_MASH);
+
+  pid[VS_KETTLE].SetInputLimits(0, 255);
+  pid[VS_KETTLE].SetOutputLimits(0, PIDCycle[VS_KETTLE] * 10 * PIDLIMIT_KETTLE);
+
   #ifdef USEMETRIC
     pid[VS_STEAM].SetInputLimits(0, 50000 / steamPSens);
   #else
     pid[VS_STEAM].SetInputLimits(0, 7250 / steamPSens);
   #endif
-  pid[VS_STEAM].SetOutputLimits(0, PIDCycle[VS_STEAM] * 1000);
+  pid[VS_STEAM].SetOutputLimits(0, PIDCycle[VS_STEAM] * 10 * PIDLIMIT_STEAM);
     
   if (pwrRecovery == 1) {
     loadZeroVols();

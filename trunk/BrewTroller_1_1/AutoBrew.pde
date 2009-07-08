@@ -4,6 +4,8 @@
 #define STEP_SACCH 2
 #define STEP_MASHOUT 3
 
+unsigned int hoptimes[10] = { 105, 90, 75, 60, 45, 30, 20, 15, 10, 5 };
+
 void doAutoBrew() {
   unsigned int delayMins = 0;
   byte stepTemp[4], stepMins[4], spargeTemp;
@@ -280,6 +282,7 @@ void doAutoBrew() {
       setpoint[TS_MASH] = 0;
       setpoint[VS_STEAM] = steamTgt;
       setABRecovery(4);
+      setValves(vlvConfig[VLV_ADDGRAIN]);
       inMenu = 1;
       while(inMenu) {
         clearLCD();
@@ -299,7 +302,11 @@ void doAutoBrew() {
           inMenu = 0;
         } else {
           enterStatus = 0;
-          if (confirmExit() == 1) setPwrRecovery(0); return;
+          if (confirmExit() == 1) {
+            resetOutputs(); 
+            setPwrRecovery(0); 
+            return;
+          }
         }
       }
     case 5:
@@ -831,6 +838,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
   unsigned int triggered = getABAddsTrig();
   setAlarm(0);
   timerValue = 0;
+  unsigned long lastHop = 0;
   
   while(1) {
     boolean redraw = 0;
@@ -877,19 +885,32 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
       if (temp[TS_KETTLE] == -1) printLCD_P(2, 0, PSTR("---")); else printLCDLPad(2, 0, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
       printLCDLPad(3, 1, itoa(setpoint[TS_KETTLE], buf, 10), 3, ' ');
 
+      //Turn off hop valve profile after 5s
+      if (lastHop > 0 && millis() - lastHop > 5000) {
+        if (vlvBits & vlvConfig[VLV_HOPADD]) setValves(vlvBits ^ vlvConfig[VLV_HOPADD]);
+        lastHop = 0;
+      }
+
       if (preheated) {
         printTimer(2, 7);
-        if ((boilAdds ^ triggered) & 1) { setAlarm(1); triggered |= 1; setABAddsTrig(triggered); }
-        if (((boilAdds ^ triggered) & 2) && timerValue <= 105 * 60000) { setAlarm(1); triggered |= 2; setABAddsTrig(triggered); } //105 Min
-        if (((boilAdds ^ triggered) & 4) && timerValue <= 90 * 60000) { setAlarm(1); triggered |= 4; setABAddsTrig(triggered); } //90 Min
-        if (((boilAdds ^ triggered) & 8) && timerValue <= 75 * 60000) { setAlarm(1); triggered |= 8; setABAddsTrig(triggered); } //75 Min
-        if (((boilAdds ^ triggered) & 16) && timerValue <= 60 * 60000) { setAlarm(1); triggered |= 16; setABAddsTrig(triggered); } //60 Min
-        if (((boilAdds ^ triggered) & 32) && timerValue <= 45 * 60000) { setAlarm(1); triggered |= 32; setABAddsTrig(triggered); } //45 Min
-        if (((boilAdds ^ triggered) & 64) && timerValue <= 30 * 60000) { setAlarm(1); triggered |= 64; setABAddsTrig(triggered); } //30 Min
-        if (((boilAdds ^ triggered) & 128) && timerValue <= 20 * 60000) { setAlarm(1); triggered |= 128; setABAddsTrig(triggered); } //20 Min
-        if (((boilAdds ^ triggered) & 256) && timerValue <= 15 * 60000) { setAlarm(1); triggered |= 256; setABAddsTrig(triggered); } //15 Min
-        if (((boilAdds ^ triggered) & 512) && timerValue <= 10 * 60000) { setAlarm(1); triggered |= 512; setABAddsTrig(triggered); } //10 Min
-        if (((boilAdds ^ triggered) & 1024) && timerValue <= 5 * 60000) { setAlarm(1); triggered |= 1024; setABAddsTrig(triggered); } //5 Min
+        //Boil Addition
+        if ((boilAdds ^ triggered) & 1) {
+          setValves(vlvConfig[VLV_HOPADD]);
+          lastHop = millis();
+          setAlarm(1); 
+          triggered |= 1; 
+          setABAddsTrig(triggered); 
+        }
+        //Timed additions (See hoptimes[] array at top of AutoBrew.pde)
+        for (byte i = 0; i < 10; i++) {
+          if (((boilAdds ^ triggered) & (1<<(i + 1))) && timerValue <= hoptimes[i] * 60000) { 
+            setValves(vlvConfig[VLV_HOPADD]);
+            lastHop = millis();
+            setAlarm(1); 
+            triggered |= (1<<(i + 1)); 
+            setABAddsTrig(triggered);
+          }
+        }
       }
 
       if (chkMsg()) {
@@ -940,9 +961,17 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
       }
     }
     if (!redraw) {
-      if ((boilAdds ^ triggered) & 2048) { setAlarm(1); triggered |= 2048; setABAddsTrig(triggered); } //0 Min
       //Turn off output
       resetOutputs();
+      //0 Min Addition
+      if ((boilAdds ^ triggered) & 2048) { 
+        setValves(vlvConfig[VLV_HOPADD]);
+        setAlarm(1);
+        triggered |= 2048;
+        setABAddsTrig(triggered);
+        delay(1000);
+        setValves(0);
+      }
       //Exit
       return;
     }
@@ -1031,18 +1060,13 @@ void manChill() {
       if (temp[TS_H2OIN] == -1) printLCD_P(1, 16, PSTR("---")); else printLCDLPad(1, 16, itoa(temp[TS_H2OIN], buf, 10), 3, ' ');
       if (temp[TS_H2OOUT] == -1) printLCD_P(2, 16, PSTR("---")); else printLCDLPad(2, 16, itoa(temp[TS_H2OOUT], buf, 10), 3, ' ');
 
-      if (vlvBits == vlvConfig[VLV_CHILLH2O]) {
-        printLCD_P(3, 0, PSTR("Off"));
-        printLCD_P(3, 17, PSTR(" On"));
-      } else if (vlvBits == vlvConfig[VLV_CHILLBEER]) {
-        printLCD_P(3, 0, PSTR("On "));
-        printLCD_P(3, 17, PSTR("Off"));
-      } else if (vlvBits == vlvConfig[VLV_CHILLH2O] | vlvConfig[VLV_CHILLBEER]) {
-        printLCD_P(3, 0, PSTR("On "));
-        printLCD_P(3, 17, PSTR(" On"));
+      if ((vlvBits & vlvConfig[VLV_CHILLBEER]) == vlvConfig[VLV_CHILLBEER]) printLCD_P(3, 0, PSTR("On ")); else printLCD_P(3, 0, PSTR("Off"));
+      if ((vlvBits & vlvConfig[VLV_CHILLH2O]) == vlvConfig[VLV_CHILLH2O]) printLCD_P(3, 17, PSTR(" On")); else printLCD_P(3, 17, PSTR("Off"));
+      
+      if (temp[TS_KETTLE] != -1 && temp[TS_KETTLE] <= KETTLELID_THRESH) {
+        if (vlvBits & vlvConfig[VLV_KETTLELID] == 0) setValves(vlvBits | vlvConfig[VLV_KETTLELID]);
       } else {
-        printLCD_P(3, 0, PSTR("Off"));
-        printLCD_P(3, 17, PSTR("Off"));
+        if (vlvBits & vlvConfig[VLV_KETTLELID]) setValves(vlvBits ^ vlvConfig[VLV_KETTLELID]);
       }
     }
   }  
@@ -1053,33 +1077,17 @@ unsigned int editHopSchedule (unsigned int sched) {
   byte lastOption = 0;
   while (1) {
     if (retVal & 1) strcpy_P(menuopts[0], PSTR("Boil: On")); else strcpy_P(menuopts[0], PSTR("Boil: Off"));
-    if (retVal & 2) strcpy_P(menuopts[1], PSTR("105 Min: On")); else strcpy_P(menuopts[1], PSTR("105 Min: Off"));
-    if (retVal & 4) strcpy_P(menuopts[2], PSTR("90 Min: On")); else strcpy_P(menuopts[2], PSTR("90 Min: Off"));
-    if (retVal & 8) strcpy_P(menuopts[3], PSTR("75 Min: On")); else strcpy_P(menuopts[3], PSTR("75 Min: Off"));
-    if (retVal & 16) strcpy_P(menuopts[4], PSTR("60 Min: On")); else strcpy_P(menuopts[4], PSTR("60 Min: Off"));
-    if (retVal & 32) strcpy_P(menuopts[5], PSTR("45 Min: On")); else strcpy_P(menuopts[5], PSTR("45 Min: Off"));
-    if (retVal & 64) strcpy_P(menuopts[6], PSTR("30 Min: On")); else strcpy_P(menuopts[6], PSTR("30 Min: Off"));
-    if (retVal & 128) strcpy_P(menuopts[7], PSTR("20 Min: On")); else strcpy_P(menuopts[7], PSTR("20 Min: Off"));
-    if (retVal & 256) strcpy_P(menuopts[8], PSTR("15 Min: On")); else strcpy_P(menuopts[8], PSTR("15 Min: Off"));
-    if (retVal & 512) strcpy_P(menuopts[9], PSTR("10 Min: On")); else strcpy_P(menuopts[9], PSTR("10 Min: Off"));
-    if (retVal & 1024) strcpy_P(menuopts[10], PSTR("5 Min: On")); else strcpy_P(menuopts[10], PSTR("5 Min: Off"));
+    for (byte i = 0; i < 10; i++) {
+      strcpy(menuopts[i + 1], itoa(hoptimes[i], buf, 10));
+      strcat_P(menuopts[i + 1], PSTR(" Min: "));
+      if (retVal & (1<<(i + 1))) strcat_P(menuopts[i + 1], PSTR("On")); else strcat_P(menuopts[i + 1], PSTR("Off"));
+    }
     if (retVal & 2048) strcpy_P(menuopts[11], PSTR("0 Min: On")); else strcpy_P(menuopts[11], PSTR("0 Min: Off"));
     strcpy_P(menuopts[12], PSTR("Exit"));
 
     lastOption = scrollMenu("Boil Additions", 13, lastOption);
-    if (lastOption == 0) retVal = retVal ^ 1;
-    else if (lastOption == 1) retVal = retVal ^ 2;
-    else if (lastOption == 2) retVal = retVal ^ 4;
-    else if (lastOption == 3) retVal = retVal ^ 8;
-    else if (lastOption == 4) retVal = retVal ^ 16;
-    else if (lastOption == 5) retVal = retVal ^ 32;
-    else if (lastOption == 6) retVal = retVal ^ 64;
-    else if (lastOption == 7) retVal = retVal ^ 128;
-    else if (lastOption == 8) retVal = retVal ^ 256;
-    else if (lastOption == 9) retVal = retVal ^ 512;
-    else if (lastOption == 10) retVal = retVal ^ 1024;
-    else if (lastOption == 11) retVal = retVal ^ 2048;
-    else if (lastOption == 12) return retVal;
-    else return sched;
+    if (lastOption == 12) return retVal;
+    else if (lastOption == 13) return sched;
+    else retVal = retVal ^ (1 << lastOption);
   }
 }

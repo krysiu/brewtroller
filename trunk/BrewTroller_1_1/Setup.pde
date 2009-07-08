@@ -112,26 +112,26 @@ void cfgOutputs() {
     if (lastOption == 0) PIDEnabled[VS_HLT] = PIDEnabled[VS_HLT] ^ 1;
     else if (lastOption == 1) {
       PIDCycle[VS_HLT] = getValue(HLTCYCLE, PIDCycle[VS_HLT], 3, 0, 255, SEC);
-      pid[VS_HLT].SetOutputLimits(0, PIDCycle[VS_HLT] * 1000);
+      pid[VS_HLT].SetOutputLimits(0, PIDCycle[VS_HLT] * 10 * PIDLIMIT_HLT);
     } else if (lastOption == 2) setPIDGain("HLT PID Gain", &PIDp[VS_HLT], &PIDi[VS_HLT], &PIDd[VS_HLT]);
     else if (lastOption == 3) hysteresis[VS_HLT] = getValue(HLTHY, hysteresis[VS_HLT], 3, 1, 255, TUNIT);
     else if (lastOption == 4) PIDEnabled[VS_MASH] = PIDEnabled[VS_MASH] ^ 1;
     else if (lastOption == 5) {
       PIDCycle[VS_MASH] = getValue(MASHCYCLE, PIDCycle[VS_MASH], 3, 0, 255, SEC);
-      pid[VS_MASH].SetOutputLimits(0, PIDCycle[VS_MASH] * 1000);
+      pid[VS_MASH].SetOutputLimits(0, PIDCycle[VS_MASH] * 10 * PIDLIMIT_MASH);
     } else if (lastOption == 6) setPIDGain("Mash PID Gain", &PIDp[VS_MASH], &PIDi[VS_MASH], &PIDd[VS_MASH]);
     else if (lastOption == 7) hysteresis[VS_MASH] = getValue(MASHHY, hysteresis[VS_MASH], 3, 1, 255, TUNIT);
     else if (lastOption == 8) PIDEnabled[VS_KETTLE] = PIDEnabled[VS_KETTLE] ^ 1;
     else if (lastOption == 9) {
       PIDCycle[VS_KETTLE] = getValue(KETTLECYCLE, PIDCycle[VS_KETTLE], 3, 0, 255, SEC);
-      pid[VS_KETTLE].SetOutputLimits(0, PIDCycle[VS_KETTLE] * 1000);
+      pid[VS_KETTLE].SetOutputLimits(0, PIDCycle[VS_KETTLE] * 10 * PIDLIMIT_KETTLE);
     } else if (lastOption == 10) setPIDGain("Kettle PID Gain", &PIDp[VS_KETTLE], &PIDi[VS_KETTLE], &PIDd[VS_KETTLE]);
     else if (lastOption == 11) hysteresis[VS_KETTLE] = getValue(KETTLEHY, hysteresis[VS_KETTLE], 3, 1, 255, TUNIT);
     else if (lastOption == 12) setBoilTemp(getValue(PSTR("Boil Temp"), getBoilTemp(), 3, 0, 255, TUNIT));
     else if (lastOption == 13) PIDEnabled[VS_STEAM] = PIDEnabled[VS_STEAM] ^ 1;
     else if (lastOption == 14) {
       PIDCycle[VS_STEAM] = getValue(STEAMCYCLE, PIDCycle[VS_STEAM], 3, 0, 255, SEC);
-      pid[VS_STEAM].SetOutputLimits(0, PIDCycle[VS_STEAM] * 1000);
+      pid[VS_STEAM].SetOutputLimits(0, PIDCycle[VS_STEAM] * 10 * PIDLIMIT_STEAM);
     } else if (lastOption == 15) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
     else if (lastOption == 16) steamTgt = getValue(STEAMPRESS, steamTgt, 3, 0, 255, PUNIT);
     else if (lastOption == 17) {
@@ -300,18 +300,21 @@ void volCalibMenu(byte vessel) {
 void cfgValves() {
   byte lastOption = 0;
   while (1) {
-    strcpy_P(menuopts[0], PSTR("HLT Fill           "));
-    strcpy_P(menuopts[1], PSTR("Mash Fill          "));
-    strcpy_P(menuopts[2], PSTR("Mash Heat          "));
-    strcpy_P(menuopts[3], PSTR("Mash Idle          "));
-    strcpy_P(menuopts[4], PSTR("Sparge In          "));
-    strcpy_P(menuopts[5], PSTR("Sparge Out         "));
-    strcpy_P(menuopts[6], PSTR("Chiller H2O In     "));
-    strcpy_P(menuopts[7], PSTR("Chiller Beer In    "));
-    strcpy_P(menuopts[8], PSTR("Exit               "));
+    strcpy_P(menuopts[0], PSTR("HLT Fill"));
+    strcpy_P(menuopts[1], PSTR("Mash Fill"));
+    strcpy_P(menuopts[2], PSTR("Add Grain"));    
+    strcpy_P(menuopts[3], PSTR("Mash Heat"));
+    strcpy_P(menuopts[4], PSTR("Mash Idle"));
+    strcpy_P(menuopts[5], PSTR("Sparge In"));
+    strcpy_P(menuopts[6], PSTR("Sparge Out"));
+    strcpy_P(menuopts[7], PSTR("Hop Addition"));
+    strcpy_P(menuopts[8], PSTR("Kettle Lid"));
+    strcpy_P(menuopts[9], PSTR("Chiller H2O In"));
+    strcpy_P(menuopts[10], PSTR("Chiller Beer In"));
+    strcpy_P(menuopts[11], PSTR("Exit"));
     
-    lastOption = scrollMenu("Valve Configuration", 9, lastOption);
-    if (lastOption > 7) return;
+    lastOption = scrollMenu("Valve Configuration", 12, lastOption);
+    if (lastOption > 10) return;
     vlvConfig[lastOption] = cfgValveProfile(menuopts[lastOption], vlvConfig[lastOption]);
   }
 }
