@@ -875,7 +875,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         if (pct == 0) strcpy_P(buf, PSTR("Off"));
         else if (pct == 100) strcpy_P(buf, PSTR(" On"));
         else { itoa(pct, buf, 10); strcat(buf, "%"); }
-      } else if (heatStatus) {
+      } else if (heatStatus[TS_KETTLE]) {
         strcpy_P(buf, PSTR(" On")); 
       } else {
         strcpy_P(buf, PSTR("Off"));
