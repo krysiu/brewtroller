@@ -133,7 +133,7 @@ void brewCore() {
   for (byte i = VS_HLT; i <= VS_KETTLE; i++) {
 #endif
     if (PIDEnabled[i]) {
-      if (i != VS_STEAM && temp[i] == -1) {
+      if (i != VS_STEAM && temp[i] <= 0) {
         pid[i].SetMode(MANUAL);
         PIDOutput[i] = 0;
       } else {
@@ -155,7 +155,7 @@ void brewCore() {
           if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
         }
       } else {
-        if (temp[i] == -1 || temp[i] >= setpoint[i]) {
+        if (temp[i] <= 0 || temp[i] >= setpoint[i]) {
           if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
           heatStatus[i] = 0;
         } else {
@@ -171,7 +171,7 @@ void brewCore() {
           if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
         }
       } else {
-        if (temp[i] != -1 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
+        if (temp[i] > 0 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
           if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
           heatStatus[i] = 1;
         } else {
