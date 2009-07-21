@@ -120,7 +120,7 @@ void setValves (unsigned long vlvBitMask) {
   for (byte i = 0; i < 32; i++)  {
     digitalWrite(MUX_CLOCK_PIN, 0);
     //create bitmask to grab the bit associated with our counter i and set data pin accordingly (NOTE: 32 - i causes bits to be sent most significant to least significant)
-    if ( vlvBitMask & ((unsigned long)1<<(32 - i)) ) digitalWrite(MUX_DATA_PIN, 1); else  digitalWrite(MUX_DATA_PIN, 0);
+    if ( vlvBitMask & ((unsigned long)1<<(31 - i)) ) digitalWrite(MUX_DATA_PIN, 1); else  digitalWrite(MUX_DATA_PIN, 0);
     //register shifts bits on upstroke of clock pin  
     digitalWrite(MUX_CLOCK_PIN, 1);
     //zero the data pin after shift to prevent bleed through
