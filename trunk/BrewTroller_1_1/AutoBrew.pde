@@ -256,7 +256,9 @@ void doAutoBrew() {
     case 2:
       if(delayMins) {
         setABRecovery(2);
-        if (recoveryStep == 2) delayStart(getTimerRecovery()); else delayStart(delayMins);
+        unsigned int recoverMins = getTimerRecovery();
+        if (recoveryStep == 2 && recoverMins > 0)  delayStart(recoverMins); else delayStart(delayMins);
+        setTimerRecovery(0);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
     case 3:
@@ -317,6 +319,7 @@ void doAutoBrew() {
         setpoint[VS_STEAM] = steamTgt;
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 5 && recoverMins > 0) mashStep("Dough In", recoverMins); else mashStep("Dough In", stepMins[STEP_DOUGHIN]);
+        setTimerRecovery(0);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
     case 6:
@@ -327,6 +330,7 @@ void doAutoBrew() {
         setpoint[VS_STEAM] = steamTgt;
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 6 && recoverMins > 0) mashStep("Protein", recoverMins); else mashStep("Protein", stepMins[STEP_PROTEIN]);
+        setTimerRecovery(0);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
     case 7:
@@ -337,6 +341,7 @@ void doAutoBrew() {
         setpoint[VS_STEAM] = steamTgt;
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 7 && recoverMins > 0) mashStep("Sacch Rest", recoverMins); else mashStep("Sacch Rest", stepMins[STEP_SACCH]);
+        setTimerRecovery(0);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
     case 8:
@@ -347,6 +352,7 @@ void doAutoBrew() {
         setpoint[VS_STEAM] = steamTgt;
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 8 && recoverMins > 0) mashStep("Mash Out", recoverMins); else mashStep("Mash Out", stepMins[STEP_MASHOUT]);
+        setTimerRecovery(0);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
     case 9:
@@ -372,6 +378,7 @@ void doAutoBrew() {
         setpoint[TS_KETTLE] = getBoilTemp();
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 11 && recoverMins > 0) boilStage(recoverMins, boilAdds); else boilStage(boilMins, boilAdds);
+        setTimerRecovery(0);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
     case 12:
