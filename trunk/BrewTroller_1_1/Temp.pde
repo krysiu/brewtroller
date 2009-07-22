@@ -1,6 +1,6 @@
 #include <OneWire.h>
 //One Wire Bus on 
-OneWire ds(5);
+OneWire ds(TEMP_PIN);
 
 void getDSAddr(byte addrRet[8]){
   byte scanAddr[8];
