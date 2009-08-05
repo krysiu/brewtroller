@@ -631,6 +631,9 @@ void mashStep(char sTitle[ ], int iMins) {
     printLCD_P(3, 18, TUNIT);
     
     while(!preheated || timerValue > 0 || doPrompt) {
+      #ifdef SMART_HERMS_HLT
+        setpoint[VS_HLT] = constrain(setpoint[VS_MASH] * 2 - temp[TS_MASH], setpoint[VS_MASH] + MASH_HEAT_LOSS, HLT_MAX_TEMP);
+      #endif
       brewCore();
       if (!preheated && temp[TS_MASH] >= setpoint[TS_MASH]) {
         preheated = 1;

@@ -1,4 +1,4 @@
-#define BUILD 259 
+#define BUILD 261 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -118,6 +118,20 @@ using LiquidCrystal Fix by Donald Weiman:
 
 #define HOPADD_DELAY 5000
 //**********************************************************************************
+
+//**********************************************************************************
+// Smart HERMS HLT
+//**********************************************************************************
+// SMART_HERMS_HLT: Varies HLT setpoint based on mash target + variance
+// MASH_HEAT_LOSS: acts a s a floor value to ensure HLT temp is at least target + 
+// specified value
+// HLT_MAX_TEMP: Ceiling value for HLT
+
+//#define SMART_HERMS_HLT
+#define MASH_HEAT_LOSS 0
+#define HLT_MAX_TEMP 180
+//**********************************************************************************
+
 
 //**********************************************************************************
 // OPTIONAL MODULES
