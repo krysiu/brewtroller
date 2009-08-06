@@ -275,6 +275,9 @@ void doAutoBrew() {
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = strikeTemp;
         setpoint[VS_STEAM] = steamTgt;
+        pid[VS_HLT].SetMode(AUTO);
+        pid[VS_MASH].SetMode(AUTO);
+        pid[VS_STEAM].SetMode(AUTO);
       }
       setABRecovery(3);
       mashStep("Preheat", MINS_PROMPT);  
@@ -317,6 +320,9 @@ void doAutoBrew() {
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_DOUGHIN];
         setpoint[VS_STEAM] = steamTgt;
+        pid[VS_HLT].SetMode(AUTO);
+        pid[VS_MASH].SetMode(AUTO);
+        pid[VS_STEAM].SetMode(AUTO);
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 5 && recoverMins > 0) mashStep("Dough In", recoverMins); else mashStep("Dough In", stepMins[STEP_DOUGHIN]);
         setTimerRecovery(0);
@@ -328,6 +334,8 @@ void doAutoBrew() {
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_PROTEIN];
         setpoint[VS_STEAM] = steamTgt;
+        pid[VS_HLT].SetMode(AUTO);
+        pid[VS_MASH].SetMode(AUTO);
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 6 && recoverMins > 0) mashStep("Protein", recoverMins); else mashStep("Protein", stepMins[STEP_PROTEIN]);
         setTimerRecovery(0);
@@ -339,6 +347,9 @@ void doAutoBrew() {
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_SACCH];
         setpoint[VS_STEAM] = steamTgt;
+        pid[VS_HLT].SetMode(AUTO);
+        pid[VS_MASH].SetMode(AUTO);
+        pid[VS_STEAM].SetMode(AUTO);
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 7 && recoverMins > 0) mashStep("Sacch Rest", recoverMins); else mashStep("Sacch Rest", stepMins[STEP_SACCH]);
         setTimerRecovery(0);
@@ -350,6 +361,9 @@ void doAutoBrew() {
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_MASHOUT];
         setpoint[VS_STEAM] = steamTgt;
+        pid[VS_HLT].SetMode(AUTO);
+        pid[VS_MASH].SetMode(AUTO);
+        pid[VS_STEAM].SetMode(AUTO);
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 8 && recoverMins > 0) mashStep("Mash Out", recoverMins); else mashStep("Mash Out", stepMins[STEP_MASHOUT]);
         setTimerRecovery(0);
@@ -362,20 +376,22 @@ void doAutoBrew() {
       //Cycle through steps and use last non-zero step for mash
       for (byte i = STEP_DOUGHIN; i <= STEP_MASHOUT; i++) if (stepTemp[i]) setpoint[TS_MASH] = stepTemp[i];
       setpoint[VS_STEAM] = steamTgt;
+      pid[VS_HLT].SetMode(AUTO);
+      pid[VS_MASH].SetMode(AUTO);
+      pid[VS_STEAM].SetMode(AUTO);
       mashStep("End Mash", MINS_PROMPT);
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       setpoint[TS_HLT] = 0;
       setpoint[TS_MASH] = 0;
       setpoint[VS_STEAM] = 0;
-      
     case 10:  
       setABRecovery(10); 
       manSparge();
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 11:
       {
-        setABRecovery(11); 
         setpoint[TS_KETTLE] = getBoilTemp();
+        setABRecovery(11); 
         unsigned int recoverMins = getTimerRecovery();
         if (recoveryStep == 11 && recoverMins > 0) boilStage(recoverMins, boilAdds); else boilStage(boilMins, boilAdds);
         setTimerRecovery(0);
@@ -849,6 +865,8 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
   setAlarm(0);
   timerValue = 0;
   unsigned long lastHop = 0;
+  byte boilPwr = getBoilPwr();
+  boolean doAutoBoil = 1;
   
   while(1) {
     boolean redraw = 0;
@@ -868,6 +886,10 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
     printLCD_P(3, 4, TUNIT);
     
     while(!preheated || timerValue > 0) {
+      if (doAutoBoil) {
+        if(temp[TS_KETTLE] < setpoint[TS_KETTLE]) PIDOutput[VS_KETTLE] = PIDCycle[VS_KETTLE] * 10 * PIDLIMIT_KETTLE;
+        else PIDOutput[VS_KETTLE] = PIDCycle[VS_KETTLE] * 10 * min(boilPwr, PIDLIMIT_KETTLE);
+      }
       brewCore();
       if (preheated) { if (alarmStatus) printLCD_P(0, 19, PSTR("!")); else printLCD_P(0, 19, SPACE); }
       if (!preheated && temp[TS_KETTLE] >= setpoint[TS_KETTLE] && setpoint[TS_KETTLE] > 0) {
@@ -927,7 +949,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         if ((!alarmStatus && strcasecmp(msg[0], "POPMENU") == 0) || (alarmStatus && strcasecmp(msg[0], "SELECT") == 0)) {
           enterStatus = 1;
           clearMsg();
-        } else rejectMsg(LOGAB);
+    } else rejectMsg(LOGAB);
       }
       if (enterStatus == 1 && alarmStatus) {
         enterStatus = 0;
@@ -939,18 +961,25 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         if (timerValue > 0) strcpy_P(menuopts[1], PSTR("Reset Timer"));
         else strcpy_P(menuopts[1], PSTR("Start Timer"));
         strcpy_P(menuopts[2], PSTR("Pause Timer"));
-        strcpy_P(menuopts[3], SKIPSTEP);
-        strcpy_P(menuopts[4], ABORT);
-        byte lastOption = scrollMenu("AutoBrew Boil Menu", 5, 0);
+        strcpy_P(menuopts[3], PSTR("Set Boil Power"));
+        strcpy_P(menuopts[4], PSTR("Auto Boil"));        
+        strcpy_P(menuopts[5], SKIPSTEP);
+        strcpy_P(menuopts[6], ABORT);
+        byte lastOption = scrollMenu("AutoBrew Boil Menu", 7, 0);
         if (lastOption == 1) {
           preheated = 1;
           printLCDRPad(0, 14, "", 6, ' ');
           setTimer(iMins);
         } else if (lastOption == 2) pauseTimer();
         else if (lastOption == 3) {
+          doAutoBoil = 0;
+          PIDOutput[VS_KETTLE] = getValue(PSTR("Boil Power"), PIDOutput[VS_KETTLE] / PIDCycle[VS_KETTLE] / 10, 3, 0, min(PIDLIMIT_KETTLE, 100), PSTR("%")) * PIDCycle[VS_KETTLE] * 10;
+        } else if (lastOption == 4) {
+          doAutoBoil = 1;
+        } else if (lastOption == 5) {
           resetOutputs();
           return;
-        } else if (lastOption == 4) {
+        } else if (lastOption == 6) {
             if (confirmExit() == 1) {
               enterStatus = 2;
               resetOutputs();

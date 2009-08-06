@@ -134,53 +134,42 @@ void brewCore() {
 #endif
     if (PIDEnabled[i]) {
       if (i != VS_STEAM && temp[i] <= 0) {
-        pid[i].SetMode(MANUAL);
         PIDOutput[i] = 0;
       } else {
-        pid[i].SetMode(AUTO);
-        if (i == VS_STEAM) PIDInput[i] = steamPressure; else PIDInput[i] = temp[i];
-        pid[i].Compute();
+        if (pid[i].GetMode() == AUTO) {
+          if (i == VS_STEAM) PIDInput[i] = steamPressure; else PIDInput[i] = temp[i];
+          pid[i].Compute();
+        }
       }
       if (cycleStart[i] == 0) cycleStart[i] = millis();
       if (millis() - cycleStart[i] > PIDCycle[i] * 1000) cycleStart[i] += PIDCycle[i] * 1000;
       if (PIDOutput[i] > millis() - cycleStart[i]) digitalWrite(heatPin[i], HIGH); else digitalWrite(heatPin[i], LOW);
-    } 
-
-    if (heatStatus[i]) {
-      if (i == VS_STEAM) {
-        if (steamPressure >= setpoint[i]) {
-          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
+      if (PIDOutput[i] == 0)  heatStatus[i] = 0; else heatStatus[i] = 1; 
+    } else {
+      if (heatStatus[i]) {
+        if (
+          (i != VS_STEAM && (temp[i] <= 0 || temp[i] >= setpoint[i]))  
+            || (i == VS_STEAM && steamPressure >= setpoint[i])
+        ) {
+          digitalWrite(heatPin[i], LOW);
           heatStatus[i] = 0;
         } else {
-          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
+          digitalWrite(heatPin[i], HIGH);
         }
       } else {
-        if (temp[i] <= 0 || temp[i] >= setpoint[i]) {
-          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
-          heatStatus[i] = 0;
+        if (
+          (i != VS_STEAM && temp[i] > 0 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) 
+            || (i == VS_STEAM && (float)(setpoint[i] - steamPressure) >= (float) hysteresis[i] / 10.0)
+        ) {
+          digitalWrite(heatPin[i], HIGH);
+          heatStatus[i] = 1;
         } else {
-          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
+          digitalWrite(heatPin[i], LOW);
         }
       }
-    } else {
-      if (i == VS_STEAM) {
-        if ((float)(setpoint[i] - steamPressure) >= (float) hysteresis[i] / 10.0) {
-          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
-          heatStatus[i] = 1;
-        } else {
-          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
-        }
-      } else {
-        if (temp[i] > 0 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
-          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], HIGH);
-          heatStatus[i] = 1;
-        } else {
-          if (PIDEnabled[i] == 0) digitalWrite(heatPin[i], LOW);
-        }
-      }        
-    }
-  }    
-
+    }    
+  }
+  
   //Do Valves
   if (autoValve == AV_FILL) {
     if (volAvg[VS_HLT] < tgtVol[VS_HLT] && volAvg[VS_MASH] < tgtVol[VS_MASH]) {

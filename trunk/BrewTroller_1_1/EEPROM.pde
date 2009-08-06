@@ -43,7 +43,8 @@ void saveSetup() {
   EEPROM.write(142, steamTgt);
   PROMwriteInt(143, steamPSens);
   
-  //145 - 151 ***OPEN***
+  //145 Boil Power
+  //146 - 151 ***OPEN***
   //152-155 Power Recovery
   //156-1805 Saved Programs
 
@@ -110,7 +111,8 @@ void loadSetup() {
   steamTgt = EEPROM.read(142);
   steamPSens = PROMreadInt(143);
 
-  //145 - 151 ***OPEN***
+  //145 Boil Power
+  //146 - 151 ***OPEN***
   //152-155 Power Recovery
   //156-1805 Saved Programs
 
@@ -304,6 +306,9 @@ void checkConfig() {
       PROMwriteLong(1834, 0);
       PROMwriteLong(1838, 0);
       EEPROM.write(2047, 8);
+    case 8:
+      setBoilPwr(100);
+      EEPROM.write(2047, 9);
     default:
       //No EEPROM Upgrade Required
       return;
@@ -385,6 +390,9 @@ void saveZeroVols() {
     PROMwriteInt(136 + vessel * 2, zeroVol[vessel]);
   }
 }
+
+byte getBoilPwr() { return EEPROM.read(145); }
+void setBoilPwr(byte boilPwr) { EEPROM.write(145, boilPwr); }
 
 byte getABPitch() { return EEPROM.read(152); }
 void setABPitch(byte pitchTemp) { EEPROM.write(152, pitchTemp); }

@@ -30,7 +30,10 @@ int availableMemory() {
 }
 
 void resetOutputs() {
-  for (byte i = VS_HLT; i <= VS_STEAM; i++) setpoint[i] = 0;
+  for (byte i = VS_HLT; i <= VS_STEAM; i++) {
+    setpoint[i] = 0;
+    pid[i].SetMode(MANUAL);
+  }
   digitalWrite(HLTHEAT_PIN, LOW);
   digitalWrite(MASHHEAT_PIN, LOW);
   digitalWrite(KETTLEHEAT_PIN, LOW);

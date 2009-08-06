@@ -1,4 +1,4 @@
-#define BUILD 261 
+#define BUILD 262 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -131,7 +131,6 @@ using LiquidCrystal Fix by Donald Weiman:
 #define MASH_HEAT_LOSS 0
 #define HLT_MAX_TEMP 180
 //**********************************************************************************
-
 
 //**********************************************************************************
 // OPTIONAL MODULES

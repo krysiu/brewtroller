@@ -101,14 +101,17 @@ void cfgOutputs() {
     strcpy_P(menuopts[12], PSTR("Boil Temp: "));
     strcat(menuopts[12], itoa(getBoilTemp(), buf, 10));
     strcat_P(menuopts[12], TUNIT);
-    if (PIDEnabled[VS_STEAM]) strcpy_P(menuopts[13], PSTR("Steam Mode: PID")); else strcpy_P(menuopts[13], PSTR("Steam Mode: On/Off"));
-    strcpy_P(menuopts[14], STEAMCYCLE);
-    strcpy_P(menuopts[15], STEAMGAIN);
-    strcpy_P(menuopts[16], STEAMPRESS);
-    strcpy_P(menuopts[17], STEAMSENSOR);
-    strcpy_P(menuopts[18], PSTR("Exit"));
+    strcpy_P(menuopts[13], PSTR("Boil Power: "));
+    strcat(menuopts[13], itoa(getBoilPwr(), buf, 10));
+    strcat(menuopts[13], "%");
+    if (PIDEnabled[VS_STEAM]) strcpy_P(menuopts[14], PSTR("Steam Mode: PID")); else strcpy_P(menuopts[14], PSTR("Steam Mode: On/Off"));
+    strcpy_P(menuopts[15], STEAMCYCLE);
+    strcpy_P(menuopts[16], STEAMGAIN);
+    strcpy_P(menuopts[17], STEAMPRESS);
+    strcpy_P(menuopts[18], STEAMSENSOR);
+    strcpy_P(menuopts[19], PSTR("Exit"));
 
-    lastOption = scrollMenu("Configure Outputs", 19, lastOption);
+    lastOption = scrollMenu("Configure Outputs", 20, lastOption);
     if (lastOption == 0) PIDEnabled[VS_HLT] = PIDEnabled[VS_HLT] ^ 1;
     else if (lastOption == 1) {
       PIDCycle[VS_HLT] = getValue(HLTCYCLE, PIDCycle[VS_HLT], 3, 0, 255, SEC);
@@ -128,13 +131,14 @@ void cfgOutputs() {
     } else if (lastOption == 10) setPIDGain("Kettle PID Gain", &PIDp[VS_KETTLE], &PIDi[VS_KETTLE], &PIDd[VS_KETTLE]);
     else if (lastOption == 11) hysteresis[VS_KETTLE] = getValue(KETTLEHY, hysteresis[VS_KETTLE], 3, 1, 255, TUNIT);
     else if (lastOption == 12) setBoilTemp(getValue(PSTR("Boil Temp"), getBoilTemp(), 3, 0, 255, TUNIT));
-    else if (lastOption == 13) PIDEnabled[VS_STEAM] = PIDEnabled[VS_STEAM] ^ 1;
-    else if (lastOption == 14) {
+    else if (lastOption == 13) setBoilPwr(getValue(PSTR("Boil Power"), getBoilPwr(), 3, 0, min(PIDLIMIT_KETTLE, 100), PSTR("%")));
+    else if (lastOption == 14) PIDEnabled[VS_STEAM] = PIDEnabled[VS_STEAM] ^ 1;
+    else if (lastOption == 15) {
       PIDCycle[VS_STEAM] = getValue(STEAMCYCLE, PIDCycle[VS_STEAM], 3, 0, 255, SEC);
       pid[VS_STEAM].SetOutputLimits(0, PIDCycle[VS_STEAM] * 10 * PIDLIMIT_STEAM);
-    } else if (lastOption == 15) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
-    else if (lastOption == 16) steamTgt = getValue(STEAMPRESS, steamTgt, 3, 0, 255, PUNIT);
-    else if (lastOption == 17) {
+    } else if (lastOption == 16) setPIDGain("Steam PID Gain", &PIDp[VS_STEAM], &PIDi[VS_STEAM], &PIDd[VS_STEAM]);
+    else if (lastOption == 17) steamTgt = getValue(STEAMPRESS, steamTgt, 3, 0, 255, PUNIT);
+    else if (lastOption == 18) {
       steamPSens = getValue(STEAMSENSOR, steamPSens, 4, 1, 9999, PSTR("mV/kPa"));
       #ifdef USEMETRIC
         pid[VS_STEAM].SetInputLimits(0, 50000 / steamPSens);
