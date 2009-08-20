@@ -868,6 +868,14 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
   byte boilPwr = getBoilPwr();
   boolean doAutoBoil = 1;
   
+  encMin = 0;
+  encMax = PIDLIMIT_KETTLE;
+  encCount = PIDLIMIT_KETTLE;
+  byte lastCount = encCount;
+
+
+
+  
   while(1) {
     boolean redraw = 0;
     timerLastWrite = 0;
@@ -886,10 +894,20 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
     printLCD_P(3, 4, TUNIT);
     
     while(!preheated || timerValue > 0) {
+      if (encCount != lastCount) {
+        lastCount = encCount;
+        doAutoBoil = 0;
+        PIDOutput[VS_KETTLE] = PIDCycle[VS_KETTLE] * 10 * lastCount;
+      }
+      
       if (doAutoBoil) {
         if(temp[TS_KETTLE] < setpoint[TS_KETTLE]) PIDOutput[VS_KETTLE] = PIDCycle[VS_KETTLE] * 10 * PIDLIMIT_KETTLE;
         else PIDOutput[VS_KETTLE] = PIDCycle[VS_KETTLE] * 10 * min(boilPwr, PIDLIMIT_KETTLE);
-      }
+        printLCD_P(3, 14, PSTR("  Auto"));
+        encCount = PIDOutput[VS_KETTLE] / PIDCycle[VS_KETTLE] / 10;
+        lastCount = encCount;
+      } else printLCD_P(3, 14, PSTR("Manual"));
+
       brewCore();
       if (preheated) { if (alarmStatus) printLCD_P(0, 19, PSTR("!")); else printLCD_P(0, 19, SPACE); }
       if (!preheated && temp[TS_KETTLE] >= setpoint[TS_KETTLE] && setpoint[TS_KETTLE] > 0) {
@@ -949,7 +967,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         if ((!alarmStatus && strcasecmp(msg[0], "POPMENU") == 0) || (alarmStatus && strcasecmp(msg[0], "SELECT") == 0)) {
           enterStatus = 1;
           clearMsg();
-    } else rejectMsg(LOGAB);
+        } else rejectMsg(LOGAB);
       }
       if (enterStatus == 1 && alarmStatus) {
         enterStatus = 0;
@@ -961,25 +979,21 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         if (timerValue > 0) strcpy_P(menuopts[1], PSTR("Reset Timer"));
         else strcpy_P(menuopts[1], PSTR("Start Timer"));
         strcpy_P(menuopts[2], PSTR("Pause Timer"));
-        strcpy_P(menuopts[3], PSTR("Set Boil Power"));
-        strcpy_P(menuopts[4], PSTR("Auto Boil"));        
-        strcpy_P(menuopts[5], SKIPSTEP);
-        strcpy_P(menuopts[6], ABORT);
-        byte lastOption = scrollMenu("AutoBrew Boil Menu", 7, 0);
+        strcpy_P(menuopts[3], PSTR("Auto Boil"));        
+        strcpy_P(menuopts[4], SKIPSTEP);
+        strcpy_P(menuopts[5], ABORT);
+        byte lastOption = scrollMenu("AutoBrew Boil Menu", 6, 0);
         if (lastOption == 1) {
           preheated = 1;
           printLCDRPad(0, 14, "", 6, ' ');
           setTimer(iMins);
         } else if (lastOption == 2) pauseTimer();
         else if (lastOption == 3) {
-          doAutoBoil = 0;
-          PIDOutput[VS_KETTLE] = getValue(PSTR("Boil Power"), PIDOutput[VS_KETTLE] / PIDCycle[VS_KETTLE] / 10, 3, 0, min(PIDLIMIT_KETTLE, 100), PSTR("%")) * PIDCycle[VS_KETTLE] * 10;
-        } else if (lastOption == 4) {
           doAutoBoil = 1;
-        } else if (lastOption == 5) {
+        } else if (lastOption == 4) {
           resetOutputs();
           return;
-        } else if (lastOption == 6) {
+        } else if (lastOption == 5) {
             if (confirmExit() == 1) {
               enterStatus = 2;
               resetOutputs();
@@ -1014,6 +1028,10 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
       //Exit
       return;
     }
+    encMin = 0;
+    encMax = PIDLIMIT_KETTLE;
+    encCount = PIDOutput[VS_KETTLE] / PIDCycle[VS_KETTLE] / 10;
+    lastCount = encCount;
   }
 }
 
