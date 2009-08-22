@@ -17,6 +17,8 @@ void doMon() {
     setPwrRecovery(2);
   }
   
+  for (byte i = VS_HLT; i <= VS_STEAM; i++) pid[i].SetMode(AUTO);
+  
   while (1) {
     if (enterStatus == 2) {
       enterStatus = 0;
