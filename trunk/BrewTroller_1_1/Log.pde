@@ -78,6 +78,13 @@ boolean chkMsg() {
             clearMsg();
             logTSensor(val);
           } else rejectParam(LOGGLB);
+        } else if(strcasecmp(msg[0], "SCAN_TS") == 0) {
+          byte tsAddr[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+          getDSAddr(tsAddr);
+          logStart_P(LOGGLB);
+          logField_P(PSTR("TS_SCAN"));
+          for (byte i=0; i<8; i++) logFieldI(tsAddr[i]);
+          logEnd();
         } else if(strcasecmp(msg[0], "GET_OSET") == 0) {
           byte val = atoi(msg[1]);
           if (msgField == 1 && val >= VS_HLT && val <= VS_STEAM) {
