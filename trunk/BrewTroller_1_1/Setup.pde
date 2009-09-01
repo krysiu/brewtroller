@@ -35,8 +35,8 @@ void assignSensor() {
   byte lastCount = 1;
   
   char dispTitle[6][21];
-  strcpy_P(dispTitle[0], PSTR("Hot Liquor Tank"));
-  strcpy_P(dispTitle[1], PSTR("Mash Tun"));
+  strcpy_P(dispTitle[0], HLTDESC);
+  strcpy_P(dispTitle[1], MASHDESC);
   strcpy_P(dispTitle[2], PSTR("Brew Kettle"));
   strcpy_P(dispTitle[3], PSTR("H2O In"));
   strcpy_P(dispTitle[4], PSTR("H2O Out"));

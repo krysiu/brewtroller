@@ -35,7 +35,9 @@ void saveSetup() {
     
   EEPROM.write(92, evapRate);
 
-  //94 - 129 Reserved for Power Recovery
+  //94 - 118 Reserved for Power Recovery
+  //118-125 ***OPEN***
+  //126 - 129 Reserved for Power Recovery
   //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
   //136 - 141 Zero Volumes
@@ -44,8 +46,8 @@ void saveSetup() {
   PROMwriteInt(143, steamPSens);
   
   //145 Boil Power
-  //146 - 151 ***OPEN***
-  //152-155 Power Recovery
+  //146 - 150 ***OPEN***
+  //151-155 Power Recovery
   //156-1805 Saved Programs
 
   //1806-1849 Valve Profiles
@@ -103,8 +105,9 @@ void loadSetup() {
   evapRate = EEPROM.read(92);
   pwrRecovery = EEPROM.read(94); 
   recoveryStep = EEPROM.read(95); 
-  //94 - 129 Reserved for Power Recovery
-  //130 Boil Temp
+  //94 - 118 Reserved for Power Recovery
+  //118-125 ***OPEN***
+  //126 - 129 Reserved for Power Recovery  //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
   //136 - 141 Zero Volumes
 
@@ -112,8 +115,8 @@ void loadSetup() {
   steamPSens = PROMreadInt(143);
 
   //145 Boil Power
-  //146 - 151 ***OPEN***
-  //152-155 Power Recovery
+  //146 - 150 ***OPEN***
+  //151-155 Power Recovery
   //156-1805 Saved Programs
 
   //1806-1849 Valve Profiles
@@ -229,8 +232,7 @@ void checkConfig() {
         setProgBoil(0, 60);
         setProgGrain(0, 0);
         setProgDelay(0, 0);
-        unsigned long vols[3] = {0, 0, 0};
-        setProgVols(0, vols);
+        setProgMLHeatSrc(0, 0);
         setProgAdds(0, 0);
       }
       {
@@ -258,8 +260,7 @@ void checkConfig() {
         setProgBoil(1, 60);
         setProgGrain(1, 0);
         setProgDelay(1, 0);
-        unsigned long vols[3] = {0, 0, 0};
-        setProgVols(1, vols);
+        setProgMLHeatSrc(1, 0);
         setProgAdds(1, 0);
       }
 #endif
@@ -309,6 +310,14 @@ void checkConfig() {
     case 8:
       setBoilPwr(100);
       EEPROM.write(2047, 9);
+    case 9:
+      setMLHeatSrc(VS_MASH);
+      //Zero out unused program tgtvol bytes and set MLHeatSrc for each program to Mash Tun
+      for (byte preset = 0; preset < 20; preset++) {
+        EEPROM.write(preset * 55 + 198, 1);
+        for (byte i = 199; i <= 205; i++) EEPROM.write(preset * 55 + i, 0);
+      }
+      EEPROM.write(2047, 10);
     default:
       //No EEPROM Upgrade Required
       return;
@@ -367,8 +376,12 @@ void saveABSteps(byte stepTemp[4], byte stepMins[4]) {
     EEPROM.write(111 + i, stepMins[i]);
   }  
 }
-void loadABVols(unsigned long tgtVol[3]) { for (byte i=0; i<3; i++) { tgtVol[i] = PROMreadLong(115 + i * 4); } }
-void saveABVols(unsigned long tgtVol[3]) { for (byte i=0; i<3; i++) { PROMwriteLong(115 + i * 4, tgtVol[i]); } }
+
+unsigned long getABBatchVol() { return PROMreadLong(115); }
+void setABBatchVol (unsigned long vol) { PROMwriteLong(115, vol); }
+
+//void loadABVols(unsigned long tgtVol[3]) { for (byte i=0; i<3; i++) { tgtVol[i] = PROMreadLong(115 + i * 4); } }
+//void saveABVols(unsigned long tgtVol[3]) { for (byte i=0; i<3; i++) { PROMwriteLong(115 + i * 4, tgtVol[i]); } }
 
 unsigned int getABAddsTrig() { return PROMreadInt(128); }
 void setABAddsTrig(unsigned int adds) { PROMwriteInt(128, adds); }
@@ -393,6 +406,9 @@ void saveZeroVols() {
 
 byte getBoilPwr() { return EEPROM.read(145); }
 void setBoilPwr(byte boilPwr) { EEPROM.write(145, boilPwr); }
+
+byte getMLHeatSrc() { return EEPROM.read(151); }
+void setMLHeatSrc(byte vessel) { EEPROM.write(151, vessel); }
 
 byte getABPitch() { return EEPROM.read(152); }
 void setABPitch(byte pitchTemp) { EEPROM.write(152, pitchTemp); }
@@ -445,8 +461,16 @@ void getProgSchedule(byte preset, byte stepTemp[4], byte stepMins[4]) {
   }
 }
 
-void getProgVols(byte preset, unsigned long vols[3]) { for (byte i=0; i<3; i++) vols[i] = PROMreadLong(preset * 55 + 194 + i * 4); }
-void setProgVols(byte preset, unsigned long vols[3]) { for (byte i=0; i<3; i++) PROMwriteLong(preset * 55 + 194 + i * 4, vols[i]); }
+unsigned long getProgBatchVol(byte preset) { return PROMreadLong(preset * 55 + 194); }
+void setProgBatchVol (byte preset, unsigned long vol) { PROMwriteLong(preset * 55 + 194, vol); }
+
+void setProgMLHeatSrc(byte preset, byte vessel) { EEPROM.write(preset * 55 + 198, vessel); }
+byte getProgMLHeatSrc(byte preset) { return EEPROM.read(preset * 55 + 198); }
+
+// 7 Bytes free per program (+199 through +205)
+
+//void getProgVols(byte preset, unsigned long vols[3]) { for (byte i=0; i<3; i++) vols[i] = PROMreadLong(preset * 55 + 194 + i * 4); }
+//void setProgVols(byte preset, unsigned long vols[3]) { for (byte i=0; i<3; i++) PROMwriteLong(preset * 55 + 194 + i * 4, vols[i]); }
 
 void setProgHLT(byte preset, byte HLT) { EEPROM.write(preset * 55 + 206, HLT); }
 byte getProgHLT(byte preset) { return EEPROM.read(preset * 55 + 206); }

@@ -185,17 +185,13 @@ boolean chkMsg() {
             setABSparge(atoi(msg[10]));
             setABDelay(atoi(msg[11]));
             setABHLTTemp(atoi(msg[12]));
-            
-            unsigned long tgtVol[3];
-            for (byte i = VS_HLT; i <= VS_KETTLE; i++) tgtVol[i] = atoi(msg[13 + i]);
-            saveABVols(tgtVol);
-
-            setABGrain(atoi(msg[16]));
-            setABBoil(atoi(msg[17]));
-            setABRatio(atoi(msg[18]));
-            setABPitch(atoi(msg[19]));
-            setABAdds(atoi(msg[20]));
-            setABGrainTemp(atoi(msg[21]));
+            setABBatchVol(atoi(msg[13]));
+            setABGrain(atoi(msg[14]));
+            setABBoil(atoi(msg[15]));
+            setABRatio(atoi(msg[16]));
+            setABPitch(atoi(msg[17]));
+            setABAdds(atoi(msg[18]));
+            setABGrainTemp(atoi(msg[19]));
             clearMsg();
             logABSettings();
           } else rejectParam(LOGGLB);
@@ -218,11 +214,7 @@ boolean chkMsg() {
             setProgSparge(program, atoi(msg[12]));
             setProgDelay(program, atoi(msg[13]));
             setProgHLT(program, atoi(msg[14]));
-            
-            unsigned long tgtVol[3];
-            for (byte i = VS_HLT; i <= VS_KETTLE; i++) tgtVol[i] = atoi(msg[15 + i]);
-            setProgVols(program, tgtVol);
-
+            setProgBatchVol(program, atoi(msg[15]));
             setProgGrain(program, atoi(msg[18]));
             setProgBoil(program, atoi(msg[19]));
             setProgRatio(program, atoi(msg[20]));
@@ -392,7 +384,6 @@ void logVlvProfile (byte profile) {
 void logABSettings() {
   byte stepTemp[4], stepMins[4];
   loadABSteps(stepTemp, stepMins);
-  loadABVols(tgtVol);
   
   logStart_P(LOGGLB);
   logField_P(PSTR("AB_SET"));
@@ -403,7 +394,7 @@ void logABSettings() {
   logFieldI(getABSparge());
   logFieldI(getABDelay());
   logFieldI(getABHLTTemp());
-  for (byte i = VS_HLT; i <= VS_KETTLE; i++) logFieldI(tgtVol[i]);
+  logFieldI(getABBatchVol());
   logFieldI(getABGrain());
   logFieldI(getABBoil());
   logFieldI(getABRatio());
@@ -416,8 +407,6 @@ void logABSettings() {
 void logProgram(byte program) {
   byte stepTemp[4], stepMins[4];
   getProgSchedule(program, stepTemp, stepMins);
-  unsigned long tgtVol[3];
-  setProgVols(program, tgtVol);
   
   logStart_P(LOGGLB);
   logField_P(PSTR("PROG_SET"));
@@ -432,7 +421,7 @@ void logProgram(byte program) {
   logFieldI(getProgSparge(program));
   logFieldI(getProgDelay(program));
   logFieldI(getProgHLT(program));
-  for (byte i = VS_HLT; i <= VS_KETTLE; i++) logFieldI(tgtVol[i]);
+  logFieldI(getProgBatchVol(program));
   logFieldI(getProgGrain(program));
   logFieldI(getProgBoil(program));
   logFieldI(getProgRatio(program));

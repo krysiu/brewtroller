@@ -4,6 +4,9 @@
 #define STEP_SACCH 2
 #define STEP_MASHOUT 3
 
+#define ADD_GRAIN 0
+#define SPARGE 1
+
 unsigned int hoptimes[10] = { 105, 90, 75, 60, 45, 30, 20, 15, 10, 5 };
 
 void doAutoBrew() {
@@ -13,14 +16,16 @@ void doAutoBrew() {
   unsigned int boilMins;
   unsigned int mashRatio;
   unsigned int boilAdds = 0;
+  unsigned long batchVol;
   byte grainTemp;
   byte HLTTemp;
   
+  MLHeatSrc = getMLHeatSrc();
   HLTTemp = getABHLTTemp();
   loadABSteps(stepTemp, stepMins);
   spargeTemp = getABSparge();
   delayMins = getABDelay();
-  loadABVols(tgtVol);
+  batchVol = getABBatchVol();
   grainWeight = getABGrain();
   boilMins = getABBoil();
   mashRatio = getABRatio();
@@ -49,7 +54,7 @@ void doAutoBrew() {
     logFieldI(spargeTemp);
     logFieldI(delayMins);
     logFieldI(HLTTemp);
-    for (byte i = VS_HLT; i <= VS_KETTLE; i++) logFieldI(tgtVol[i]);
+    logFieldI(batchVol);
     logFieldI(grainWeight);
     logFieldI(boilMins);
     logFieldI(mashRatio);
@@ -68,13 +73,14 @@ void doAutoBrew() {
     strcpy_P(menuopts[7], PSTR("Sparge Temp:"));
     strcpy_P(menuopts[8], PSTR("Pitch Temp:"));
     strcpy_P(menuopts[9], PSTR("Mash Schedule"));
-    strcpy_P(menuopts[10], PSTR("Boil Additions"));    
-    strcpy_P(menuopts[11], PSTR("Start Program"));
-    strcpy_P(menuopts[12], PSTR("Load Program"));
-    strcpy_P(menuopts[13], PSTR("Save Program"));
-    strcpy_P(menuopts[14], PSTR("Exit"));
+    strcpy_P(menuopts[10], PSTR("Heat Mash Liq:"));    
+    strcpy_P(menuopts[11], PSTR("Boil Additions"));    
+    strcpy_P(menuopts[12], PSTR("Start Program"));
+    strcpy_P(menuopts[13], PSTR("Load Program"));
+    strcpy_P(menuopts[14], PSTR("Save Program"));
+    strcpy_P(menuopts[15], PSTR("Exit"));
 
-    ftoa((float)tgtVol[TS_KETTLE]/1000, buf, 2);
+    ftoa((float)batchVol/1000, buf, 2);
     truncFloat(buf, 5);
     strcat(menuopts[0], buf);
     strcat_P(menuopts[0], VOLUNIT);
@@ -107,8 +113,12 @@ void doAutoBrew() {
     strncat(menuopts[8], itoa(pitchTemp, buf, 10), 3);
     strcat_P(menuopts[8], TUNIT);
     
-    lastOption = scrollMenu("AutoBrew Parameters", 15, lastOption);
-    if (lastOption == 0) tgtVol[TS_KETTLE] = getValue(PSTR("Batch Volume"), tgtVol[TS_KETTLE], 7, 3, 9999999, VOLUNIT);
+    if (MLHeatSrc == VS_HLT) strcat_P(menuopts[10], PSTR("HLT"));
+    else if (MLHeatSrc == VS_MASH) strcat_P(menuopts[10], PSTR("MASH"));
+    else strcat_P(menuopts[10], PSTR("UNKWN"));
+    
+    lastOption = scrollMenu("AutoBrew Parameters", 16, lastOption);
+    if (lastOption == 0) batchVol = getValue(PSTR("Batch Volume"), batchVol, 7, 3, 9999999, VOLUNIT);
     else if (lastOption == 1) grainWeight = getValue(PSTR("Grain Weight"), grainWeight, 7, 3, 9999999, WTUNIT);
     else if (lastOption == 2) grainTemp = getValue(PSTR("Grain Temp"), grainTemp, 3, 0, 255, TUNIT);
     else if (lastOption == 3) boilMins = getTimerValue(PSTR("Boil Length"), boilMins);
@@ -124,9 +134,10 @@ void doAutoBrew() {
     else if (lastOption == 7) spargeTemp = getValue(PSTR("Sparge Temp"), spargeTemp, 3, 0, 255, TUNIT);
     else if (lastOption == 8) pitchTemp = getValue(PSTR("Pitch Temp"), pitchTemp, 3, 0, 255, TUNIT);
     else if (lastOption == 9) editMashSchedule(stepTemp, stepMins);
-    else if (lastOption == 10) boilAdds = editHopSchedule(boilAdds);
-    else if (lastOption == 11) inMenu = 0;
-    else if (lastOption == 12) {
+    else if (lastOption == 10) MLHeatSrc = MLHeatSrcMenu(MLHeatSrc);
+    else if (lastOption == 11) boilAdds = editHopSchedule(boilAdds);
+    else if (lastOption == 12) inMenu = 0;
+    else if (lastOption == 13) {
       byte profile = 0;
       //Display Stored Programs
       for (byte i = 0; i < 20; i++) getProgName(i, menuopts[i]);
@@ -138,14 +149,15 @@ void doAutoBrew() {
         boilMins = getProgBoil(profile);
         mashRatio = getProgRatio(profile);
         getProgSchedule(profile, stepTemp, stepMins);
-        getProgVols(profile, tgtVol);
+        batchVol = getProgBatchVol(profile);
         HLTTemp = getProgHLT(profile);
         pitchTemp = getProgPitch(profile);
         boilAdds = getProgAdds(profile);
         grainTemp = getProgGrainT(profile);
+        MLHeatSrc = getProgMLHeatSrc(profile);
       }
     } 
-    else if (lastOption == 13) {
+    else if (lastOption == 14) {
       byte profile = 0;
       //Display Stored Schedules
       for (byte i = 0; i < 20; i++) getProgName(i, menuopts[i]);
@@ -159,11 +171,12 @@ void doAutoBrew() {
         setProgBoil(profile, boilMins);
         setProgRatio(profile, mashRatio);
         setProgSchedule(profile, stepTemp, stepMins);
-        setProgVols(profile, tgtVol);
+        setProgBatchVol(profile, batchVol);
         setProgHLT(profile, HLTTemp);
         setProgPitch(profile, pitchTemp);
         setProgAdds(profile, boilAdds);
         setProgGrainT(profile, grainTemp);
+        setProgMLHeatSrc(profile, MLHeatSrc);
       }
     }
     else {
@@ -173,23 +186,8 @@ void doAutoBrew() {
         } else lastOption = 0;
     }
     
-    //Detrmine Total Water Needed (Evap + Deadspaces)
-    tgtVol[TS_HLT] = round(tgtVol[TS_KETTLE] / (1.0 - evapRate / 100.0 * boilMins / 60.0) + volLoss[TS_HLT] + volLoss[TS_MASH]);
-    //Add Water Lost in Spent Grain
-
-    #ifdef USEMETRIC
-      tgtVol[TS_HLT] += round(grainWeight * 1.7884);
-    #else
-      tgtVol[TS_HLT] += round(grainWeight * .2143);
-    #endif
-
-    //Calculate mash volume
-    tgtVol[TS_MASH] = round(grainWeight * mashRatio / 100.0);
-    //Convert qts to gal for US
-    #ifndef USEMETRIC
-      tgtVol[TS_MASH] = round(tgtVol[TS_MASH] / 4.0);
-    #endif
-    tgtVol[TS_HLT] -= tgtVol[TS_MASH];
+    tgtVol[TS_HLT] = calcSpargeVol(batchVol, boilMins, grainWeight, mashRatio);
+    tgtVol[TS_MASH] = calcMashVol(grainWeight, mashRatio);
 
     //Grain-to-volume factor for mash tun capacity (1 lb = .15 gal)
     float grain2Vol;
@@ -231,13 +229,14 @@ void doAutoBrew() {
     }
 
     //Save Values to EEPROM for Recovery
+    setMLHeatSrc(MLHeatSrc);
     setPwrRecovery(1);
     setABRecovery(0);
     setABHLTTemp(HLTTemp);
     saveABSteps(stepTemp, stepMins);
     setABSparge(spargeTemp);
     setABDelay(delayMins);
-    saveABVols(tgtVol);
+    setABBatchVol(batchVol);
     setABGrain(grainWeight);
     setABBoil(boilMins);
     setABRatio(mashRatio);
@@ -251,6 +250,14 @@ void doAutoBrew() {
     case 0:
     case 1:
       setABRecovery(1);
+      //Set tgtVols
+      if (MLHeatSrc == VS_HLT) {
+        tgtVol[VS_HLT] = min(calcSpargeVol(batchVol, boilMins, grainWeight, mashRatio) + calcMashVol(grainWeight, mashRatio), capacity[VS_HLT]);
+        tgtVol[VS_MASH] = 0;
+      } else {
+        tgtVol[VS_HLT] = calcSpargeVol(batchVol, boilMins, grainWeight, mashRatio);
+        tgtVol[VS_MASH] = calcMashVol(grainWeight, mashRatio);
+      }
       manFill();
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 2:
@@ -272,8 +279,13 @@ void doAutoBrew() {
         #else
           strikeTemp = round(.2 / (mashRatio / 100.0) * (strikeTemp - grainTemp)) + strikeTemp;
         #endif
-        setpoint[TS_HLT] = HLTTemp;
-        setpoint[TS_MASH] = strikeTemp;
+        if (MLHeatSrc == VS_HLT) {
+          setpoint[TS_HLT] = strikeTemp;
+          setpoint[TS_MASH] = 0;
+        } else {
+          setpoint[TS_HLT] = HLTTemp;
+          setpoint[TS_MASH] = strikeTemp;
+        }
         setpoint[VS_STEAM] = steamTgt;
         pid[VS_HLT].SetMode(AUTO);
         pid[VS_MASH].SetMode(AUTO);
@@ -287,36 +299,20 @@ void doAutoBrew() {
       setpoint[TS_MASH] = 0;
       setpoint[VS_STEAM] = steamTgt;
       setABRecovery(4);
-      setValves(vlvConfig[VLV_ADDGRAIN]);
-      inMenu = 1;
-      while(inMenu) {
-        clearLCD();
-        printLCD_P(1, 5, PSTR("Add Grain"));
-        printLCD_P(2, 0, PSTR("Press Enter to Start"));
-        while(enterStatus == 0) {
-          brewCore();
-          if (chkMsg()) {
-            if (strcasecmp(msg[0], "SELECT") == 0) {
-              enterStatus = 1;
-              clearMsg();
-            } else rejectMsg(LOGSCROLLP);
-          }
-        }
-        if (enterStatus == 1) {
-          enterStatus = 0;
-          inMenu = 0;
-        } else {
-          enterStatus = 0;
-          if (confirmExit() == 1) {
-            resetOutputs(); 
-            setPwrRecovery(0); 
-            return;
-          }
-        }
-      }
+      manSparge(ADD_GRAIN);
+      if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
+    //Refill HLT
     case 5:
+      setABRecovery(5);
+      if (MLHeatSrc == VS_HLT) {
+        tgtVol[VS_HLT] = calcSpargeVol(batchVol, boilMins, grainWeight, mashRatio);
+        tgtVol[VS_MASH] = 0;
+        manFill();
+        if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
+      }
+    case 6:
       if (stepTemp[STEP_DOUGHIN]) {
-        setABRecovery(5);
+        setABRecovery(6);
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_DOUGHIN];
         setpoint[VS_STEAM] = steamTgt;
@@ -324,26 +320,26 @@ void doAutoBrew() {
         pid[VS_MASH].SetMode(AUTO);
         pid[VS_STEAM].SetMode(AUTO);
         unsigned int recoverMins = getTimerRecovery();
-        if (recoveryStep == 5 && recoverMins > 0) mashStep("Dough In", recoverMins); else mashStep("Dough In", stepMins[STEP_DOUGHIN]);
+        if (recoveryStep == 6 && recoverMins > 0) mashStep("Dough In", recoverMins); else mashStep("Dough In", stepMins[STEP_DOUGHIN]);
         setTimerRecovery(0);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
-    case 6:
+    case 7:
       if (stepTemp[STEP_PROTEIN]) {
-        setABRecovery(6);
+        setABRecovery(7);
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_PROTEIN];
         setpoint[VS_STEAM] = steamTgt;
         pid[VS_HLT].SetMode(AUTO);
         pid[VS_MASH].SetMode(AUTO);
         unsigned int recoverMins = getTimerRecovery();
-        if (recoveryStep == 6 && recoverMins > 0) mashStep("Protein", recoverMins); else mashStep("Protein", stepMins[STEP_PROTEIN]);
+        if (recoveryStep == 7 && recoverMins > 0) mashStep("Protein", recoverMins); else mashStep("Protein", stepMins[STEP_PROTEIN]);
         setTimerRecovery(0);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
-    case 7:
+    case 8:
       if (stepTemp[STEP_SACCH]) {
-        setABRecovery(7);
+        setABRecovery(8);
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_SACCH];
         setpoint[VS_STEAM] = steamTgt;
@@ -351,13 +347,13 @@ void doAutoBrew() {
         pid[VS_MASH].SetMode(AUTO);
         pid[VS_STEAM].SetMode(AUTO);
         unsigned int recoverMins = getTimerRecovery();
-        if (recoveryStep == 7 && recoverMins > 0) mashStep("Sacch Rest", recoverMins); else mashStep("Sacch Rest", stepMins[STEP_SACCH]);
+        if (recoveryStep == 8 && recoverMins > 0) mashStep("Sacch Rest", recoverMins); else mashStep("Sacch Rest", stepMins[STEP_SACCH]);
         setTimerRecovery(0);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
-    case 8:
+    case 9:
       if (stepTemp[STEP_MASHOUT]) {
-        setABRecovery(8);
+        setABRecovery(9);
         setpoint[TS_HLT] = HLTTemp;
         setpoint[TS_MASH] = stepTemp[STEP_MASHOUT];
         setpoint[VS_STEAM] = steamTgt;
@@ -365,13 +361,13 @@ void doAutoBrew() {
         pid[VS_MASH].SetMode(AUTO);
         pid[VS_STEAM].SetMode(AUTO);
         unsigned int recoverMins = getTimerRecovery();
-        if (recoveryStep == 8 && recoverMins > 0) mashStep("Mash Out", recoverMins); else mashStep("Mash Out", stepMins[STEP_MASHOUT]);
+        if (recoveryStep == 9 && recoverMins > 0) mashStep("Mash Out", recoverMins); else mashStep("Mash Out", stepMins[STEP_MASHOUT]);
         setTimerRecovery(0);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
-    case 9:
+    case 10:
       //Hold last mash temp until user exits
-      setABRecovery(9); 
+      setABRecovery(10); 
       setpoint[TS_HLT] = spargeTemp;
       //Cycle through steps and use last non-zero step for mash
       for (byte i = STEP_DOUGHIN; i <= STEP_MASHOUT; i++) if (stepTemp[i]) setpoint[TS_MASH] = stepTemp[i];
@@ -384,21 +380,21 @@ void doAutoBrew() {
       setpoint[TS_HLT] = 0;
       setpoint[TS_MASH] = 0;
       setpoint[VS_STEAM] = 0;
-    case 10:  
-      setABRecovery(10); 
-      manSparge();
+    case 11:  
+      setABRecovery(11); 
+      manSparge(SPARGE);
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
-    case 11:
+    case 12:
       {
         setpoint[TS_KETTLE] = getBoilTemp();
-        setABRecovery(11); 
+        setABRecovery(12); 
         unsigned int recoverMins = getTimerRecovery();
-        if (recoveryStep == 11 && recoverMins > 0) boilStage(recoverMins, boilAdds); else boilStage(boilMins, boilAdds);
+        if (recoveryStep == 12 && recoverMins > 0) boilStage(recoverMins, boilAdds); else boilStage(boilMins, boilAdds);
         setTimerRecovery(0);
         if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
       }
-    case 12:
-      setABRecovery(12); 
+    case 13:
+      setABRecovery(13); 
       manChill();
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
   }  
@@ -648,10 +644,10 @@ void mashStep(char sTitle[ ], int iMins) {
     
     while(!preheated || timerValue > 0 || doPrompt) {
       #ifdef SMART_HERMS_HLT
-        setpoint[VS_HLT] = constrain(setpoint[VS_MASH] * 2 - temp[TS_MASH], setpoint[VS_MASH] + MASH_HEAT_LOSS, HLT_MAX_TEMP);
+        if (setpoint[VS_MASH] != 0) setpoint[VS_HLT] = constrain(setpoint[VS_MASH] * 2 - temp[TS_MASH], setpoint[VS_MASH] + MASH_HEAT_LOSS, HLT_MAX_TEMP);
       #endif
       brewCore();
-      if (!preheated && temp[TS_MASH] >= setpoint[TS_MASH]) {
+      if (!preheated && ((setpoint[VS_MASH] != 0 && temp[TS_MASH] >= setpoint[TS_MASH]) || (setpoint[VS_MASH] == 0 && temp[TS_HLT] >= setpoint[TS_HLT]))) {
         preheated = 1;
         printLCDRPad(2, 7, "", 6, ' ');
         if(doPrompt) {
@@ -756,10 +752,15 @@ void mashStep(char sTitle[ ], int iMins) {
   }
 }
 
-void manSparge() {
+//used for Sparge and Add Grain Steps
+void manSparge(byte mode) {
   while (1) {
     clearLCD();
-    printLCD_P(0, 7, PSTR("Sparge"));
+    if (mode == ADD_GRAIN) {
+      printLCD_P(0, 5, PSTR("Add Grain"));
+      setValves(vlvConfig[VLV_ADDGRAIN]);
+    } else printLCD_P(0, 7, PSTR("Sparge"));
+    
     printLCD_P(0, 0, PSTR("HLT"));
     printLCD_P(0, 16, PSTR("Mash"));
     printLCD_P(1, 0, PSTR("---"));
@@ -798,7 +799,22 @@ void manSparge() {
 
       if (encCount != lastCount) {
         printLCDRPad(3, 5, "", 10, ' ');
+        boolean moveUp = 1;
+        if (encCount < lastCount) moveUp = 0;
         lastCount = encCount;
+        //Skip unneeded menu options in Add Grain Step
+        if (mode == ADD_GRAIN) {
+          if (MLHeatSrc == VS_HLT) {
+            if (lastCount >= 2 && lastCount <= 3) {
+              if (moveUp) lastCount = 4; else lastCount = 1;
+            }
+          } else {
+            if (lastCount >= 1 && lastCount <= 4) {
+              if (moveUp) lastCount = 5; else lastCount = 0;
+            }            
+          }
+          encCount = lastCount;
+        }
         if (lastCount == 0) printLCD_P(3, 6, CONTINUE);
         else if (lastCount == 1) printLCD_P(3, 6, SPARGEIN);
         else if (lastCount == 2) printLCD_P(3, 5, SPARGEOUT);
@@ -847,6 +863,7 @@ void manSparge() {
               return;
             } else redraw = 1;
         }
+        if (mode == ADD_GRAIN) setValves(vlvBits | vlvConfig[VLV_ADDGRAIN]);
       } else if (enterStatus == 2) {
         enterStatus = 0;
         if (confirmExit()) {
@@ -1147,4 +1164,36 @@ unsigned int editHopSchedule (unsigned int sched) {
     else if (lastOption == 13) return sched;
     else retVal = retVal ^ (1 << lastOption);
   }
+}
+
+byte MLHeatSrcMenu (byte MLHeatSrc) {
+    strcpy_P(menuopts[0], HLTDESC);
+    strcpy_P(menuopts[1], MASHDESC);
+    byte lastOption = scrollMenu("Heat Mash Liq In:", 2, MLHeatSrc);
+    if (lastOption > 1) return MLHeatSrc;
+    else return lastOption;
+}
+
+unsigned long calcMashVol(unsigned long grainWeight, unsigned int mashRatio) {
+  unsigned long retValue = round(grainWeight * mashRatio / 100.0);
+  //Convert qts to gal for US
+  #ifndef USEMETRIC
+    retValue = round(retValue / 4.0);
+  #endif
+  return retValue;
+}
+
+unsigned long calcSpargeVol(unsigned long batchVol, unsigned int boilMins, unsigned long grainWeight, unsigned int mashRatio) {
+  //Detrmine Total Water Needed (Evap + Deadspaces)
+  unsigned long retValue = round(batchVol / (1.0 - evapRate / 100.0 * boilMins / 60.0) + volLoss[TS_HLT] + volLoss[TS_MASH]);
+  //Add Water Lost in Spent Grain
+  #ifdef USEMETRIC
+    retValue += round(grainWeight * 1.7884);
+  #else
+    retValue += round(grainWeight * .2143);
+  #endif
+
+  //Subtract mash volume
+  retValue -= calcMashVol(grainWeight, mashRatio);
+  return retValue;
 }

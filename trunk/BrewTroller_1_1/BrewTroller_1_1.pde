@@ -1,4 +1,4 @@
-#define BUILD 266 
+#define BUILD 267 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -300,6 +300,8 @@ unsigned long volAvg[3];
 unsigned long volReadings[3][5];
 byte volCount;
 unsigned long lastVolChk;
+//Where to heat mash water (affects volume calcs)
+byte MLHeatSrc;
 
 //Valve Variables
 unsigned long vlvConfig[11];
@@ -399,6 +401,8 @@ const char STEAMCYCLE[] PROGMEM = "Steam PID Cycle";
 const char STEAMGAIN[] PROGMEM = "Steam PID Gain";
 const char STEAMPRESS[] PROGMEM = "Steam Pressure";
 const char STEAMSENSOR[] PROGMEM = "Steam Sensor";
+const char HLTDESC[] PROGMEM = "Hot Liquor Tank";
+const char MASHDESC[] PROGMEM = "Mash Tun";
 
 #ifdef USEMETRIC
 const char VOLUNIT[] PROGMEM = "l";

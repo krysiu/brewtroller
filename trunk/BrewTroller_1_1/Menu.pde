@@ -19,7 +19,8 @@ byte scrollMenu(char sTitle[], byte numOpts, byte defOption) {
       if (encCount < topItem) {
         clearLCD();
         if (sTitle != NULL) printLCD(0, 0, sTitle);
-        topItem = encCount;
+        if (numOpts <= 3) topItem = 0;
+        else topItem = encCount;
         drawItems(numOpts, topItem);
       } else if (encCount > topItem + 2) {
         clearLCD();
