@@ -78,10 +78,10 @@ void loadSetup() {
  
   //Option Array (48)
   byte options = EEPROM.read(48);
-  if (options & 2) PIDEnabled[VS_HLT] = 1;
-  if (options & 4) PIDEnabled[VS_MASH] = 1;
-  if (options & 8) PIDEnabled[VS_KETTLE] = 1;
-  if (options & 16) PIDEnabled[VS_STEAM] = 1;
+  if (options & 2) PIDEnabled[VS_HLT] = 1; else PIDEnabled[VS_HLT] = 0;
+  if (options & 4) PIDEnabled[VS_MASH] = 1; else PIDEnabled[VS_MASH] = 0;
+  if (options & 8) PIDEnabled[VS_KETTLE] = 1; else PIDEnabled[VS_KETTLE] = 0;
+  if (options & 16) PIDEnabled[VS_STEAM] = 1; else PIDEnabled[VS_STEAM] = 0;
   
   //Output Settings for HLT (49-53), MASH (54 - 58) and KETTLE (59 - 63)
   //Volume Settings for HLT (64-71), MASH (72 - 79) and KETTLE (80 - 87)
