@@ -2,8 +2,8 @@
 #include <EEPROM.h>
 
 void saveSetup() {
-  //Walk through the 5 tSensor elements and store 8-byte address of each
-  //Zone 0 - Zone 4 (0-55)
+  //Walk through the 7 tSensor elements and store 8-byte address of each
+  //Zone 0 - Zone 5 + Ambient (0-55)
   for (byte i = 0; i < 7; i++) PROMwriteBytes(i * 8, tSensor[i], 8);
 
    //Option Array (57)
@@ -28,14 +28,14 @@ void saveSetup() {
 }
 
 void loadSetup() {
-  //Walk through the 5 tSensor elements and store 8-byte address of each
-  //Zone 0 - Zone 4 (0-55)
+  //Walk through the 7 tSensor elements and store 8-byte address of each
+  //Zone 0 - Zone 5 + Ambient (0-55)
   for (byte i = 0; i < 7; i++) PROMreadBytes(i * 8, tSensor[i], 8);
  
   //Option Array (57)
   byte options = EEPROM.read(57);
   //Bits 1, 2, 4, 8, 16, 32 = Pid Enabled for Zones 1-6
-  for (byte i = 0; i < 6; i++) if (options & 1<<i) PIDEnabled[i] = 1;
+  for (byte i = 0; i < 6; i++) { if (options & 1<<i) PIDEnabled[i] = 1; else PIDEnabled[i] = 0; }
   
   //Output Settings for Zones (58-87)
   for (byte i = 0; i < 6; i++) {
@@ -103,10 +103,10 @@ void checkConfig() {
             #else
               byte defOutputSettings[5] = {3, 4, 2, 4, 5};
             #endif
-            PROMwriteBytes(41, defOutputSettings, 5);
-            PROMwriteBytes(46, defOutputSettings, 5);
-            PROMwriteBytes(51, defOutputSettings, 5);
-            PROMwriteBytes(56, defOutputSettings, 5);
+            PROMwriteBytes(58, defOutputSettings, 5);
+            PROMwriteBytes(63, defOutputSettings, 5);
+            PROMwriteBytes(68, defOutputSettings, 5);
+            PROMwriteBytes(73, defOutputSettings, 5);
           }
         }
       }
