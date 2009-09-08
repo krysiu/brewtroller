@@ -138,7 +138,7 @@ boolean confirmExit() {
   printLCD_P(1, 0, PSTR("outputs, setpoints"));
   printLCD_P(2, 0, PSTR("and timers."));
   strcpy_P(menuopts[0], CANCEL);
-  strcpy_P(menuopts[1], PSTR("Exit Program"));
+  strcpy_P(menuopts[1], EXIT);
   if(getChoice(2, 3) == 1) return 1; else return 0;
 }
 

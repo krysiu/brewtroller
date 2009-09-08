@@ -47,7 +47,7 @@ void doMon() {
         strcpy_P(menuopts[7], PSTR("Pause Timer"));
         strcpy_P(menuopts[8], PSTR("Clear Timer"));
         strcpy_P(menuopts[9], PSTR("Close Menu"));
-        strcpy_P(menuopts[10], PSTR("Quit Brew Monitor"));
+        strcpy_P(menuopts[10], EXIT);
 
         boolean inMenu = 1;
         byte lastOption = 0;

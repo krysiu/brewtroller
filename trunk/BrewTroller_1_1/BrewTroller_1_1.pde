@@ -1,4 +1,4 @@
-#define BUILD 267 
+#define BUILD 268 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -367,6 +367,7 @@ const char LOGDATA[] PROGMEM = "DATA";
 //Other PROGMEM Repeated Strings
 const char PWRLOSSRECOVER[] PROGMEM = "PLR";
 const char CANCEL[] PROGMEM = "Cancel";
+const char EXIT[] PROGMEM = "Exit";
 const char SPACE[] PROGMEM = " ";
 const char INIT_EEPROM[] PROGMEM = "Initialize EEPROM";
 const char LOGSCROLLP[] PROGMEM = "PROMPT";
@@ -382,12 +383,16 @@ const char FILLMASH[] PROGMEM = "Fill Mash";
 const char FILLBOTH[] PROGMEM = "Fill Both";
 const char ALLOFF[] PROGMEM = "All Off";
 const char ABORT[] PROGMEM = "Abort";
+const char ADDGRAIN[] PROGMEM = "Add Grain";
+const char MASHHEAT[] PROGMEM = "Mash Heat";
+const char MASHIDLE[] PROGMEM = "Mash Idle";
 const char SPARGEIN[] PROGMEM = "Sparge In";
 const char SPARGEOUT[] PROGMEM = "Sparge Out";
 const char FLYSPARGE[] PROGMEM = "Fly Sparge";
-const char CHILLNORM[] PROGMEM = "Chill Norm";
-const char CHILLH2O[] PROGMEM = "H2O Only";
-const char CHILLBEER[] PROGMEM = "Beer Only";
+const char BOILADDS[] PROGMEM = "Boil Additions";
+const char CHILLNORM[] PROGMEM = "Chiller Both";
+const char CHILLH2O[] PROGMEM = "Chiller H2O";
+const char CHILLBEER[] PROGMEM = "Chiller Beer";
 const char HLTCYCLE[] PROGMEM = "HLT PID Cycle";
 const char HLTGAIN[] PROGMEM = "HLT PID Gain";
 const char HLTHY[] PROGMEM = "HLT Hysteresis";

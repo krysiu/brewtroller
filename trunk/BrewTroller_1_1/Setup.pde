@@ -6,7 +6,7 @@ void menuSetup() {
     strcpy_P(menuopts[2], PSTR("Volume/Capacity"));
     strcpy_P(menuopts[3], PSTR("Configure Valves"));
     strcpy_P(menuopts[4], INIT_EEPROM);
-    strcpy_P(menuopts[5], PSTR("Exit Setup"));
+    strcpy_P(menuopts[5], EXIT);
     
     lastOption = scrollMenu("System Setup", 6, lastOption);
     if (lastOption == 0) assignSensor();
@@ -60,7 +60,7 @@ void assignSensor() {
       strcpy_P(menuopts[0], PSTR("Scan Bus"));
       strcpy_P(menuopts[1], PSTR("Delete Address"));
       strcpy_P(menuopts[2], PSTR("Close Menu"));
-      strcpy_P(menuopts[3], PSTR("Exit"));
+      strcpy_P(menuopts[3], EXIT);
       byte selected = scrollMenu(dispTitle[lastCount], 4, 0);
       if (selected == 0) {
         clearLCD();
@@ -68,7 +68,7 @@ void assignSensor() {
         printLCD_P(1,0,PSTR("Disconnect all other"));
         printLCD_P(2,2,PSTR("temp sensors now"));
         {
-          strcpy_P(menuopts[0], PSTR("Continue"));
+          strcpy_P(menuopts[0], CONTINUE);
           strcpy_P(menuopts[1], CANCEL);
           if (getChoice(2, 3) == 0) getDSAddr(tSensor[lastCount]);
         }
@@ -109,7 +109,7 @@ void cfgOutputs() {
     strcpy_P(menuopts[16], STEAMGAIN);
     strcpy_P(menuopts[17], STEAMPRESS);
     strcpy_P(menuopts[18], STEAMSENSOR);
-    strcpy_P(menuopts[19], PSTR("Exit"));
+    strcpy_P(menuopts[19], EXIT);
 
     lastOption = scrollMenu("Configure Outputs", 20, lastOption);
     if (lastOption == 0) PIDEnabled[VS_HLT] = PIDEnabled[VS_HLT] ^ 1;
@@ -234,17 +234,17 @@ void setPIDGain(char sTitle[], byte* p, byte* i, byte* d) {
 void cfgVolumes() {
   byte lastOption = 0;
   while(1) {
-    strcpy_P(menuopts[0], PSTR("HLT Capacity       "));
-    strcpy_P(menuopts[1], PSTR("HLT Dead Space     "));
-    strcpy_P(menuopts[2], PSTR("HLT Calibration    "));
-    strcpy_P(menuopts[3], PSTR("Mash Capacity      "));
-    strcpy_P(menuopts[4], PSTR("Mash Dead Space    "));
-    strcpy_P(menuopts[5], PSTR("Mash Calibration   "));
-    strcpy_P(menuopts[6], PSTR("Kettle Capacity    "));
-    strcpy_P(menuopts[7], PSTR("Kettle Dead Space  "));
-    strcpy_P(menuopts[8], PSTR("Kettle Calibration "));
-    strcpy_P(menuopts[9], PSTR("Evaporation Rate   "));
-    strcpy_P(menuopts[10], PSTR("Exit               "));
+    strcpy_P(menuopts[0], PSTR("HLT Capacity"));
+    strcpy_P(menuopts[1], PSTR("HLT Dead Space"));
+    strcpy_P(menuopts[2], PSTR("HLT Calibration"));
+    strcpy_P(menuopts[3], PSTR("Mash Capacity"));
+    strcpy_P(menuopts[4], PSTR("Mash Dead Space"));
+    strcpy_P(menuopts[5], PSTR("Mash Calibration"));
+    strcpy_P(menuopts[6], PSTR("Kettle Capacity"));
+    strcpy_P(menuopts[7], PSTR("Kettle Dead Space"));
+    strcpy_P(menuopts[8], PSTR("Kettle Calibration"));
+    strcpy_P(menuopts[9], PSTR("Evaporation Rate"));
+    strcpy_P(menuopts[10], EXIT);
 
     lastOption = scrollMenu("Volume/Capacity", 11, lastOption);
     if (lastOption == 0) capacity[TS_HLT] = getValue(PSTR("HLT Capacity"), capacity[TS_HLT], 7, 3, 9999999, VOLUNIT);
@@ -282,7 +282,7 @@ void volCalibMenu(byte vessel) {
         strcat_P(menuopts[i], PSTR(")"));
       } else strcpy_P(menuopts[i], PSTR("OPEN"));
     }
-    strcpy_P(menuopts[10], PSTR("Exit"));
+    strcpy_P(menuopts[10], EXIT);
     strcpy(sTitle, sVessel);
     strcat_P(sTitle, PSTR(" Calibration"));
     lastOption = scrollMenu(sTitle, 11, lastOption);
@@ -304,18 +304,18 @@ void volCalibMenu(byte vessel) {
 void cfgValves() {
   byte lastOption = 0;
   while (1) {
-    strcpy_P(menuopts[0], PSTR("HLT Fill"));
-    strcpy_P(menuopts[1], PSTR("Mash Fill"));
-    strcpy_P(menuopts[2], PSTR("Add Grain"));    
-    strcpy_P(menuopts[3], PSTR("Mash Heat"));
-    strcpy_P(menuopts[4], PSTR("Mash Idle"));
-    strcpy_P(menuopts[5], PSTR("Sparge In"));
-    strcpy_P(menuopts[6], PSTR("Sparge Out"));
-    strcpy_P(menuopts[7], PSTR("Hop Addition"));
+    strcpy_P(menuopts[0], FILLHLT);
+    strcpy_P(menuopts[1], FILLMASH);
+    strcpy_P(menuopts[2], ADDGRAIN);    
+    strcpy_P(menuopts[3], MASHHEAT);
+    strcpy_P(menuopts[4], MASHIDLE);
+    strcpy_P(menuopts[5], SPARGEIN);
+    strcpy_P(menuopts[6], SPARGEOUT);
+    strcpy_P(menuopts[7], BOILADDS);
     strcpy_P(menuopts[8], PSTR("Kettle Lid"));
-    strcpy_P(menuopts[9], PSTR("Chiller H2O In"));
-    strcpy_P(menuopts[10], PSTR("Chiller Beer In"));
-    strcpy_P(menuopts[11], PSTR("Exit"));
+    strcpy_P(menuopts[9], CHILLH2O);
+    strcpy_P(menuopts[10], CHILLBEER);
+    strcpy_P(menuopts[11], EXIT);
     
     lastOption = scrollMenu("Valve Configuration", 12, lastOption);
     if (lastOption > 10) return;

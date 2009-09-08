@@ -74,11 +74,11 @@ void doAutoBrew() {
     strcpy_P(menuopts[8], PSTR("Pitch Temp:"));
     strcpy_P(menuopts[9], PSTR("Mash Schedule"));
     strcpy_P(menuopts[10], PSTR("Heat Mash Liq:"));    
-    strcpy_P(menuopts[11], PSTR("Boil Additions"));    
+    strcpy_P(menuopts[11], BOILADDS);    
     strcpy_P(menuopts[12], PSTR("Start Program"));
     strcpy_P(menuopts[13], PSTR("Load Program"));
     strcpy_P(menuopts[14], PSTR("Save Program"));
-    strcpy_P(menuopts[15], PSTR("Exit"));
+    strcpy_P(menuopts[15], EXIT);
 
     ftoa((float)batchVol/1000, buf, 2);
     truncFloat(buf, 5);
@@ -206,7 +206,9 @@ void doAutoBrew() {
       truncFloat(buf, 5);
       printLCD(1, 11, buf);
       printLCD_P(1, 16, VOLUNIT);
-      printLCD_P(3, 4, PSTR("> Continue <"));
+      printLCD(3, 4, ">");
+      printLCD_P(3, 6, CONTINUE);
+      printLCD(3, 15, "<");
       while (!enterStatus) delay(500);
       enterStatus = 0;
     }
@@ -223,7 +225,9 @@ void doAutoBrew() {
       truncFloat(buf, 5);
       printLCD(2, 11, buf);
       printLCD_P(2, 16, VOLUNIT);
-      printLCD_P(3, 4, PSTR("> Continue <"));
+      printLCD(3, 4, ">");
+      printLCD_P(3, 6, CONTINUE);
+      printLCD(3, 15, "<");
       while (!enterStatus) delay(500);
       enterStatus = 0;
     }
@@ -414,7 +418,7 @@ void editMashSchedule(byte stepTemp[4], byte stepMins[4]) {
     strcpy_P(menuopts[5], PSTR("Sacch Rest:"));
     strcpy_P(menuopts[6], PSTR("Mash Out:"));
     strcpy_P(menuopts[7], PSTR("Mash Out:"));
-    strcpy_P(menuopts[8], PSTR("Exit"));
+    strcpy_P(menuopts[8], EXIT);
   
     strncat(menuopts[0], itoa(stepMins[STEP_DOUGHIN], buf, 10), 2);
     strcat(menuopts[0], " min");
@@ -651,7 +655,9 @@ void mashStep(char sTitle[ ], int iMins) {
         preheated = 1;
         printLCDRPad(2, 7, "", 6, ' ');
         if(doPrompt) {
-          printLCD_P(2, 5, PSTR(">Continue<"));
+          printLCD(2, 5, ">");
+          printLCD_P(2, 6, CONTINUE);
+          printLCD(2, 14, "<");
           logStart_P(LOGMENU);
           logField_P(LOGSCROLLP);
           logField(sTitle);
@@ -757,7 +763,7 @@ void manSparge(byte mode) {
   while (1) {
     clearLCD();
     if (mode == ADD_GRAIN) {
-      printLCD_P(0, 5, PSTR("Add Grain"));
+      printLCD_P(0, 5, ADDGRAIN);
       setValves(vlvConfig[VLV_ADDGRAIN]);
     } else printLCD_P(0, 7, PSTR("Sparge"));
     
@@ -782,7 +788,7 @@ void manSparge(byte mode) {
     printLCD_P(3, 17, PSTR("Off"));
 
     encMin = 0;
-    encMax = 5;
+    encMax = 7;
     encCount = 0;
     byte lastCount = 1;
     
@@ -805,22 +811,24 @@ void manSparge(byte mode) {
         //Skip unneeded menu options in Add Grain Step
         if (mode == ADD_GRAIN) {
           if (MLHeatSrc == VS_HLT) {
-            if (lastCount >= 2 && lastCount <= 3) {
-              if (moveUp) lastCount = 4; else lastCount = 1;
+            if (lastCount >= 2 && lastCount <= 5) {
+              if (moveUp) lastCount = 6; else lastCount = 1;
             }
           } else {
-            if (lastCount >= 1 && lastCount <= 4) {
-              if (moveUp) lastCount = 5; else lastCount = 0;
+            if (lastCount >= 1 && lastCount <= 6) {
+              if (moveUp) lastCount = 7; else lastCount = 0;
             }            
           }
           encCount = lastCount;
         }
         if (lastCount == 0) printLCD_P(3, 6, CONTINUE);
-        else if (lastCount == 1) printLCD_P(3, 6, SPARGEIN);
+        else if (lastCount == 1) printLCD_P(3, 5, SPARGEIN);
         else if (lastCount == 2) printLCD_P(3, 5, SPARGEOUT);
         else if (lastCount == 3) printLCD_P(3, 5, FLYSPARGE);
-        else if (lastCount == 4) printLCD_P(3, 7, ALLOFF);
-        else if (lastCount == 5) printLCD_P(3, 8, ABORT);
+        else if (lastCount == 4) printLCD_P(3, 5, MASHHEAT);
+        else if (lastCount == 5) printLCD_P(3, 5, MASHIDLE);
+        else if (lastCount == 6) printLCD_P(3, 7, ALLOFF);
+        else if (lastCount == 7) printLCD_P(3, 8, ABORT);
       }
 
       for (byte i = TS_HLT; i <= TS_MASH; i++) if (temp[i] == -1) printLCD_P(1, i * 16, PSTR("---")); else printLCDLPad(1, i * 16, itoa(temp[i], buf, 10), 3, ' ');
@@ -855,8 +863,16 @@ void manSparge(byte mode) {
         } else if (encCount == 4) {
           printLCD_P(3, 0, PSTR("Off"));
           printLCD_P(3, 17, PSTR("Off"));
-          setValves(0);
+          setValves(vlvConfig[VLV_MASHHEAT]);
         } else if (encCount == 5) {
+          printLCD_P(3, 0, PSTR("Off"));
+          printLCD_P(3, 17, PSTR("Off"));
+          setValves(vlvConfig[VLV_MASHIDLE]);
+        } else if (encCount == 6) {
+          printLCD_P(3, 0, PSTR("Off"));
+          printLCD_P(3, 17, PSTR("Off"));
+          setValves(0);
+        } else if (encCount == 7) {
             if (confirmExit()) {
               resetOutputs();
               enterStatus = 2;
@@ -1065,8 +1081,8 @@ void manChill() {
     printLCD_P(1, 19, TUNIT);
     printLCD_P(2, 3, TUNIT);
     printLCD_P(2, 19, TUNIT);
-    printLCD_P(3, 4, PSTR(">"));
-    printLCD_P(3, 15, PSTR("<"));    
+    printLCD_P(3, 3, PSTR(">"));
+    printLCD_P(3, 16, PSTR("<"));    
     
     setValves(0);
 
@@ -1080,11 +1096,11 @@ void manChill() {
       brewCore();
       if (encCount != lastCount) {
         lastCount = encCount;
-        printLCDRPad(3, 5, "", 10, ' ');
+        printLCDRPad(3, 4, "", 12, ' ');
         if (lastCount == 0) printLCD_P(3, 6, CONTINUE);
-        else if (lastCount == 1) printLCD_P(3, 5, CHILLNORM);
-        else if (lastCount == 2) printLCD_P(3, 6, CHILLH2O);
-        else if (lastCount == 3) printLCD_P(3, 6, CHILLBEER);
+        else if (lastCount == 1) printLCD_P(3, 4, CHILLNORM);
+        else if (lastCount == 2) printLCD_P(3, 4, CHILLH2O);
+        else if (lastCount == 3) printLCD_P(3, 4, CHILLBEER);
         else if (lastCount == 4) printLCD_P(3, 7, ALLOFF);
         else if (lastCount == 5) printLCD_P(3, 8, AUTOFILL);
         else if (lastCount == 6) printLCD_P(3, 8, ABORT);
@@ -1157,7 +1173,7 @@ unsigned int editHopSchedule (unsigned int sched) {
       if (retVal & (1<<(i + 1))) strcat_P(menuopts[i + 1], PSTR("On")); else strcat_P(menuopts[i + 1], PSTR("Off"));
     }
     if (retVal & 2048) strcpy_P(menuopts[11], PSTR("0 Min: On")); else strcpy_P(menuopts[11], PSTR("0 Min: Off"));
-    strcpy_P(menuopts[12], PSTR("Exit"));
+    strcpy_P(menuopts[12], EXIT);
 
     lastOption = scrollMenu("Boil Additions", 13, lastOption);
     if (lastOption == 12) return retVal;
