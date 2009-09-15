@@ -1,4 +1,4 @@
-#define BUILD 273 
+#define BUILD 274 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -130,6 +130,15 @@ using LiquidCrystal Fix by Donald Weiman:
 //#define SMART_HERMS_HLT
 #define MASH_HEAT_LOSS 0
 #define HLT_MAX_TEMP 180
+//**********************************************************************************
+
+//**********************************************************************************
+// Pre-Boil Alarm
+//**********************************************************************************
+// PREBOIL_ALARM: Triggers the alarm during the boil stage when the defined
+// temperature is reached
+
+//#define PREBOIL_ALARM 205
 //**********************************************************************************
 
 //**********************************************************************************

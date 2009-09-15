@@ -7,6 +7,7 @@
 #define ADD_GRAIN 0
 #define SPARGE 1
 
+//Bit 1 = Boil; Bit 2-11 (See Below); Bit 12 = End of Boil; Bit 13-15 (Open); Bit 16 = Preboil (If Compile Option Enabled)
 unsigned int hoptimes[10] = { 105, 90, 75, 60, 45, 30, 20, 15, 10, 5 };
 
 void doAutoBrew() {
@@ -942,7 +943,14 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
       } else printLCD_P(3, 14, PSTR("Manual"));
 
       brewCore();
-      if (preheated) { if (alarmStatus) printLCD_P(0, 19, PSTR("!")); else printLCD_P(0, 19, SPACE); }
+      #ifdef PREBOIL_ALARM
+        if ((triggered ^ 32768) && temp[TS_KETTLE] >= PREBOIL_ALARM) {
+          setAlarm(1);
+          triggered |= 32768; 
+          setABAddsTrig(triggered);
+        }
+      #endif
+     if (alarmStatus) printLCD_P(0, 19, PSTR("!")); else printLCD_P(0, 19, SPACE);
       if (!preheated && temp[TS_KETTLE] >= setpoint[TS_KETTLE] && setpoint[TS_KETTLE] > 0) {
         preheated = 1;
         printLCDRPad(0, 14, "", 6, ' ');

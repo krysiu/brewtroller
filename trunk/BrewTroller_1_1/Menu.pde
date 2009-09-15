@@ -15,21 +15,20 @@ byte scrollMenu(char sTitle[], byte numOpts, byte defOption) {
   
   while(1) {
     if (encCount != lastCount) {
-
-      if (encCount < topItem) {
+      lastCount = encCount;
+      if (lastCount < topItem) {
         clearLCD();
         if (sTitle != NULL) printLCD(0, 0, sTitle);
         if (numOpts <= 3) topItem = 0;
-        else topItem = encCount;
+        else topItem = lastCount;
         drawItems(numOpts, topItem);
-      } else if (encCount > topItem + 2) {
+      } else if (lastCount > topItem + 2) {
         clearLCD();
         if (sTitle != NULL) printLCD(0, 0, sTitle);
-        topItem = encCount - 2;
+        topItem = lastCount - 2;
         drawItems(numOpts, topItem);
       }
-      for (byte i = 1; i <= 3; i++) if (i == encCount - topItem + 1) printLCD(i, 0, ">"); else printLCD(i, 0, " ");
-      lastCount = encCount;
+      for (byte i = 1; i <= 3; i++) if (i == lastCount - topItem + 1) printLCD(i, 0, ">"); else printLCD(i, 0, " ");
     }
     
     if (chkMsg()) {
