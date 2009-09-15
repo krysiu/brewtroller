@@ -35,8 +35,8 @@ void saveSetup() {
     
   EEPROM.write(92, evapRate);
 
-  //94 - 118 Reserved for Power Recovery
-
+  //94 - 114 Reserved for Power Recovery
+  //115-117 *** OPEN ***
   //118-125 AUX1 TSensor Addr
   PROMwriteBytes(118, tSensor[TS_AUX1], 8);
 
@@ -49,7 +49,8 @@ void saveSetup() {
   PROMwriteInt(143, steamPSens);
   
   //145 Boil Power
-  //146 - 150 ***OPEN***
+  //146 - 149 Reserved for Power Recovery
+  //150 ***OPEN***
   //151-155 Power Recovery
   //156-1805 Saved Programs
 
@@ -111,8 +112,8 @@ void loadSetup() {
   evapRate = EEPROM.read(92);
   pwrRecovery = EEPROM.read(94); 
   recoveryStep = EEPROM.read(95); 
-  //94 - 118 Reserved for Power Recovery
-  
+  //94 - 114 Reserved for Power Recovery
+  //115-117 *** OPEN ***
   //118-125 AUX1 TSensor Addr
   PROMreadBytes(118, tSensor[TS_AUX1], 8);
   
@@ -124,7 +125,8 @@ void loadSetup() {
   steamPSens = PROMreadInt(143);
 
   //145 Boil Power
-  //146 - 150 ***OPEN***
+  //146 - 149 Reserved for Power Recovery
+  //150 ***OPEN***
   //151-155 Power Recovery
   //156-1805 Saved Programs
 
@@ -394,8 +396,8 @@ void saveABSteps(byte stepTemp[4], byte stepMins[4]) {
   }  
 }
 
-unsigned long getABBatchVol() { return PROMreadLong(115); }
-void setABBatchVol (unsigned long vol) { PROMwriteLong(115, vol); }
+unsigned long getABBatchVol() { return PROMreadLong(146); }
+void setABBatchVol (unsigned long vol) { PROMwriteLong(146, vol); }
 
 //void loadABVols(unsigned long tgtVol[3]) { for (byte i=0; i<3; i++) { tgtVol[i] = PROMreadLong(115 + i * 4); } }
 //void saveABVols(unsigned long tgtVol[3]) { for (byte i=0; i<3; i++) { PROMwriteLong(115 + i * 4, tgtVol[i]); } }

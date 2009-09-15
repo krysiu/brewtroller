@@ -167,7 +167,8 @@ unsigned long getValue(const char *sTitle, unsigned long defValue, byte digits, 
 
   lcdSetCustChar_P(0, CHARFIELD);
   lcdSetCustChar_P(1, CHARCURSOR);
-      
+  lcdSetCustChar_P(2, CHARSEL);
+   
   clearLCD();
   printLCD_P(0, 0, sTitle);
   printLCD_P(1, (20 - digits + 1) / 2 + digits + 1, dispUnit);
@@ -180,9 +181,11 @@ unsigned long getValue(const char *sTitle, unsigned long defValue, byte digits, 
         unsigned long factor = 1;
         for (byte i = 0; i < digits - cursorPos - 1; i++) factor *= 10;
         if (encCount > lastCount) retValue += (encCount-lastCount) * factor; else retValue -= (lastCount-encCount) * factor;
+        lastCount = encCount;
         if (retValue > maxValue) retValue = maxValue;
       } else {
-        cursorPos = encCount;
+        lastCount = encCount;
+        cursorPos = lastCount;
         for (byte i = (20 - digits + 1) / 2 - 1; i < (20 - digits + 1) / 2 - 1 + digits - precision; i++) lcdWriteCustChar(2, i, 0);
         if (precision) for (byte i = (20 - digits + 1) / 2 + digits - precision; i < (20 - digits + 1) / 2 + digits; i++) lcdWriteCustChar(2, i, 0);
         printLCD(3, 8, " ");
@@ -191,8 +194,8 @@ unsigned long getValue(const char *sTitle, unsigned long defValue, byte digits, 
           printLCD(3, 8, ">");
           printLCD(3, 11, "<");
         } else {
-          if (cursorPos < digits - precision) lcdWriteCustChar(2, (20 - digits + 1) / 2 + encCount - 1, 1);
-          else lcdWriteCustChar(2, (20 - digits + 1) / 2 + encCount, 1);
+          if (cursorPos < digits - precision) lcdWriteCustChar(2, (20 - digits + 1) / 2 + cursorPos - 1, 1);
+          else lcdWriteCustChar(2, (20 - digits + 1) / 2 + cursorPos, 1);
         }
       }
       lastCount = encCount;
@@ -210,6 +213,8 @@ unsigned long getValue(const char *sTitle, unsigned long defValue, byte digits, 
       else {
         cursorState = cursorState ^ 1;
         if (cursorState) {
+          if (cursorPos < digits - precision) lcdWriteCustChar(2, (20 - digits + 1) / 2 + cursorPos - 1, 2);
+          else lcdWriteCustChar(2, (20 - digits + 1) / 2 + cursorPos, 2);
           encMin = 0;
           encMax = 9;
           if (cursorPos < digits - precision) {
@@ -220,6 +225,8 @@ unsigned long getValue(const char *sTitle, unsigned long defValue, byte digits, 
             if (cursorPos < digits - strlen(buf)) encCount = 0; else  encCount = buf[cursorPos - (digits - strlen(buf))] - '0';
           }
         } else {
+          if (cursorPos < digits - precision) lcdWriteCustChar(2, (20 - digits + 1) / 2 + cursorPos - 1, 1);
+          else lcdWriteCustChar(2, (20 - digits + 1) / 2 + cursorPos, 1);
           encMin = 0;
           encMax = digits;
           encCount = cursorPos;
@@ -322,17 +329,19 @@ void getString(const char *sTitle, char defValue[], byte chars) {
 
   lcdSetCustChar_P(0, CHARFIELD);
   lcdSetCustChar_P(1, CHARCURSOR);
-      
+  lcdSetCustChar_P(2, CHARSEL);
+  
   clearLCD();
   printLCD_P(0,0,sTitle);
   printLCD(3, 9, "OK");
   
   while(1) {
     if (encCount != lastCount) {
+      lastCount = encCount;
       if (cursorState) {
-        retValue[cursorPos] = enc2ASCII(encCount);
+        retValue[cursorPos] = enc2ASCII(lastCount);
       } else {
-        cursorPos = encCount;
+        cursorPos = lastCount;
         for (byte i = (20 - chars + 1) / 2 - 1; i < (20 - chars + 1) / 2 - 1 + chars; i++) lcdWriteCustChar(2, i, 0);
         printLCD(3, 8, " ");
         printLCD(3, 11, " ");
@@ -340,10 +349,9 @@ void getString(const char *sTitle, char defValue[], byte chars) {
           printLCD(3, 8, ">");
           printLCD(3, 11, "<");
         } else {
-          lcdWriteCustChar(2, (20 - chars + 1) / 2 + encCount - 1, 1);
+          lcdWriteCustChar(2, (20 - chars + 1) / 2 + cursorPos - 1, 1);
         }
       }
-      lastCount = encCount;
       printLCD(1, (20 - chars + 1) / 2 - 1, retValue);
     }
     if (enterStatus == 1) {
@@ -358,10 +366,12 @@ void getString(const char *sTitle, char defValue[], byte chars) {
           encMin = 0;
           encMax = 94;
           encCount = ASCII2enc(retValue[cursorPos]);
+          lcdWriteCustChar(2, (20 - chars + 1) / 2 + cursorPos - 1, 2);
         } else {
           encMin = 0;
           encMax = chars;
           encCount = cursorPos;
+          lcdWriteCustChar(2, (20 - chars + 1) / 2 + cursorPos - 1, 1);
         }
         lastCount = encCount;
       }
