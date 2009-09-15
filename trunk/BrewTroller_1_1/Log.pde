@@ -66,13 +66,13 @@ boolean chkMsg() {
         //Check for Global Commands
         if       (strcasecmp(msg[0], "GET_TS") == 0) {
           byte val = atoi(msg[1]);
-          if (msgField == 1 && val >= TS_HLT && val <= TS_BEEROUT) {
+          if (msgField == 1 && val >= TS_HLT && val <= TS_AUX2) {
             logTSensor(val);
             clearMsg();
           } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "SET_TS") == 0) {
           byte val = atoi(msg[1]);
-          if (msgField == 9 && val >= TS_HLT && val <= TS_BEEROUT) {
+          if (msgField == 9 && val >= TS_HLT && val <= TS_AUX2) {
             for (byte i=0; i<8; i++) tSensor[val][i] = (byte)atoi(msg[i+2]);
             saveSetup();
             clearMsg();
