@@ -30,17 +30,19 @@ void menuSetup() {
 
 void assignSensor() {
   encMin = 0;
-  encMax = 5;
+  encMax = 7;
   encCount = 0;
   byte lastCount = 1;
   
-  char dispTitle[6][21];
+  char dispTitle[8][21];
   strcpy_P(dispTitle[0], HLTDESC);
   strcpy_P(dispTitle[1], MASHDESC);
   strcpy_P(dispTitle[2], PSTR("Brew Kettle"));
   strcpy_P(dispTitle[3], PSTR("H2O In"));
   strcpy_P(dispTitle[4], PSTR("H2O Out"));
   strcpy_P(dispTitle[5], PSTR("Beer Out"));
+  strcpy_P(dispTitle[6], PSTR("AUX 1"));
+  strcpy_P(dispTitle[7], PSTR("AUX 2"));
   
   while (1) {
     if (encCount != lastCount) {
@@ -76,7 +78,7 @@ void assignSensor() {
       else if (selected > 2) return;
 
       encMin = 0;
-      encMax = 5;
+      encMax = 7;
       encCount = lastCount;
       lastCount += 1;
     }

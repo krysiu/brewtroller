@@ -36,7 +36,10 @@ void saveSetup() {
   EEPROM.write(92, evapRate);
 
   //94 - 118 Reserved for Power Recovery
-  //118-125 ***OPEN***
+
+  //118-125 AUX1 TSensor Addr
+  PROMwriteBytes(118, tSensor[TS_AUX1], 8);
+
   //126 - 129 Reserved for Power Recovery
   //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
@@ -53,7 +56,10 @@ void saveSetup() {
   //1806-1849 Valve Profiles
   for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) PROMwriteLong(1806 + (profile) * 4, vlvConfig[profile]);
   
-  //1850-1860 ***OPEN***
+  //1850-1857 AUX2 TSensor Addr
+  PROMwriteBytes(1850, tSensor[TS_AUX2], 8);
+
+  //1858-1860 ***OPEN***
   
   //Set all Volume Calibrations for a given vessel (EEPROM Bytes 1861 - 2040)
   // vessel: 0-2 Corresponding to TS_HLT, TS_MASH, TS_KETTLE
@@ -106,7 +112,10 @@ void loadSetup() {
   pwrRecovery = EEPROM.read(94); 
   recoveryStep = EEPROM.read(95); 
   //94 - 118 Reserved for Power Recovery
-  //118-125 ***OPEN***
+  
+  //118-125 AUX1 TSensor Addr
+  PROMreadBytes(118, tSensor[TS_AUX1], 8);
+  
   //126 - 129 Reserved for Power Recovery  //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
   //136 - 141 Zero Volumes
@@ -122,7 +131,10 @@ void loadSetup() {
   //1806-1849 Valve Profiles
   for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) vlvConfig[profile] = PROMreadLong(1806 + (profile) * 4);
 
-  //1850-1860 ***OPEN***
+  //1850 - 1857 AUX2 TSensor Addr
+  PROMreadBytes(1850, tSensor[TS_AUX2], 8);
+  
+  // 1858 - 1860 ***OPEN***
 
   //Get all Volume Calibrations for a given vessel (EEPROM Bytes 1861 - 2040)
   // vessel: 0-2 Corresponding to TS_HLT, TS_MASH, TS_KETTLE
@@ -318,6 +330,11 @@ void checkConfig() {
         for (byte i = 199; i <= 205; i++) EEPROM.write(preset * 55 + i, 0);
       }
       EEPROM.write(2047, 10);
+    case 10:
+      //Zero Out Aux1/AUX2 TSensor Addresses
+      for (byte i = 118; i <= 125; i++) EEPROM.write(i, 0);
+      for (unsigned int i = 1850; i <= 1857; i++) EEPROM.write(i, 0);
+      EEPROM.write(2047, 11);
     default:
       //No EEPROM Upgrade Required
       return;

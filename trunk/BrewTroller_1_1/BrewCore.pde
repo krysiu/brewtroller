@@ -44,7 +44,7 @@ void brewCore() {
         logFieldI(1);
       #endif
       logEnd();
-    } else if (logCount >= 5 && logCount <= 10) {
+    } else if (logCount >= 5 && logCount <= 12) {
       byte i = logCount - 5;
       logStart_P(LOGDATA);
       logField_P(PSTR("TEMP"));
@@ -57,7 +57,7 @@ void brewCore() {
         logFieldI(1);
       #endif
       logEnd();
-    } else if (logCount == 11) {
+    } else if (logCount == 13) {
       logStart_P(LOGDATA);
       logField_P(PSTR("STEAM"));
       ftoa(steamPressure, buf, 3);
@@ -68,9 +68,9 @@ void brewCore() {
         logFieldI(1);
       #endif
       logEnd();
-    } else if (logCount >= 12 && logCount <= 15) {
+    } else if (logCount >= 14 && logCount <= 17) {
       byte pct;
-      byte i = logCount - 12;
+      byte i = logCount - 14;
       if (PIDEnabled[i]) pct = PIDOutput[i] / PIDCycle[i] / 10;
       else if (heatStatus[i]) pct = 100;
       else pct = 0;
@@ -79,8 +79,8 @@ void brewCore() {
       logFieldI(i);
       logFieldI(pct);
       logEnd();
-    } else if (logCount >= 16 && logCount <= 19) {
-      byte i = logCount - 16;
+    } else if (logCount >= 18 && logCount <= 21) {
+      byte i = logCount - 18;
       logStart_P(LOGDATA);
       logField_P(PSTR("SETPOINT"));
       logFieldI(i);
@@ -92,7 +92,7 @@ void brewCore() {
         logFieldI(1);
       #endif
       logEnd();
-    } else if (logCount == 20) {
+    } else if (logCount == 22) {
       logStart_P(LOGDATA);
       logField_P(PSTR("AUTOVLV"));
       logFieldI(autoValve);
@@ -101,7 +101,7 @@ void brewCore() {
       logField_P(PSTR("SETVLV"));
       logFieldI(vlvBits);
       logEnd();
-    } else if (logCount == 21) {
+    } else if (logCount == 23) {
       logStart_P(LOGDATA);
       logField_P(PSTR("VLVPRF"));
       for (byte i = VLV_FILLHLT; i <= VLV_CHILLBEER; i++) { if ((vlvBits & vlvConfig[i]) == vlvConfig[i]) logFieldI(1); else logFieldI(0); }
@@ -109,7 +109,7 @@ void brewCore() {
       if (millis() - lastLog > 5000) lastLog = millis(); else lastLog += 1000;
     }
     logCount++;
-    if (logCount > 21) logCount = 0;
+    if (logCount > 23) logCount = 0;
   }
 
   //Check Temps
@@ -117,7 +117,7 @@ void brewCore() {
     convertAll();
     convStart = millis();
   } else if (millis() - convStart >= 750) {
-    for (byte i = TS_HLT; i <= TS_BEEROUT; i++) temp[i] = read_temp(tSensor[i]);
+    for (byte i = TS_HLT; i <= TS_AUX2; i++) temp[i] = read_temp(tSensor[i]);
     convStart = 0;
   }
 

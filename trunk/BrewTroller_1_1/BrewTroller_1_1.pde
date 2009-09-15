@@ -1,4 +1,4 @@
-#define BUILD 270 
+#define BUILD 271 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -245,6 +245,8 @@ using LiquidCrystal Fix by Donald Weiman:
 #define TS_H2OIN 3
 #define TS_H2OOUT 4
 #define TS_BEEROUT 5
+#define TS_AUX1 6
+#define TS_AUX2 7
 
 #define VS_HLT 0
 #define VS_MASH 1
@@ -284,8 +286,8 @@ byte encMax;
 byte enterStatus = 0;
 
 //8-byte Temperature Sensor Address x6 Sensors
-byte tSensor[6][8];
-float temp[6];
+byte tSensor[8][8];
+float temp[8];
 unsigned long convStart = 0;
 
 //Volume
