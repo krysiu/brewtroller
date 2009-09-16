@@ -638,7 +638,7 @@ void mashStep(char sTitle[ ], int iMins) {
     printLCD_P(3, 14, PSTR("[    ]"));
     
     #ifdef USEMETRIC
-      printLCD_P(1, 7, PSTR("Liters"));
+      printLCD_P(1, 7, PSTR("Litres"));
     #else
       printLCD_P(1, 8, PSTR("Gals"));
     #endif
@@ -906,7 +906,7 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
     printLCD_P(3,0,PSTR("[    ]"));
 
     #ifdef USEMETRIC
-      printLCD_P(1, 7, PSTR("Liters"));
+      printLCD_P(1, 7, PSTR("Litres"));
     #else
       printLCD_P(1, 8, PSTR("Gals"));
     #endif
