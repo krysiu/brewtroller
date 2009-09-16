@@ -300,14 +300,15 @@ void doAutoBrew() {
       mashStep("Preheat", MINS_PROMPT);  
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
     case 4:
+      //Add Grain
       setpoint[TS_HLT] = 0;
       setpoint[TS_MASH] = 0;
       setpoint[VS_STEAM] = steamTgt;
       setABRecovery(4);
       manSparge(ADD_GRAIN);
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
-    //Refill HLT
     case 5:
+      //Refill HLT
       setABRecovery(5);
       if (MLHeatSrc == VS_HLT) {
         tgtVol[VS_HLT] = calcSpargeVol(batchVol, boilMins, grainWeight, mashRatio);
@@ -764,29 +765,27 @@ void manSparge(byte mode) {
   while (1) {
     clearLCD();
     if (mode == ADD_GRAIN) {
-      printLCD_P(0, 5, ADDGRAIN);
+      printLCD_P(0, 0, PSTR("Grain In"));
       setValves(vlvConfig[VLV_ADDGRAIN]);
-    } else printLCD_P(0, 7, PSTR("Sparge"));
+    } else printLCD_P(0, 0, PSTR("Sparge"));
+
+    printLCD_P(0, 8, PSTR(">"));
+    printLCD_P(0, 19, PSTR("<"));
     
-    printLCD_P(0, 0, PSTR("HLT"));
-    printLCD_P(0, 16, PSTR("Mash"));
-    printLCD_P(1, 0, PSTR("---"));
-    printLCD_P(1, 16, PSTR("---"));
-    printLCD_P(2, 0, PSTR("---.-"));
-    printLCD_P(2, 15, PSTR("---.-"));
-    printLCD_P(1, 3, TUNIT);
-    printLCD_P(1, 19, TUNIT);
-    #ifdef USEMETRIC
-      printLCD_P(2, 7, PSTR("Liters"));
-    #else
-      printLCD_P(2, 8, PSTR("Gals"));
-    #endif
-    printLCD_P(3, 4, PSTR(">"));
-    printLCD_P(3, 15, PSTR("<"));
+    printLCD_P(1, 0, PSTR("HLT"));
+    printLCD_P(2, 0, PSTR("Mash"));
+    printLCD_P(3, 0, PSTR("Kettle"));
+    printLCD_P(1, 7, PSTR("---"));
+    printLCD_P(2, 7, PSTR("---"));
+    printLCD_P(3, 7, PSTR("---"));
+    printLCD_P(1, 12, PSTR("----.---"));
+    printLCD_P(2, 12, PSTR("----.---"));
+    printLCD_P(3, 12, PSTR("----.---"));
+    printLCD_P(1, 10, TUNIT);
+    printLCD_P(2, 10, TUNIT);
+    printLCD_P(3, 10, TUNIT);
     
     setValves(0);
-    printLCD_P(3, 0, PSTR("Off"));
-    printLCD_P(3, 17, PSTR("Off"));
 
     encMin = 0;
     encMax = 7;
@@ -796,16 +795,20 @@ void manSparge(byte mode) {
     boolean redraw = 0;
     while(!redraw) {
       brewCore();
-      ftoa(volAvg[VS_HLT]/1000.0, buf, 2);
-      truncFloat(buf, 6);
-      printLCDRPad(2, 0, buf, 7, ' ');
+      ftoa(volAvg[VS_HLT]/1000.0, buf, 3);
+      truncFloat(buf, 8);
+      printLCDLPad(1, 12, buf, 8, ' ');
         
-      ftoa(volAvg[VS_MASH]/1000.0, buf, 2);
-      truncFloat(buf, 6);
-      printLCDLPad(2, 14, buf, 6, ' ');
-
+      ftoa(volAvg[VS_MASH]/1000.0, buf, 3);
+      truncFloat(buf, 8);
+      printLCDLPad(2, 12, buf, 8, ' ');
+        
+      ftoa(volAvg[VS_KETTLE]/1000.0, buf, 3);
+      truncFloat(buf, 8);
+      printLCDLPad(3, 12, buf, 8, ' ');
+      
       if (encCount != lastCount) {
-        printLCDRPad(3, 5, "", 10, ' ');
+        printLCDRPad(0, 9, "", 10, ' ');
         boolean moveUp = 1;
         if (encCount < lastCount) moveUp = 0;
         lastCount = encCount;
@@ -822,17 +825,17 @@ void manSparge(byte mode) {
           }
           encCount = lastCount;
         }
-        if (lastCount == 0) printLCD_P(3, 6, CONTINUE);
-        else if (lastCount == 1) printLCD_P(3, 5, SPARGEIN);
-        else if (lastCount == 2) printLCD_P(3, 5, SPARGEOUT);
-        else if (lastCount == 3) printLCD_P(3, 5, FLYSPARGE);
-        else if (lastCount == 4) printLCD_P(3, 5, MASHHEAT);
-        else if (lastCount == 5) printLCD_P(3, 5, MASHIDLE);
-        else if (lastCount == 6) printLCD_P(3, 7, ALLOFF);
-        else if (lastCount == 7) printLCD_P(3, 8, ABORT);
+        if (lastCount == 0) printLCD_P(0, 10, CONTINUE);
+        else if (lastCount == 1) printLCD_P(0, 9, SPARGEIN);
+        else if (lastCount == 2) printLCD_P(0, 9, SPARGEOUT);
+        else if (lastCount == 3) printLCD_P(0, 9, FLYSPARGE);
+        else if (lastCount == 4) printLCD_P(0, 9, MASHHEAT);
+        else if (lastCount == 5) printLCD_P(0, 9, MASHIDLE);
+        else if (lastCount == 6) printLCD_P(0, 11, ALLOFF);
+        else if (lastCount == 7) printLCD_P(0, 12, ABORT);
       }
 
-      for (byte i = TS_HLT; i <= TS_MASH; i++) if (temp[i] == -1) printLCD_P(1, i * 16, PSTR("---")); else printLCDLPad(1, i * 16, itoa(temp[i], buf, 10), 3, ' ');
+      for (byte i = TS_HLT; i <= TS_KETTLE; i++) if (temp[i] == -1) printLCD_P(i + 1, 7, PSTR("---")); else printLCDLPad(i + 1, 7, itoa(temp[i], buf, 10), 3, ' ');
 
       if (chkMsg()) {
         if (strcasecmp(msg[0], "SELECT") == 0) {
@@ -849,31 +852,14 @@ void manSparge(byte mode) {
         if (encCount == 0) {
           resetOutputs();
           return;
-        } else if (encCount == 1) {
-          printLCD_P(3, 0, PSTR("On "));
-          printLCD_P(3, 17, PSTR("Off"));
-          setValves(vlvConfig[VLV_SPARGEIN]);
-        } else if (encCount == 2) {
-          printLCD_P(3, 0, PSTR("Off"));
-          printLCD_P(3, 17, PSTR(" On"));
-          setValves(vlvConfig[VLV_SPARGEOUT]);
-        } else if (encCount == 3) {
-          printLCD_P(3, 0, PSTR("On "));
-          printLCD_P(3, 17, PSTR(" On"));
-          setValves(vlvConfig[VLV_SPARGEIN] | vlvConfig[VLV_SPARGEOUT]);
-        } else if (encCount == 4) {
-          printLCD_P(3, 0, PSTR("Off"));
-          printLCD_P(3, 17, PSTR("Off"));
-          setValves(vlvConfig[VLV_MASHHEAT]);
-        } else if (encCount == 5) {
-          printLCD_P(3, 0, PSTR("Off"));
-          printLCD_P(3, 17, PSTR("Off"));
-          setValves(vlvConfig[VLV_MASHIDLE]);
-        } else if (encCount == 6) {
-          printLCD_P(3, 0, PSTR("Off"));
-          printLCD_P(3, 17, PSTR("Off"));
-          setValves(0);
-        } else if (encCount == 7) {
+        }
+        else if (encCount == 1) setValves(vlvConfig[VLV_SPARGEIN]);
+        else if (encCount == 2) setValves(vlvConfig[VLV_SPARGEOUT]);
+        else if (encCount == 3) setValves(vlvConfig[VLV_SPARGEIN] | vlvConfig[VLV_SPARGEOUT]);
+        else if (encCount == 4) setValves(vlvConfig[VLV_MASHHEAT]);
+        else if (encCount == 5) setValves(vlvConfig[VLV_MASHIDLE]);
+        else if (encCount == 6) setValves(0);
+        else if (encCount == 7) {
             if (confirmExit()) {
               resetOutputs();
               enterStatus = 2;
