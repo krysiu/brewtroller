@@ -337,6 +337,15 @@ void checkConfig() {
       for (byte i = 118; i <= 125; i++) EEPROM.write(i, 0);
       for (unsigned int i = 1850; i <= 1857; i++) EEPROM.write(i, 0);
       EEPROM.write(2047, 11);
+    case 11: 
+      //Swap P/V 3&4 in existing Valve Profiles
+      for (byte i = VLV_FILLHLT; i <= VLV_CHILLBEER; i++) {
+        unsigned long vlvs = PROMreadLong(1806 + i * 4);
+        vlvs = (vlvs & 0xFFFFFFF3) | ((vlvs>>1) & B100) | ((vlvs<<1) & B1000);
+        PROMwriteLong(1806 + i * 4, vlvs);
+      }
+
+      EEPROM.write(2047, 12);
     default:
       //No EEPROM Upgrade Required
       return;

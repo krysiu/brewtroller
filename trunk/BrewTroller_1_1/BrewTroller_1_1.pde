@@ -1,4 +1,4 @@
-#define BUILD 276 
+#define BUILD 277 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -214,8 +214,8 @@ using LiquidCrystal Fix by Donald Weiman:
   #define VALVE2_PIN 7
 
 #ifdef BTBOARD_2.2
-  #define VALVE3_PIN 26
-  #define VALVE4_PIN 25
+  #define VALVE3_PIN 25
+  #define VALVE4_PIN 26
 #else
   #define VALVE3_PIN 8
   #define VALVE4_PIN 9

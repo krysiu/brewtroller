@@ -203,7 +203,7 @@ boolean chkMsg() {
           } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "SET_PROG") == 0) {
           byte program = atoi(msg[1]);
-          if (msgField == 23 && program >= 0 && program < 30) {
+          if (msgField == 21 && program >= 0 && program < 30) {
             setProgName(program, msg[2]);
             byte stepTemp[4], stepMins[4];
             for (byte i = STEP_DOUGHIN; i <= STEP_MASHOUT; i++) {
@@ -215,12 +215,12 @@ boolean chkMsg() {
             setProgDelay(program, atoi(msg[13]));
             setProgHLT(program, atoi(msg[14]));
             setProgBatchVol(program, atoi(msg[15]));
-            setProgGrain(program, atoi(msg[18]));
-            setProgBoil(program, atoi(msg[19]));
-            setProgRatio(program, atoi(msg[20]));
-            setProgPitch(program, atoi(msg[21]));
-            setProgAdds(program, atoi(msg[22]));
-            setProgGrainT(program, atoi(msg[23]));
+            setProgGrain(program, atoi(msg[16]));
+            setProgBoil(program, atoi(msg[17]));
+            setProgRatio(program, atoi(msg[18]));
+            setProgPitch(program, atoi(msg[19]));
+            setProgAdds(program, atoi(msg[20]));
+            setProgGrainT(program, atoi(msg[21]));
             clearMsg();
             logProgram(program);
           } else rejectParam(LOGGLB);
