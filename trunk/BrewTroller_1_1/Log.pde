@@ -175,7 +175,7 @@ boolean chkMsg() {
           clearMsg();
           logABSettings();
         } else if(strcasecmp(msg[0], "SET_ABSET") == 0) {
-          if (msgField == 21) {
+          if (msgField == 19) {
             byte stepTemp[4], stepMins[4];
             for (byte i = STEP_DOUGHIN; i <= STEP_MASHOUT; i++) {
               stepTemp[i] = atoi(msg[i * 2 + 2]);
