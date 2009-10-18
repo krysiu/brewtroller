@@ -123,8 +123,8 @@ boolean chkMsg() {
         } else if(strcasecmp(msg[0], "SET_VSET") == 0) {
           byte val = atoi(msg[1]);
           if (msgField == 3 && val >= VS_HLT && val <= VS_STEAM) {
-            capacity[val] = atoi(msg[2]);
-            volLoss[val] = atoi(msg[3]);
+            capacity[val] = strtoul(msg[2], NULL, 10);
+            volLoss[val] = atol(msg[3]);
             saveSetup();
             clearMsg();
             logVSet(val);
@@ -139,8 +139,8 @@ boolean chkMsg() {
           byte vessel = atoi(msg[1]);
           if (msgField == 21 && vessel >= VS_HLT && vessel <= VS_KETTLE) {
             for (byte i = 0; i < 10; i++) {
-              calibVols[vessel][i] = atol(msg[i * 2 + 2]);
-              calibVals[vessel][i] = atoi(msg[i * 2 + 3]);
+              calibVols[vessel][i] = strtoul(msg[i * 2 + 2], NULL, 10);
+              calibVals[vessel][i] = atol(msg[i * 2 + 3]);
               saveSetup();
             }
             clearMsg();
@@ -166,7 +166,7 @@ boolean chkMsg() {
         } else if(strcasecmp(msg[0], "SET_VLVP") == 0) {
           byte profile = atoi(msg[1]);
           if (msgField == 2 && profile >= VS_HLT && profile <= VS_KETTLE) {
-            vlvConfig[profile] = atol(msg[2]);
+            vlvConfig[profile] = strtoul(msg[2], NULL, 10);
             saveSetup();
             clearMsg();
             logVlvProfile(profile);
@@ -183,14 +183,14 @@ boolean chkMsg() {
             }
             saveABSteps(stepTemp, stepMins);
             setABSparge(atoi(msg[9]));
-            setABDelay(atoi(msg[10]));
+            setABDelay(atol(msg[10]));
             setABHLTTemp(atoi(msg[11]));
-            setABBatchVol(atol(msg[12]));
-            setABGrain(atoi(msg[13]));
-            setABBoil(atoi(msg[14]));
-            setABRatio(atoi(msg[15]));
+            setABBatchVol(strtoul(msg[12], NULL, 10));
+            setABGrain(strtoul(msg[13], NULL, 10));
+            setABBoil(atol(msg[14]));
+            setABRatio(atol(msg[15]));
             setABPitch(atoi(msg[16]));
-            setABAdds(atoi(msg[17]));
+            setABAdds(atol(msg[17]));
             setABGrainTemp(atoi(msg[18]));
             clearMsg();
             logABSettings();
@@ -212,14 +212,14 @@ boolean chkMsg() {
             }
             setProgSchedule(program, stepTemp, stepMins);
             setProgSparge(program, atoi(msg[11]));
-            setProgDelay(program, atoi(msg[12]));
+            setProgDelay(program, atol(msg[12]));
             setProgHLT(program, atoi(msg[13]));
-            setProgBatchVol(program, atoi(msg[14]));
-            setProgGrain(program, atoi(msg[15]));
-            setProgBoil(program, atoi(msg[16]));
-            setProgRatio(program, atoi(msg[17]));
+            setProgBatchVol(program, strtoul(msg[14], NULL, 10));
+            setProgGrain(program, strtoul(msg[15], NULL, 10));
+            setProgBoil(program, atol(msg[16]));
+            setProgRatio(program, atol(msg[17]));
             setProgPitch(program, atoi(msg[18]));
-            setProgAdds(program, atoi(msg[19]));
+            setProgAdds(program, atol(msg[19]));
             setProgGrainT(program, atoi(msg[20]));
             clearMsg();
             logProgram(program);
