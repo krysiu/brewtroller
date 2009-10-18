@@ -1,4 +1,4 @@
-#define BUILD 279 
+#define BUILD 280 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -63,7 +63,7 @@ using LiquidCrystal Fix by Donald Weiman:
 // all lines commented
 //
 //#define MUXBOARDS 1
-#define MUXBOARDS 2
+//#define MUXBOARDS 2
 //#define MUXBOARDS 3
 //#define MUXBOARDS 4
 //**********************************************************************************
