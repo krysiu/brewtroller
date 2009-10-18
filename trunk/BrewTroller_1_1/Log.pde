@@ -175,23 +175,23 @@ boolean chkMsg() {
           clearMsg();
           logABSettings();
         } else if(strcasecmp(msg[0], "SET_ABSET") == 0) {
-          if (msgField == 19) {
+          if (msgField == 18) {
             byte stepTemp[4], stepMins[4];
             for (byte i = STEP_DOUGHIN; i <= STEP_MASHOUT; i++) {
-              stepTemp[i] = atoi(msg[i * 2 + 2]);
-              stepMins[i] = atoi(msg[i * 2 + 3]);
+              stepTemp[i] = atoi(msg[i * 2 + 1]);
+              stepMins[i] = atoi(msg[i * 2 + 2]);
             }
             saveABSteps(stepTemp, stepMins);
-            setABSparge(atoi(msg[10]));
-            setABDelay(atoi(msg[11]));
-            setABHLTTemp(atoi(msg[12]));
-            setABBatchVol(atoi(msg[13]));
-            setABGrain(atoi(msg[14]));
-            setABBoil(atoi(msg[15]));
-            setABRatio(atoi(msg[16]));
-            setABPitch(atoi(msg[17]));
-            setABAdds(atoi(msg[18]));
-            setABGrainTemp(atoi(msg[19]));
+            setABSparge(atoi(msg[9]));
+            setABDelay(atoi(msg[10]));
+            setABHLTTemp(atoi(msg[11]));
+            setABBatchVol(atol(msg[12]));
+            setABGrain(atoi(msg[13]));
+            setABBoil(atoi(msg[14]));
+            setABRatio(atoi(msg[15]));
+            setABPitch(atoi(msg[16]));
+            setABAdds(atoi(msg[17]));
+            setABGrainTemp(atoi(msg[18]));
             clearMsg();
             logABSettings();
           } else rejectParam(LOGGLB);
@@ -203,24 +203,24 @@ boolean chkMsg() {
           } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "SET_PROG") == 0) {
           byte program = atoi(msg[1]);
-          if (msgField == 21 && program >= 0 && program < 30) {
+          if (msgField == 20 && program >= 0 && program < 30) {
             setProgName(program, msg[2]);
             byte stepTemp[4], stepMins[4];
             for (byte i = STEP_DOUGHIN; i <= STEP_MASHOUT; i++) {
-              stepTemp[i] = atoi(msg[i * 2 + 4]);
-              stepMins[i] = atoi(msg[i * 2 + 5]);
+              stepTemp[i] = atoi(msg[i * 2 + 3]);
+              stepMins[i] = atoi(msg[i * 2 + 4]);
             }
             setProgSchedule(program, stepTemp, stepMins);
-            setProgSparge(program, atoi(msg[12]));
-            setProgDelay(program, atoi(msg[13]));
-            setProgHLT(program, atoi(msg[14]));
-            setProgBatchVol(program, atoi(msg[15]));
-            setProgGrain(program, atoi(msg[16]));
-            setProgBoil(program, atoi(msg[17]));
-            setProgRatio(program, atoi(msg[18]));
-            setProgPitch(program, atoi(msg[19]));
-            setProgAdds(program, atoi(msg[20]));
-            setProgGrainT(program, atoi(msg[21]));
+            setProgSparge(program, atoi(msg[11]));
+            setProgDelay(program, atoi(msg[12]));
+            setProgHLT(program, atoi(msg[13]));
+            setProgBatchVol(program, atoi(msg[14]));
+            setProgGrain(program, atoi(msg[15]));
+            setProgBoil(program, atoi(msg[16]));
+            setProgRatio(program, atoi(msg[17]));
+            setProgPitch(program, atoi(msg[18]));
+            setProgAdds(program, atoi(msg[19]));
+            setProgGrainT(program, atoi(msg[20]));
             clearMsg();
             logProgram(program);
           } else rejectParam(LOGGLB);

@@ -1,4 +1,4 @@
-#define BUILD 278 
+#define BUILD 279 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -63,7 +63,7 @@ using LiquidCrystal Fix by Donald Weiman:
 // all lines commented
 //
 //#define MUXBOARDS 1
-//#define MUXBOARDS 2
+#define MUXBOARDS 2
 //#define MUXBOARDS 3
 //#define MUXBOARDS 4
 //**********************************************************************************
@@ -175,7 +175,7 @@ using LiquidCrystal Fix by Donald Weiman:
 
 // Disable On board pump/valve outputs for BT Board 3.0 and older boards using steam
 // Set MUXBOARDS 0 for boards without on board or MUX Pump/valve outputs
-#if !defined BTBOARD_3 && !defined USESTEAM
+#if !defined BTBOARD_3 && !defined USESTEAM && !defined MUXBOARDS
   #define ONBOARDPV
 #else
   #if !defined MUXBOARDS
