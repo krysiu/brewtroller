@@ -1,4 +1,4 @@
-#define BUILD 281 
+#define BUILD 282 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -191,12 +191,7 @@ using LiquidCrystal Fix by Donald Weiman:
 //Pin and Interrupt Definitions
 #define ENCA_PIN 2
 #define ENCB_PIN 4
-
-#ifdef BTBOARD_3
-  #define TEMP_PIN 24
-#else
-  #define TEMP_PIN 5
-#endif
+#define TEMP_PIN 5
 
 #define ENTER_PIN 11
 #define ALARM_PIN 15
@@ -233,14 +228,7 @@ using LiquidCrystal Fix by Donald Weiman:
 #define HLTHEAT_PIN 0
 #define MASHHEAT_PIN 1
 #define KETTLEHEAT_PIN 3
-
-
-#if defined BTBOARD_3
-  #define STEAMHEAT_PIN 25
-#else
-  #define STEAMHEAT_PIN 6
-#endif
-
+#define STEAMHEAT_PIN 6
 
 #define HLTVOL_APIN 0
 #define MASHVOL_APIN 1
@@ -509,19 +497,23 @@ void setup() {
 
   pid[VS_HLT].SetInputLimits(0, 255);
   pid[VS_HLT].SetOutputLimits(0, PIDCycle[VS_HLT] * 10 * PIDLIMIT_HLT);
+  pid[VS_HLT].SetTunings(PIDp[VS_HLT], PIDi[VS_HLT], PIDd[VS_HLT]);
 
   pid[VS_MASH].SetInputLimits(0, 255);
   pid[VS_MASH].SetOutputLimits(0, PIDCycle[VS_MASH] * 10 * PIDLIMIT_MASH);
-
+  pid[VS_MASH].SetTunings(PIDp[VS_MASH], PIDi[VS_MASH], PIDd[VS_MASH]);
+  
   pid[VS_KETTLE].SetInputLimits(0, 255);
   pid[VS_KETTLE].SetOutputLimits(0, PIDCycle[VS_KETTLE] * 10 * PIDLIMIT_KETTLE);
-
+  pid[VS_KETTLE].SetTunings(PIDp[VS_KETTLE], PIDi[VS_KETTLE], PIDd[VS_KETTLE]);
+  
   #ifdef USEMETRIC
     pid[VS_STEAM].SetInputLimits(0, 50000 / steamPSens);
   #else
     pid[VS_STEAM].SetInputLimits(0, 7250 / steamPSens);
   #endif
   pid[VS_STEAM].SetOutputLimits(0, PIDCycle[VS_STEAM] * 10 * PIDLIMIT_STEAM);
+  pid[VS_STEAM].SetTunings(PIDp[VS_STEAM], PIDi[VS_STEAM], PIDd[VS_STEAM]);
     
   if (pwrRecovery == 1) {
     loadZeroVols();
