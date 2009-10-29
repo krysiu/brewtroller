@@ -30,9 +30,41 @@ int availableMemory() {
 }
 
 void resetOutputs() {
-  for (byte i = 0; i < 6; i++) {
+  for (byte i = 0; i < NUM_ZONES; i++) {
     setpoint[i] = 0;
-    digitalWrite(outputPin[i], LOW);
+    heatStatus[i] = 0;
+    coolStatus[i] = 0;
+    if (COOLPIN_OFFSET > i) {
+      if (!muxOuts[i]) digitalWrite(outputPin[i], LOW);
+    }
+    if (NUM_OUTS - COOLPIN_OFFSET > i) {
+      if (!muxOuts[i + COOLPIN_OFFSET]) digitalWrite(outputPin[i + COOLPIN_OFFSET], LOW);
+    }
+    #ifdef USE_MUX
+      digitalWrite(MUX_OE_PIN, HIGH);
+      //ground latchPin and hold low for as long as you are transmitting
+      digitalWrite(MUX_LATCH_PIN, 0);
+      //clear everything out just in case to prepare shift register for bit shifting
+      digitalWrite(MUX_DATA_PIN, 0);
+      digitalWrite(MUX_CLOCK_PIN, 0);
+
+      //for each bit in the long myDataOut
+      for (byte i = 31; i >= 0; i--)  {
+        digitalWrite(MUX_CLOCK_PIN, 0);
+        //create bitmask to grab the bit associated with our counter i and set data pin accordingly (NOTE: 32 - i causes bits to be sent most significant to least significant)
+        digitalWrite(MUX_DATA_PIN, 0);
+        //register shifts bits on upstroke of clock pin  
+        digitalWrite(MUX_CLOCK_PIN, 1);
+        //zero the data pin after shift to prevent bleed through
+        digitalWrite(MUX_DATA_PIN, 0);
+      }
+
+      //stop shifting
+      digitalWrite(MUX_CLOCK_PIN, 0);
+      digitalWrite(MUX_LATCH_PIN, 1);
+      //Enable outputs
+      digitalWrite(MUX_OE_PIN, LOW);
+    #endif
   }
 }
 

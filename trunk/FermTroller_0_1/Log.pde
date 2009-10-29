@@ -55,13 +55,13 @@ boolean chkMsg() {
         //Check for Global Commands
         if       (strcasecmp(msg[0], "GET_TS") == 0) {
           byte val = atoi(msg[1]);
-          if (msgField == 1 && val < 5) {
+          if (msgField == 1 && val < NUM_ZONES + 1) {
             logTSensor(val);
             clearMsg();
           } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "SET_TS") == 0) {
           byte val = atoi(msg[1]);
-          if (msgField == 9 && val < 5) {
+          if (msgField == 9 && val < NUM_ZONES + 1) {
             for (byte i=0; i<8; i++) tSensor[val][i] = (byte)atoi(msg[i+2]);
             saveSetup();
             clearMsg();
@@ -69,18 +69,20 @@ boolean chkMsg() {
           } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "GET_OSET") == 0) {
           byte val = atoi(msg[1]);
-          if (msgField == 1 && val < 4) {
+          if (msgField == 1 && val < NUM_ZONES) {
             logOSet(val);
             clearMsg();
           } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "SET_OSET") == 0) {
           byte val = atoi(msg[1]);
-          if (msgField == 7 && val < 4) {
-            PIDEnabled[val] = (byte)atoi(msg[2]);
-            PIDCycle[val] = (byte)atoi(msg[3]);
-            PIDp[val] = (byte)atoi(msg[4]);
-            PIDi[val] = (byte)atoi(msg[5]);
-            PIDd[val] = (byte)atoi(msg[6]);
+          if (msgField == 7 && val < NUM_ZONES) {
+            if (val < NUM_PID_OUTS) {
+              PIDEnabled[val] = (byte)atoi(msg[2]);
+              PIDCycle[val] = (byte)atoi(msg[3]);
+              PIDp[val] = (byte)atoi(msg[4]);
+              PIDi[val] = (byte)atoi(msg[5]);
+              PIDd[val] = (byte)atoi(msg[6]);
+            }
             hysteresis[val] = (byte)atoi(msg[7]);
             saveSetup();
             clearMsg();
@@ -180,10 +182,17 @@ void logOSet(byte zone) {
   logField_P(PSTR("OUTPUT_SET"));
   logFieldI(zone);
   logFieldI(PIDEnabled[zone]);
-  logFieldI(PIDCycle[zone]);
-  logFieldI(PIDp[zone]);
-  logFieldI(PIDi[zone]);
-  logFieldI(PIDd[zone]);
+  if (zone < NUM_PID_OUTS) {
+    logFieldI(PIDCycle[zone]);
+    logFieldI(PIDp[zone]);
+    logFieldI(PIDi[zone]);
+    logFieldI(PIDd[zone]);
+  } else {
+    logFieldI(0);
+    logFieldI(0);
+    logFieldI(0);
+    logFieldI(0);
+  }
   logFieldI(hysteresis[zone]);
   logEnd();
 }

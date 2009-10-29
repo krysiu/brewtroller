@@ -1,4 +1,4 @@
-#define BUILD 269 
+#define BUILD 283 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -21,39 +21,19 @@ using LiquidCrystal Fix by Donald Weiman:
 //*****************************************************************************************************************************
 
 //**********************************************************************************
-// MODE
-//**********************************************************************************
-// You must uncomment one and only one of the following MODE_ definitions.
-// FermTroller supports six onboard outputs plus six additional output on an
-// optional MUX board.
-//
-// MODE_3+3 supports three zones each with its own heat and cool outputs
-// MODE_6COOL supports six zones with cool outputs only
-// MODE_6HEAT supports six zones with heat outputs only
-// MODE_6+6 supports six zones each with its own heat output onboard 
-//          and a cool output provided through an optional MUX board
-
-#define MODE_3+3
-//#define MODE_6COOL
-//#define MODE_6HEAT
-//#define MODE_6+6
-//**********************************************************************************
-
-//**********************************************************************************
 // UNIT (Metric/US)
 //**********************************************************************************
 // By default BrewTroller will use US Units
 // Uncomment USEMETRIC below to use metric instead
-//
+// 
 //#define USEMETRIC
 //**********************************************************************************
 
 //**********************************************************************************
 // BrewTroller Board Version
 //**********************************************************************************
-// The Brewtroller 3.0 board moved the LCD RS line to a new pin. If you are using a 
-// BrewTroller 3.0 or newer board uncomment this line to enable the correct pins.
-//
+// The Brewtroller 3.0 board uses MUX instead of direct on-board outputs.
+// 
 //#define BTBOARD_3
 //**********************************************************************************
 
@@ -63,11 +43,65 @@ using LiquidCrystal Fix by Donald Weiman:
 // You must uncomment one and only one of the following ENCODER_ definitions
 // Use ENCODER_ALPS for ALPS and Panasonic Encoders
 // Use ENCODER_CUI for older CUI encoders
-//
+// 
 #define ENCODER_ALPS
 //#define ENCODER_CUI
 //**********************************************************************************
 
+//**********************************************************************************
+// Number of Zones
+//**********************************************************************************
+// Theoretical maximum value is 32 zones
+// Default is 6 zones
+// 
+#define NUM_ZONES 6
+//**********************************************************************************
+
+//**********************************************************************************
+// Number of Outputs
+//**********************************************************************************
+// The total number of outputs used
+// 12 is the theoretical maximum for non-MUX
+// MUX enabled systems could support up to 32 outputs
+//
+#define NUM_OUTS 12
+//**********************************************************************************
+
+//**********************************************************************************
+// Number of Cool/Heat Outputs
+//**********************************************************************************
+// The number of output pins dedicated to heat
+// Increase to trade cool outputs for heat.
+// Decrease to trade heat outputs for cool.
+// If there are fewer heat or cool outputs than zones, the outputs will be applied
+// starting with Zone 1. Higher zones will lack those outputs. 
+// Examples:
+//   NUM_ZONES 6, NUM_OUTS 12, COOLPIN_OFFSET 6 gives 6 zones with heat on 1-6 and cool on 1-6 (Default)
+//   NUM_ZONES 8, NUM_OUTS 12, COOLPIN_OFFSET 8 gives 8 zones with heat on 1-8 and cool on 1-4
+//   NUM_ZONES 8, NUM_OUTS 12, COOLPIN_OFFSET 4 gives 8 zones with heat on 1-4 and cool on 1-8
+//
+#define COOLPIN_OFFSET 6
+//**********************************************************************************
+
+//**********************************************************************************
+// Number of PID Outputs
+//**********************************************************************************
+//This setting defaults to 6 for 2.x boards or 4 for 3.x boards. 
+//WARNING: A value greater than 5 on 3.x boards will conflict with MUX outputs.
+//Output pin 5 is not connected on the 3.x board. A value of 0-4 is recommended for 3.x boards.
+//Theoretical limit for is 12 on 2.x boards, matching NUM_OUTS. 
+//PID is only used on heat so a value > 6 would only be useful if you were using > 6 zones.
+//
+//#define NUM_PID_OUTS 6
+//**********************************************************************************
+
+//**********************************************************************************
+// Enable MUX
+//**********************************************************************************
+//3.x boards use MUX by default. Use this setting to enable MUX on 2.x boards
+//
+//#define USE_MUX
+//**********************************************************************************
 
 //**********************************************************************************
 // DEBUG
@@ -87,50 +121,47 @@ using LiquidCrystal Fix by Donald Weiman:
 //Pin and Interrupt Definitions
 #define ENCA_PIN 2
 #define ENCB_PIN 4
-#ifdef BTBOARD_3
-  #define TEMP_PIN 24
-#else
-  #define TEMP_PIN 5
-#endif
+#define TEMP_PIN 5
 #define ENTER_PIN 11
 #define ALARM_PIN 15
 #define ENTER_INT 1
 #define ENCA_INT 2
 
 //Output Pin Array
-//In 3 + 3 mode the first three pins are heat outputs and the last three are cool outputs for Zones 1 - 3
-//In 6 Cool Mode these are cool outputs for Zones 1 - 6
-//In 6 Heat Mode these are heat outputs for Zones 1 - 6
-//In 6 + 6 Mode these pins are used for heat output and MUX is used for cool
-#define OUT1_PIN 0
-#define OUT2_PIN 1
-#define OUT3_PIN 3
+//The first six pins are heat outputs and the next six are cool outputs for Zones 1 - 6
+//BTBOARD_3 uses only the first four pins and uses MUX for the remaining outputs
+byte outputPin[12] = { 0, 1, 3, 6, 7, 10, 12, 13, 14, 24, 18, 16 };
 
 #ifdef BTBOARD_3
-  #define OUT4_PIN 25
-  #define OUT5_PIN 27
-  #define OUT6_PIN 26
+  //Supports PID output on Zones 1-4. 
+  #ifndef NUM_PID_OUTS
+    #define NUM_PID_OUTS 4
+  #endif
+  #ifndef USE_MUX
+    #define USE_MUX
+  #endif
+  
+  //Uses on-board heat outputs for 1-4 and MUX outputs 5-12
+  boolean muxOuts[32] = {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 #else
-  #define OUT4_PIN 24
-  #define OUT5_PIN 18
-  #define OUT6_PIN 16
+  //2.x Boards Supports PID output on Zones 1-6
+  #ifndef NUM_PID_OUTS
+    #define NUM_PID_OUTS 6
+  #endif
+  //No MUX
+  boolean muxOuts[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 #endif
 
-byte outputPin[6] = { OUT1_PIN, OUT2_PIN, OUT3_PIN, OUT4_PIN, OUT5_PIN, OUT6_PIN };
-
-#ifdef MODE_3+3
-  #define NUM_ZONES 3
-  #define COOLPIN_OFFSET 3
-#else
-  #define NUM_ZONES 6
-  #define COOLPIN_OFFSET 0
-#endif
-
-#ifdef MODE_6+6
+#ifdef USE_MUX
   #define MUX_LATCH_PIN 12
   #define MUX_CLOCK_PIN 13
   #define MUX_DATA_PIN 14
   #define MUX_OE_PIN 10
+#endif
+
+//Safety catch if using fewer zones than defined PID outputs
+#if NUM_PID_OUTS > NUM_ZONES
+  #define NUM_PID_OUTS NUM_ZONES
 #endif
 
 //Encoder Globals
@@ -140,31 +171,61 @@ byte encMax;
 byte enterStatus = 0;
 
 //8-byte Temperature Sensor Address x6 Sensors
-byte tSensor[7][8];
-float temp[7];
+byte tSensor[NUM_ZONES + 1][8];
+float temp[NUM_ZONES + 1];
 unsigned long convStart = 0;
 
 //Shared menuOptions Array
-char menuopts[30][20];
+char menuopts[45][20];
 
 //Common Buffer
 char buf[11];
 
 //Output Globals
-double PIDInput[6], PIDOutput[6], setpoint[6];
-byte PIDp[6], PIDi[6], PIDd[6], PIDCycle[6], hysteresis[6];
-unsigned long cycleStart[6];
-boolean heatStatus[6];
-boolean coolStatus[6];
-boolean PIDEnabled[6];
+double PIDInput[NUM_PID_OUTS], PIDOutput[NUM_PID_OUTS], setpoint[NUM_ZONES];
+byte PIDp[NUM_PID_OUTS], PIDi[NUM_PID_OUTS], PIDd[NUM_PID_OUTS], PIDCycle[NUM_PID_OUTS], hysteresis[NUM_ZONES];
+unsigned long cycleStart[NUM_PID_OUTS];
+boolean heatStatus[NUM_ZONES];
+boolean coolStatus[NUM_ZONES];
+boolean PIDEnabled[32];
 
-PID pid[6] = {
-  PID(&PIDInput[0], &PIDOutput[0], &setpoint[0], 3, 4, 1),
-  PID(&PIDInput[1], &PIDOutput[1], &setpoint[1], 3, 4, 1),
-  PID(&PIDInput[2], &PIDOutput[2], &setpoint[2], 3, 4, 1),
-  PID(&PIDInput[3], &PIDOutput[3], &setpoint[3], 3, 4, 1),
-  PID(&PIDInput[4], &PIDOutput[4], &setpoint[4], 3, 4, 1),
-  PID(&PIDInput[5], &PIDOutput[5], &setpoint[5], 3, 4, 1)
+PID pid[NUM_PID_OUTS] = {
+  #if NUM_PID_OUTS > 0
+    PID(&PIDInput[0], &PIDOutput[0], &setpoint[0], 3, 4, 1),
+  #endif
+  #if NUM_PID_OUTS > 1
+    PID(&PIDInput[1], &PIDOutput[1], &setpoint[1], 3, 4, 1),
+  #endif
+  #if NUM_PID_OUTS > 2
+    PID(&PIDInput[2], &PIDOutput[2], &setpoint[2], 3, 4, 1),
+  #endif
+  #if NUM_PID_OUTS > 3
+    PID(&PIDInput[3], &PIDOutput[3], &setpoint[3], 3, 4, 1),
+  #endif
+  #if NUM_PID_OUTS > 4
+    PID(&PIDInput[4], &PIDOutput[4], &setpoint[4], 3, 4, 1),
+  #endif
+  #if NUM_PID_OUTS > 5
+    PID(&PIDInput[5], &PIDOutput[5], &setpoint[5], 3, 4, 1),
+  #endif
+  #if NUM_PID_OUTS > 6
+    PID(&PIDInput[6], &PIDOutput[6], &setpoint[6], 3, 4, 1),
+  #endif
+  #if NUM_PID_OUTS > 7
+    PID(&PIDInput[7], &PIDOutput[7], &setpoint[7], 3, 4, 1),
+  #endif
+  #if NUM_PID_OUTS > 8
+    PID(&PIDInput[8], &PIDOutput[8], &setpoint[8], 3, 4, 1),
+  #endif
+  #if NUM_PID_OUTS > 9
+    PID(&PIDInput[9], &PIDOutput[9], &setpoint[9], 3, 4, 1),
+  #endif
+  #if NUM_PID_OUTS > 10
+    PID(&PIDInput[10], &PIDOutput[10], &setpoint[10], 3, 4, 1),
+  #endif
+  #if NUM_PID_OUTS > 11
+    PID(&PIDInput[11], &PIDOutput[11], &setpoint[11], 3, 4, 1),
+  #endif 
 };
 
 //Timer Globals
@@ -245,16 +306,15 @@ void setup() {
   pinMode(ENCB_PIN, INPUT);
   pinMode(ENTER_PIN, INPUT);
   pinMode(ALARM_PIN, OUTPUT);
-  for (byte i = 0; i < 6; i++) pinMode(outputPin[i], OUTPUT);
-  resetOutputs();
-  
-  #ifdef MODE_6+6
+  for (byte i = 0; i < 12; i++) if (!muxOuts[i]) pinMode(outputPin[i], OUTPUT);
+ 
+  #ifdef USE_MUX
     pinMode(MUX_LATCH_PIN, OUTPUT);
     pinMode(MUX_CLOCK_PIN, OUTPUT);
     pinMode(MUX_DATA_PIN, OUTPUT);
     pinMode(MUX_OE_PIN, OUTPUT);
   #endif
-  
+  resetOutputs();
   initLCD();
   
   //Encoder Setup
@@ -275,9 +335,10 @@ void setup() {
   //Load global variable values stored in EEPROM
   loadSetup();
 
-  for (byte i = 0; i < 6; i++) {
+  for (byte i = 0; i < NUM_PID_OUTS; i++) {
       pid[i].SetInputLimits(0, 255);
       pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
+      pid[i].SetTunings(PIDp[i], PIDi[i], PIDd[i]);
   }
   
   if (pwrRecovery == 1) {

@@ -26,24 +26,19 @@ void menuSetup() {
 
 void assignSensor() {
   encMin = 0;
-  encMax = 6;
+  encMax = NUM_ZONES;
   encCount = 0;
   byte lastCount = 1;
   
-  char dispTitle[7][21];
-  strcpy_P(dispTitle[0], PSTR("Zone 1"));
-  strcpy_P(dispTitle[1], PSTR("Zone 2"));
-  strcpy_P(dispTitle[2], PSTR("Zone 3"));
-  strcpy_P(dispTitle[3], PSTR("Zone 4"));
-  strcpy_P(dispTitle[4], PSTR("Zone 5"));
-  strcpy_P(dispTitle[5], PSTR("Zone 6"));
-  strcpy_P(dispTitle[6], PSTR("Ambient"));
+  char dispTitle[NUM_ZONES + 1][21];
+  for (byte i = 0; i < NUM_ZONES; i++) {
+    strcpy_P(dispTitle[i], PSTR("Zone "));
+    strcat(dispTitle[i], itoa(i + 1, buf, 10));
+  }
+  strcpy_P(dispTitle[NUM_ZONES], PSTR("Ambient"));
   
   while (1) {
     if (encCount != lastCount) {
-      #ifdef MODE_3+3
-        if (encCount > 2) { if (lastCount < encCount) encCount = 6; else encCount = 2; }
-      #endif
       lastCount = encCount;
       clearLCD();
       printLCD_P(0, 0, PSTR("Assign Temp Sensor"));
@@ -74,10 +69,9 @@ void assignSensor() {
         }
       } else if (selected == 1) for (byte i = 0; i <8; i++) tSensor[lastCount][i] = 0;
       else if (selected > 2) return;
-
       saveSetup();
       encMin = 0;
-      encMax = 6;
+      encMax = NUM_ZONES;
       encCount = lastCount;
       lastCount += 1;
     }
@@ -87,41 +81,53 @@ void assignSensor() {
 void cfgOutputs() {
   byte lastOption = 0;
   while(1) {
-    for (byte i = 0; i < NUM_ZONES; i++) {
-      for (byte j = 0; j < 4; j++) {
-        strcpy_P(menuopts[i * 4 + j], PSTR("Zone "));
-        strcat(menuopts[i * 4 + j], itoa(i + 1, buf, 10));
+    if (NUM_PID_OUTS > 0) {
+      for (byte i = 0; i < NUM_PID_OUTS; i++) {
+        for (byte j = 0; j < 4; j++) {
+          strcpy_P(menuopts[i * 4 + j], PSTR("Zone "));
+          strcat(menuopts[i * 4 + j], itoa(i + 1, buf, 10));
+        }
+        strcat_P(menuopts[i * 4], PSTR(" Mode: "));
+        if (PIDEnabled[i]) strcat_P(menuopts[i * 4], PSTR("PID")); 
+          else strcat_P(menuopts[i * 4], PSTR("On/Off"));
+        strcat_P(menuopts[i * 4 + 1], PSTR(" PID Cycle"));
+        strcat_P(menuopts[i * 4 + 2], PSTR(" PID Gain"));
+        strcat_P(menuopts[i * 4 + 3], PSTR(" Hysteresis"));
       }
-      strcat_P(menuopts[i * 4], PSTR(" Mode: "));
-      if (PIDEnabled[i]) strcat_P(menuopts[i * 4], PSTR("PID")); else strcat_P(menuopts[i * 4], PSTR("On/Off"));
-      
-      strcat_P(menuopts[i * 4 + 1], PSTR(" PID Cycle"));
-      strcat_P(menuopts[i * 4 + 2], PSTR(" PID Gain"));
-      strcat_P(menuopts[i * 4 + 3], PSTR(" Hysteresis"));
     }
-    strcpy_P(menuopts[NUM_ZONES * 4], PSTR("Exit"));
-
-    lastOption = scrollMenu("Configure Outputs", NUM_ZONES * 4 + 1, lastOption);
-    char zone[2];
-    itoa(lastOption/4 + 1, zone, 10);
-    if (lastOption == NUM_ZONES * 4) return;
-    else if ((lastOption / 4) * 4 == lastOption) PIDEnabled[lastOption/4] = PIDEnabled[lastOption/4] ^ 1;
-    else if ((lastOption / 4) * 4 + 1 == lastOption) {
+    if (NUM_ZONES - NUM_PID_OUTS > 0) {
+      for (byte i = NUM_PID_OUTS; i < NUM_ZONES; i++) {
+        strcpy_P(menuopts[NUM_PID_OUTS * 3 + i], PSTR("Zone "));
+        strcat(menuopts[NUM_PID_OUTS * 3 + i], itoa(i + 1, buf, 10));
+        strcat_P(menuopts[NUM_PID_OUTS * 3 + i], PSTR(" Hysteresis"));
+      }
+    }
+    strcpy_P(menuopts[NUM_PID_OUTS * 3 + NUM_ZONES], PSTR("Exit"));
+    lastOption = scrollMenu("Configure Outputs", NUM_PID_OUTS * 3 + NUM_ZONES + 1, lastOption);
+    byte zone;
+    char strZone[2];
+    if (lastOption < NUM_PID_OUTS * 4) zone = lastOption / 4;
+      else zone = (lastOption - NUM_PID_OUTS * 3);
+    itoa(zone + 1, strZone, 10);
+    if (lastOption >= NUM_PID_OUTS * 3 + NUM_ZONES) return;
+    else if (zone < NUM_PID_OUTS && lastOption / 4 * 4 == lastOption) PIDEnabled[zone] = PIDEnabled[zone] ^ 1;
+    else if (zone < NUM_PID_OUTS && lastOption / 4 * 4 + 1 == lastOption) {
       strcpy_P(buf, PSTR("Zone "));
-      strcat(buf, zone);
+      strcat(buf, strZone);
       strcat_P(buf, PSTR(" Cycle Time"));
-      PIDCycle[lastOption/4] = getValue(buf, PIDCycle[lastOption/4], 3, 0, 255, PSTR("s"));
-      pid[lastOption/4].SetOutputLimits(0, PIDCycle[lastOption/4] * 1000);
-    } else if ((lastOption / 4) * 4 + 2 == lastOption) {
+      PIDCycle[zone] = getValue(buf, PIDCycle[zone], 3, 0, 255, PSTR("s"));
+      pid[zone].SetOutputLimits(0, PIDCycle[zone] * 1000);
+    } else if (zone < NUM_PID_OUTS && lastOption / 4 * 4 + 2 == lastOption) {
       strcpy_P(buf, PSTR("Zone "));
-      strcat(buf, zone);
+      strcat(buf, strZone);
       strcat_P(buf, PSTR(" PID Gain"));
-      setPIDGain(buf, &PIDp[lastOption/4], &PIDi[lastOption/4], &PIDd[lastOption/4]);
-    } else if ((lastOption / 4) * 4 + 3 == lastOption) {
+      setPIDGain(buf, &PIDp[zone], &PIDi[zone], &PIDd[zone]);
+      pid[zone].SetTunings(PIDp[zone], PIDi[zone], PIDd[zone]);
+    } else if ((zone < NUM_PID_OUTS && lastOption / 4 * 4 + 3 == lastOption) || zone >= NUM_PID_OUTS) {
       strcpy_P(buf, PSTR("Zone "));
-      strcat(buf, zone);
+      strcat(buf, strZone);
       strcat_P(buf, PSTR(" Hysteresis"));
-      hysteresis[lastOption/4] = getValue(buf, hysteresis[lastOption/4], 3, 1, 255, TUNIT);
+      hysteresis[zone] = getValue(buf, hysteresis[zone], 3, 1, 255, TUNIT);
     }
   } 
 }

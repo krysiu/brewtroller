@@ -15,7 +15,7 @@ void fermCore() {
       logField_P(PSTR("ALARM"));
       logFieldI(alarmStatus);
       logEnd();
-    } else if (logCount >= 2 && logCount <= 8) {
+    } else if (logCount >= 2 && logCount <= NUM_ZONES + 2) {
       byte i = logCount - 2;
       logStart_P(LOGDATA);
       logField_P(PSTR("TEMP"));
@@ -28,9 +28,9 @@ void fermCore() {
         logFieldI(1);
       #endif
       logEnd();
-    } else if (logCount >= 9 && logCount <= 14) {
+    } else if (logCount >= NUM_ZONES + 3 && logCount <= NUM_ZONES * 2 + 2) {
       int pct;
-      byte i = logCount - 9;
+      byte i = logCount - NUM_ZONES - 3;
       if (coolStatus[i]) pct = -1;
       else {
         if (PIDEnabled[i]) pct = PIDOutput[i] / PIDCycle[i] / 10;
@@ -42,8 +42,8 @@ void fermCore() {
       logFieldI(i);
       logFieldI(pct);
       logEnd();
-    } else if (logCount >= 15 && logCount <= 20) {
-      byte i = logCount - 15;
+    } else if (logCount >= NUM_ZONES * 2 + 3 && logCount <= NUM_ZONES * 3 + 2) {
+      byte i = logCount - NUM_ZONES * 2 - 3;
       logStart_P(LOGDATA);
       logField_P(PSTR("SETPOINT"));
       logFieldI(i);
@@ -55,9 +55,9 @@ void fermCore() {
         logFieldI(1);
       #endif
       logEnd();
-    } else if (logCount == 21) { if (millis() - lastLog > 5000) lastLog = millis(); else lastLog += 1000; }
-    if (logCount > 20) logCount = 0;
-    logCount++;
+    } else if (logCount == NUM_ZONES * 3 + 3) { if (millis() - lastLog > 5000) lastLog = millis(); else lastLog += 1000; }
+    if (logCount == NUM_ZONES * 3 + 3) logCount = 0;
+    else logCount++;
   }
 
   //Check Temps
@@ -65,13 +65,17 @@ void fermCore() {
     convertAll();
     convStart = millis();
   } else if (millis() - convStart >= 750) {
-    for (byte i = 0; i < 7; i++) temp[i] = read_temp(tSensor[i]);
+    for (byte i = 0; i < NUM_ZONES + 1; i++) temp[i] = read_temp(tSensor[i]);
     convStart = 0;
   }
 
-  //Process PID Heat Outputs
+  //Set doMUXUpdate to 1 to force MUX update on each cycle.
+  boolean doMUXUpdate = 0;
+
+  //Process Outputs
   for (byte i = 0; i < NUM_ZONES; i++) {
-    #ifndef MODE_6COOL
+    if (COOLPIN_OFFSET > i) {
+      //Process PID Heat Outputs
       if (PIDEnabled[i]) {
         if (temp[i] == -1 || coolStatus[i]) {
           pid[i].SetMode(MANUAL);
@@ -89,70 +93,71 @@ void fermCore() {
       //Process On/Off Heat
       if (heatStatus[i]) {
         if (temp[i] == -1 || temp[i] >= setpoint[i]) {
-          if (!PIDEnabled[i]) digitalWrite(outputPin[i], LOW);
+          if (!PIDEnabled[i]) {
+            if (!muxOuts[i]) digitalWrite(outputPin[i], LOW);
+              else doMUXUpdate = 1;
+          }
           heatStatus[i] = 0;
-        } else {
-          if (!PIDEnabled[i]) digitalWrite(outputPin[i], HIGH);
         }
       } else { 
-        if (temp[i] != -1 && (float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0) {
-          if (!PIDEnabled[i]) digitalWrite(outputPin[i], HIGH);
+        if (temp[i] != -1 && ((float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0)) {
+          if (!PIDEnabled[i]) {
+            if (!muxOuts[i]) digitalWrite(outputPin[i], HIGH);
+              else doMUXUpdate = 1;
+          }
           heatStatus[i] = 1;
-        } else {
-          if (!PIDEnabled[i]) digitalWrite(outputPin[i], LOW);
         }
       }
-    #endif
-
-    #if !defined MODE_6HEAT && !defined MODE_6+6
-      //Process Non-MUX Cool
+    }
+    
+    if (NUM_OUTS - COOLPIN_OFFSET > i) {
+      //Process On/Off Cool
       if (coolStatus[i]) {
         if (temp[i] == -1 || temp[i] <= setpoint[i] || setpoint[i] == 0) {
-          digitalWrite(outputPin[i + COOLPIN_OFFSET], LOW);
+          if (!muxOuts[i + COOLPIN_OFFSET]) digitalWrite(outputPin[i + COOLPIN_OFFSET], LOW);
+            else doMUXUpdate = 1;
           coolStatus[i] = 0;
-        } else digitalWrite(outputPin[i + COOLPIN_OFFSET], HIGH);
+        }
       } else { 
         if (temp[i] != -1 && setpoint[i] != 0 && (float)(temp[i] - setpoint[i]) >= (float) hysteresis[i] / 10.0) {
-          digitalWrite(outputPin[i + COOLPIN_OFFSET], HIGH);
+          if (!muxOuts[i + COOLPIN_OFFSET]) digitalWrite(outputPin[i + COOLPIN_OFFSET], HIGH);
+            else doMUXUpdate = 1;
           coolStatus[i] = 1;
-        } else digitalWrite(outputPin[i + COOLPIN_OFFSET], LOW);
+        }
       }
-    #endif
+    }
   }
-  #ifdef MODE_6+6
-    //Process MUX Cool
-    boolean doUpdate = 0;
-    for (byte i = 0; i < 6; i++) {
-      if ((coolStatus[i] && temp[i] == -1) || (coolStatus[i] && temp[i] <= setpoint[i]) || (!coolStatus[i] && (float)(temp[i] - setpoint[i]) >= (float) hysteresis[i] / 10.0)) {
-        coolStatus[i] = coolStatus[i] ^ 1;
-        doUpdate = 1;
-      }
-    }
-    if (doUpdate) {
-      //Disable outputs
-      digitalWrite(MUX_OE_PIN, HIGH);
-      //ground latchPin and hold low for as long as you are transmitting
-      digitalWrite(MUX_LATCH_PIN, 0);
-      //clear everything out just in case to prepare shift register for bit shifting
-      digitalWrite(MUX_DATA_PIN, 0);
-      digitalWrite(MUX_CLOCK_PIN, 0);
+  
+#ifdef USE_MUX
+  if (doMUXUpdate) {
+    //Disable outputs
+    digitalWrite(MUX_OE_PIN, HIGH);
+    //ground latchPin and hold low for as long as you are transmitting
+    digitalWrite(MUX_LATCH_PIN, LOW);
+    //clear everything out just in case to prepare shift register for bit shifting
+    digitalWrite(MUX_DATA_PIN, LOW);
+    digitalWrite(MUX_CLOCK_PIN, LOW);
 
-      //for each bit in the long myDataOut
-      for (byte i = 0; i < 8; i++)  {
-        digitalWrite(MUX_CLOCK_PIN, 0);
-        //create bitmask to grab the bit associated with our counter i and set data pin accordingly (NOTE: 32 - i causes bits to be sent most significant to least significant)
-        if (i < 6) digitalWrite(MUX_DATA_PIN, coolStatus[i]); else digitalWrite(MUX_DATA_PIN, 0);
-        //register shifts bits on upstroke of clock pin  
-        digitalWrite(MUX_CLOCK_PIN, 1);
-        //zero the data pin after shift to prevent bleed through
-        digitalWrite(MUX_DATA_PIN, 0);
-      }
-
-      //stop shifting
-      digitalWrite(MUX_CLOCK_PIN, 0);
-      digitalWrite(MUX_LATCH_PIN, 1);
-      //Enable outputs
-      digitalWrite(MUX_OE_PIN, LOW);
+    //for each bit in the long myDataOut
+    for (byte i = 31; i >= 0; i--)  {
+      digitalWrite(MUX_CLOCK_PIN, LOW);
+      //create bitmask to grab the bit associated with our counter i and set data pin accordingly (NOTE: 32 - i causes bits to be sent most significant to least significant)
+      if (muxOuts[i]) {
+        if (i < COOLPIN_OFFSET) digitalWrite(MUX_DATA_PIN, heatStatus[i]);
+        else if (i < NUM_OUTS) digitalWrite(MUX_DATA_PIN, coolStatus[i - COOLPIN_OFFSET]);
+        else digitalWrite(MUX_DATA_PIN, LOW);
+      } else digitalWrite(MUX_DATA_PIN, LOW);
+      //register shifts bits on upstroke of clock pin  
+      digitalWrite(MUX_CLOCK_PIN, HIGH);
+      //zero the data pin after shift to prevent bleed through
+      digitalWrite(MUX_DATA_PIN, LOW);
     }
-  #endif
+
+    //stop shifting
+    digitalWrite(MUX_CLOCK_PIN, LOW);
+    digitalWrite(MUX_LATCH_PIN, HIGH);
+    //Enable outputs
+    digitalWrite(MUX_OE_PIN, LOW);
+  }
+#endif
 }

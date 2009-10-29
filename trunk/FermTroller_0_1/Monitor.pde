@@ -60,44 +60,53 @@ void doMon() {
     }
     fermCore();
     if (encCount == 0) {
-      //Summary Screen
+      //Summary Screen: Display up to the first six zones (or less based on NUM_ZONES)
       if (encCount != lastCount) {
         lastCount = encCount;
         clearLCD();
         printLCD_P(0, 4, PSTR("Ambient:"));
         printLCD_P(0, 16, TUNIT);
 
-        printLCD_P(1, 5, TUNIT);
-        printLCD_P(2, 5, TUNIT);
-        printLCD_P(3, 5, TUNIT);
-        printLCD(1, 6, "[");
-        printLCD(1, 8, "]");
-        printLCD(2, 6, "[");
-        printLCD(2, 8, "]");
-        printLCD(3, 6, "[");
-        printLCD(3, 8, "]");
-        printLCD(1, 0, "1>");
-        printLCD(2, 0, "2>");
-        printLCD(3, 0, "3>");
-        
-        #ifndef MODE_3+3
+        if (NUM_ZONES > 0) {
+          printLCD(1, 0, "1>");
+          printLCD_P(1, 5, TUNIT);
+          printLCD(1, 6, "[");
+          printLCD(1, 8, "]");
+        }
+        if (NUM_ZONES > 1) {
+          printLCD(2, 0, "2>");
+          printLCD_P(2, 5, TUNIT);
+          printLCD(2, 6, "[");
+          printLCD(2, 8, "]");
+        }
+        if (NUM_ZONES > 2) {
+          printLCD(3, 0, "3>");
+          printLCD_P(3, 5, TUNIT);
+          printLCD(3, 6, "[");
+          printLCD(3, 8, "]");
+        }
+        if (NUM_ZONES > 3) {
+          printLCD(1, 11, "4>");
           printLCD_P(1, 16, TUNIT);
-          printLCD_P(2, 16, TUNIT);
-          printLCD_P(3, 16, TUNIT);
           printLCD(1, 17, "[");
           printLCD(1, 19, "]");
+        }
+        if (NUM_ZONES > 4) {
+          printLCD(2, 11, "5>");
+          printLCD_P(2, 16, TUNIT);
           printLCD(2, 17, "[");
           printLCD(2, 19, "]");
+        }
+        if (NUM_ZONES > 5) {
+          printLCD(3, 11, "6>");
+          printLCD_P(3, 16, TUNIT);
           printLCD(3, 17, "[");
           printLCD(3, 19, "]");
-          printLCD(1, 11, "4>");
-          printLCD(2, 11, "5>");
-          printLCD(3, 11, "6>");
-        #endif
+        }
         timerLastWrite = 0;
       }
 
-      for (byte i = 0; i < 7; i++) {
+      for (byte i = 0; i < NUM_ZONES + 1; i++) {
         if (temp[i] == -1) strcpy_P(menuopts[i], PSTR("---"));
         else { 
           itoa(temp[i], buf, 10); 
@@ -105,16 +114,14 @@ void doMon() {
         } 
       }
       
-      printLCDLPad(0, 13, menuopts[6], 3, ' ');
-      printLCDLPad(1,  2, menuopts[0], 3, ' ');
-      printLCDLPad(2,  2, menuopts[1], 3, ' ');
-      printLCDLPad(3,  2, menuopts[2], 3, ' ');
+      printLCDLPad(0, 13, menuopts[NUM_ZONES], 3, ' ');
 
-      #ifndef MODE_3+3
-        printLCDLPad(1, 13, menuopts[3], 3, ' ');
-        printLCDLPad(2, 13, menuopts[4], 3, ' ');
-        printLCDLPad(3, 13, menuopts[5], 3, ' ');
-      #endif
+      if (NUM_ZONES > 0) printLCDLPad(1,  2, menuopts[0], 3, ' ');
+      if (NUM_ZONES > 1) printLCDLPad(2,  2, menuopts[1], 3, ' ');
+      if (NUM_ZONES > 2) printLCDLPad(3,  2, menuopts[2], 3, ' ');
+      if (NUM_ZONES > 3) printLCDLPad(1, 13, menuopts[3], 3, ' ');
+      if (NUM_ZONES > 4) printLCDLPad(2, 13, menuopts[4], 3, ' ');
+      if (NUM_ZONES > 5) printLCDLPad(3, 13, menuopts[5], 3, ' ');
       
       for (byte i = 0; i < 6; i++) {
         if (coolStatus[i]) strcpy_P(menuopts[i], PSTR("C"));
@@ -122,15 +129,12 @@ void doMon() {
         else strcpy_P(menuopts[i], PSTR(" "));
       }
       
-      printLCD(1,  7, menuopts[0]);
-      printLCD(2,  7, menuopts[1]);
-      printLCD(3,  7, menuopts[2]);
-      
-      #ifndef MODE_3+3
-        printLCD(1, 18, menuopts[3]);
-        printLCD(2, 18, menuopts[4]);
-        printLCD(3, 18, menuopts[5]);
-      #endif
+      if (NUM_ZONES > 0) printLCD(1,  7, menuopts[0]);
+      if (NUM_ZONES > 1) printLCD(2,  7, menuopts[1]);
+      if (NUM_ZONES > 2) printLCD(3,  7, menuopts[2]);
+      if (NUM_ZONES > 3) printLCD(1, 18, menuopts[3]);
+      if (NUM_ZONES > 4) printLCD(2, 18, menuopts[4]);
+      if (NUM_ZONES > 5) printLCD(3, 18, menuopts[5]);
 
     } else {
       //Zone 1 - 6 Detail

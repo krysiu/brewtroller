@@ -2,23 +2,31 @@
 #include <EEPROM.h>
 
 void saveSetup() {
-  //Walk through the 7 tSensor elements and store 8-byte address of each
-  //Zone 0 - Zone 5 + Ambient (0-55)
-  for (byte i = 0; i < 7; i++) PROMwriteBytes(i * 8, tSensor[i], 8);
+  //Walk through the tSensor elements and store 8-byte address of each
+  //Theoretical maximum of 32 zones + ambient
+  //EEPROM bytes 100-363 (Was 0-55)
+  for (byte i = 0; i < NUM_ZONES + 1; i++) PROMwriteBytes(100 + i * 8, tSensor[i], 8);
 
-   //Option Array (57)
-  byte options = B00000000;
-  //Bits 1, 2, 4, 8, 16, 32 = Pid Enabled for Zones 1-6
-  for (byte i = 0; i < 6; i++) if (PIDEnabled[i]) options |= 1<<i;
-  EEPROM.write(57, options);
+  //Option Array
+  //EEPROM bytes 0-3 (was 57)
+  //Bits 1, 2, 4, 8, 16, 32, 64, 128 = Pid Enabled for Zones 1-6
+  for (byte b = 0; b < 4; b++) {
+    byte options = B00000000;
+    for (byte i = 0; i < 8; i++) if (PIDEnabled[b * 8 + i]) options |= 1<<i;
+    EEPROM.write(b, options);
+  }
   
-  //Output Settings for Zones (58-87)
-  for (byte i = 0; i < 6; i++) {
-    EEPROM.write(i * 5 + 58, PIDp[i]);
-    EEPROM.write(i * 5 + 59, PIDi[i]);
-    EEPROM.write(i * 5 + 60, PIDd[i]);
-    EEPROM.write(i * 5 + 61, PIDCycle[i]);
-    EEPROM.write(i * 5 + 62, hysteresis[i]);
+  
+  //Output Settings for Zones 
+  //EEPROM bytes 400-559 (Was 58-87)
+  for (byte i = 0; i < NUM_ZONES; i++) {
+    if (i < NUM_PID_OUTS) {
+      EEPROM.write(i * 5 + 400, PIDp[i]);
+      EEPROM.write(i * 5 + 401, PIDi[i]);
+      EEPROM.write(i * 5 + 402, PIDd[i]);
+      EEPROM.write(i * 5 + 403, PIDCycle[i]);
+    }
+    EEPROM.write(i * 5 + 404, hysteresis[i]);
   }
   
   //88-96 Reserved for Power Recovery
@@ -28,29 +36,45 @@ void saveSetup() {
 }
 
 void loadSetup() {
-  //Walk through the 7 tSensor elements and store 8-byte address of each
-  //Zone 0 - Zone 5 + Ambient (0-55)
-  for (byte i = 0; i < 7; i++) PROMreadBytes(i * 8, tSensor[i], 8);
- 
-  //Option Array (57)
-  byte options = EEPROM.read(57);
-  //Bits 1, 2, 4, 8, 16, 32 = Pid Enabled for Zones 1-6
-  for (byte i = 0; i < 6; i++) { if (options & 1<<i) PIDEnabled[i] = 1; else PIDEnabled[i] = 0; }
+  //Walk through the tSensor elements and store 8-byte address of each
+  //Theoretical maximum of 32 zones + ambient
+  //EEPROM bytes 100-363 (Was 0-55)
+  for (byte i = 0; i < NUM_ZONES + 1; i++) {
+    PROMreadBytes(100 + i * 8, tSensor[i], 8);
+    logTSensor(i);
+  }
+
+  //Option Array
+  // EEPROM bytes 0-3 (was 57)
+  //Bits 1, 2, 4, 8, 16, 32, 64, 128 = Pid Enabled for Zones 1-6
+  for (byte b = 0; b < 4; b++) {
+    byte options = EEPROM.read(b);
+    for (byte i = 0; i < 8; i++) { 
+      if (b * 8 + i < NUM_PID_OUTS) {
+        if (options & 1<<i) PIDEnabled[b * 8 + i] = 1; else PIDEnabled[b * 8 + i] = 0;
+      } else PIDEnabled[b * 8 + i] = 0;
+    }
+  }
   
-  //Output Settings for Zones (58-87)
-  for (byte i = 0; i < 6; i++) {
-    PIDp[i] = EEPROM.read(i * 5 + 58);
-    PIDi[i] = EEPROM.read(i * 5 + 59);
-    PIDd[i] = EEPROM.read(i * 5 + 60);
-    PIDCycle[i] = EEPROM.read(i * 5 + 61);
-    hysteresis[i] = EEPROM.read(i * 5 + 62);
+  //Output Settings for Zones 
+  //EEPROM bytes 400-559 (Was 58-87)
+  for (byte i = 0; i < NUM_ZONES; i++) {
+    if (i < NUM_PID_OUTS) {
+      PIDp[i] = EEPROM.read(i * 5 + 400);
+      PIDi[i] = EEPROM.read(i * 5 + 401);
+      PIDd[i] = EEPROM.read(i * 5 + 402);
+      PIDCycle[i] = EEPROM.read(i * 5 + 403);
+    }
+    hysteresis[i] = EEPROM.read(i * 5 + 404);
+    logOSet(i);
   }
 
   //Power Recovery(88)
   pwrRecovery = EEPROM.read(88);
   
-  //Setpoints (89-94)
-  for (byte i = 0; i < 6; i++) setpoint[i] = EEPROM.read(89 + i);
+  //Setpoints
+  //EEPROM bytes 4-35 (Was 89-94)
+  for (byte i = 0; i < NUM_ZONES; i++) setpoint[i] = EEPROM.read(4 + i);
   
   //95 - 96 Timer Recovery
 
@@ -150,7 +174,9 @@ void setPwrRecovery(byte funcValue) {
   EEPROM.write(88, funcValue);
 }
 
-void saveSetpoints() { for (byte i = 0; i < 6; i++) { EEPROM.write(89 + i, setpoint[i]); } }
+  //Setpoints
+  //EEPROM bytes 4-35 (Was 89-94)
+void saveSetpoints() { for (byte i = 0; i < NUM_ZONES; i++) { EEPROM.write(4 + i, setpoint[i]); } }
 
 unsigned int getTimerRecovery() { return PROMreadInt(95); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(95, newMins); }
