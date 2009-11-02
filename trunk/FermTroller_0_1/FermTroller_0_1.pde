@@ -1,4 +1,4 @@
-#define BUILD 283 
+#define BUILD 285 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -52,9 +52,11 @@ using LiquidCrystal Fix by Donald Weiman:
 // Number of Zones
 //**********************************************************************************
 // Theoretical maximum value is 32 zones
-// Default is 6 zones
+//
+// Default for BTBOARD_2.x is 6 zones
+// Default for BTBOARD_3 is 8 zones
 // 
-#define NUM_ZONES 6
+//#define NUM_ZONES 6
 //**********************************************************************************
 
 //**********************************************************************************
@@ -63,8 +65,11 @@ using LiquidCrystal Fix by Donald Weiman:
 // The total number of outputs used
 // 12 is the theoretical maximum for non-MUX
 // MUX enabled systems could support up to 32 outputs
+// 
+// Default for BTBOARD_2.x is 12 outputs
+// Default for BTBOARD_3 is 16 outputs
 //
-#define NUM_OUTS 12
+//#define NUM_OUTS 12
 //**********************************************************************************
 
 //**********************************************************************************
@@ -74,23 +79,31 @@ using LiquidCrystal Fix by Donald Weiman:
 // Increase to trade cool outputs for heat.
 // Decrease to trade heat outputs for cool.
 // If there are fewer heat or cool outputs than zones, the outputs will be applied
-// starting with Zone 1. Higher zones will lack those outputs. 
+// starting with Zone 1. Higher zones will lack those outputs.
+// 
+// Default for BTBOARD_2.x is 6 (6+6)
+// Default for BTBOARD_3 is 8 (8+8)
+//
 // Examples:
 //   NUM_ZONES 6, NUM_OUTS 12, COOLPIN_OFFSET 6 gives 6 zones with heat on 1-6 and cool on 1-6 (Default)
 //   NUM_ZONES 8, NUM_OUTS 12, COOLPIN_OFFSET 8 gives 8 zones with heat on 1-8 and cool on 1-4
 //   NUM_ZONES 8, NUM_OUTS 12, COOLPIN_OFFSET 4 gives 8 zones with heat on 1-4 and cool on 1-8
+//   NUM_ZONES 12, NUM_OUTS 12, COOLPIN_OFFSET 0 gives 12 zones with cool on 1-12
+//   NUM_ZONES 12, NUM_OUTS 12, COOLPIN_OFFSET 12 gives 12 zones with heat on 1-12
 //
-#define COOLPIN_OFFSET 6
+//#define COOLPIN_OFFSET 6
 //**********************************************************************************
 
 //**********************************************************************************
 // Number of PID Outputs
 //**********************************************************************************
-//This setting defaults to 6 for 2.x boards or 4 for 3.x boards. 
 //WARNING: A value greater than 5 on 3.x boards will conflict with MUX outputs.
 //Output pin 5 is not connected on the 3.x board. A value of 0-4 is recommended for 3.x boards.
 //Theoretical limit for is 12 on 2.x boards, matching NUM_OUTS. 
 //PID is only used on heat so a value > 6 would only be useful if you were using > 6 zones.
+// 
+// Default for BTBOARD_2.x is 6
+// Default for BTBOARD_3 is 4
 //
 //#define NUM_PID_OUTS 6
 //**********************************************************************************
@@ -98,9 +111,20 @@ using LiquidCrystal Fix by Donald Weiman:
 //**********************************************************************************
 // Enable MUX
 //**********************************************************************************
-//3.x boards use MUX by default. Use this setting to enable MUX on 2.x boards
+// 3.x boards use MUX by default. Use this setting to enable MUX on 2.x boards
 //
 //#define USE_MUX
+//**********************************************************************************
+
+//**********************************************************************************
+// LCD Timing Fix
+//**********************************************************************************
+// Some LCDs seem to have issues with displaying garbled characters but introducing
+// a delay seems to help or resolve completely. You may comment out the following
+// lines to remove this delay between a print of each character.
+//
+#define LCD_DELAY_CURSOR 60
+#define LCD_DELAY_CHAR 60
 //**********************************************************************************
 
 //**********************************************************************************
@@ -128,28 +152,45 @@ using LiquidCrystal Fix by Donald Weiman:
 #define ENCA_INT 2
 
 //Output Pin Array
-//The first six pins are heat outputs and the next six are cool outputs for Zones 1 - 6
 //BTBOARD_3 uses only the first four pins and uses MUX for the remaining outputs
 byte outputPin[12] = { 0, 1, 3, 6, 7, 10, 12, 13, 14, 24, 18, 16 };
 
-#ifdef BTBOARD_3
-  //Supports PID output on Zones 1-4. 
-  #ifndef NUM_PID_OUTS
-    #define NUM_PID_OUTS 4
-  #endif
-  #ifndef USE_MUX
-    #define USE_MUX
-  #endif
-  
-  //Uses on-board heat outputs for 1-4 and MUX outputs 5-12
-  boolean muxOuts[32] = {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-#else
-  //2.x Boards Supports PID output on Zones 1-6
-  #ifndef NUM_PID_OUTS
-    #define NUM_PID_OUTS 6
-  #endif
-  //No MUX
-  boolean muxOuts[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+//BTBOARD_3 Defaults: MUX, 16 Outputs, 8 Zones, 8 Heat Pins + 8 Cool Pins, 4 PID Heat Outputs
+#if defined BTBOARD_3 && !defined USE_MUX
+  #define USE_MUX
+#endif
+
+#if defined BTBOARD_3 && !defined NUM_OUTS
+  #define NUM_OUTS 16
+#endif
+
+#if defined BTBOARD_3 && !defined NUM_ZONES
+  #define NUM_ZONES 8
+#endif
+
+#if defined BTBOARD_3 && !defined COOLPIN_OFFSET
+  #define COOLPIN_OFFSET 8
+#endif
+
+#if defined USE_MUX && !defined NUM_PID_OUTS
+  #define NUM_PID_OUTS 4
+#endif
+
+//BTBOARD_2.x Defaults: 12 Outputs, 6 Zones, 6 Heat Pins + 6 Cool Pins, 6 PID Heat Outputs
+#if !defined BTBOARD_3 && !defined NUM_OUTS
+  #define NUM_OUTS 12
+#endif
+
+#if !defined BTBOARD_3 && !defined NUM_ZONES
+  #define NUM_ZONES 6
+#endif
+
+#if !defined BTBOARD_3 && !defined COOLPIN_OFFSET
+  #define COOLPIN_OFFSET 6
+#endif
+
+#if !defined BTBOARD_3 && !defined NUM_PID_OUTS
+  #define NUM_PID_OUTS 6
 #endif
 
 #ifdef USE_MUX
@@ -157,6 +198,9 @@ byte outputPin[12] = { 0, 1, 3, 6, 7, 10, 12, 13, 14, 24, 18, 16 };
   #define MUX_CLOCK_PIN 13
   #define MUX_DATA_PIN 14
   #define MUX_OE_PIN 10
+  boolean muxOuts[32] = {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+#else
+  boolean muxOuts[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 #endif
 
 //Safety catch if using fewer zones than defined PID outputs
