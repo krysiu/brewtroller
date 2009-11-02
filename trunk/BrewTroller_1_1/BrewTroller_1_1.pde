@@ -1,4 +1,4 @@
-#define BUILD 282 
+#define BUILD 284 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -152,6 +152,16 @@ using LiquidCrystal Fix by Donald Weiman:
 
 //**********************************************************************************
 
+//**********************************************************************************
+// LCD Timing Fix
+//**********************************************************************************
+// Some LCDs seem to have issues with displaying garbled characters but introducing
+// a delay seems to help or resolve completely. You may comment out the following
+// lines to remove this delay between a print of each character.
+//
+#define LCD_DELAY_CURSOR 60
+#define LCD_DELAY_CHAR 60
+//**********************************************************************************
 
 //**********************************************************************************
 // DEBUG
