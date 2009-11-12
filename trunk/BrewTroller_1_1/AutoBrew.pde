@@ -36,9 +36,6 @@ void doAutoBrew() {
   
   if (pwrRecovery == 0) {
     recoveryStep = 0;
-    //Set Zero Volume Calibrations on Normal AutoBrew Start (Not Power Loss Recovery)
-    for (byte i = TS_HLT; i <= TS_KETTLE; i++) zeroVol[i] = analogRead(vSensor[i]);
-    saveZeroVols();
   }
 
   boolean inMenu = 1;
