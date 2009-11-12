@@ -52,9 +52,10 @@ void saveSetup() {
   //146 - 149 Reserved for Power Recovery
   //150 ***OPEN***
   //151-155 Power Recovery
-  //156-1805 Saved Programs
-
-  //1806-1849 Valve Profiles
+  //156-1255 Saved Programs
+  //1256-1801 *** OPEN ***
+  //1802-1849 Valve Profiles
+  PROMwriteLong(1802, vlvConfig[VLV_BOILRECIRC]);
   for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) PROMwriteLong(1806 + (profile) * 4, vlvConfig[profile]);
   
   //1850-1857 AUX2 TSensor Addr
@@ -128,9 +129,10 @@ void loadSetup() {
   //146 - 149 Reserved for Power Recovery
   //150 ***OPEN***
   //151-155 Power Recovery
-  //156-1805 Saved Programs
-
-  //1806-1849 Valve Profiles
+  //156-1255 Saved Programs
+  //1256-1801 *** OPEN ***
+  //1802-1849 Valve Profiles
+  vlvConfig[VLV_BOILRECIRC] = PROMreadLong(1802);
   for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) vlvConfig[profile] = PROMreadLong(1806 + (profile) * 4);
 
   //1850 - 1857 AUX2 TSensor Addr
@@ -344,8 +346,12 @@ void checkConfig() {
         vlvs = (vlvs & 0xFFFFFFF3) | ((vlvs>>1) & B100) | ((vlvs<<1) & B1000);
         PROMwriteLong(1806 + i * 4, vlvs);
       }
-
       EEPROM.write(2047, 12);
+      
+    case 12: 
+      //Zero Out Boil Recirc Profile
+      PROMwriteLong(1802, 0);
+      EEPROM.write(2047, 13);
     default:
       //No EEPROM Upgrade Required
       return;
@@ -407,9 +413,6 @@ void saveABSteps(byte stepTemp[4], byte stepMins[4]) {
 
 unsigned long getABBatchVol() { return PROMreadLong(146); }
 void setABBatchVol (unsigned long vol) { PROMwriteLong(146, vol); }
-
-//void loadABVols(unsigned long tgtVol[3]) { for (byte i=0; i<3; i++) { tgtVol[i] = PROMreadLong(115 + i * 4); } }
-//void saveABVols(unsigned long tgtVol[3]) { for (byte i=0; i<3; i++) { PROMwriteLong(115 + i * 4, tgtVol[i]); } }
 
 unsigned int getABAddsTrig() { return PROMreadInt(128); }
 void setABAddsTrig(unsigned int adds) { PROMwriteInt(128, adds); }
@@ -496,9 +499,6 @@ void setProgMLHeatSrc(byte preset, byte vessel) { EEPROM.write(preset * 55 + 198
 byte getProgMLHeatSrc(byte preset) { return EEPROM.read(preset * 55 + 198); }
 
 // 7 Bytes free per program (+199 through +205)
-
-//void getProgVols(byte preset, unsigned long vols[3]) { for (byte i=0; i<3; i++) vols[i] = PROMreadLong(preset * 55 + 194 + i * 4); }
-//void setProgVols(byte preset, unsigned long vols[3]) { for (byte i=0; i<3; i++) PROMwriteLong(preset * 55 + 194 + i * 4, vols[i]); }
 
 void setProgHLT(byte preset, byte HLT) { EEPROM.write(preset * 55 + 206, HLT); }
 byte getProgHLT(byte preset) { return EEPROM.read(preset * 55 + 206); }

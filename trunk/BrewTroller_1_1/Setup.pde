@@ -325,10 +325,11 @@ void cfgValves() {
     strcpy_P(menuopts[8], PSTR("Kettle Lid"));
     strcpy_P(menuopts[9], CHILLH2O);
     strcpy_P(menuopts[10], CHILLBEER);
-    strcpy_P(menuopts[11], EXIT);
+    strcpy_P(menuopts[11], BOILRECIRC);
+    strcpy_P(menuopts[12], EXIT);
     
-    lastOption = scrollMenu("Valve Configuration", 12, lastOption);
-    if (lastOption > 10) return;
+    lastOption = scrollMenu("Valve Configuration", 13, lastOption);
+    if (lastOption > 11) return;
     vlvConfig[lastOption] = cfgValveProfile(menuopts[lastOption], vlvConfig[lastOption]);
   }
 }

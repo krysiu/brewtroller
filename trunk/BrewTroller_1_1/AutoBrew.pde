@@ -893,9 +893,6 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
   encCount = PIDLIMIT_KETTLE;
   byte lastCount = encCount;
 
-
-
-  
   while(1) {
     boolean redraw = 0;
     timerLastWrite = 0;
@@ -988,6 +985,9 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
             setABAddsTrig(triggered);
           }
         }
+        #ifdef AUTO_BOIL_RECIRC
+        if (timerValue <= AUTO_BOIL_RECIRC * 60000) setValves(vlvConfig[VLV_BOILRECIRC]);
+        #endif
       }
 
       if (chkMsg()) {
@@ -1007,20 +1007,23 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         else strcpy_P(menuopts[1], PSTR("Start Timer"));
         strcpy_P(menuopts[2], PSTR("Pause Timer"));
         strcpy_P(menuopts[3], PSTR("Auto Boil"));        
-        strcpy_P(menuopts[4], SKIPSTEP);
-        strcpy_P(menuopts[5], ABORT);
-        byte lastOption = scrollMenu("AutoBrew Boil Menu", 6, 0);
+        strcpy_P(menuopts[4], BOILRECIRC);
+        strcpy_P(menuopts[5], PSTR("Reset Valves"));
+        strcpy_P(menuopts[6], SKIPSTEP);
+        strcpy_P(menuopts[7], ABORT);
+        byte lastOption = scrollMenu("AutoBrew Boil Menu", 8, 0);
         if (lastOption == 1) {
           preheated = 1;
           printLCDRPad(0, 14, "", 6, ' ');
           setTimer(iMins);
         } else if (lastOption == 2) pauseTimer();
-        else if (lastOption == 3) {
-          doAutoBoil = 1;
-        } else if (lastOption == 4) {
+        else if (lastOption == 3) doAutoBoil = 1;
+        else if (lastOption == 4) setValves(vlvConfig[VLV_BOILRECIRC]);
+        else if (lastOption == 5) setValves(0);
+        else if (lastOption == 6) {
           resetOutputs();
           return;
-        } else if (lastOption == 5) {
+        } else if (lastOption == 7) {
             if (confirmExit() == 1) {
               enterStatus = 2;
               resetOutputs();

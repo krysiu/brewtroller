@@ -6,7 +6,11 @@
 // enable on pin 19 (LCD pin 6)
 // d4, d5, d6, d7 on pins 20, 21, 22, 23  (LCD pins 11-14)
 
-LiquidCrystal lcd(17, 27, 19, 20, 21, 22, 23);
+#ifdef BTBOARD_3
+  LiquidCrystal lcd(18, 27, 19, 20, 21, 22, 23);
+#else
+  LiquidCrystal lcd(17, 27, 19, 20, 21, 22, 23);
+#endif 
 
 void initLCD(){
 

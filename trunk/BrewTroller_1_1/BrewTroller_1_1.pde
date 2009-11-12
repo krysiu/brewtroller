@@ -1,4 +1,4 @@
-#define BUILD 284 
+#define BUILD 286 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -142,6 +142,18 @@ using LiquidCrystal Fix by Donald Weiman:
 //**********************************************************************************
 
 //**********************************************************************************
+// Auto Boil Recirc
+//**********************************************************************************
+// AUTO_BOIL_RECIRC: Activates the BOIL RECIRC valve profile during the last minutes
+// of the AutoBrew Boil stage as defined below (ie AUTO_BOIL_RECIRC 20 will enable
+// BOIL RECIRC for the last twenty minutes of boil. Warning: if you do not have a
+// valve config that will reroute wort back to the kettle there is a great risk of
+// losing wort or causing personal injury when this profile is enabled
+
+//#define AUTO_BOIL_RECIRC 20
+//**********************************************************************************
+
+//**********************************************************************************
 // OPTIONAL MODULES
 //**********************************************************************************
 // Comment out any of the following lines to disable a module. This is handy to see
@@ -278,7 +290,7 @@ using LiquidCrystal Fix by Donald Weiman:
 #define VLV_KETTLELID 8
 #define VLV_CHILLH2O 9
 #define VLV_CHILLBEER 10
-
+#define VLV_BOILRECIRC 11
 
 //Heat Output Pin Array
 byte heatPin[4] = { HLTHEAT_PIN, MASHHEAT_PIN, KETTLEHEAT_PIN, STEAMHEAT_PIN };
@@ -313,7 +325,7 @@ unsigned long lastVolChk;
 byte MLHeatSrc;
 
 //Valve Variables
-unsigned long vlvConfig[11];
+unsigned long vlvConfig[12];
 unsigned long vlvBits;
 byte autoValve;
 
@@ -402,6 +414,7 @@ const char BOILADDS[] PROGMEM = "Boil Additions";
 const char CHILLNORM[] PROGMEM = "Chiller Both";
 const char CHILLH2O[] PROGMEM = "Chiller H2O";
 const char CHILLBEER[] PROGMEM = "Chiller Beer";
+const char BOILRECIRC[] PROGMEM = "Boil Recirc";
 const char HLTCYCLE[] PROGMEM = "HLT PID Cycle";
 const char HLTGAIN[] PROGMEM = "HLT PID Gain";
 const char HLTHY[] PROGMEM = "HLT Hysteresis";
