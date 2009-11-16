@@ -1,4 +1,4 @@
-#define BUILD 287 
+#define BUILD 288 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -539,15 +539,12 @@ void setup() {
   pid[VS_STEAM].SetTunings(PIDp[VS_STEAM], PIDi[VS_STEAM], PIDd[VS_STEAM]);
     
   if (pwrRecovery == 1) {
-    loadZeroVols();
     logPLR();
     doAutoBrew();
   } else if (pwrRecovery == 2) {
-    loadZeroVols();
     logPLR();
     doMon();
   } else {
-    saveZeroVols();
     splashScreen();
   }
 }

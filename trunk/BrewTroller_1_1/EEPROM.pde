@@ -44,6 +44,7 @@ void saveSetup() {
   //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
   //136 - 141 Zero Volumes
+  for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) PROMwriteInt(136 + vessel * 2, zeroVol[vessel]);
 
   EEPROM.write(142, steamTgt);
   PROMwriteInt(143, steamPSens);
@@ -121,7 +122,8 @@ void loadSetup() {
   //126 - 129 Reserved for Power Recovery  //130 Boil Temp
   //131 - 135 Reserved for Power Recovery
   //136 - 141 Zero Volumes
-
+  for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) zeroVol[vessel] = PROMreadInt(136 + vessel * 2);
+  
   steamTgt = EEPROM.read(142);
   steamPSens = PROMreadInt(143);
 
@@ -427,13 +429,13 @@ unsigned int getTimerRecovery() { return PROMreadInt(134); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(134, newMins); }
 
 //Zero Volumes 136-141 (analogRead of Empty Vessels)
-unsigned int loadZeroVols() { for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) zeroVol[vessel] = PROMreadInt(136 + vessel * 2); }
+/* unsigned int loadZeroVols() { for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) zeroVol[vessel] = PROMreadInt(136 + vessel * 2); }
 void saveZeroVols() { 
   for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) {
     zeroVol[vessel] = analogRead(vSensor[vessel]);
     PROMwriteInt(136 + vessel * 2, zeroVol[vessel]);
   }
-}
+} */
 
 byte getBoilPwr() { return EEPROM.read(145); }
 void setBoilPwr(byte boilPwr) { EEPROM.write(145, boilPwr); }

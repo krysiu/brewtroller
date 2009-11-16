@@ -247,26 +247,33 @@ void cfgVolumes() {
     strcpy_P(menuopts[0], PSTR("HLT Capacity"));
     strcpy_P(menuopts[1], PSTR("HLT Dead Space"));
     strcpy_P(menuopts[2], PSTR("HLT Calibration"));
-    strcpy_P(menuopts[3], PSTR("Mash Capacity"));
-    strcpy_P(menuopts[4], PSTR("Mash Dead Space"));
-    strcpy_P(menuopts[5], PSTR("Mash Calibration"));
-    strcpy_P(menuopts[6], PSTR("Kettle Capacity"));
-    strcpy_P(menuopts[7], PSTR("Kettle Dead Space"));
-    strcpy_P(menuopts[8], PSTR("Kettle Calibration"));
-    strcpy_P(menuopts[9], PSTR("Evaporation Rate"));
-    strcpy_P(menuopts[10], EXIT);
+    strcpy_P(menuopts[3], PSTR("HLT Zero Volume"));
+    strcpy_P(menuopts[4], PSTR("Mash Capacity"));
+    strcpy_P(menuopts[5], PSTR("Mash Dead Space"));
+    strcpy_P(menuopts[6], PSTR("Mash Calibration"));
+    strcpy_P(menuopts[7], PSTR("Mash Zero Volume"));
+    strcpy_P(menuopts[8], PSTR("Kettle Capacity"));
+    strcpy_P(menuopts[9], PSTR("Kettle Dead Space"));
+    strcpy_P(menuopts[10], PSTR("Kettle Calibration"));
+    strcpy_P(menuopts[11], PSTR("Kettle Zero Volume"));
+    strcpy_P(menuopts[12], PSTR("Evaporation Rate"));
+    strcpy_P(menuopts[13], EXIT);
 
-    lastOption = scrollMenu("Volume/Capacity", 11, lastOption);
+    lastOption = scrollMenu("Volume/Capacity", 14, lastOption);
+
     if (lastOption == 0) capacity[TS_HLT] = getValue(PSTR("HLT Capacity"), capacity[TS_HLT], 7, 3, 9999999, VOLUNIT);
     else if (lastOption == 1) volLoss[TS_HLT] = getValue(PSTR("HLT Dead Space"), volLoss[TS_HLT], 5, 3, 65535, VOLUNIT);
     else if (lastOption == 2) volCalibMenu(TS_HLT);
-    else if (lastOption == 3) capacity[TS_MASH] = getValue(PSTR("Mash Capacity"), capacity[TS_MASH], 7, 3, 9999999, VOLUNIT);
-    else if (lastOption == 4) volLoss[TS_MASH] = getValue(PSTR("Mash Dead Space"), volLoss[TS_MASH], 5, 3, 65535, VOLUNIT);
-    else if (lastOption == 5) volCalibMenu(TS_MASH);
-    else if (lastOption == 6) capacity[TS_KETTLE] = getValue(PSTR("Kettle Capacity"), capacity[TS_KETTLE], 7, 3, 9999999, VOLUNIT);
-    else if (lastOption == 7) volLoss[TS_KETTLE] = getValue(PSTR("Kettle Dead Space"), volLoss[TS_KETTLE], 5, 3, 65535, VOLUNIT);
-    else if (lastOption == 8) volCalibMenu(TS_KETTLE);
-    else if (lastOption == 9) evapRate = getValue(PSTR("Evaporation Rate"), evapRate, 3, 0, 100, PSTR("%/hr"));
+    else if (lastOption == 3) cfgZeroVol(menuopts[3], VS_HLT);
+    else if (lastOption == 4) capacity[TS_MASH] = getValue(PSTR("Mash Capacity"), capacity[TS_MASH], 7, 3, 9999999, VOLUNIT);
+    else if (lastOption == 5) volLoss[TS_MASH] = getValue(PSTR("Mash Dead Space"), volLoss[TS_MASH], 5, 3, 65535, VOLUNIT);
+    else if (lastOption == 6) volCalibMenu(TS_MASH);
+    else if (lastOption == 7) cfgZeroVol(menuopts[7], VS_MASH);
+    else if (lastOption == 8) capacity[TS_KETTLE] = getValue(PSTR("Kettle Capacity"), capacity[TS_KETTLE], 7, 3, 9999999, VOLUNIT);
+    else if (lastOption == 9) volLoss[TS_KETTLE] = getValue(PSTR("Kettle Dead Space"), volLoss[TS_KETTLE], 5, 3, 65535, VOLUNIT);
+    else if (lastOption == 10) volCalibMenu(TS_KETTLE);
+    else if (lastOption == 11) cfgZeroVol(menuopts[11], VS_KETTLE);
+    else if (lastOption == 12) evapRate = getValue(PSTR("Evaporation Rate"), evapRate, 3, 0, 100, PSTR("%/hr"));
     else return;
   } 
 }
@@ -308,6 +315,17 @@ void volCalibMenu(byte vessel) {
         calibVals[vessel][lastOption] = analogRead(vSensor[vessel]) - zeroVol[vessel];
       }
     }
+  }
+}
+
+void cfgZeroVol(char sTitle[], byte vessel) {
+  clearLCD();
+  printLCDCenter(0, 0, sTitle, 20);
+  printLCD_P(1,2,PSTR("Calibrate Zero?"));
+  {
+    strcpy_P(menuopts[0], CONTINUE);
+    strcpy_P(menuopts[1], CANCEL);
+    if (getChoice(2, 3) == 0) zeroVol[vessel] = analogRead(vSensor[vessel]);
   }
 }
 

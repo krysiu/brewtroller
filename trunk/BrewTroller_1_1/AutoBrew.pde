@@ -277,9 +277,11 @@ void doAutoBrew() {
         byte i = 0;
         while (strikeTemp == 0 && i <= STEP_MASHOUT) strikeTemp = stepTemp[i++];
         #ifdef USEMETRIC
-          strikeTemp = round(.41 / (mashRatio / 100.0) * (strikeTemp - grainTemp)) + strikeTemp;
+          //strikeTemp = round(.41 / (mashRatio / 100.0) * (strikeTemp - grainTemp)) + strikeTemp;
+          strikeTemp = strikeTemp + round(.4 * (strikeTemp - grainTemp) / (mashRatio / 100.0)) + 1.7;
         #else
-          strikeTemp = round(.2 / (mashRatio / 100.0) * (strikeTemp - grainTemp)) + strikeTemp;
+          //strikeTemp = round(.2 / (mashRatio / 100.0) * (strikeTemp - grainTemp)) + strikeTemp;
+          strikeTemp = strikeTemp + round(.192 * (strikeTemp - grainTemp) / (mashRatio / 100.0)) + 3;
         #endif
         if (MLHeatSrc == VS_HLT) {
           setpoint[TS_HLT] = strikeTemp;
