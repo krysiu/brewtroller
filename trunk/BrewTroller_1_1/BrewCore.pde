@@ -133,7 +133,7 @@ void brewCore() {
   for (byte i = VS_HLT; i <= VS_KETTLE; i++) {
 #endif
     if (PIDEnabled[i]) {
-      if (i != VS_STEAM && temp[i] <= 0) {
+      if (i != VS_STEAM && i != VS_KETTLE && temp[i] <= 0) {
         PIDOutput[i] = 0;
       } else {
         if (pid[i].GetMode() == AUTO) {
