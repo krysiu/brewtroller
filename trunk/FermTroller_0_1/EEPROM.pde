@@ -2,11 +2,6 @@
 #include <EEPROM.h>
 
 void saveSetup() {
-  //Walk through the tSensor elements and store 8-byte address of each
-  //Theoretical maximum of 32 zones + ambient
-  //EEPROM bytes 100-363 (Was 0-55)
-  for (byte i = 0; i < NUM_ZONES + 1; i++) PROMwriteBytes(100 + i * 8, tSensor[i], 8);
-
   //Option Array
   //EEPROM bytes 0-3 (was 57)
   //Bits 1, 2, 4, 8, 16, 32, 64, 128 = Pid Enabled for Zones 1-6
@@ -15,6 +10,14 @@ void saveSetup() {
     for (byte i = 0; i < 8; i++) if (PIDEnabled[b * 8 + i]) options |= 1<<i;
     EEPROM.write(b, options);
   }
+
+  //88-96 Reserved for Power Recovery
+
+  //Walk through the tSensor elements and store 8-byte address of each
+  //Theoretical maximum of 32 zones + ambient
+  //EEPROM bytes 100-363 (Was 0-55)
+  for (byte i = 0; i < NUM_ZONES + 1; i++) PROMwriteBytes(100 + i * 8, tSensor[i], 8);
+
   
   
   //Output Settings for Zones 
@@ -29,21 +32,13 @@ void saveSetup() {
     EEPROM.write(i * 5 + 404, hysteresis[i]);
   }
   
-  //88-96 Reserved for Power Recovery
-
+  //600-631 CoolOffTime counters
+  
   //2046 FermTroller FingerPrint
   //2047 EEPROM Version
 }
 
 void loadSetup() {
-  //Walk through the tSensor elements and store 8-byte address of each
-  //Theoretical maximum of 32 zones + ambient
-  //EEPROM bytes 100-363 (Was 0-55)
-  for (byte i = 0; i < NUM_ZONES + 1; i++) {
-    PROMreadBytes(100 + i * 8, tSensor[i], 8);
-    logTSensor(i);
-  }
-
   //Option Array
   // EEPROM bytes 0-3 (was 57)
   //Bits 1, 2, 4, 8, 16, 32, 64, 128 = Pid Enabled for Zones 1-6
@@ -54,6 +49,24 @@ void loadSetup() {
         if (options & 1<<i) PIDEnabled[b * 8 + i] = 1; else PIDEnabled[b * 8 + i] = 0;
       } else PIDEnabled[b * 8 + i] = 0;
     }
+  }
+
+  //Power Recovery(88)
+  pwrRecovery = EEPROM.read(88);
+  
+  //Setpoints
+  //EEPROM bytes 4-35 (Was 89-94)
+  for (byte i = 0; i < NUM_ZONES; i++) setpoint[i] = EEPROM.read(4 + i);
+  
+  //95 - 96 Timer Recovery
+
+
+  //Walk through the tSensor elements and store 8-byte address of each
+  //Theoretical maximum of 32 zones + ambient
+  //EEPROM bytes 100-363 (Was 0-55)
+  for (byte i = 0; i < NUM_ZONES + 1; i++) {
+    PROMreadBytes(100 + i * 8, tSensor[i], 8);
+    logTSensor(i);
   }
   
   //Output Settings for Zones 
@@ -69,14 +82,8 @@ void loadSetup() {
     logOSet(i);
   }
 
-  //Power Recovery(88)
-  pwrRecovery = EEPROM.read(88);
-  
-  //Setpoints
-  //EEPROM bytes 4-35 (Was 89-94)
-  for (byte i = 0; i < NUM_ZONES; i++) setpoint[i] = EEPROM.read(4 + i);
-  
-  //95 - 96 Timer Recovery
+//600-631 coolOffTime counters
+for (byte zone = 0; zone <= NUM_ZONES; zone++) coolOnTime[zone] = EEPROM.read(600 + zone) * 1000;
 
   //2046 FermTroller FingerPrint
   //2047 EEPROM Version
@@ -180,3 +187,10 @@ void saveSetpoints() { for (byte i = 0; i < NUM_ZONES; i++) { EEPROM.write(4 + i
 
 unsigned int getTimerRecovery() { return PROMreadInt(95); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(95, newMins); }
+
+//EEPROM bytes 600-631
+//Store seconds of Cool-On delay remaining in EEPROM for each zone
+void setCoolDelaySecs(byte zone) {
+  if (coolOnTime[zone] > millis()) EEPROM.write(600 + zone, round((coolOnTime[zone] - millis()) / 1000));
+  else EEPROM.write(600 + zone, 0);
+}

@@ -2,7 +2,7 @@ void fermCore() {
 
   //Log data every 2s
   //Log 1 of 6 chunks per cycle to improve responsiveness to calling function
-  if (millis() - lastLog > 1000) {
+  if (millis() - lastLog > 2000) {
     if (logCount == 0) {
       logPgm();
     } else if (logCount == 1) {
@@ -55,7 +55,7 @@ void fermCore() {
         logFieldI(1);
       #endif
       logEnd();
-    } else if (logCount == NUM_ZONES * 3 + 3) { if (millis() - lastLog > 5000) lastLog = millis(); else lastLog += 1000; }
+    } else if (logCount == NUM_ZONES * 3 + 3) { if (millis() - lastLog > 5000) lastLog = millis() - 2000; else lastLog += 2000; }
     if (logCount == NUM_ZONES * 3 + 3) logCount = 0;
     else logCount++;
   }
@@ -118,13 +118,19 @@ void fermCore() {
             else doMUXUpdate = 1;
           coolStatus[i] = 0;
         }
-      } else { 
+        coolOnTime[i] = millis() + coolDelay[i] * 1000;
+      } else {
         if (temp[i] != -1 && setpoint[i] != 0 && (float)(temp[i] - setpoint[i]) >= (float) hysteresis[i] / 10.0) {
-          if (!muxOuts[i + COOLPIN_OFFSET]) digitalWrite(outputPin[i + COOLPIN_OFFSET], HIGH);
-            else doMUXUpdate = 1;
-          coolStatus[i] = 1;
+          //Check Cool Off Time Limit
+          if (coolOnTime[i] <= millis()) {
+            if (!muxOuts[i + COOLPIN_OFFSET]) digitalWrite(outputPin[i + COOLPIN_OFFSET], HIGH);
+              else doMUXUpdate = 1;
+            coolStatus[i] = 1;
+            coolOnTime[i] = millis() + coolDelay[i] * 1000;
+          }
         }
       }
+      setCoolDelaySecs(i);
     }
   }
   

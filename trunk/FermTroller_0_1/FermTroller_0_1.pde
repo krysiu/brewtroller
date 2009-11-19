@@ -1,4 +1,4 @@
-#define BUILD 289 
+#define BUILD 291 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -128,6 +128,17 @@ using LiquidCrystal Fix by Donald Weiman:
 //**********************************************************************************
 
 //**********************************************************************************
+// Cool Cycle Limit
+//**********************************************************************************
+// When using cool outputs for devices with compressors like refrigerators you may
+// need to specify a minimum delay before enabling the output. This is intended to
+// eliminate quick cycling of the output On/Off. Specify a limit in seconds for each
+// zone in the array below. Maximum value is 255 seconds or approximately 4.2 min.
+//
+byte coolDelay[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+//**********************************************************************************
+
+//**********************************************************************************
 // DEBUG
 //**********************************************************************************
 // Enables Serial Out with Additional Debug Data
@@ -232,6 +243,7 @@ unsigned long cycleStart[NUM_PID_OUTS];
 boolean heatStatus[NUM_ZONES];
 boolean coolStatus[NUM_ZONES];
 boolean PIDEnabled[32];
+unsigned long coolOnTime[32];
 
 PID pid[NUM_PID_OUTS] = {
   #if NUM_PID_OUTS > 0
