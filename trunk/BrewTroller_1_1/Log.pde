@@ -267,6 +267,13 @@ boolean chkMsg() {
           logStart_P(LOGGLB);
           logField_P(PSTR("PONG"));
           logEnd();
+        } else if(strcasecmp(msg[0], "SET_SETPOINT") == 0) {
+          byte vessel = atoi(msg[1]);
+          if (msgField == 2 && vessel <= VS_KETTLE) {
+            setpoint[vessel] = (byte)atoi(msg[2]);
+            saveSetpoints();
+            clearMsg();
+          } else rejectParam(LOGGLB);
         }
         break;
       } else if (byteIn == '\t') {

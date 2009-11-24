@@ -120,7 +120,10 @@ void doMon() {
         lastCount += 1;
       }
     }
+    
+    if (chkMsg()) rejectMsg(LOGSCROLLP);
     brewCore();
+    
     if (encCount == 0) {
       if (encCount != lastCount) {
         clearLCD();
