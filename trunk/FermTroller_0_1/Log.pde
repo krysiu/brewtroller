@@ -67,6 +67,13 @@ boolean chkMsg() {
             clearMsg();
             logTSensor(val);
           } else rejectParam(LOGGLB);
+        } else if(strcasecmp(msg[0], "SCAN_TS") == 0) {
+          byte tsAddr[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+          getDSAddr(tsAddr);
+          logStart_P(LOGGLB);
+          logField_P(PSTR("TS_SCAN"));
+          for (byte i=0; i<8; i++) logFieldI(tsAddr[i]);
+          logEnd();
         } else if(strcasecmp(msg[0], "GET_OSET") == 0) {
           byte val = atoi(msg[1]);
           if (msgField == 1 && val < NUM_ZONES) {
@@ -121,6 +128,13 @@ boolean chkMsg() {
           logStart_P(LOGGLB);
           logField_P(PSTR("PONG"));
           logEnd();
+        } else if(strcasecmp(msg[0], "SET_SETPOINT") == 0) {
+          byte zone = atoi(msg[1]);
+          if (msgField == 2 && zone < NUM_ZONES) {
+            setpoint[zone] = (byte)atoi(msg[2]);
+            saveSetpoints();
+            clearMsg();
+          } else rejectParam(LOGGLB);
         }
         break;
       } else if (byteIn == '\t') {
@@ -196,4 +210,3 @@ void logOSet(byte zone) {
   logFieldI(hysteresis[zone]);
   logEnd();
 }
-

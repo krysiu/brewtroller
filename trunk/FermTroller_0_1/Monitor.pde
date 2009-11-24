@@ -58,7 +58,10 @@ void doMon() {
         lastCount += 1;
       }
     }
+    
+    if (chkMsg()) rejectMsg(LOGSCROLLP);
     fermCore();
+    
     if (encCount == 0) {
       //Summary Screen: Display up to the first six zones (or less based on NUM_ZONES)
       if (encCount != lastCount) {
