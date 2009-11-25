@@ -121,7 +121,7 @@ void doMon() {
       }
     }
     
-    if (chkMsg()) rejectMsg(LOGSCROLLP);
+    if (chkMsg()) rejectMsg(LOGGLB);
     brewCore();
     
     if (encCount == 0) {

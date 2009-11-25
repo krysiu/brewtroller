@@ -1,4 +1,4 @@
-#define BUILD 293 
+#define BUILD 294 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)

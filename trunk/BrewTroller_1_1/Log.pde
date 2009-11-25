@@ -274,6 +274,18 @@ boolean chkMsg() {
             saveSetpoints();
             clearMsg();
           } else rejectParam(LOGGLB);
+        } else if(strcasecmp(msg[0], "SET_TIMERVALUE") == 0) {
+          if (msgField == 1) {
+            timerValue = strtoul(msg[1], NULL, 10);
+            lastTime = millis();
+            timerLastWrite = 0;
+            clearMsg();
+          } else rejectParam(LOGGLB);
+        } else if(strcasecmp(msg[0], "SET_TIMERSTATUS") == 0) {
+          if (msgField == 1) {
+            timerStatus = (boolean)atoi(msg[1]);
+            clearMsg();
+          } else rejectParam(LOGGLB);
         }
         break;
       } else if (byteIn == '\t') {

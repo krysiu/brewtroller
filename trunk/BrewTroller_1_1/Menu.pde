@@ -31,16 +31,7 @@ byte scrollMenu(char sTitle[], byte numOpts, byte defOption) {
       for (byte i = 1; i <= 3; i++) if (i == lastCount - topItem + 1) printLCD(i, 0, ">"); else printLCD(i, 0, " ");
     }
     
-    if (chkMsg()) {
-      if (strcasecmp(msg[0], "SELECT") == 0) {
-        byte val = atoi(msg[1]);
-        if (msgField == 1 && val  >= 0 && val <= numOpts) {
-          encCount = val;
-          enterStatus = 1;
-          clearMsg();
-        } else rejectParam(LOGSCROLLP);
-      } else rejectMsg(LOGSCROLLP);
-    }
+    if (chkMsg()) rejectMsg(LOGGLB);
     
     //If Enter
     if (enterStatus) {
@@ -97,16 +88,7 @@ byte getChoice(byte numChoices, byte iRow) {
     }
     
     //If Enter
-    if (chkMsg()) {
-      if (strcasecmp(msg[0], "SELECT") == 0) {
-        byte val = atoi(msg[1]);
-        if (msgField == 1 && val  >= 0 && val <= numChoices) {
-          encCount = val;
-          enterStatus = 1;
-          clearMsg();
-        } else rejectParam(LOGSCROLLP);
-      } else rejectMsg(LOGSCROLLP);
-    }
+    if (chkMsg()) rejectMsg(LOGGLB);
     if (enterStatus) {
       logStart_P(LOGMENU);
       logField_P(LOGSCROLLR);
