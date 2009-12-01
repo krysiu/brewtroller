@@ -1,4 +1,4 @@
-#define BUILD 295 
+#define BUILD 297 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -376,7 +376,6 @@ const char BTVER[] PROGMEM = "v1.1";
 const char LOGAB[] PROGMEM = "AB";
 const char LOGCMD[] PROGMEM = "CMD";
 const char LOGDEBUG[] PROGMEM = "DEBUG";
-const char LOGMENU[] PROGMEM = "MENU";
 const char LOGSYS[] PROGMEM = "SYSTEM";
 const char LOGGLB[] PROGMEM = "GLOBAL";
 const char LOGDATA[] PROGMEM = "DATA";
@@ -387,10 +386,6 @@ const char CANCEL[] PROGMEM = "Cancel";
 const char EXIT[] PROGMEM = "Exit";
 const char SPACE[] PROGMEM = " ";
 const char INIT_EEPROM[] PROGMEM = "Initialize EEPROM";
-const char LOGSCROLLP[] PROGMEM = "PROMPT";
-const char LOGSCROLLR[] PROGMEM = "RESULT";
-const char LOGCHOICE[] PROGMEM = "CHOICE";
-const char LOGGETVAL[] PROGMEM = "GETVAL";
 const char SKIPSTEP[] PROGMEM = "Skip Step";
 const char LOGSPLASH[] PROGMEM = "SPLASH";
 const char CONTINUE[] PROGMEM = "Continue";
@@ -579,24 +574,10 @@ void splashScreen() {
   printLCD_P(1, 10, PSTR("Build "));
   printLCDLPad(1, 16, itoa(BUILD, buf, 10), 4, '0');
   printLCD_P(3, 1, PSTR("www.brewtroller.com"));
-  logStart_P(LOGMENU);
-  logField_P(LOGSCROLLP);
-  logField_P(LOGSPLASH);
-  logField_P(PSTR("0"));
-  logEnd();
+
   while(!enterStatus) {
-     if (chkMsg()) {
-      if (strcasecmp(msg[0], "SELECT") == 0) {
-        enterStatus = 1;
-        clearMsg();
-      } else rejectMsg(LOGSCROLLP);
-    }
-    delay(250);
+    if (chkMsg()) rejectMsg(LOGGLB);
+    brewCore();
   }
   enterStatus = 0;
-  logStart_P(LOGMENU);
-  logField_P(LOGSCROLLR);
-  logField_P(LOGSPLASH);
-  logFieldI(0);
-  logEnd();
 }

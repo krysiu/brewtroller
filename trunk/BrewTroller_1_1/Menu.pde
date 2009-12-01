@@ -6,12 +6,6 @@ byte scrollMenu(char sTitle[], byte numOpts, byte defOption) {
   encCount = defOption;
   byte lastCount = encCount + 1;
   byte topItem = numOpts;
-  logStart_P(LOGMENU);
-  logField_P(LOGSCROLLP);
-  logField(sTitle);
-  logFieldI(numOpts);
-  for (byte i = 0; i < numOpts; i++)  logField(menuopts[i]);
-  logEnd();
   
   while(1) {
     if (encCount != lastCount) {
@@ -35,20 +29,11 @@ byte scrollMenu(char sTitle[], byte numOpts, byte defOption) {
     
     //If Enter
     if (enterStatus) {
-      logStart_P(LOGMENU);
-      logField_P(LOGSCROLLR);
-      logField(sTitle);
       if (enterStatus == 1) {
         enterStatus = 0;
-        logFieldI(encCount);
-        logField(menuopts[encCount]);
-        logEnd();
         return encCount;
       } else if (enterStatus == 2) {
         enterStatus = 0;
-        logFieldI(numOpts);
-        logField_P(CANCEL);
-        logEnd();
         return numOpts;
       }
     }
@@ -74,12 +59,6 @@ byte getChoice(byte numChoices, byte iRow) {
  
   encCount = 0;
   byte lastCount = encCount + 1;
-  logStart_P(LOGMENU);
-  logField_P(LOGSCROLLP);
-  logField_P(LOGCHOICE);
-  logFieldI(numChoices);
-  for (byte i = 0; i < numChoices; i++)  logField(menuopts[i]);
-  logEnd();
 
   while(1) {
     if (encCount != lastCount) {
@@ -87,24 +66,17 @@ byte getChoice(byte numChoices, byte iRow) {
       lastCount = encCount;
     }
     
-    //If Enter
     if (chkMsg()) rejectMsg(LOGGLB);
+    
+    //If Enter
     if (enterStatus) {
-      logStart_P(LOGMENU);
-      logField_P(LOGSCROLLR);
-      logField_P(LOGCHOICE);
       printLCD_P(iRow, 0, SPACE);
       printLCD_P(iRow, 19, SPACE);
       if (enterStatus == 1) {
         enterStatus = 0;
-        logFieldI(encCount);
-        logField(menuopts[encCount]);
-        logEnd();
         return encCount;
       } else if (enterStatus == 2) {
         enterStatus = 0;
-        logFieldI(numChoices);
-        logField_P(CANCEL);
         return numChoices;
       }
     }
@@ -113,7 +85,6 @@ byte getChoice(byte numChoices, byte iRow) {
 }
 
 boolean confirmExit() {
-  logString_P(LOGMENU, PSTR("CONFIRM_EXIT"));
   clearLCD();
   printLCD_P(0, 0, PSTR("Exiting will reset"));
   printLCD_P(1, 0, PSTR("outputs, setpoints"));
@@ -124,7 +95,6 @@ boolean confirmExit() {
 }
 
 boolean confirmDel() {
-  logString_P(LOGMENU, PSTR("CONFIRM_DEL"));
   clearLCD();
   printLCD_P(1, 0, PSTR("Delete Item?"));
   
@@ -188,6 +158,9 @@ unsigned long getValue(const char *sTitle, unsigned long defValue, byte digits, 
         printLCDLPad(1, (20 - digits + 1) / 2 + digits - precision, ltoa(frac, buf, 10), precision, '0');
       }
     }
+    
+    if (chkMsg()) rejectMsg(LOGGLB);
+
     if (enterStatus == 1) {
       enterStatus = 0;
       if (cursorPos == digits) break;
@@ -267,6 +240,9 @@ unsigned int getTimerValue(const char *sTitle, unsigned int defMins) {
       printLCDLPad(1, 10, itoa(mins, buf, 10), 2, '0');
       lastCount = encCount;
     }
+    
+    if (chkMsg()) rejectMsg(LOGGLB);
+
     if (enterStatus == 1) {
       enterStatus = 0;
       if (cursorPos == 2) return hours * 60 + mins;
@@ -335,6 +311,9 @@ void getString(const char *sTitle, char defValue[], byte chars) {
       }
       printLCD(1, (20 - chars + 1) / 2 - 1, retValue);
     }
+    
+    if (chkMsg()) rejectMsg(LOGGLB);
+
     if (enterStatus == 1) {
       enterStatus = 0;
       if (cursorPos == chars) {

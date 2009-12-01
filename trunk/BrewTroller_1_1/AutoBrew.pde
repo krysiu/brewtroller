@@ -512,16 +512,8 @@ void manFill() {
         else if (lastCount == 6) printLCD_P(3, 8, ABORT);
       }
 
-      if (chkMsg()) {
-        if (strcasecmp(msg[0], "SELECT") == 0) {
-          byte val = atoi(msg[1]);
-          if (msgField == 1 && val  >= 0 && val <= 6) {
-            encCount = val;
-            enterStatus = 1;
-            clearMsg();
-          } else rejectParam(LOGSCROLLP);
-        } else rejectMsg(LOGSCROLLP);
-      }
+      if (chkMsg()) rejectMsg(LOGGLB);
+    
       if (enterStatus == 1) {
         enterStatus = 0;
         autoValve = 0;
@@ -577,12 +569,8 @@ void delayStart(int iMins) {
       brewCore();
       printTimer(1,7);
 
-      if (chkMsg()) {
-        if (strcasecmp(msg[0], "POPMENU") == 0) {
-          enterStatus = 1;
-          clearMsg();
-        } else rejectMsg(LOGAB);
-      }
+      if (chkMsg()) rejectMsg(LOGGLB);
+    
       if (enterStatus == 1) {
         enterStatus = 0;
         redraw = 1;
@@ -659,12 +647,6 @@ void mashStep(char sTitle[ ], int iMins) {
           printLCD(2, 5, ">");
           printLCD_P(2, 6, CONTINUE);
           printLCD(2, 14, "<");
-          logStart_P(LOGMENU);
-          logField_P(LOGSCROLLP);
-          logField(sTitle);
-          logFieldI(1);
-          logField_P(CONTINUE);
-          logEnd();
         } else setTimer(iMins);
       }
 
@@ -697,20 +679,10 @@ void mashStep(char sTitle[ ], int iMins) {
 
       if (preheated && !doPrompt) printTimer(2, 7);
 
-      if (chkMsg()) {
-        if ((!(doPrompt && preheated) && strcasecmp(msg[0], "POPMENU") == 0) || (doPrompt && preheated && strcasecmp(msg[0], "SELECT") == 0)) {
-          enterStatus = 1;
-          clearMsg();
-        } else rejectMsg(LOGAB);
-      }
+      if (chkMsg()) rejectMsg(LOGGLB);
+    
       if (doPrompt && preheated && enterStatus == 1) { 
         enterStatus = 0;
-        logStart_P(LOGMENU);
-        logField_P(LOGSCROLLR);
-        logField(sTitle);
-        logFieldI(0);
-        logField_P(CONTINUE);
-        logEnd();
         break; 
       }
       else if (enterStatus == 1) {
@@ -836,16 +808,8 @@ void manSparge(byte mode) {
 
       for (byte i = TS_HLT; i <= TS_KETTLE; i++) if (temp[i] == -1) printLCD_P(i + 1, 7, PSTR("---")); else printLCDLPad(i + 1, 7, itoa(temp[i], buf, 10), 3, ' ');
 
-      if (chkMsg()) {
-        if (strcasecmp(msg[0], "SELECT") == 0) {
-          byte val = atoi(msg[1]);
-          if (msgField == 1 && val  >= 0 && val <= 5) {
-            encCount = val;
-            enterStatus = 1;
-            clearMsg();
-          } else rejectParam(LOGSCROLLP);
-        } else rejectMsg(LOGSCROLLP);
-      }
+      if (chkMsg()) rejectMsg(LOGGLB);
+    
       if (enterStatus == 1) {
         enterStatus = 0;
         if (encCount == 0) {
@@ -989,12 +953,8 @@ void boilStage(unsigned int iMins, unsigned int boilAdds) {
         #endif
       }
 
-      if (chkMsg()) {
-        if ((!alarmStatus && strcasecmp(msg[0], "POPMENU") == 0) || (alarmStatus && strcasecmp(msg[0], "SELECT") == 0)) {
-          enterStatus = 1;
-          clearMsg();
-        } else rejectMsg(LOGAB);
-      }
+      if (chkMsg()) rejectMsg(LOGGLB);
+    
       if (enterStatus == 1 && alarmStatus) {
         enterStatus = 0;
         setAlarm(0);
@@ -1102,16 +1062,8 @@ void manChill() {
         else if (lastCount == 6) printLCD_P(3, 8, ABORT);
       }
       
-      if (chkMsg()) {
-        if (strcasecmp(msg[0], "SELECT") == 0) {
-          byte val = atoi(msg[1]);
-          if (msgField == 1 && val  >= 0 && val <= 6) {
-            encCount = val;
-            enterStatus = 1;
-            clearMsg();
-          } else rejectParam(LOGSCROLLP);
-        } else rejectMsg(LOGSCROLLP);
-      }
+      if (chkMsg()) rejectMsg(LOGGLB);
+    
       if (enterStatus == 1 && alarmStatus) {
         enterStatus = 0;
         setAlarm(0);
