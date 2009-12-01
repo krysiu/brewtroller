@@ -121,10 +121,8 @@ void brewCore() {
     convStart = 0;
   }
 
-#ifdef USESTEAM
   //Check steam Pressure
-  steamPressure = readPressure(STEAMPRESS_APIN, steamPSens);
-#endif
+  steamPressure = readPressure(STEAMPRESS_APIN, steamPSens, steamZero);
 
   //Process Heat Outputs
 #ifdef USESTEAM

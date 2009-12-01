@@ -111,9 +111,10 @@ void cfgOutputs() {
     strcpy_P(menuopts[16], STEAMGAIN);
     strcpy_P(menuopts[17], STEAMPRESS);
     strcpy_P(menuopts[18], STEAMSENSOR);
-    strcpy_P(menuopts[19], EXIT);
+    strcpy_P(menuopts[19], STEAMZERO);
+    strcpy_P(menuopts[20], EXIT);
 
-    lastOption = scrollMenu("Configure Outputs", 20, lastOption);
+    lastOption = scrollMenu("Configure Outputs", 21, lastOption);
     if (lastOption == 0) PIDEnabled[VS_HLT] = PIDEnabled[VS_HLT] ^ 1;
     else if (lastOption == 1) {
       PIDCycle[VS_HLT] = getValue(HLTCYCLE, PIDCycle[VS_HLT], 3, 0, 255, SEC);
@@ -155,6 +156,13 @@ void cfgOutputs() {
       #else
         pid[VS_STEAM].SetInputLimits(0, 7250 / steamPSens);
       #endif
+    } else if (lastOption == 19) {
+      clearLCD();
+      printLCD_P(0, 0, STEAMZERO);
+      printLCD_P(1,2,PSTR("Calibrate Zero?"));
+      strcpy_P(menuopts[0], CONTINUE);
+      strcpy_P(menuopts[1], CANCEL);
+      if (getChoice(2, 3) == 0) steamZero = analogRead(STEAMPRESS_APIN);
     } else return;
   } 
 }

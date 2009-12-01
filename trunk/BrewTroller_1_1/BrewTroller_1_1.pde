@@ -1,4 +1,4 @@
-#define BUILD 297 
+#define BUILD 299 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -216,15 +216,14 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 #define ENTER_INT 1
 #define ENCA_INT 2
 
-//Standard 11 P/V Ouput Defines
-#ifdef MUXBOARDS
-  #define MUX_LATCH_PIN 12
-  #define MUX_CLOCK_PIN 13
-  #define MUX_DATA_PIN 14
-  #define MUX_OE_PIN 10
-#else
-  #define VALVE1_PIN 6
-  #define VALVE2_PIN 7
+//P/V Ouput Defines
+#define MUX_LATCH_PIN 12
+#define MUX_CLOCK_PIN 13
+#define MUX_DATA_PIN 14
+#define MUX_OE_PIN 10
+
+#define VALVE1_PIN 6
+#define VALVE2_PIN 7
 
 #ifdef BTBOARD_2.2
   #define VALVE3_PIN 25
@@ -234,14 +233,13 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
   #define VALVE4_PIN 9
 #endif
 
-  #define VALVE5_PIN 10
-  #define VALVE6_PIN 12
-  #define VALVE7_PIN 13
-  #define VALVE8_PIN 14
-  #define VALVE9_PIN 24
-  #define VALVEA_PIN 18
-  #define VALVEB_PIN 16
-#endif
+#define VALVE5_PIN 10
+#define VALVE6_PIN 12
+#define VALVE7_PIN 13
+#define VALVE8_PIN 14
+#define VALVE9_PIN 24
+#define VALVEA_PIN 18
+#define VALVEB_PIN 16
 
 #define HLTHEAT_PIN 0
 #define MASHHEAT_PIN 1
@@ -343,6 +341,7 @@ boolean PIDEnabled[4];
 byte pitchTemp;
 byte steamTgt;
 unsigned int steamPSens;
+unsigned int steamZero;
 float steamPressure;
 
 PID pid[4] = {
@@ -417,8 +416,9 @@ const char KETTLEGAIN[] PROGMEM = "Kettle PID Gain";
 const char KETTLEHY[] PROGMEM = "Kettle Hysteresis";
 const char STEAMCYCLE[] PROGMEM = "Steam PID Cycle";
 const char STEAMGAIN[] PROGMEM = "Steam PID Gain";
-const char STEAMPRESS[] PROGMEM = "Steam Pressure";
-const char STEAMSENSOR[] PROGMEM = "Steam Sensor";
+const char STEAMPRESS[] PROGMEM = "Steam Target";
+const char STEAMSENSOR[] PROGMEM = "Steam Sensor Sens";
+const char STEAMZERO[] PROGMEM = "Steam Zero Calib";
 const char HLTDESC[] PROGMEM = "Hot Liquor Tank";
 const char MASHDESC[] PROGMEM = "Mash Tun";
 
@@ -464,12 +464,13 @@ void setup() {
   pinMode(ENCB_PIN, INPUT);
   pinMode(ENTER_PIN, INPUT);
   pinMode(ALARM_PIN, OUTPUT);
-#ifdef MUXBOARDS
+#if MUXBOARDS > 0
   pinMode(MUX_LATCH_PIN, OUTPUT);
   pinMode(MUX_CLOCK_PIN, OUTPUT);
   pinMode(MUX_DATA_PIN, OUTPUT);
   pinMode(MUX_OE_PIN, OUTPUT);
-#else
+#endif
+#ifdef ONBOARDPV
   pinMode(VALVE1_PIN, OUTPUT);
   pinMode(VALVE2_PIN, OUTPUT);
   pinMode(VALVE3_PIN, OUTPUT);
@@ -485,7 +486,9 @@ void setup() {
   pinMode(HLTHEAT_PIN, OUTPUT);
   pinMode(MASHHEAT_PIN, OUTPUT);
   pinMode(KETTLEHEAT_PIN, OUTPUT);
+#ifdef USESTEAM
   pinMode(STEAMHEAT_PIN, OUTPUT);
+#endif
   resetOutputs();
   
   initLCD();

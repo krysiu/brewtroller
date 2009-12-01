@@ -36,7 +36,11 @@ void saveSetup() {
   EEPROM.write(92, evapRate);
 
   //94 - 114 Reserved for Power Recovery
-  //115-117 *** OPEN ***
+
+  //115-116 Steam Zero
+  PROMwriteInt(115, steamZero);
+
+  //117 *** OPEN ***
   //118-125 AUX1 TSensor Addr
   PROMwriteBytes(118, tSensor[TS_AUX1], 8);
 
@@ -115,7 +119,11 @@ void loadSetup() {
   pwrRecovery = EEPROM.read(94); 
   recoveryStep = EEPROM.read(95); 
   //94 - 114 Reserved for Power Recovery
-  //115-117 *** OPEN ***
+
+  //115-116 Steam Zero
+  steamZero = PROMreadInt(115);
+
+  //117 *** OPEN ***
   //118-125 AUX1 TSensor Addr
   PROMreadBytes(118, tSensor[TS_AUX1], 8);
   

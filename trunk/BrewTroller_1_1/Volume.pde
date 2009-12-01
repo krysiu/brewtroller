@@ -65,8 +65,9 @@ unsigned long readVolume( byte pin, unsigned long calibrationVols[10], unsigned 
 }
 
 //Read Analog value of aPin and calculate kPA or psi based on unit and sensitivity (sens in tenths of mv per kpa)
-float readPressure( byte aPin, unsigned int sens) {
-  float retValue = analogRead(aPin) * .0049 / (sens / 10000.0);
+float readPressure( byte aPin, unsigned int sens, unsigned int zero) {
+  if (sens == 0) return 999;
+  float retValue = (analogRead(aPin) - zero) * .0049 / (sens / 10000.0);
   #ifdef USEMETRIC
     return retValue; 
   #else
