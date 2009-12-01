@@ -1,4 +1,4 @@
-#define BUILD 294 
+#define BUILD 295 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -6,14 +6,10 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 
 Documentation, Forums and more information available at http://www.brewtroller.com
 
-Compiled on Arduino-0016 (http://arduino.cc/en/Main/Software)
+Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
 With Sanguino Software v1.4 (http://code.google.com/p/sanguino/downloads/list)
 using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrary)
 using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
-using LiquidCrystal Fix by Donald Weiman:
-  Download fix: http://web.alfredstate.edu/weimandn/arduino/LiquidCrystal_library/LiquidCrystal.cpp
-  Replace arduino-0015\hardware\libraries\LiquidCrystal\LiquidCrystal.cpp
-  Delete arduino-0015\hardware\libraries\LiquidCrystal\LiquidCrystal.o if it exists
 */
 
 //*****************************************************************************************************************************
@@ -171,8 +167,8 @@ using LiquidCrystal Fix by Donald Weiman:
 // a delay seems to help or resolve completely. You may comment out the following
 // lines to remove this delay between a print of each character.
 //
-#define LCD_DELAY_CURSOR 60
-#define LCD_DELAY_CHAR 60
+//#define LCD_DELAY_CURSOR 60
+//#define LCD_DELAY_CHAR 60
 //**********************************************************************************
 
 //**********************************************************************************

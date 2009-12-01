@@ -128,15 +128,15 @@ void doMon() {
       if (encCount != lastCount) {
         clearLCD();
         printLCD_P(0,4,PSTR("Brew Monitor"));
-        printLCD_P(1,2,PSTR("HLT"));
+        printLCD_P(1,0,PSTR("HLT"));
         printLCD_P(3,0,PSTR("["));
         printLCD_P(3,5,PSTR("]"));
-        printLCD_P(2, 4, TUNIT);
+        printLCD_P(2, 3, TUNIT);
         printLCD_P(3, 4, TUNIT);
-        printLCD_P(1,15,PSTR("Mash"));
+        printLCD_P(1,16,PSTR("Mash"));
         printLCD_P(3,14,PSTR("["));
         printLCD_P(3,19,PSTR("]"));
-        printLCD_P(2, 18, TUNIT);
+        printLCD_P(2, 19, TUNIT);
         printLCD_P(3, 18, TUNIT);
         lastCount = encCount;
         timerLastWrite = 0;
@@ -161,13 +161,13 @@ void doMon() {
         printLCD_P(1,0,PSTR("Kettle"));
         printLCD_P(3,0,PSTR("["));
         printLCD_P(3,5,PSTR("]"));
-        printLCD_P(2, 4, TUNIT);
+        printLCD_P(2, 3, TUNIT);
         printLCD_P(3, 4, TUNIT);
         lastCount = encCount;
         timerLastWrite = 0;
       }
 
-      if (temp[TS_KETTLE] == -1) printLCD_P(2, 1, PSTR("---")); else printLCDLPad(2, 1, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
+      if (temp[TS_KETTLE] == -1) printLCD_P(2, 0, PSTR("---")); else printLCDLPad(2, 0, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
       printLCDLPad(3, 1, itoa(setpoint[TS_KETTLE], buf, 10), 3, ' ');
       if (PIDEnabled[TS_KETTLE]) {
         byte pct = PIDOutput[TS_KETTLE] / PIDCycle[TS_KETTLE] / 10;
