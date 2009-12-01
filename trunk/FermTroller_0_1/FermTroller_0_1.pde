@@ -1,4 +1,4 @@
-#define BUILD 292 
+#define BUILD 296 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -123,8 +123,8 @@ using LiquidCrystal Fix by Donald Weiman:
 // a delay seems to help or resolve completely. You may comment out the following
 // lines to remove this delay between a print of each character.
 //
-#define LCD_DELAY_CURSOR 60
-#define LCD_DELAY_CHAR 60
+//#define LCD_DELAY_CURSOR 60
+//#define LCD_DELAY_CHAR 60
 //**********************************************************************************
 
 //**********************************************************************************
