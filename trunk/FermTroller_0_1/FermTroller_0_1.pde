@@ -1,4 +1,4 @@
-#define BUILD 296 
+#define BUILD 298 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -306,7 +306,6 @@ const char BTVER[] PROGMEM = "v0.1";
 //Log Message Classes
 const char LOGCMD[] PROGMEM = "CMD";
 const char LOGDEBUG[] PROGMEM = "DEBUG";
-const char LOGMENU[] PROGMEM = "MENU";
 const char LOGSYS[] PROGMEM = "SYSTEM";
 const char LOGGLB[] PROGMEM = "GLOBAL";
 const char LOGDATA[] PROGMEM = "DATA";
@@ -315,12 +314,8 @@ const char LOGDATA[] PROGMEM = "DATA";
 const char PWRLOSSRECOVER[] PROGMEM = "PLR";
 const char INIT_EEPROM[] PROGMEM = "Initialize EEPROM";
 const char CANCEL[] PROGMEM = "Cancel";
+const char EXIT[] PROGMEM = "Exit";
 const char SPACE[] PROGMEM = " ";
-const char LOGSCROLLP[] PROGMEM = "PROMPT";
-const char LOGSCROLLR[] PROGMEM = "RESULT";
-const char LOGCHOICE[] PROGMEM = "CHOICE";
-const char LOGGETVAL[] PROGMEM = "GETVAL";
-const char LOGSPLASH[] PROGMEM = "SPLASH";
 const char CONTINUE[] PROGMEM = "Continue";
 const char ABORT[] PROGMEM = "Abort";
         
@@ -339,6 +334,7 @@ const char PUNIT[] PROGMEM = "psi";
 //Custom LCD Chars
 const byte CHARFIELD[] PROGMEM = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};
 const byte CHARCURSOR[] PROGMEM = {B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
+const byte CHARSEL[] PROGMEM = {B10001, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
 const byte BMP0[] PROGMEM = {B00000, B00000, B00000, B00000, B00011, B01111, B11111, B11111};
 const byte BMP1[] PROGMEM = {B00000, B00000, B00000, B00000, B11100, B11110, B11111, B11111};
 const byte BMP2[] PROGMEM = {B00001, B00011, B00111, B01111, B00001, B00011, B01111, B11111};
@@ -437,25 +433,10 @@ void splashScreen() {
   printLCD_P(1, 10, PSTR("Build "));
   printLCDLPad(1, 16, itoa(BUILD, buf, 10), 4, '0');
   printLCD_P(3, 1, PSTR("www.brewtroller.com"));
-  logStart_P(LOGMENU);
-  logField_P(LOGSCROLLP);
-  logField_P(LOGSPLASH);
-  logField_P(PSTR("0"));
-  logEnd();
   while(!enterStatus) {
-     if (chkMsg()) {
-      if (strcasecmp(msg[0], "SELECT") == 0) {
-        enterStatus = 1;
-        clearMsg();
-      } else rejectMsg(LOGSCROLLP);
-    }
-    delay(250);
+    if (chkMsg()) rejectMsg(LOGGLB);
+    fermCore();
   }
   enterStatus = 0;
-  logStart_P(LOGMENU);
-  logField_P(LOGSCROLLR);
-  logField_P(LOGSPLASH);
-  logFieldI(0);
-  logEnd();
 }
 

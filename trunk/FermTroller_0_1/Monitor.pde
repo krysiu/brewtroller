@@ -59,7 +59,7 @@ void doMon() {
       }
     }
     
-    if (chkMsg()) rejectMsg(LOGSCROLLP);
+    if (chkMsg()) rejectMsg(LOGGLB);
     fermCore();
     
     if (encCount == 0) {
