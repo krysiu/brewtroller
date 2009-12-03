@@ -1,4 +1,4 @@
-#define BUILD 299 
+#define BUILD 300 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -147,6 +147,16 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 // losing wort or causing personal injury when this profile is enabled
 
 //#define AUTO_BOIL_RECIRC 20
+//**********************************************************************************
+
+//**********************************************************************************
+// LOG INTERVAL
+//**********************************************************************************
+// Specifies how often data is logged via serial in milliseconds. If real time
+// display of data is being used a smaller interval is best (1000 ms). A larger
+// interval can be used for logging applications to reduce log file size (5000 ms).
+
+#define LOG_INTERVAL 2000
 //**********************************************************************************
 
 //**********************************************************************************

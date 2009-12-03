@@ -12,7 +12,7 @@ void brewCore() {
 
   //Log data every 2s
   //Log 1 of 6 chunks per cycle to improve responsiveness to calling function
-  if (millis() - lastLog > 1000) {
+  if (millis() - lastLog > LOG_INTERVAL) {
     if (logCount == 0) {
       logPgm();
       if (pwrRecovery == 1) {
@@ -106,7 +106,8 @@ void brewCore() {
       logField_P(PSTR("VLVPRF"));
       for (byte i = VLV_FILLHLT; i <= VLV_CHILLBEER; i++) { if ((vlvBits & vlvConfig[i]) == vlvConfig[i]) logFieldI(1); else logFieldI(0); }
       logEnd();
-      if (millis() - lastLog > 5000) lastLog = millis(); else lastLog += 1000;
+      //Logic below times start of log to start of log. Interval is reset if exceeds two intervals.
+      if (millis() - lastLog > LOG_INTERVAL * 2) lastLog = millis(); else lastLog += LOG_INTERVAL;
     }
     logCount++;
     if (logCount > 23) logCount = 0;
