@@ -2,7 +2,7 @@ void fermCore() {
 
   //Log data every 2s
   //Log 1 of 6 chunks per cycle to improve responsiveness to calling function
-  if (millis() - lastLog > 2000) {
+  if (millis() - lastLog > LOG_INTERVAL) {
     if (logCount == 0) {
       logPgm();
     } else if (logCount == 1) {
@@ -55,7 +55,7 @@ void fermCore() {
         logFieldI(1);
       #endif
       logEnd();
-    } else if (logCount == NUM_ZONES * 3 + 3) { if (millis() - lastLog > 5000) lastLog = millis() - 2000; else lastLog += 2000; }
+    } else if (logCount == NUM_ZONES * 3 + 3) { if (millis() - lastLog > LOG_INTERVAL * 2) lastLog = millis(); else lastLog += LOG_INTERVAL; }
     if (logCount == NUM_ZONES * 3 + 3) logCount = 0;
     else logCount++;
   }

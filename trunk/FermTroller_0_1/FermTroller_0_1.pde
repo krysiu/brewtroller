@@ -1,4 +1,4 @@
-#define BUILD 298 
+#define BUILD 301 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -114,6 +114,16 @@ using LiquidCrystal Fix by Donald Weiman:
 // 3.x boards use MUX by default. Use this setting to enable MUX on 2.x boards
 //
 //#define USE_MUX
+//**********************************************************************************
+
+//**********************************************************************************
+// LOG INTERVAL
+//**********************************************************************************
+// Specifies how often data is logged via serial in milliseconds. If real time
+// display of data is being used a smaller interval is best (1000 ms). A larger
+// interval can be used for logging applications to reduce log file size (5000 ms).
+
+#define LOG_INTERVAL 2000
 //**********************************************************************************
 
 //**********************************************************************************
