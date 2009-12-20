@@ -1,5 +1,5 @@
 #include <avr/eeprom.h>
-#include <eeprom.h>
+#include <EEPROM.h>
 
 void saveSetup() {
   //Walk through the 6 tSensor elements and store 8-byte address of each
