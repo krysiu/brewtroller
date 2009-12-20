@@ -1,4 +1,4 @@
-#define BUILD 300 
+#define BUILD 307 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -256,9 +256,16 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 #define KETTLEHEAT_PIN 3
 #define STEAMHEAT_PIN 6
 
-#define HLTVOL_APIN 0
+//Reverse pin swap on 2.x boards
+#ifdef BTBOARD_2.2
+  #define HLTVOL_APIN 2
+  #define KETTLEVOL_APIN 0
+#else
+  #define HLTVOL_APIN 0
+  #define KETTLEVOL_APIN 2
+#endif
+
 #define MASHVOL_APIN 1
-#define KETTLEVOL_APIN 2
 #define STEAMPRESS_APIN 3
 
 //TSensor and Output (0-2) Array Element Constants
