@@ -49,7 +49,7 @@ void resetOutputs() {
       digitalWrite(MUX_CLOCK_PIN, 0);
 
       //for each bit in the long myDataOut
-      for (byte i = 31; i >= 0; i--)  {
+      for (byte i = 32; i > 0; i--)  {
         digitalWrite(MUX_CLOCK_PIN, 0);
         //create bitmask to grab the bit associated with our counter i and set data pin accordingly (NOTE: 32 - i causes bits to be sent most significant to least significant)
         digitalWrite(MUX_DATA_PIN, 0);

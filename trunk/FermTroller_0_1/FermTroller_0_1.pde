@@ -1,4 +1,4 @@
-#define BUILD 301 
+#define BUILD 309 
 /*
 FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -34,7 +34,7 @@ using LiquidCrystal Fix by Donald Weiman:
 //**********************************************************************************
 // The Brewtroller 3.0 board uses MUX instead of direct on-board outputs.
 // 
-//#define BTBOARD_3
+#define BTBOARD_3
 //**********************************************************************************
 
 //**********************************************************************************
