@@ -85,9 +85,10 @@ void printTimer(byte iRow, byte iCol) {
       lastTime = now;
     } else if (!alarmStatus) printLCD(iRow, iCol, "PAUSED");
 
-    unsigned int timerHours = timerValue / 3600000;
-    unsigned int timerMins = (timerValue - timerHours * 3600000) / 60000;
-    unsigned int timerSecs = (timerValue - timerHours * 3600000 - timerMins * 60000) / 1000;
+    byte timerHours = timerValue / 3600000;
+    byte timerMins = (timerValue - timerHours * 3600000) / 60000;
+    byte timerSecs = (timerValue - timerHours * 3600000 - timerMins * 60000) / 1000;
+    
     //Update EEPROM once per minute
     if (timerLastWrite/60 != timerValue/60000) setTimerRecovery(timerValue/60000 + 1);
     //Update LCD once per second
