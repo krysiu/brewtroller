@@ -1,5 +1,3 @@
-void(* softReset) (void) = 0;
-
 void logPLR() {
   logStart_P(LOGGLB);
   logField_P(PSTR("PLR"));

@@ -198,8 +198,8 @@ unsigned long getValue(const char *sTitle, unsigned long defValue, byte digits, 
 }
 
 unsigned int getTimerValue(const char *sTitle, unsigned int defMins) {
-  unsigned int hours = defMins / 60;
-  unsigned int mins = defMins - hours * 60;
+  byte hours = defMins / 60;
+  byte mins = defMins - hours * 60;
   byte cursorPos = 0; //0 = Hours, 1 = Mins, 2 = OK
   boolean cursorState = 0; //0 = Unselected, 1 = Selected
   encMin = 0;

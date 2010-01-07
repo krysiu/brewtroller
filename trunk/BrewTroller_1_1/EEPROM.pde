@@ -57,9 +57,10 @@ void saveSetup() {
   //146 - 149 Reserved for Power Recovery
   //150 ***OPEN***
   //151-155 Power Recovery
-  //156-1255 Saved Programs
-  //1256-1801 *** OPEN ***
-  //1802-1849 Valve Profiles
+  //156-1310 Saved Programs
+  //1311-1797 *** OPEN ***
+  //1798-1849 Valve Profiles
+  PROMwriteLong(1798, vlvConfig[VLV_DRAIN]);
   PROMwriteLong(1802, vlvConfig[VLV_BOILRECIRC]);
   for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) PROMwriteLong(1806 + (profile) * 4, vlvConfig[profile]);
   
@@ -139,9 +140,10 @@ void loadSetup() {
   //146 - 149 Reserved for Power Recovery
   //150 ***OPEN***
   //151-155 Power Recovery
-  //156-1255 Saved Programs
-  //1256-1801 *** OPEN ***
-  //1802-1849 Valve Profiles
+  //156-1310 Saved Programs
+  //1311-1797 *** OPEN ***
+  //1798-1849 Valve Profiles
+  vlvConfig[VLV_DRAIN] = PROMreadLong(1798);
   vlvConfig[VLV_BOILRECIRC] = PROMreadLong(1802);
   for (byte profile = VLV_FILLHLT; profile <= VLV_CHILLBEER; profile ++) vlvConfig[profile] = PROMreadLong(1806 + (profile) * 4);
 
@@ -362,6 +364,38 @@ void checkConfig() {
       //Zero Out Boil Recirc Profile
       PROMwriteLong(1802, 0);
       EEPROM.write(2047, 13);
+      
+    case 13:
+      //Add Clean Program
+      {
+        setProgName(20, "Clean");
+        #ifdef USEMETRIC
+          byte temps[4] = {0, 0, 60, 0};
+          byte mins[4] = {0, 0, 5, 0};
+          setProgSchedule(20, temps, mins);
+          setProgSparge(20, 76);
+          setProgHLT(20, 82);
+          setProgRatio(20, 277);
+          setProgPitch(20, 21);
+          setProgGrainT(20, 16);
+        #else
+          byte temps[4] = {0, 0, 140, 0};
+          byte mins[4] = {0, 0, 5, 0};
+          setProgSchedule(20, temps, mins);
+          setProgSparge(20, 168);
+          setProgHLT(20, 180);
+          setProgRatio(20, 133);
+          setProgPitch(20, 70);
+          setProgGrainT(20, 60);
+        #endif
+
+        setProgBoil(20, 0);
+        setProgGrain(20, 0);
+        setProgDelay(20, 0);
+        setProgMLHeatSrc(20, 0);
+        setProgAdds(20, 0);
+      }
+      EEPROM.write(2047, 14);
     default:
       //No EEPROM Upgrade Required
       return;

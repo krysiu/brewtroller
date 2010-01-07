@@ -1,4 +1,4 @@
-#define BUILD 310 
+#define BUILD 311 
 /*
 BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
@@ -196,6 +196,7 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 #include <avr/pgmspace.h>
 #include <PID_Beta6.h>
 
+void(* softReset) (void) = 0;
 
 //**********************************************************************************
 //Compile Time Logic
@@ -302,6 +303,7 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 #define VLV_CHILLH2O 9
 #define VLV_CHILLBEER 10
 #define VLV_BOILRECIRC 11
+#define VLV_DRAIN 12
 
 //Heat Output Pin Array
 byte heatPin[4] = { HLTHEAT_PIN, MASHHEAT_PIN, KETTLEHEAT_PIN, STEAMHEAT_PIN };
@@ -336,7 +338,7 @@ unsigned long lastVolChk;
 byte MLHeatSrc;
 
 //Valve Variables
-unsigned long vlvConfig[12];
+unsigned long vlvConfig[13];
 unsigned long vlvBits;
 byte autoValve;
 
@@ -344,7 +346,7 @@ byte autoValve;
 byte evapRate;
 
 //Shared menuOptions Array
-char menuopts[20][20];
+char menuopts[21][20];
 
 //Common Buffer
 char buf[11];
@@ -422,6 +424,7 @@ const char CHILLNORM[] PROGMEM = "Chiller Both";
 const char CHILLH2O[] PROGMEM = "Chiller H2O";
 const char CHILLBEER[] PROGMEM = "Chiller Beer";
 const char BOILRECIRC[] PROGMEM = "Boil Recirc";
+const char DRAIN[] PROGMEM = "Drain";
 const char HLTCYCLE[] PROGMEM = "HLT PID Cycle";
 const char HLTGAIN[] PROGMEM = "HLT PID Gain";
 const char HLTHY[] PROGMEM = "HLT Hysteresis";

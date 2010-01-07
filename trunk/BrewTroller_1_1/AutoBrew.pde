@@ -138,9 +138,9 @@ void doAutoBrew() {
     else if (lastOption == 13) {
       byte profile = 0;
       //Display Stored Programs
-      for (byte i = 0; i < 20; i++) getProgName(i, menuopts[i]);
-      profile = scrollMenu("Load Program", 20, profile);
-      if (profile < 20) {
+      for (byte i = 0; i < 21; i++) getProgName(i, menuopts[i]);
+      profile = scrollMenu("Load Program", 21, profile);
+      if (profile < 21) {
         spargeTemp = getProgSparge(profile);
         grainWeight = getProgGrain(profile);
         delayMins = getProgDelay(profile);
@@ -158,9 +158,9 @@ void doAutoBrew() {
     else if (lastOption == 14) {
       byte profile = 0;
       //Display Stored Schedules
-      for (byte i = 0; i < 20; i++) getProgName(i, menuopts[i]);
-      profile = scrollMenu("Save Program", 20, profile);
-      if (profile < 20) {
+      for (byte i = 0; i < 21; i++) getProgName(i, menuopts[i]);
+      profile = scrollMenu("Save Program", 21, profile);
+      if (profile < 21) {
         getString(PSTR("Save Program As:"), menuopts[profile], 19);
         setProgName(profile, menuopts[profile]);
         setProgSparge(profile, spargeTemp);
@@ -402,6 +402,43 @@ void doAutoBrew() {
       setABRecovery(13); 
       manChill();
       if (enterStatus == 2) { enterStatus = 0; setPwrRecovery(0); return; }
+    case 14:
+      setABRecovery(14); 
+      lastOption = 0;
+      inMenu = 1;
+      while (inMenu) {
+        strcpy_P(menuopts[0], PSTR("Load Clean Program"));
+        strcpy_P(menuopts[1], DRAIN);
+        if ((vlvBits & vlvConfig[VLV_DRAIN]) == vlvConfig[VLV_DRAIN] && vlvConfig[VLV_DRAIN] != 0) strcat_P(menuopts[1], PSTR(" (On)"));
+        
+        strcpy_P(menuopts[2], ALLOFF);
+        strcpy_P(menuopts[3], EXIT);
+
+        lastOption = scrollMenu("Clean/Drain", 4, lastOption);
+        if (lastOption == 0) {
+          byte profile = 20;
+          setMLHeatSrc(getProgMLHeatSrc(profile));
+          setPwrRecovery(1);
+          setABRecovery(1);
+          setABHLTTemp(getProgHLT(profile));
+          getProgSchedule(profile, stepTemp, stepMins);
+          saveABSteps(stepTemp, stepMins);
+          setABSparge(getProgSparge(profile));
+          setABDelay(getProgDelay(profile));
+          setABBatchVol(getProgBatchVol(profile));
+          setABGrain(getProgGrain(profile));
+          setABBoil(getProgBoil(profile));
+          setABRatio(getProgRatio(profile));
+          setABPitch(getProgPitch(profile));
+          setABAdds(getProgAdds(profile));
+          setABAddsTrig(0);
+          setABGrainTemp(getProgGrainT(profile));
+          softReset();
+        } else if (lastOption == 1) setValves(vlvConfig[VLV_DRAIN]);
+        else if (lastOption == 2) setValves(0);
+        else inMenu = 0;
+      }
+ 
   }  
   enterStatus = 0;
   setABRecovery(0);
