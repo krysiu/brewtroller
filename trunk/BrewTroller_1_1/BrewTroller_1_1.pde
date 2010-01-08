@@ -1,4 +1,4 @@
-#define BUILD 313 
+#define BUILD 315 
 /*  
    Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -53,8 +53,8 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 // Use BTBOARD_3 for 3.0 boards
 //
 //#define BTBOARD_1
-#define BTBOARD_2.2
-//#define BTBOARD_3
+//#define BTBOARD_2.2
+#define BTBOARD_3
 //**********************************************************************************
 
 //**********************************************************************************
@@ -74,7 +74,8 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 // Uncomment one of the following lines to enable MUX'ing of Pump/Valve Outputs
 // Note: MUX'ing requires 1-4 expansion boards providing 8-32 pump/valve outputs
 // To use the original 11 Pump/valve outputs included in BrewTroller 1.0 - 2.0 leave
-// all lines commented
+// all lines commented. If you are using BTBOARD_3, MUXBOARDS 2 is used automatically
+// but you can override the default by specifying a value below.
 //
 //#define MUXBOARDS 1
 //#define MUXBOARDS 2
@@ -222,6 +223,10 @@ void(* softReset) (void) = 0;
 
 // Disable On board pump/valve outputs for BT Board 3.0 and older boards using steam
 // Set MUXBOARDS 0 for boards without on board or MUX Pump/valve outputs
+#if defined BTBOARD_3 && !defined MUXBOARDS
+  #define MUXBOARDS 2
+#endif
+
 #if !defined BTBOARD_3 && !defined USESTEAM && !defined MUXBOARDS
   #define ONBOARDPV
 #else
@@ -229,6 +234,8 @@ void(* softReset) (void) = 0;
     #define MUXBOARDS 0
   #endif
 #endif
+
+
 
 //Enable Serial on BTBOARD_2.2+ boards or if DEBUG is set
 #if !defined BTBOARD_1 || defined DEBUG
