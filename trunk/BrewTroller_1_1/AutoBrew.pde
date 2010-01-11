@@ -465,6 +465,11 @@ void doAutoBrew() {
           setABAdds(getProgAdds(profile));
           setABAddsTrig(0);
           setABGrainTemp(getProgGrainT(profile));
+
+          logStart_P(LOGSYS);
+          logField_P(PSTR("SOFT_RESET"));
+          logEnd();
+
           softReset();
         } else if (lastOption == 1) setValves(vlvConfig[VLV_DRAIN]);
         else if (lastOption == 2) setValves(0);

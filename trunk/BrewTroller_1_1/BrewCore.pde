@@ -136,7 +136,7 @@ void brewCore() {
     } else if (logCount == 23) {
       logStart_P(LOGDATA);
       logField_P(PSTR("VLVPRF"));
-      for (byte i = VLV_FILLHLT; i <= VLV_CHILLBEER; i++) { if ((vlvBits & vlvConfig[i]) == vlvConfig[i]) logFieldI(1); else logFieldI(0); }
+      for (byte i = VLV_FILLHLT; i <= VLV_DRAIN; i++) { if ((vlvBits & vlvConfig[i]) == vlvConfig[i]) logFieldI(1); else logFieldI(0); }
       logEnd();
       //Logic below times start of log to start of log. Interval is reset if exceeds two intervals.
       if (millis() - lastLog > LOG_INTERVAL * 2) lastLog = millis(); else lastLog += LOG_INTERVAL;
