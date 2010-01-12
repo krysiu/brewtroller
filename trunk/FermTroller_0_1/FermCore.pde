@@ -61,14 +61,14 @@ void fermCore() {
     } else if (logCount >= NUM_ZONES + 3 && logCount <= NUM_ZONES * 2 + 2) {
       int pct;
       byte i = logCount - NUM_ZONES - 3;
-      if (coolStatus[i]) pct = -1;
+      if (coolStatus[i]) pct = -100;
       else {
         if (PIDEnabled[i]) pct = PIDOutput[i] / PIDCycle[i] / 10;
         else if (heatStatus[i]) pct = 100;
         else pct = 0;
       }
       logStart_P(LOGDATA);
-      logField_P(PSTR("ZONEPWR"));
+      logField_P(PSTR("HEATPWR"));
       logFieldI(i);
       logFieldI(pct);
       logEnd();
