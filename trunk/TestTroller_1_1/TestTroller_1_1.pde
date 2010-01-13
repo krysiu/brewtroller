@@ -1,5 +1,22 @@
-#define BUILD 302 
+#define BUILD 319 
 /*
+   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
+
+    This file is part of BrewTroller.
+
+    BrewTroller is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    BrewTroller is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with BrewTroller.  If not, see <http://www.gnu.org/licenses/>.
+
 TestTroller - Open Source Brewing Computer - Test Program
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
 Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
@@ -25,8 +42,8 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 // Use BTBOARD_3 for 3.0 boards
 //
 //#define BTBOARD_1
-#define BTBOARD_2.2
-//#define BTBOARD_3
+//#define BTBOARD_2.2
+#define BTBOARD_3
 //**********************************************************************************
 
 //**********************************************************************************
@@ -74,6 +91,10 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 
 // Disable On board pump/valve outputs for BT Board 3.0 and older boards using steam
 // Set MUXBOARDS 0 for boards without on board or MUX Pump/valve outputs
+#if defined BTBOARD_3 && !defined MUXBOARDS
+  #define MUXBOARDS 2
+#endif
+
 #if !defined BTBOARD_3 && !defined USESTEAM && !defined MUXBOARDS
   #define ONBOARDPV
 #else
@@ -225,6 +246,7 @@ void loop() {
   testOneWire(5, numTests);
   testVSensor(6, numTests);
   testTimer(7, numTests);
+  manTestValves();
   testComplete();
 }
 

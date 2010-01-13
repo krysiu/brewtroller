@@ -1,3 +1,33 @@
+/*
+   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
+
+    This file is part of BrewTroller.
+
+    BrewTroller is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    BrewTroller is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with BrewTroller.  If not, see <http://www.gnu.org/licenses/>.
+
+TestTroller - Open Source Brewing Computer - Test Program
+Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
+Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
+
+Documentation, Forums and more information available at http://www.brewtroller.com
+
+Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
+With Sanguino Software v1.4 (http://code.google.com/p/sanguino/downloads/list)
+using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
+*/
+
+
 #include <EEPROM.h>
 
 void testLCD(byte testNum, byte numTests) {
@@ -207,3 +237,60 @@ void testComplete() {
   enterStatus = 0;  
 }
 
+void manTestValves () {
+  encMin = 0;
+
+#ifdef ONBOARDPV
+  encMax = 11;
+#else
+  encMax = MUXBOARDS * 8;
+#endif
+
+  //The left most bit being displayed (Set to MAX + 1 to force redraw)
+  byte firstBit = encMax + 1;
+  encCount = 0;
+  byte lastCount = 1;
+
+  clearLCD();
+  printLCD_P(0, 0, PSTR("Manual Valve Testing"));
+  printLCD_P(3, 15, PSTR("EXIT"));
+  
+  while(1) {
+    if (encCount != lastCount) {
+      lastCount = encCount;
+      
+      if (lastCount < firstBit || lastCount > firstBit + 17) {
+        if (lastCount < firstBit) firstBit = lastCount; else if (lastCount < encMax ) firstBit = lastCount - 17;
+        for (byte i = firstBit; i < min(encMax, firstBit + 18); i++) if (vlvBits & ((unsigned long)1<<i)) printLCD_P(1, i - firstBit + 1, PSTR("1")); else printLCD_P(1, i - firstBit + 1, PSTR("0"));
+      }
+
+      for (byte i = firstBit; i < min(encMax, firstBit + 18); i++) {
+        if (i < 9) itoa(i + 1, buf, 10); else buf[0] = i + 56;
+        buf[1] = '\0';
+        printLCD(2, i - firstBit + 1, buf);
+      }
+
+      if (firstBit > 0) printLCD_P(2, 0, PSTR("<")); else printLCD_P(2, 0, PSTR(" "));
+      if (firstBit + 18 < encMax) printLCD_P(2, 19, PSTR(">")); else printLCD_P(2, 19, PSTR(" "));
+      if (lastCount == encMax) {
+        printLCD_P(3, 14, PSTR(">"));
+        printLCD_P(3, 19, PSTR("<"));
+      } else {
+        printLCD_P(3, 14, PSTR(" "));
+        printLCD_P(3, 19, PSTR(" "));
+        printLCD_P(2, lastCount - firstBit + 1, PSTR("^"));
+      }
+    }
+    
+    if (enterStatus == 1) {
+      enterStatus = 0;
+      if (lastCount == encMax) return;
+      setValves(vlvBits ^ ((unsigned long)1<<lastCount));
+      for (byte i = firstBit; i < min(encMax, firstBit + 18); i++) if (vlvBits & ((unsigned long)1<<i)) printLCD_P(1, i - firstBit + 1, PSTR("1")); else printLCD_P(1, i - firstBit + 1, PSTR("0"));
+    } else if (enterStatus == 2) {
+      enterStatus = 0;
+      return;
+    }
+  }
+
+}
