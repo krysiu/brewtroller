@@ -389,7 +389,7 @@ void cfgValves() {
     
     lastOption = scrollMenu("Valve Configuration", 14, lastOption);
     if (lastOption > 12) return;
-    vlvConfig[lastOption] = cfgValveProfile(menuopts[lastOption], vlvConfig[lastOption]);
+    else vlvConfig[lastOption] = cfgValveProfile(menuopts[lastOption], vlvConfig[lastOption]);
   }
 }
 
@@ -398,9 +398,9 @@ unsigned long cfgValveProfile (char sTitle[], unsigned long defValue) {
   encMin = 0;
 
 #ifdef ONBOARDPV
-  encMax = 11;
+  encMax = 12;
 #else
-  encMax = MUXBOARDS * 8;
+  encMax = MUXBOARDS * 8 + 1;
 #endif
 
   //The left most bit being displayed (Set to MAX + 1 to force redraw)
@@ -410,31 +410,41 @@ unsigned long cfgValveProfile (char sTitle[], unsigned long defValue) {
 
   clearLCD();
   printLCD(0,0,sTitle);
-  printLCD_P(3, 8, PSTR("OK"));
+  printLCD_P(3, 3, PSTR("Test"));
+  printLCD_P(3, 13, PSTR("Save"));
   
   while(1) {
     if (encCount != lastCount) {
       lastCount = encCount;
       
       if (lastCount < firstBit || lastCount > firstBit + 17) {
-        if (lastCount < firstBit) firstBit = lastCount; else if (lastCount < encMax ) firstBit = lastCount - 17;
-        for (byte i = firstBit; i < min(encMax, firstBit + 18); i++) if (retValue & ((unsigned long)1<<i)) printLCD_P(1, i - firstBit + 1, PSTR("1")); else printLCD_P(1, i - firstBit + 1, PSTR("0"));
+        if (lastCount < firstBit) firstBit = lastCount; else if (lastCount < encMax - 1) firstBit = lastCount - 17;
+        for (byte i = firstBit; i < min(encMax - 1, firstBit + 18); i++) if (retValue & ((unsigned long)1<<i)) printLCD_P(1, i - firstBit + 1, PSTR("1")); else printLCD_P(1, i - firstBit + 1, PSTR("0"));
       }
 
-      for (byte i = firstBit; i < min(encMax, firstBit + 18); i++) {
+      for (byte i = firstBit; i < min(encMax - 1, firstBit + 18); i++) {
         if (i < 9) itoa(i + 1, buf, 10); else buf[0] = i + 56;
         buf[1] = '\0';
         printLCD(2, i - firstBit + 1, buf);
       }
 
       if (firstBit > 0) printLCD_P(2, 0, PSTR("<")); else printLCD_P(2, 0, PSTR(" "));
-      if (firstBit + 18 < encMax) printLCD_P(2, 19, PSTR(">")); else printLCD_P(2, 19, PSTR(" "));
-      if (lastCount == encMax) {
-        printLCD_P(3, 7, PSTR(">"));
-        printLCD_P(3, 10, PSTR("<"));
-      } else {
+      if (firstBit + 18 < encMax - 1) printLCD_P(2, 19, PSTR(">")); else printLCD_P(2, 19, PSTR(" "));
+      if (lastCount == encMax - 1) {
+        printLCD_P(3, 2, PSTR(">"));
+        printLCD_P(3, 7, PSTR("<"));
+        printLCD_P(3, 12, PSTR(" "));
+        printLCD_P(3, 17, PSTR(" "));
+      } else if (lastCount == encMax) {
+        printLCD_P(3, 2, PSTR(" "));
         printLCD_P(3, 7, PSTR(" "));
-        printLCD_P(3, 10, PSTR(" "));
+        printLCD_P(3, 12, PSTR(">"));
+        printLCD_P(3, 17, PSTR("<"));
+      } else {
+        printLCD_P(3, 2, PSTR(" "));
+        printLCD_P(3, 7, PSTR(" "));
+        printLCD_P(3, 12, PSTR(" "));
+        printLCD_P(3, 17, PSTR(" "));
         printLCD_P(2, lastCount - firstBit + 1, PSTR("^"));
       }
     }
@@ -442,11 +452,23 @@ unsigned long cfgValveProfile (char sTitle[], unsigned long defValue) {
     if (enterStatus == 1) {
       enterStatus = 0;
       if (lastCount == encMax) return retValue;
-      retValue = retValue ^ ((unsigned long)1<<lastCount);
-      for (byte i = firstBit; i < min(encMax, firstBit + 18); i++) if (retValue & ((unsigned long)1<<i)) printLCD_P(1, i - firstBit + 1, PSTR("1")); else printLCD_P(1, i - firstBit + 1, PSTR("0"));
+      else if (lastCount == encMax - 1) {
+        setValves(retValue);
+        printLCD_P(3, 2, PSTR("["));
+        printLCD_P(3, 7, PSTR("]"));
+        while (!enterStatus) delay(100);
+        enterStatus = 0;
+        setValves(0);
+        lastCount++;
+      } else {
+        retValue = retValue ^ ((unsigned long)1<<lastCount);
+        for (byte i = firstBit; i < min(encMax - 1, firstBit + 18); i++) if (retValue & ((unsigned long)1<<i)) printLCD_P(1, i - firstBit + 1, PSTR("1")); else printLCD_P(1, i - firstBit + 1, PSTR("0"));
+      }
     } else if (enterStatus == 2) {
       enterStatus = 0;
       return defValue;
     }
   }
 }
+
+
