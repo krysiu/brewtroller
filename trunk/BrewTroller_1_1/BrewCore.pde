@@ -136,7 +136,10 @@ void brewCore() {
     } else if (logCount == 23) {
       logStart_P(LOGDATA);
       logField_P(PSTR("VLVPRF"));
-      for (byte i = VLV_FILLHLT; i <= VLV_DRAIN; i++) { if ((vlvBits & vlvConfig[i]) == vlvConfig[i]) logFieldI(1); else logFieldI(0); }
+      unsigned int profileMask = 0;
+      for (byte i = VLV_FILLHLT; i <= VLV_DRAIN; i++) 
+        if (vlvConfig[i] != 0 && (vlvBits & vlvConfig[i]) == vlvConfig[i]) profileMask |= 1<<i;
+      logFieldI(profileMask);
       logEnd();
       //Logic below times start of log to start of log. Interval is reset if exceeds two intervals.
       if (millis() - lastLog > LOG_INTERVAL * 2) lastLog = millis(); else lastLog += LOG_INTERVAL;

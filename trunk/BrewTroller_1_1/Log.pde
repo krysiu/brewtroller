@@ -316,6 +316,12 @@ boolean chkMsg() {
             timerStatus = (boolean)atoi(msg[1]);
             clearMsg();
           } else rejectParam(LOGGLB);
+        } else if(strcasecmp(msg[0], "SET_AUTOVLV") == 0) {
+          byte avSet = atoi(msg[1]);
+          if (msgField == 1 && avSet >= AV_OFF && avSet <= AV_CHILL) {
+            autoValve = avSet;
+            clearMsg();
+          } else rejectParam(LOGGLB);
         }
         break;
       } else if (byteIn == '\t') {
@@ -360,7 +366,7 @@ void rejectParam(const char *handler) {
   logStart_P(LOGCMD);
   logField_P(PSTR("BAD_PARAM"));
   logField_P(handler);
-  for (byte i = 0; i < msgField; i++) logField(msg[i]);
+  for (byte i = 0; i <= msgField; i++) logField(msg[i]);
   logEnd();
   clearMsg();
 }

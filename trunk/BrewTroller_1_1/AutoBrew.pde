@@ -441,7 +441,7 @@ void doAutoBrew() {
       while (inMenu) {
         strcpy_P(menuopts[0], PSTR("Load Clean Program"));
         strcpy_P(menuopts[1], DRAIN);
-        if ((vlvBits & vlvConfig[VLV_DRAIN]) == vlvConfig[VLV_DRAIN] && vlvConfig[VLV_DRAIN] != 0) strcat_P(menuopts[1], PSTR(" (On)"));
+        if (vlvConfig[VLV_DRAIN] != 0 && (vlvBits & vlvConfig[VLV_DRAIN]) == vlvConfig[VLV_DRAIN]) strcat_P(menuopts[1], PSTR(" (On)"));
         
         strcpy_P(menuopts[2], ALLOFF);
         strcpy_P(menuopts[3], EXIT);
@@ -615,19 +615,12 @@ void manFill() {
           return;
         } else redraw = 1;
       }
-      if (vlvBits == vlvConfig[VLV_FILLMASH]) {
-        printLCD_P(3, 0, PSTR("Off"));
-        printLCD_P(3, 17, PSTR(" On"));
-      } else if (vlvBits == vlvConfig[VLV_FILLHLT]) {
-        printLCD_P(3, 0, PSTR("On "));
-        printLCD_P(3, 17, PSTR("Off"));
-      } else if (vlvBits == (vlvConfig[VLV_FILLHLT] | vlvConfig[VLV_FILLMASH])) {
-        printLCD_P(3, 0, PSTR("On "));
-        printLCD_P(3, 17, PSTR(" On"));
-      } else {
-        printLCD_P(3, 0, PSTR("Off"));
-        printLCD_P(3, 17, PSTR("Off"));
-      }
+      
+      if (vlvConfig[VLV_FILLMASH] != 0 && (vlvBits & vlvConfig[VLV_FILLMASH]) == vlvConfig[VLV_FILLMASH]) printLCD_P(3, 17, PSTR(" On"));
+      else printLCD_P(3, 17, PSTR("Off"));
+
+      if (vlvConfig[VLV_FILLHLT] != 0 && (vlvBits & vlvConfig[VLV_FILLHLT]) == vlvConfig[VLV_FILLHLT]) printLCD_P(3, 0, PSTR("On "));
+      else printLCD_P(3, 0, PSTR("Off"));
     }
   }
 }

@@ -1,4 +1,4 @@
-#define BUILD 318 
+#define BUILD 322 
 /*  
    Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -310,6 +310,7 @@ void(* softReset) (void) = 0;
 #define VS_STEAM 3
 
 //Auto-Valve Modes
+#define AV_OFF 0
 #define AV_FILL 1
 #define AV_MASH 2
 #define AV_SPARGE 3
