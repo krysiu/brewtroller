@@ -322,6 +322,20 @@ boolean chkMsg() {
             autoValve = avSet;
             clearMsg();
           } else rejectParam(LOGGLB);
+        } else if(strcasecmp(msg[0], "ACT_VLV") == 0) {
+          if (msgField == 1) {
+            setValves(strtoul(msg[1], NULL, 10));
+            clearMsg();
+          } else rejectParam(LOGGLB);
+        } else if(strcasecmp(msg[0], "ACT_VLVPRF") == 0) {
+          if (msgField == 1) {
+            unsigned long newBits = 0;
+            unsigned long actProfiles = strtoul(msg[1], NULL, 10);
+            for (byte i = VLV_FILLHLT; i <= VLV_DRAIN; i++) 
+              if ((actProfiles & 1<<i)) newBits |= vlvConfig[i];
+            setValves(newBits);
+            clearMsg();
+          } else rejectParam(LOGGLB);
         }
         break;
       } else if (byteIn == '\t') {
