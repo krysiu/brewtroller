@@ -112,6 +112,7 @@ void printTimer(byte iRow, byte iCol) {
         timerValue = 0;
         timerStatus = 0;
         setAlarm(1);
+        setTimerRecovery(0);
         printLCD(iRow, iCol + 5, "!");
       }
       lastTime = now;

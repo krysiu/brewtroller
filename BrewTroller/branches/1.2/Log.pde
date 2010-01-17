@@ -314,6 +314,8 @@ boolean chkMsg() {
         } else if(strcasecmp(msg[0], "SET_TIMERSTATUS") == 0) {
           if (msgField == 1) {
             timerStatus = (boolean)atoi(msg[1]);
+            lastTime = millis();
+            timerLastWrite = 0;
             clearMsg();
           } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "SET_AUTOVLV") == 0) {
@@ -334,6 +336,11 @@ boolean chkMsg() {
             for (byte i = VLV_FILLHLT; i <= VLV_DRAIN; i++) 
               if ((actProfiles & 1<<i)) newBits |= vlvConfig[i];
             setValves(newBits);
+            clearMsg();
+          } else rejectParam(LOGGLB);
+        } else if(strcasecmp(msg[0], "SET_ALARM") == 0) {
+          if (msgField == 1) {
+            setAlarm((boolean)atoi(msg[1]));
             clearMsg();
           } else rejectParam(LOGGLB);
         }
