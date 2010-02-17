@@ -179,7 +179,7 @@ void fermCore() {
       digitalWrite(MUX_CLOCK_PIN, LOW);
       //create bitmask to grab the bit associated with our counter i and set data pin accordingly (NOTE: 32 - i causes bits to be sent most significant to least significant)
       if (muxOuts[i - 1]) {
-        if (i < COOLPIN_OFFSET) digitalWrite(MUX_DATA_PIN, heatStatus[i - 1]);
+        if (i - 1 < COOLPIN_OFFSET) digitalWrite(MUX_DATA_PIN, heatStatus[i - 1]);
         else if (i - 1 < NUM_OUTS) digitalWrite(MUX_DATA_PIN, coolStatus[i - 1 - COOLPIN_OFFSET]);
         else digitalWrite(MUX_DATA_PIN, LOW);
       } else digitalWrite(MUX_DATA_PIN, LOW);
