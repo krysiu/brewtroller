@@ -1,4 +1,4 @@
-#define BUILD 400 
+#define BUILD 401 
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -92,12 +92,24 @@ Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
 //**********************************************************************************
 
 //**********************************************************************************
-//Enable Serial
+// Enable Serial
 //**********************************************************************************
 // Comment out to disable use of serial
 
 #define USESERIAL
 //**********************************************************************************
+
+
+//**********************************************************************************
+// Temperature Reading Settings
+//**********************************************************************************
+// TEMP_ERROR: Calibration correction in 0.25C units
+// TEMP_SAMPLES: Number of samples to use in reading (Max: 10)
+
+#define TEMP_ERROR 0
+#define TEMP_SAMPLES 10
+//**********************************************************************************
+
 
 //*****************************************************************************************************************************
 // BEGIN CODE
@@ -115,15 +127,16 @@ void(* softReset) (void) = 0;
 //Pin and Interrupt Definitions
 #define HEAT_PIN 0
 
-//#define ENCB_PIN 1
-#define ENCB_PIN 4
+#define ENCB_PIN 1
 
 #define ENCA_PIN 2
 
 
-//#define SPI_MOSI_PIN 5
-//#define SPI_MISO_PIN 6
-//#define SPI_CLK_PIN 7
+#define SPI_MOSI_PIN 5
+#define SPI_MISO_PIN 6
+#define SPI_CLK_PIN 7
+//Temp Chip SS
+#define TEMP_PIN 4
 
 #define ENTER_PIN 11
 #define ALARM_PIN 15
@@ -139,7 +152,7 @@ void(* softReset) (void) = 0;
 #define EVENT_STEPEXIT 1
 
 //Heat Output, alarm Pins
-pin spiClk, spiMOSI, spiMISO, heatPin, alarmPin;
+pin spiClk, spiMOSI, spiMISO, tempPin, heatPin, alarmPin;
 
 float temp;
 
@@ -188,6 +201,9 @@ void setup() {
 
   //Pin initialization (Outputs.pde)
   pinInit();
+
+  //Pin initialization for temp chip (Temp.pde)
+  tempInit();
   
   //User Interface Initialization (UI.pde)
   #ifndef NOUI
