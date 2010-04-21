@@ -49,17 +49,6 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 
 
 //**********************************************************************************
-// UI Definitions
-//**********************************************************************************
-#define SCREEN_HOME 0
-#define SCREEN_FILL 1
-#define SCREEN_MASH 2
-#define SCREEN_SPARGE 3
-#define SCREEN_BOIL 4
-#define SCREEN_CHILL 5
-#define SCREEN_AUX 6
-
-//**********************************************************************************
 // UI Strings
 //**********************************************************************************
 const char CANCEL[] PROGMEM = "Cancel";
@@ -68,55 +57,19 @@ const char SPACE[] PROGMEM = " ";
 const char INIT_EEPROM[] PROGMEM = "Initialize EEPROM";
 const char SKIPSTEP[] PROGMEM = "Skip Step";
 const char CONTINUE[] PROGMEM = "Continue";
-const char AUTOFILL[] PROGMEM = "Auto";
-const char FILLHLT[] PROGMEM = "Fill HLT";
-const char FILLMASH[] PROGMEM = "Fill Mash";
-const char FILLBOTH[] PROGMEM = "Fill Both";
-const char ALLOFF[] PROGMEM = "All Off";
 const char ABORT[] PROGMEM = "Abort";
-const char ADDGRAIN[] PROGMEM = "Add Grain";
-const char MASHHEAT[] PROGMEM = "Mash Heat";
-const char MASHIDLE[] PROGMEM = "Mash Idle";
-const char SPARGEIN[] PROGMEM = "Sparge In";
-const char SPARGEOUT[] PROGMEM = "Sparge Out";
-const char FLYSPARGE[] PROGMEM = "Fly Sparge";
-const char BOILADDS[] PROGMEM = "Boil Additions";
-const char CHILLNORM[] PROGMEM = "Chill Both";
-const char CHILLH2O[] PROGMEM = "Chill H2O";
-const char CHILLBEER[] PROGMEM = "Chill Beer";
-const char BOILRECIRC[] PROGMEM = "Boil Recirc";
-const char DRAIN[] PROGMEM = "Drain";
 
 #ifndef UI_NO_SETUP
-const char HLTCYCLE[] PROGMEM = "HLT PID Cycle";
-const char HLTGAIN[] PROGMEM = "HLT PID Gain";
-const char HLTHY[] PROGMEM = "HLT Hysteresis";
-const char MASHCYCLE[] PROGMEM = "Mash PID Cycle";
-const char MASHGAIN[] PROGMEM = "Mash PID Gain";
-const char MASHHY[] PROGMEM = "Mash Hysteresis";
-const char KETTLECYCLE[] PROGMEM = "Kettle PID Cycle";
-const char KETTLEGAIN[] PROGMEM = "Kettle PID Gain";
-const char KETTLEHY[] PROGMEM = "Kettle Hysteresis";
-const char STEAMCYCLE[] PROGMEM = "Steam PID Cycle";
-const char STEAMGAIN[] PROGMEM = "Steam PID Gain";
-const char STEAMPRESS[] PROGMEM = "Steam Target";
-const char STEAMSENSOR[] PROGMEM = "Steam Sensor Sens";
-const char STEAMZERO[] PROGMEM = "Steam Zero Calib";
+const char PIDCYCLE[] PROGMEM = "PID Cycle";
+const char PIDGAIN[] PROGMEM = "PID Gain";
+const char HYSTERESIS[] PROGMEM = "Hysteresis";
 #endif
 
-const char HLTDESC[] PROGMEM = "Hot Liquor Tank";
-const char MASHDESC[] PROGMEM = "Mash Tun";
 const char SEC[] PROGMEM = "s";
 #ifdef USEMETRIC
-const char VOLUNIT[] PROGMEM = "l";
-const char WTUNIT[] PROGMEM = "kg";
 const char TUNIT[] PROGMEM = "C";
-const char PUNIT[] PROGMEM = "kPa";
 #else
-const char VOLUNIT[] PROGMEM = "gal";
-const char WTUNIT[] PROGMEM = "lb";
 const char TUNIT[] PROGMEM = "F";
-const char PUNIT[] PROGMEM = "psi";
 #endif
 
 //**********************************************************************************
@@ -132,14 +85,10 @@ const byte BMP3[] PROGMEM = {B11111, B11111, B10001, B00011, B01111, B11111, B11
 const byte BMP4[] PROGMEM = {B01111, B01110, B01100, B00001, B01111, B00111, B00011, B11101};
 const byte BMP5[] PROGMEM = {B11111, B00111, B00111, B11111, B11111, B11111, B11110, B11001};
 const byte BMP6[] PROGMEM = {B11111, B11111, B11110, B11101, B11011, B00111, B11111, B11111};
-//const byte UNLOCK_ICON[] PROGMEM = {B01110, B10001, B10001, B10000, B11111, B11111, B11111, B11111};
-const byte UNLOCK_ICON[] PROGMEM = {B00110, B01001, B01001, B01000, B01111, B01111, B01111, B00000};
-const byte PROG_ICON[] PROGMEM = {B00001, B11101, B10101, B11101, B10001, B10001, B00001, B11111};
+
 //**********************************************************************************
 // UI Globals
 //**********************************************************************************
-byte activeScreen;
-boolean screenLock;
 byte timerLastPrint;
 
 //**********************************************************************************
@@ -147,7 +96,6 @@ byte timerLastPrint;
 //**********************************************************************************
 void uiInit() {
   initLCD();
-  lcdSetCustChar_P(7, UNLOCK_ICON);
   Encoder.begin(ENCA_PIN, ENCB_PIN, ENTER_PIN, ENTER_INT, ENCODER_TYPE);
 
   //Check to see if EEPROM Initialization is needed
@@ -167,64 +115,19 @@ void uiInit() {
     clearLCD();
   }
 
-  activeScreen = SCREEN_HOME;
-  screenInit(SCREEN_HOME);
-  unlockUI();
+  screenInit();
 }
 
 void uiEvent(byte eventID, byte eventParam) {
   if (eventID == EVENT_STEPINIT) {
-    if (eventParam == STEP_FILL 
-      || eventParam == STEP_REFILL
-    ) activeScreen = SCREEN_FILL;
-    else if (eventParam == STEP_DELAY
-      || eventParam == STEP_PREHEAT
-      || eventParam == STEP_DOUGHIN
-      || eventParam == STEP_ACID
-      || eventParam == STEP_PROTEIN
-      || eventParam == STEP_SACCH
-      || eventParam == STEP_SACCH2
-      || eventParam == STEP_MASHOUT
-      || eventParam == STEP_MASHHOLD
-    ) activeScreen = SCREEN_MASH;
-    else if (eventParam == STEP_ADDGRAIN
-      || eventParam == STEP_SPARGE
-    ) activeScreen = SCREEN_SPARGE;
-    else if (eventParam == STEP_BOIL) activeScreen = SCREEN_BOIL;
-    else if (eventParam == STEP_CHILL) activeScreen = SCREEN_CHILL;
-    screenInit(activeScreen);
+    screenInit();
   }
-}
-
-//**********************************************************************************
-// unlockUI:  Unlock active screen to select another
-//**********************************************************************************
-void unlockUI() {
-  Encoder.setMin(SCREEN_HOME);
-  Encoder.setMax(SCREEN_AUX);
-  Encoder.setCount(activeScreen);
-  screenLock = 0;
-  //Reinit screen to show unlock icon hide parts not visible while locked
-  screenInit(activeScreen);
-}
-
-void lockUI() {
-  screenLock = 1;
-  //Recall screenInit to setup encoder and other functions available only when locked
-  screenInit(activeScreen);
 }
 
 //**********************************************************************************
 // screenCore: Called in main loop to handle all UI functions
 //**********************************************************************************
 void uiCore() {
-  if (!screenLock) {
-    int encValue = Encoder.change();
-    if (encValue >= 0) {
-      activeScreen = encValue;
-      screenInit(activeScreen);
-    }
-  }
   screenEnter(activeScreen);
   screenRefresh(activeScreen);
 }
@@ -232,320 +135,36 @@ void uiCore() {
 //**********************************************************************************
 // screenInit: Initialize active screen
 //**********************************************************************************
-void screenInit(byte screen) {
+void screenInit() {
   clearLCD();
   
-  //Print Program Active Char (Overwritten if no program active)
-  if (screen != SCREEN_HOME) {
-    lcdSetCustChar_P(6, PROG_ICON);
-    lcdWriteCustChar(0, 0, 6);
-  }
-  
-  if (screen == SCREEN_HOME) {
-    //Screen Init: Home
-    lcdSetCustChar_P(0, BMP0);
-    lcdSetCustChar_P(1, BMP1);
-    lcdSetCustChar_P(2, BMP2);
-    lcdSetCustChar_P(3, BMP3);
-    lcdSetCustChar_P(4, BMP4);
-    lcdSetCustChar_P(5, BMP5);
-    lcdSetCustChar_P(6, BMP6);
-    lcdWriteCustChar(0, 1, 0);
-    lcdWriteCustChar(0, 2, 1);
-    lcdWriteCustChar(1, 0, 2); 
-    lcdWriteCustChar(1, 1, 3); 
-    lcdWriteCustChar(1, 2, 255); 
-    lcdWriteCustChar(2, 0, 4); 
-    lcdWriteCustChar(2, 1, 5); 
-    lcdWriteCustChar(2, 2, 6); 
-    printLCD_P(3, 0, BT);
-    printLCD_P(3, 12, BTVER);
-    printLCDLPad(3, 16, itoa(BUILD, buf, 10), 4, '0');
+  lcdSetCustChar_P(0, BMP0);
+  lcdSetCustChar_P(1, BMP1);
+  lcdSetCustChar_P(2, BMP2);
+  lcdSetCustChar_P(3, BMP3);
+  lcdSetCustChar_P(4, BMP4);
+  lcdSetCustChar_P(5, BMP5);
+  lcdSetCustChar_P(6, BMP6);
+  lcdWriteCustChar(0, 1, 0);
+  lcdWriteCustChar(0, 2, 1);
+  lcdWriteCustChar(1, 0, 2); 
+  lcdWriteCustChar(1, 1, 3); 
+  lcdWriteCustChar(1, 2, 255); 
+  lcdWriteCustChar(2, 0, 4); 
+  lcdWriteCustChar(2, 1, 5); 
+  lcdWriteCustChar(2, 2, 6); 
+  printLCD_P(3, 0, BT);
+  printLCD_P(3, 12, BTVER);
+  printLCDLPad(3, 16, itoa(BUILD, buf, 10), 4, '0');
     
-  } else if (screen == SCREEN_FILL) {
-    //Screen Init: Fill/Refill
-    if (stepIsActive(STEP_FILL)) printLCD_P(0, 1, PSTR("Fill"));
-    else if (stepIsActive(STEP_REFILL)) printLCD_P(0, 1, PSTR("Refill"));
-    else printLCD_P(0, 0, PSTR("Fill"));
-    printLCD_P(0, 11, PSTR("HLT"));
-    printLCD_P(0, 16, PSTR("Mash"));
-    printLCD_P(1, 1, PSTR("Target"));
-    printLCD_P(2, 1, PSTR("Actual"));
-    ftoa(tgtVol[VS_HLT]/1000.0, buf, 2);
-    truncFloat(buf, 5);
-    printLCDLPad(1, 9, buf, 5, ' ');
-    ftoa(tgtVol[VS_MASH]/1000.0, buf, 2);
-    truncFloat(buf, 5);
-    printLCDLPad(1, 15, buf, 5, ' ');
-
-    if (screenLock) {
-      printLCD_P(3, 0, PSTR(">"));
-      printLCD_P(3, 10, PSTR("<"));
-      printLCD_P(3, 3, AUTOFILL);
-      Encoder.setMin(0);
-      Encoder.setMax(6);
-      Encoder.setCount(0);
-    }
-    
-  } else if (screen == SCREEN_MASH) {
-    //Screen Init: Preheat/Mash
-    //Delay Start Indication
-    timerLastPrint = 0;
-    
-    if (stepIsActive(STEP_DELAY)) printLCD_P(0, 1, PSTR("Delay"));
-    else if (stepIsActive(STEP_PREHEAT)) printLCD_P(0, 1, PSTR("Preheat"));
-    else if (stepIsActive(STEP_DOUGHIN)) printLCD_P(0, 1, PSTR("Dough In"));
-    else if (stepIsActive(STEP_ACID)) printLCD_P(0, 1, PSTR("Acid"));
-    else if (stepIsActive(STEP_PROTEIN)) printLCD_P(0, 1, PSTR("Protein"));
-    else if (stepIsActive(STEP_SACCH)) printLCD_P(0, 1, PSTR("Sacch"));
-    else if (stepIsActive(STEP_SACCH2)) printLCD_P(0, 1, PSTR("Sacch2"));
-    else if (stepIsActive(STEP_MASHOUT)) printLCD_P(0, 1, PSTR("Mash Out"));
-    else if (stepIsActive(STEP_MASHHOLD)) printLCD_P(0, 1, PSTR("End Mash"));
-    else printLCD_P(0, 0, PSTR("Mash"));
-    printLCD_P(0, 11, PSTR("HLT"));
-    printLCD_P(0, 16, PSTR("Mash"));
-    printLCD_P(1, 1, PSTR("Target"));
-    printLCD_P(2, 1, PSTR("Actual"));
-    
-    printLCD_P(1, 13, TUNIT);
-    printLCD_P(1, 19, TUNIT);
-    printLCD_P(2, 13, TUNIT);
-    printLCD_P(2, 19, TUNIT);
-
-  } else if (screen == SCREEN_SPARGE) {
-    //Screen Init: Sparge
-    if (stepIsActive(STEP_SPARGE)) printLCD_P(0, 1, PSTR("Sparge"));
-    else if (stepIsActive(STEP_ADDGRAIN)) printLCD_P(0, 1, PSTR("Grain In"));
-    else printLCD_P(0, 0, PSTR("Sparge"));
-    printLCD_P(1, 1, PSTR("HLT"));
-    printLCD_P(2, 1, PSTR("Mash"));
-    printLCD_P(3, 1, PSTR("Kettle"));
-    printLCD_P(1, 8, PSTR("---"));
-    printLCD_P(2, 8, PSTR("---"));
-    printLCD_P(3, 8, PSTR("---"));
-    printLCD_P(1, 13, PSTR("---.---"));
-    printLCD_P(2, 13, PSTR("---.---"));
-    printLCD_P(3, 13, PSTR("---.---"));
-    printLCD_P(1, 11, TUNIT);
-    printLCD_P(2, 11, TUNIT);
-    printLCD_P(3, 11, TUNIT);
-
-    if (screenLock) {
-      printLCD_P(0, 8, PSTR(">"));
-      printLCD_P(0, 19, PSTR("<"));
-      printLCD_P(0, 9, SPARGEIN);
-      Encoder.setMin(0);
-      Encoder.setMax(7);
-      Encoder.setCount(0);
-    }
-    
-  } else if (screen == SCREEN_BOIL) {
-    //Screen Init: Boil
-    timerLastPrint = 0;
-    if (stepIsActive(STEP_BOIL)) printLCD_P(0, 1, PSTR("Boil"));
-    else printLCD_P(0,0,PSTR("Boil"));
-    printLCD_P(1, 19, TUNIT);
-
-  if (screenLock) {
-      Encoder.setMin(0);
-      Encoder.setMax(PIDLIMIT_KETTLE);
-      Encoder.setCount(PIDLIMIT_KETTLE);
-  }
-
-  } else if (screen == SCREEN_CHILL) {
-    //Screen Init: Chill
-    if (stepIsActive(STEP_CHILL)) printLCD_P(0, 1, PSTR("Chill"));
-    else printLCD_P(0, 0, PSTR("Chill"));
-    printLCD_P(0, 11, PSTR("Beer"));
-    printLCD_P(0, 17, PSTR("H2O"));
-    printLCD_P(1, 8, PSTR("In"));
-    printLCD_P(2, 7, PSTR("Out"));
-
-    printLCD_P(1, 14, TUNIT);
-    printLCD_P(1, 19, TUNIT);
-    printLCD_P(2, 14, TUNIT);
-    printLCD_P(2, 19, TUNIT);
-    
-    if (screenLock) {
-      printLCD_P(3, 0, PSTR(">"));
-      printLCD_P(3, 11, PSTR("<"));
-      printLCD_P(3, 1, CHILLNORM);
-      Encoder.setMin(0);
-      Encoder.setMax(6);
-      Encoder.setCount(0);
-    }
-
-  } else if (screen == SCREEN_AUX) {
-    //Screen Init: AUX
-    printLCD_P(0,0,PSTR("AUX Temps"));
-    printLCD_P(1,1,PSTR("AUX1"));
-    printLCD_P(2,1,PSTR("AUX2"));
-    printLCD_P(3,1,PSTR("AUX3"));
-    printLCD_P(1, 11, TUNIT);
-    printLCD_P(2, 11, TUNIT);
-    printLCD_P(3, 11, TUNIT);
-  }
-  //Write Unlock symbol to upper right corner
-  if (!screenLock) lcdWriteCustChar(0, 19, 7);
+  printLCD_P(2, 19, TUNIT);
 }
 
 //**********************************************************************************
 // screenRefresh:  Refresh active screen
 //**********************************************************************************
-void screenRefresh(byte screen) {
-  if (screen == SCREEN_HOME) {
-    //Refresh Screen: Home
+void screenRefresh() {
 
-  } else if (screen == SCREEN_FILL) {
-    ftoa(volAvg[VS_HLT]/1000.0, buf, 2);
-    truncFloat(buf, 5);
-    printLCDLPad(2, 9, buf, 5, ' ');
-
-    ftoa(volAvg[VS_MASH]/1000.0, buf, 2);
-    truncFloat(buf, 5);
-    printLCDLPad(2, 15, buf, 5, ' ');
-
-    if (vlvConfig[VLV_FILLHLT] != 0 && (vlvBits & vlvConfig[VLV_FILLHLT]) == vlvConfig[VLV_FILLHLT]) printLCD_P(3, 11, PSTR("On "));
-    else printLCD_P(3, 11, PSTR("Off"));
-
-    if (vlvConfig[VLV_FILLMASH] != 0 && (vlvBits & vlvConfig[VLV_FILLMASH]) == vlvConfig[VLV_FILLMASH]) printLCD_P(3, 17, PSTR(" On"));
-    else printLCD_P(3, 17, PSTR("Off"));
-    
-    if (screenLock) {
-      int encValue = Encoder.change();
-      if (encValue >= 0) {
-        printLCDRPad(3, 1, "", 9, ' ');
-        if (encValue == 0) printLCD_P(3, 3, AUTOFILL);
-        else if (encValue == 1) printLCD_P(3, 1, FILLHLT);
-        else if (encValue == 2) printLCD_P(3, 1, FILLMASH);
-        else if (encValue == 3) printLCD_P(3, 1, FILLBOTH);
-        else if (encValue == 4) printLCD_P(3, 2, ALLOFF);
-        else if (encValue == 5) printLCD_P(3, 1, CONTINUE);
-        else if (encValue == 6) printLCD_P(3, 3, PSTR("Menu"));
-      }
-    }
-    
-  } else if (screen == SCREEN_MASH) {
-    //Refresh Screen: Preheat/Mash
-    for (byte i = VS_HLT; i <= VS_MASH; i++) {
-      printLCDLPad(1, i * 6 + 10, itoa(setpoint[i], buf, 10), 3, ' ');
-      if (temp[i] == -1) printLCD_P(2, i * 6 + 10, PSTR("---")); else printLCDLPad(2, i * 6 + 10, itoa(temp[i], buf, 10), 3, ' ');
-      byte pct;
-      if (PIDEnabled[i]) {
-        pct = PIDOutput[i] / PIDCycle[i] / 10;
-        if (pct == 0) strcpy_P(buf, PSTR("Off"));
-        else if (pct == 100) strcpy_P(buf, PSTR(" On"));
-        else { itoa(pct, buf, 10); strcat(buf, "%"); }
-      } else if (heatStatus[i]) {
-        strcpy_P(buf, PSTR(" On")); 
-        pct = 100;
-      } else {
-        strcpy_P(buf, PSTR("Off"));
-        pct = 0;
-      }
-      printLCDLPad(3, i * 6 + 11, buf, 3, ' ');
-    }
-
-    printTimer(TIMER_MASH, 3, 0);
-
-  } else if (screen == SCREEN_SPARGE) {
-    //Refresh Screen: Sparge
-    ftoa(volAvg[VS_HLT]/1000.0, buf, 3);
-    truncFloat(buf, 7);
-    printLCDLPad(1, 13, buf, 7, ' ');
-      
-    ftoa(volAvg[VS_MASH]/1000.0, buf, 3);
-    truncFloat(buf, 7);
-    printLCDLPad(2, 13, buf, 7, ' ');
-      
-    ftoa(volAvg[VS_KETTLE]/1000.0, buf, 3);
-    truncFloat(buf, 7);
-    printLCDLPad(3, 13, buf, 7, ' ');
-    
-    if (screenLock) {
-      int encValue = Encoder.change();
-      if (encValue >= 0) {
-        printLCDRPad(0, 9, "", 10, ' ');
-
-        if (encValue == 0) printLCD_P(0, 9, SPARGEIN);
-        else if (encValue == 1) printLCD_P(0, 9, SPARGEOUT);
-        else if (encValue == 2) printLCD_P(0, 9, FLYSPARGE);
-        else if (encValue == 3) printLCD_P(0, 9, MASHHEAT);
-        else if (encValue == 4) printLCD_P(0, 9, MASHIDLE);
-        else if (encValue == 5) printLCD_P(0, 11, ALLOFF);
-        else if (encValue == 6) printLCD_P(0, 10, CONTINUE);
-        else if (encValue == 7) printLCD_P(0, 12, ABORT);
-      }
-    }
-    
-    for (byte i = TS_HLT; i <= TS_KETTLE; i++) if (temp[i] == -1) printLCD_P(i + 1, 8, PSTR("---")); else printLCDLPad(i + 1, 8, itoa(temp[i], buf, 10), 3, ' ');
-
-  } else if (screen == SCREEN_BOIL) {
-    //Refresh Screen: Boil
-    if (screenLock) {
-      if (doAutoBoil) printLCD_P(0, 14, PSTR("  Auto"));
-      else printLCD_P(0, 14, PSTR("Manual"));
-    }
-    
-    printTimer(TIMER_BOIL, 3, 0);
-    if (alarmStatus) printLCD_P(3, 5, PSTR("!")); else printLCD_P(3, 5, SPACE);
-
-    ftoa(volAvg[VS_KETTLE]/1000.0, buf, 2);
-    truncFloat(buf, 5);
-    printLCDLPad(2, 15, buf, 5, ' ');
-
-    if (PIDEnabled[TS_KETTLE]) {
-      byte pct = PIDOutput[TS_KETTLE] / PIDCycle[TS_KETTLE] / 10;
-      if (pct == 0) strcpy_P(buf, PSTR("Off"));
-      else if (pct == 100) strcpy_P(buf, PSTR(" On"));
-      else { itoa(pct, buf, 10); strcat(buf, "%"); }
-    } else if (heatStatus[TS_KETTLE]) {
-      strcpy_P(buf, PSTR(" On")); 
-    } else {
-      strcpy_P(buf, PSTR("Off"));
-    }
-    printLCDLPad(3, 17, buf, 3, ' ');
-    
-    if (temp[TS_KETTLE] == -1) printLCD_P(1, 16, PSTR("---")); else printLCDLPad(1, 16, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
-    if (screenLock) {
-      int encValue = Encoder.change();
-      if (encValue >= 0) {
-        doAutoBoil = 0;
-        PIDOutput[VS_KETTLE] = PIDCycle[VS_KETTLE] * 10 * encValue;
-      }
-      if (doAutoBoil) Encoder.setCount(PIDOutput[VS_KETTLE] / PIDCycle[VS_KETTLE] / 10);
-    }
-    
-  } else if (screen == SCREEN_CHILL) {
-    //Refresh Screen: Chill
-    if (screenLock) {
-      int encValue = Encoder.change();
-      if (encValue >= 0) {
-        printLCDRPad(3, 1, "", 10, ' ');
-        if (encValue == 0) printLCD_P(3, 1, CHILLNORM);
-        else if (encValue == 1) printLCD_P(3, 1, CHILLH2O);
-        else if (encValue == 2) printLCD_P(3, 1, CHILLBEER);
-        else if (encValue == 3) printLCD_P(3, 2, ALLOFF);
-        else if (encValue == 4) printLCD_P(3, 4, AUTOFILL);
-        else if (encValue == 5) printLCD_P(3, 2, CONTINUE);
-        else if (encValue == 6) printLCD_P(3, 3, ABORT);
-      }
-    }
-    if (temp[TS_KETTLE] == -1) printLCD_P(1, 11, PSTR("---")); else printLCDLPad(1, 11, itoa(temp[TS_KETTLE], buf, 10), 3, ' ');
-    if (temp[TS_BEEROUT] == -1) printLCD_P(2, 11, PSTR("---")); else printLCDLPad(2, 11, itoa(temp[TS_BEEROUT], buf, 10), 3, ' ');
-    if (temp[TS_H2OIN] == -1) printLCD_P(1, 16, PSTR("---")); else printLCDLPad(1, 16, itoa(temp[TS_H2OIN], buf, 10), 3, ' ');
-    if (temp[TS_H2OOUT] == -1) printLCD_P(2, 16, PSTR("---")); else printLCDLPad(2, 16, itoa(temp[TS_H2OOUT], buf, 10), 3, ' ');
-    if ((vlvBits & vlvConfig[VLV_CHILLBEER]) == vlvConfig[VLV_CHILLBEER]) printLCD_P(3, 12, PSTR(" On")); else printLCD_P(3, 12, PSTR("Off"));
-    if ((vlvBits & vlvConfig[VLV_CHILLH2O]) == vlvConfig[VLV_CHILLH2O]) printLCD_P(3, 17, PSTR(" On")); else printLCD_P(3, 17, PSTR("Off"));
-
-  } else if (screen == SCREEN_AUX) {
-    //Screen Refresh: AUX
-    for (byte i = TS_AUX1; i <= TS_AUX3; i++) {
-      ftoa(temp[i], buf, 1);
-      truncFloat(buf, 5);
-      printLCDLPad(i - 5, 6, buf, 5, ' ');
-    }
-  }
 }
 
 
@@ -553,269 +172,53 @@ void screenRefresh(byte screen) {
 // screenEnter:  Check enterStatus and handle based on screenLock and activeScreen
 //**********************************************************************************
 void screenEnter(byte screen) {
-  if (Encoder.cancel()) {
-    //Unlock screens
-    unlockUI();
-  } else if (Encoder.ok()) {
+  if (Encoder.ok()) {
     if (alarmStatus) setAlarm(0);
-    else if (!screenLock) lockUI();
     else {
-      if (screen == SCREEN_HOME) {
-        //Screen Enter: Home
-        strcpy_P(menuopts[0], CANCEL);
-        strcpy_P(menuopts[1], PSTR("Edit Program"));
-        strcpy_P(menuopts[2], PSTR("Start Program"));
-        strcpy_P(menuopts[3], DRAIN);
-        if (vlvConfigIsActive(VLV_DRAIN)) strcat_P(menuopts[3], PSTR(": On"));
-        else strcat_P(menuopts[3], PSTR(": Off"));
-        strcpy_P(menuopts[4], PSTR("Reset All"));
-        strcpy_P(menuopts[5], PSTR("System Info"));
-        strcpy_P(menuopts[6], PSTR("System Setup"));
-        #ifdef UI_NO_SETUP
-          byte lastOption = scrollMenu("Main Menu", 6, 0);
-        #else
-          byte lastOption = scrollMenu("Main Menu", 7, 0);
-        #endif
-        if (lastOption == 1) editProgramMenu();
-        else if (lastOption == 2) startProgramMenu();
-        else if (lastOption == 3) {
-          //Drain
-          if (vlvConfigIsActive(VLV_DRAIN)) setValves(vlvConfig[VLV_DRAIN], 0);
-          else {
-            if (zoneIsActive(ZONE_MASH) || zoneIsActive(ZONE_BOIL)) {
-              clearLCD();
-              printLCD_P(0, 0, PSTR("Cannot drain while"));
-              printLCD_P(1, 0, PSTR("mash or boil zone"));
-              printLCD_P(2, 0, PSTR("is active"));
-              printLCD(3, 4, ">");
-              printLCD_P(3, 6, CONTINUE);
-              printLCD(3, 15, "<");
-              while (!Encoder.ok()) brewCore();
-            } else setValves(vlvConfig[VLV_DRAIN], 1);
-          }
-        }
-        else if (lastOption == 4) {
-          //Reset All
-          if (confirmAbort()) {
-            resetOutputs();
-            clearTimer(TIMER_MASH);
-            clearTimer(TIMER_BOIL);
-          }
-        }
-        else if (lastOption == 5) UIsysInfo();
-#ifndef UI_NO_SETUP        
-        else if (lastOption == 6) menuSetup();
-#endif
-        screenInit(activeScreen);
+      strcpy_P(menuopts[0], CANCEL);
+      strcpy_P(menuopts[1], PSTR("Edit Program"));
+      strcpy_P(menuopts[2], PSTR("Start Program"));
+      strcpy_P(menuopts[3], PSTR("Setpoint: "));
+      strcat(menuopts[3], itoa(setpoint, buf, 10));
+      strcat_P(menuopts[3], TUNIT);
+      strcpy_P(menuopts[4], PSTR("Set Timer"));
+      if (timerStatus) strcpy_P(menuopts[5], PSTR("Pause Timer"));
+      else strcpy_P(menuopts[5], PSTR("Start Timer"));
+      strcpy_P(menuopts[6], SKIPSTEP);
+      strcpy_P(menuopts[7], PSTR("Reset All"));
+      strcpy_P(menuopts[8], PSTR("System Info"));
+      strcpy_P(menuopts[9], PSTR("System Setup"));
+      #ifdef UI_NO_SETUP
+        byte lastOption = scrollMenu("Main Menu", 9, 0);
+      #else
+        byte lastOption = scrollMenu("Main Menu", 10, 0);
+      #endif
 
-      } else if (screen == SCREEN_FILL) {
-        //Sceeen Enter: Fill/Refill
-        int encValue = Encoder.getCount();
-        if (encValue == 0) autoValve[AV_FILL] = 1;
-        else if (encValue == 1) { autoValve[AV_FILL] = 0; setValves(vlvConfig[VLV_FILLHLT], 1); setValves(vlvConfig[VLV_FILLMASH], 0);}
-        else if (encValue == 2) { autoValve[AV_FILL] = 0; setValves(vlvConfig[VLV_FILLHLT], 0); setValves(vlvConfig[VLV_FILLMASH], 1);}
-        else if (encValue == 3) { autoValve[AV_FILL] = 0; setValves(vlvConfig[VLV_FILLHLT], 1); setValves(vlvConfig[VLV_FILLMASH], 1);}
-        else if (encValue == 4) { autoValve[AV_FILL] = 0; setValves(vlvConfig[VLV_FILLHLT], 0); setValves(vlvConfig[VLV_FILLMASH], 0);}
-        else if (encValue == 5) {
-          byte brewstep = PROGRAM_IDLE;
-          if (stepIsActive(STEP_FILL)) brewstep = STEP_FILL;
-          else if (stepIsActive(STEP_REFILL)) brewstep = STEP_REFILL;
-          if(brewstep != PROGRAM_IDLE) {
-            if (stepAdvance(brewstep)) {
-              //Failed to advance step
-              stepAdvanceFailDialog();
-            }
-          } else {
-            activeScreen = SCREEN_MASH;
-            screenInit(activeScreen);
-          }
-        } else if (encValue == 6) { 
-          strcpy_P(menuopts[0], PSTR("HLT Target"));
-          strcpy_P(menuopts[1], PSTR("Mash Target"));
-          strcpy_P(menuopts[2], PSTR("Abort"));
-          strcpy_P(menuopts[3], PSTR("Cancel"));
-          byte lastOption = scrollMenu("Fill Menu", 4, 0);
-          if (lastOption == 0) tgtVol[VS_HLT] = getValue(PSTR("Grain Temp"), tgtVol[VS_HLT], 7, 3, 9999999, VOLUNIT);
-          else if (lastOption == 1) tgtVol[VS_MASH] = getValue(PSTR("Grain Temp"), tgtVol[VS_MASH], 7, 3, 9999999, VOLUNIT);
-          else if (lastOption == 2) {
-            if (confirmAbort()) {
-              if (stepIsActive(STEP_FILL)) stepExit(STEP_FILL);
-              else stepExit(STEP_REFILL); //Abort STEP_REFILL or manual operation
-            }
-          }
-          screenInit(activeScreen);
-        }
+      if (lastOption == 1) editProgramMenu();
+      else if (lastOption == 2) startProgramMenu();
 
-      } else if (screen == SCREEN_MASH) {
-        //Screen Enter: Preheat/Mash
-        strcpy_P(menuopts[0], CANCEL);
-        strcpy_P(menuopts[1], PSTR("HLT Setpoint: "));
-        strcat(menuopts[1], itoa(setpoint[VS_HLT], buf, 10));
-        strcat_P(menuopts[1], TUNIT);
-        strcpy_P(menuopts[2], PSTR("Mash Setpoint: "));
-        strcat(menuopts[2], itoa(setpoint[VS_MASH], buf, 10));
-        strcat_P(menuopts[2], TUNIT);
-        strcpy_P(menuopts[3], PSTR("Set Timer"));
-        if (timerStatus[TIMER_MASH]) strcpy_P(menuopts[4], PSTR("Pause Timer"));
-        else strcpy_P(menuopts[4], PSTR("Start Timer"));
-        strcpy_P(menuopts[5], SKIPSTEP);
-        strcpy_P(menuopts[6], ABORT);
-        byte lastOption = scrollMenu("AutoBrew Mash Menu", 7, 0);
-        if (lastOption == 1) setSetpoint(VS_HLT, getValue(PSTR("HLT Setpoint"), setpoint[VS_HLT], 3, 0, 255, TUNIT));
-        else if (lastOption == 2) setSetpoint(VS_MASH, getValue(PSTR("Mash Setpoint"), setpoint[VS_MASH], 3, 0, 255, TUNIT));
-        else if (lastOption == 3) { 
-          setTimer(TIMER_MASH, getTimerValue(PSTR("Mash Timer"), timerValue[TIMER_MASH] / 60000));
-          //Force Preheated
-          preheated[VS_MASH] = 1;
-        } 
-        else if (lastOption == 4) {
-          pauseTimer(TIMER_MASH);
-          //Force Preheated
-          preheated[VS_MASH] = 1;
-        } 
-        else if (lastOption == 5) {
-          byte brewstep = PROGRAM_IDLE;
-          if (stepIsActive(STEP_DELAY)) brewstep = STEP_DELAY;
-          else if (stepIsActive(STEP_DOUGHIN)) brewstep = STEP_DOUGHIN;
-          else if (stepIsActive(STEP_PREHEAT)) brewstep = STEP_PREHEAT;
-          else if (stepIsActive(STEP_ACID)) brewstep = STEP_ACID;
-          else if (stepIsActive(STEP_PROTEIN)) brewstep = STEP_PROTEIN;
-          else if (stepIsActive(STEP_SACCH)) brewstep = STEP_SACCH;
-          else if (stepIsActive(STEP_SACCH2)) brewstep = STEP_SACCH2;
-          else if (stepIsActive(STEP_MASHOUT)) brewstep = STEP_MASHOUT;
-          else if (stepIsActive(STEP_MASHHOLD)) brewstep = STEP_MASHHOLD;
-          if(brewstep != PROGRAM_IDLE) {
-            if (stepAdvance(brewstep)) {
-              //Failed to advance step
-              stepAdvanceFailDialog();
-            }
-          } else {
-            activeScreen = SCREEN_SPARGE;
-            screenInit(activeScreen);
-          }
-        } else if (lastOption == 6) {
-          if (confirmAbort()) {
-            if (stepIsActive(STEP_DELAY)) stepExit(STEP_DELAY);
-            else if (stepIsActive(STEP_DOUGHIN)) stepExit(STEP_DOUGHIN);
-            else if (stepIsActive(STEP_PREHEAT)) stepExit(STEP_PREHEAT);
-            else if (stepIsActive(STEP_ACID)) stepExit(STEP_ACID);
-            else if (stepIsActive(STEP_PROTEIN)) stepExit(STEP_PROTEIN);
-            else if (stepIsActive(STEP_SACCH)) stepExit(STEP_SACCH);
-            else if (stepIsActive(STEP_SACCH2)) stepExit(STEP_SACCH2);
-            else if (stepIsActive(STEP_MASHOUT)) stepExit(STEP_MASHOUT);
-            else stepExit(STEP_MASHHOLD); //Abort STEP_MASHOUT or manual operation
-          }
-        }
-        screenInit(activeScreen);
-        
-      } else if (screen == SCREEN_SPARGE) {
-        //Screen Enter: Sparge
-        int encValue = Encoder.getCount();
-        if (encValue == 0) { setValves(vlvConfig[VLV_SPARGEIN], 1); setValves(vlvConfig[VLV_SPARGEOUT], 0); }
-        else if (encValue == 1) { setValves(vlvConfig[VLV_SPARGEIN], 0); setValves(vlvConfig[VLV_SPARGEOUT], 1); }
-        else if (encValue == 2) { setValves(vlvConfig[VLV_SPARGEIN], 1); setValves(vlvConfig[VLV_SPARGEOUT], 1); }
-        else if (encValue == 3) { setValves(vlvConfig[VLV_MASHHEAT], 1); setValves(vlvConfig[VLV_MASHIDLE], 0); }
-        else if (encValue == 4) { setValves(vlvConfig[VLV_MASHHEAT], 0); setValves(vlvConfig[VLV_MASHIDLE], 1); }
-        else if (encValue == 5) { setValves(vlvConfig[VLV_SPARGEIN], 0); setValves(vlvConfig[VLV_SPARGEOUT], 0); setValves(vlvConfig[VLV_MASHHEAT], 0); setValves(vlvConfig[VLV_MASHIDLE], 0); }
-        else if (encValue == 6) {
-          byte brewstep = PROGRAM_IDLE;
-          if (stepIsActive(STEP_SPARGE)) brewstep = STEP_SPARGE;
-          else if (stepIsActive(STEP_ADDGRAIN)) brewstep = STEP_ADDGRAIN;
-          if(brewstep != PROGRAM_IDLE) {
-            if (stepAdvance(brewstep)) {
-              //Failed to advance step
-              stepAdvanceFailDialog();
-            }
-          } else {
-            activeScreen = SCREEN_BOIL;
-            screenInit(activeScreen);
-          }
-        } else if (encValue == 7) {
-          if (confirmAbort()) {
-            if (stepIsActive(STEP_ADDGRAIN)) stepExit(STEP_ADDGRAIN);
-            else stepExit(STEP_SPARGE); //Abort STEP_SPARGE or manual operation
-          }
-          screenInit(activeScreen);
-        }
-        
-      } else if (screen == SCREEN_BOIL) {
-        //Screen Enter: Boil
-        strcpy_P(menuopts[0], CANCEL);
-        strcpy_P(menuopts[1], PSTR("Set Timer"));
-        if (timerStatus[TIMER_BOIL]) strcpy_P(menuopts[2], PSTR("Pause Timer"));
-        else strcpy_P(menuopts[2], PSTR("Start Timer"));
-        strcpy_P(menuopts[3], PSTR("Auto Boil"));
-        strcpy_P(menuopts[4], PSTR("Boil Temp: "));
-        strcat(menuopts[4], itoa(getBoilTemp(), buf, 10));
-        strcat_P(menuopts[4], TUNIT);
-        strcpy_P(menuopts[5], PSTR("Boil Power: "));
-        strcat(menuopts[5], itoa(boilPwr, buf, 10));
-        strcat(menuopts[5], "%");
-        strcpy_P(menuopts[6], BOILRECIRC);
-        if (vlvConfigIsActive(VLV_BOILRECIRC)) strcat_P(menuopts[6], PSTR(": On"));
-        else strcat_P(menuopts[6], PSTR(": Off"));
-        strcpy_P(menuopts[7], SKIPSTEP);
-        strcpy_P(menuopts[8], ABORT);
-        byte lastOption = scrollMenu("AutoBrew Boil Menu", 9, 0);
-        if (lastOption == 1) {
-          setTimer(TIMER_BOIL, getTimerValue(PSTR("Boil Timer"), timerValue[TIMER_BOIL] / 60000));
-          //Force Preheated
-          preheated[VS_KETTLE] = 1;
-        } 
-        else if (lastOption == 2) {
-          pauseTimer(TIMER_BOIL);
-          //Force Preheated
-          preheated[VS_KETTLE] = 1;
-        } 
-        else if (lastOption == 3) doAutoBoil = 1;
-        else if (lastOption == 4) {
-          setBoilTemp(getValue(PSTR("Boil Temp"), getBoilTemp(), 3, 0, 255, TUNIT));
-          setSetpoint(VS_KETTLE, getBoilTemp());
-        }
-        else if (lastOption == 5) setBoilPwr(getValue(PSTR("Boil Power"), boilPwr, 3, 0, min(PIDLIMIT_KETTLE, 100), PSTR("%")));
-        else if (lastOption == 6) {
-          if (vlvConfigIsActive(VLV_BOILRECIRC)) setValves(vlvConfig[VLV_BOILRECIRC], 0);
-          else setValves(vlvConfig[VLV_BOILRECIRC], 1);
-        } else if (lastOption == 7) {
-          byte brewstep = PROGRAM_IDLE;
-          if (stepIsActive(STEP_BOIL)) brewstep = STEP_BOIL;
-          if(brewstep != PROGRAM_IDLE) {
-            if (stepAdvance(brewstep)) {
-              //Failed to advance step
-              stepAdvanceFailDialog();
-            }
-          } else {
-            activeScreen = SCREEN_CHILL;
-            screenInit(activeScreen);
-          }
-        } else if (lastOption == 8) { if (confirmAbort()) stepExit(STEP_BOIL); }
-        screenInit(activeScreen);
-        
-      } else if (screen == SCREEN_CHILL) {
-        //Screen Enter: Chill
-
-        int encValue = Encoder.getCount();
-        if (encValue == 0) { autoValve[AV_CHILL] = 0; setValves(vlvConfig[VLV_CHILLH2O], 1); setValves(vlvConfig[VLV_CHILLBEER], 1); }
-        else if (encValue == 1) { autoValve[AV_CHILL] = 0; setValves(vlvConfig[VLV_CHILLH2O], 1); setValves(vlvConfig[VLV_CHILLBEER], 0); }
-        else if (encValue == 2) { autoValve[AV_CHILL] = 0; setValves(vlvConfig[VLV_CHILLH2O], 0); setValves(vlvConfig[VLV_CHILLBEER], 1); }
-        else if (encValue == 3) { autoValve[AV_CHILL] = 0; setValves(vlvConfig[VLV_CHILLH2O], 0); setValves(vlvConfig[VLV_CHILLBEER], 0); }
-        else if (encValue == 4) autoValve[AV_CHILL] = 1;
-        else {
-          stepExit(STEP_CHILL);
-          activeScreen = SCREEN_HOME;
-          screenInit(activeScreen);
+      else if (lastOption == 7) {
+        //Reset All
+        if (confirmAbort()) {
+          resetOutputs();
+          clearTimer();
         }
       }
+      else if (lastOption == 8) UIsysInfo();
+#ifndef UI_NO_SETUP        
+      else if (lastOption == 9) menuSetup();
+#endif
+      screenInit();
     }
   }
 }
 
-void printTimer(byte timer, byte iRow, byte iCol) {
-  if (timerValue[timer] > 0 && !timerStatus[timer]) printLCD(iRow, iCol, "PAUSED");
-  else if (alarmStatus || timerStatus[timer]) {
-    byte timerHours = timerValue[timer] / 3600000;
-    byte timerMins = (timerValue[timer] - timerHours * 3600000) / 60000;
-    byte timerSecs = (timerValue[timer] - timerHours * 3600000 - timerMins * 60000) / 1000;
+void printTimer(byte iRow, byte iCol) {
+  if (timerValue > 0 && !timerStatus) printLCD(iRow, iCol, "PAUSED");
+  else if (alarmStatus || timerStatus) {
+    byte timerHours = timerValue / 3600000;
+    byte timerMins = (timerValue - timerHours * 3600000) / 60000;
+    byte timerSecs = (timerValue - timerHours * 3600000 - timerMins * 60000) / 1000;
 
     //Update LCD once per second
     if (timerLastPrint != timerSecs) {
@@ -841,7 +244,7 @@ void stepAdvanceFailDialog() {
   printLCD(3, 4, ">");
   printLCD_P(3, 6, CONTINUE);
   printLCD(3, 15, "<");
-  while (!Encoder.ok()) brewCore();
+  while (!Encoder.ok()) flowCore();
 }
 
 void editProgramMenu() {
@@ -858,54 +261,26 @@ void startProgramMenu() {
   for (byte i = 0; i < 20; i++) getProgName(i, menuopts[i]);
   byte profile = scrollMenu("Start Program", 20, 0);
   if (profile < 20) {
-    while(1) {
-      unsigned long spargeVol = calcSpargeVol(profile);
-      unsigned long mashVol = calcMashVol(profile);
-      unsigned long grainVol = calcGrainVolume(profile);
-      if (spargeVol > getCapacity(TS_HLT)) warnHLT(spargeVol);
-      if (mashVol + grainVol > getCapacity(TS_MASH)) warnMash(mashVol, grainVol);
-        
-      strcpy_P(menuopts[0], PSTR("Edit Program"));
-      strcpy_P(menuopts[1], PSTR("Grain Temp:"));
-        strncat(menuopts[1], itoa(getGrainTemp(), buf, 10), 3);
-        strcat_P(menuopts[1], TUNIT);
-      strcpy_P(menuopts[2], PSTR("Start"));
-      strcpy_P(menuopts[3], PSTR("Delay Start"));
-      strcpy_P(menuopts[4], PSTR("Cancel"));
-      char progName[20];
-      getProgName(profile, progName);
-      byte lastOption = scrollMenu(progName, 5, 0);
-      if (lastOption == 0) editProgram(profile);
-      else if (lastOption == 1) setGrainTemp(getValue(PSTR("Grain Temp"), getGrainTemp(), 3, 0, 255, TUNIT)); 
-      else if (lastOption == 2 || lastOption == 3) {
-        if (zoneIsActive(ZONE_MASH)) {
-          clearLCD();
-          printLCD_P(0, 0, PSTR("Cannot start program"));
-          printLCD_P(1, 0, PSTR("while mash zone is"));
-          printLCD_P(2, 0, PSTR("active."));
-          printLCD(3, 4, ">");
-          printLCD_P(3, 6, CONTINUE);
-          printLCD(3, 15, "<");
-          while (!Encoder.ok()) brewCore();
-        } else {
-          if (lastOption == 3) {
-            //Delay Start
-            setDelayMins(getTimerValue(PSTR("Delay Start"), 0));
-          }
-          if (stepInit(profile, STEP_FILL)) {
-            clearLCD();
-            printLCD_P(1, 0, PSTR("Program start failed"));
-            printLCD(3, 4, ">");
-            printLCD_P(3, 6, CONTINUE);
-            printLCD(3, 15, "<");
-            while (!Encoder.ok()) brewCore();
-          } else {
-            activeScreen = SCREEN_FILL;
-            //screenInit called by screenEnter upon return
-            break;
-          }
-        }
-      } else break;
+    if (zoneIsActive()) {
+      clearLCD();
+      printLCD_P(0, 0, PSTR("Cannot start program"));
+      printLCD_P(1, 0, PSTR("while program is"));
+      printLCD_P(2, 0, PSTR("active."));
+      printLCD(3, 4, ">");
+      printLCD_P(3, 6, CONTINUE);
+      printLCD(3, 15, "<");
+      while (!Encoder.ok()) flowCore();
+    } else {
+      if (stepInit(profile, 0)) {
+        clearLCD();
+        printLCD_P(1, 0, PSTR("Program start failed"));
+        printLCD(3, 4, ">");
+        printLCD_P(3, 6, CONTINUE);
+        printLCD(3, 15, "<");
+        while (!Encoder.ok()) flowCore();
+      } else {
+        break;
+      }
     }
   }
 }
@@ -913,180 +288,27 @@ void startProgramMenu() {
 void editProgram(byte pgm) {
   byte lastOption = 0;
   while (1) {
-    strcpy_P(menuopts[0], PSTR("Batch Vol:"));
-    strcpy_P(menuopts[1], PSTR("Grain Wt:"));
-    strcpy_P(menuopts[2], PSTR("Boil Length:"));
-    strcpy_P(menuopts[3], PSTR("Mash Ratio:"));
-    strcpy_P(menuopts[4], PSTR("HLT Temp:"));
-    strcpy_P(menuopts[5], PSTR("Sparge Temp:"));
-    strcpy_P(menuopts[6], PSTR("Pitch Temp:"));
-    strcpy_P(menuopts[7], PSTR("Mash Schedule"));
-    strcpy_P(menuopts[8], PSTR("Heat Mash Liq:"));    
-    strcpy_P(menuopts[9], BOILADDS);    
-    strcpy_P(menuopts[10], EXIT);
-
-    ftoa((float)getProgBatchVol(pgm)/1000, buf, 2);
-    truncFloat(buf, 5);
-    strcat(menuopts[0], buf);
-    strcat_P(menuopts[0], VOLUNIT);
-
-    ftoa((float)getProgGrain(pgm)/1000, buf, 3);
-    truncFloat(buf, 7);
-    strcat(menuopts[1], buf);
-    strcat_P(menuopts[1], WTUNIT);
-
-    strncat(menuopts[2], itoa(getProgBoil(pgm), buf, 10), 3);
-    strcat_P(menuopts[2], PSTR(" min"));
-    
-    ftoa((float)getProgRatio(pgm)/100, buf, 2);
-    truncFloat(buf, 4);
-    strcat(menuopts[3], buf);
-    strcat_P(menuopts[3], PSTR(":1"));
-
-    strncat(menuopts[4], itoa(getProgHLT(pgm), buf, 10), 3);
-    strcat_P(menuopts[4], TUNIT);
-    
-    strncat(menuopts[5], itoa(getProgSparge(pgm), buf, 10), 3);
-    strcat_P(menuopts[5], TUNIT);
-    
-    strncat(menuopts[6], itoa(getProgPitch(pgm), buf, 10), 3);
-    strcat_P(menuopts[6], TUNIT);
-    {
-      byte MLHeatSrc = getProgMLHeatSrc(pgm);
-      if (MLHeatSrc == VS_HLT) strcat_P(menuopts[8], PSTR("HLT"));
-      else if (MLHeatSrc == VS_MASH) strcat_P(menuopts[8], PSTR("MASH"));
-      else strcat_P(menuopts[8], PSTR("UNKWN"));
+    for (byte flowStep = 0; flowStep < NUM_FLOW_STEPS; flowStep++) {
+      strcpy_P(menuopts[flowStep * 2], PSTR("Step "));
+      strcat(menuopts[flowStep * 2], itoa(flowStep + 1, buf, 10));
+      strcat(menuopts[flowStep * 2], ": ");
+      strcat(menuopts[flowStep * 2], itoa(getProgMins(pgm, flowStep), buf, 10));
+      strcat(menuopts[flowStep * 2], " min");
+      
+      strcpy_P(menuopts[flowStep * 2 + 1], PSTR("Step "));
+      strcat(menuopts[flowStep * 2 + 1], itoa(flowStep + 1, buf, 10));
+      strcat(menuopts[flowStep * 2 + 1], ": ");
+      strcat(menuopts[flowStep * 2 + 1], itoa(getProgTemp(pgm, i), buf, 10));
+      strcat_P(menuopts[flowStep * 2 + 1], TUNIT);
     }
-    lastOption = scrollMenu("Program Parameters", 11, lastOption);
-    if (lastOption == 0) setProgBatchVol(pgm, getValue(PSTR("Batch Volume"), getProgBatchVol(pgm), 7, 3, 9999999, VOLUNIT));
-    else if (lastOption == 1) setProgGrain(pgm, getValue(PSTR("Grain Weight"), getProgGrain(pgm), 7, 3, 9999999, WTUNIT));
-    else if (lastOption == 2) setProgBoil(pgm, getTimerValue(PSTR("Boil Length"), getProgBoil(pgm)));
-    else if (lastOption == 3) { 
-      #ifdef USEMETRIC
-        setProgRatio(pgm, getValue(PSTR("Mash Ratio"), getProgRatio(pgm), 3, 2, 999, PSTR(" l/kg"))); 
-      #else
-        setProgRatio(pgm, getValue(PSTR("Mash Ratio"), getProgRatio(pgm), 3, 2, 999, PSTR(" qts/lb")));
-      #endif
-    }
-    else if (lastOption == 4) setProgHLT(pgm, getValue(PSTR("HLT Setpoint"), getProgHLT(pgm), 3, 0, 255, TUNIT));
-    else if (lastOption == 5) setProgSparge(pgm, getValue(PSTR("Sparge Temp"), getProgSparge(pgm), 3, 0, 255, TUNIT));
-    else if (lastOption == 6) setProgPitch(pgm, getValue(PSTR("Pitch Temp"), getProgPitch(pgm), 3, 0, 255, TUNIT));
-    else if (lastOption == 7) editMashSchedule(pgm);
-    else if (lastOption == 8) setProgMLHeatSrc(pgm, MLHeatSrcMenu(getProgMLHeatSrc(pgm)));
-    else if (lastOption == 9) setProgAdds(pgm, editHopSchedule(getProgAdds(pgm)));
-    else return;
-    unsigned long spargeVol = calcSpargeVol(pgm);
-    unsigned long mashVol = calcMashVol(pgm);
-    unsigned long grainVol = calcGrainVolume(pgm);
-    if (spargeVol > getCapacity(TS_HLT)) warnHLT(spargeVol);
-    if (mashVol + grainVol > getCapacity(TS_MASH)) warnMash(mashVol, grainVol);
+    strcpy_P(menuopts[NUM_FLOW_STEPS * 2], PSTR("Exit"));
+    lastOption = scrollMenu("Edit Program", NUM_FLOW_STEPS * 2 + 1, lastOption);
+    
+    if (lastOption >= NUM_FLOW_STEPS * 2) return;
+    else if (lastOption / 2.0 == lastOption / 2) setProgMins(pgm, lastOption / 2, getTimerValue(PSTR("Step Mins"), getProgMins(pgm, lastOption / 2)));
+    else setProgTemp(pgm, lastOption / 2 + 1, getValue(PSTR("Step Temp"), getProgTemp(pgm, lastOption / 2 + 1), 3, 0, 999, TUNIT));
   }
 }
-
-void editMashSchedule(byte pgm) {
-  byte lastOption = 0;
-  while (1) {
-    strcpy_P(menuopts[0], PSTR("Dough In:"));
-    strcpy_P(menuopts[1], PSTR("Dough In:"));
-    strcpy_P(menuopts[2], PSTR("Acid Rest:"));
-    strcpy_P(menuopts[3], PSTR("Acid Rest:"));
-    strcpy_P(menuopts[4], PSTR("Protein Rest:"));
-    strcpy_P(menuopts[5], PSTR("Protein Rest:"));
-    strcpy_P(menuopts[6], PSTR("Sacch Rest:"));
-    strcpy_P(menuopts[7], PSTR("Sacch Rest:"));
-    strcpy_P(menuopts[8], PSTR("Sacch2 Rest:"));
-    strcpy_P(menuopts[9], PSTR("Sacch2 Rest:"));
-    strcpy_P(menuopts[10], PSTR("Mash Out:"));
-    strcpy_P(menuopts[11], PSTR("Mash Out:"));
-    strcpy_P(menuopts[12], EXIT);
-
-    for (byte i = MASH_DOUGHIN; i <= MASH_MASHOUT; i++) {  
-      strncat(menuopts[i * 2], itoa(getProgMashMins(pgm, i), buf, 10), 2);
-      strcat(menuopts[i * 2], " min");
-
-      strncat(menuopts[i * 2 + 1], itoa(getProgMashTemp(pgm, i), buf, 10), 3);
-      strcat_P(menuopts[i * 2 + 1], TUNIT);
-    }
-    
-    lastOption = scrollMenu("Mash Schedule", 13, lastOption);
-    if (lastOption == 0) setProgMashMins(pgm, MASH_DOUGHIN, getTimerValue(PSTR("Dough In"), getProgMashMins(pgm, MASH_DOUGHIN)));
-    else if (lastOption == 1) setProgMashTemp(pgm, MASH_DOUGHIN, getValue(PSTR("Dough In"), getProgMashTemp(pgm, MASH_DOUGHIN), 3, 0, 255, TUNIT));
-    else if (lastOption == 2) setProgMashMins(pgm, MASH_ACID, getTimerValue(PSTR("Acid Rest"), getProgMashMins(pgm, MASH_ACID)));
-    else if (lastOption == 3) setProgMashTemp(pgm, MASH_ACID, getValue(PSTR("Acid Rest"), getProgMashTemp(pgm, MASH_ACID), 3, 0, 255, TUNIT));
-    else if (lastOption == 4) setProgMashMins(pgm, MASH_PROTEIN, getTimerValue(PSTR("Protein Rest"), getProgMashMins(pgm, MASH_PROTEIN)));
-    else if (lastOption == 5) setProgMashTemp(pgm, MASH_PROTEIN, getValue(PSTR("Protein Rest"), getProgMashTemp(pgm, MASH_PROTEIN), 3, 0, 255, TUNIT));
-    else if (lastOption == 6) setProgMashMins(pgm, MASH_SACCH, getTimerValue(PSTR("Sacch Rest"), getProgMashMins(pgm, MASH_SACCH)));
-    else if (lastOption == 7) setProgMashTemp(pgm, MASH_SACCH, getValue(PSTR("Sacch Rest"), getProgMashTemp(pgm, MASH_SACCH), 3, 0, 255, TUNIT));
-    else if (lastOption == 8) setProgMashMins(pgm, MASH_SACCH2, getTimerValue(PSTR("Sacch2 Rest"), getProgMashMins(pgm, MASH_SACCH2)));
-    else if (lastOption == 9) setProgMashTemp(pgm, MASH_SACCH2, getValue(PSTR("Sacch2 Rest"), getProgMashTemp(pgm, MASH_SACCH2), 3, 0, 255, TUNIT));
-    else if (lastOption == 10) setProgMashMins(pgm, MASH_MASHOUT, getTimerValue(PSTR("Mash Out"), getProgMashMins(pgm, MASH_MASHOUT)));
-    else if (lastOption == 11) setProgMashTemp(pgm, MASH_MASHOUT, getValue(PSTR("Mash Out"), getProgMashTemp(pgm, MASH_MASHOUT), 3, 0, 255, TUNIT));
-    else return;
-  }
-}
-
-unsigned int editHopSchedule (unsigned int sched) {
-  unsigned int retVal = sched;
-  byte lastOption = 0;
-  while (1) {
-    if (retVal & 1) strcpy_P(menuopts[0], PSTR("Boil: On")); else strcpy_P(menuopts[0], PSTR("Boil: Off"));
-    for (byte i = 0; i < 10; i++) {
-      strcpy(menuopts[i + 1], itoa(hoptimes[i], buf, 10));
-      strcat_P(menuopts[i + 1], PSTR(" Min: "));
-      if (retVal & (1<<(i + 1))) strcat_P(menuopts[i + 1], PSTR("On")); else strcat_P(menuopts[i + 1], PSTR("Off"));
-    }
-    if (retVal & 2048) strcpy_P(menuopts[11], PSTR("0 Min: On")); else strcpy_P(menuopts[11], PSTR("0 Min: Off"));
-    strcpy_P(menuopts[12], EXIT);
-
-    lastOption = scrollMenu("Boil Additions", 13, lastOption);
-    if (lastOption == 12) return retVal;
-    else if (lastOption == 13) return sched;
-    else retVal = retVal ^ (1 << lastOption);
-  }
-}
-
-byte MLHeatSrcMenu (byte MLHeatSrc) {
-  strcpy_P(menuopts[0], HLTDESC);
-  strcpy_P(menuopts[1], MASHDESC);
-  byte lastOption = scrollMenu("Heat Mash Liq In:", 2, MLHeatSrc);
-  if (lastOption > 1) return MLHeatSrc;
-  else return lastOption;
-}
-
-void warnHLT(unsigned long spargeVol) {
-  clearLCD();
-  printLCD_P(0, 0, PSTR("HLT Capacity Issue"));
-  printLCD_P(1, 0, PSTR("Sparge Vol:"));
-  ftoa(spargeVol/1000.0, buf, 2);
-  truncFloat(buf, 5);
-  printLCD(1, 11, buf);
-  printLCD_P(1, 16, VOLUNIT);
-  printLCD(3, 4, ">");
-  printLCD_P(3, 6, CONTINUE);
-  printLCD(3, 15, "<");
-  while (!Encoder.ok()) brewCore();
-}
-
-
-void warnMash(unsigned long mashVol, unsigned long grainVol) {
-  clearLCD();
-  printLCD_P(0, 0, PSTR("Mash Capacity Issue"));
-  printLCD_P(1, 0, PSTR("Strike Vol:"));
-  ftoa(mashVol/1000.0, buf, 2);
-  truncFloat(buf, 5);
-  printLCD(1, 11, buf);
-  printLCD_P(1, 16, VOLUNIT);
-  printLCD_P(2, 0, PSTR("Grain Vol:"));
-  ftoa(grainVol / 1000.0, buf, 2);
-  truncFloat(buf, 5);
-  printLCD(2, 11, buf);
-  printLCD_P(2, 16, VOLUNIT);
-  printLCD(3, 4, ">");
-  printLCD_P(3, 6, CONTINUE);
-  printLCD(3, 15, "<");
-  while (!Encoder.ok()) brewCore();
-}
-
 
 
 //*****************************************************************************************************************************

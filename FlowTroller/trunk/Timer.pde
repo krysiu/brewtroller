@@ -26,52 +26,50 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 
 byte lastEEPROMWrite[2];
 
-void setTimer(byte timer, unsigned int minutes) {
-  timerValue[timer] = minutes * 60000;
-  lastTime[timer] = millis();
-  timerStatus[timer] = 1;
-  setTimerRecovery(timer, minutes);
+void setTimer(unsigned int minutes) {
+  timerValue = minutes * 60000;
+  lastTime = millis();
+  timerStatus = 1;
+  setTimerRecovery(minutes);
 }
 
-void pauseTimer(byte timer) {
-  if (timerStatus[timer]) {
+void pauseTimer() {
+  if (timerStatus) {
     //Pause
-    timerStatus[timer] = 0;
+    timerStatus = 0;
   } else {
     //Unpause
-    timerStatus[timer] = 1;
-    lastTime[timer] = millis();
+    timerStatus = 1;
+    lastTime = millis();
   }
 }
 
-void clearTimer(byte timer) {
-  timerValue[timer] = 0;
-  timerStatus[timer] = 0;
-  setTimerRecovery(timer, 0);
+void clearTimer() {
+  timerValue = 0;
+  timerStatus = 0;
+  setTimerRecovery(0);
 }
 
 void updateTimers() {
-  for (byte timer = TIMER_MASH; timer <= TIMER_BOIL; timer++) {
-    if (timerStatus[timer]) {
-      unsigned long now = millis();
-      if (timerValue[timer] > now - lastTime[timer]) {
-        timerValue[timer] -= now - lastTime[timer];
-      } else {
-        timerValue[timer] = 0;
-        timerStatus[timer] = 0;
-        setAlarm(1);
-      }
-      lastTime[timer] = now;
+  if (timerStatus) {
+    unsigned long now = millis();
+    if (timerValue > now - lastTime) {
+      timerValue -= now - lastTime;
+    } else {
+      timerValue = 0;
+      timerStatus = 0;
+      setAlarm(1);
     }
+    lastTime = now;
+  }
 
-    byte timerHours = timerValue[timer] / 3600000;
-    byte timerMins = (timerValue[timer] - timerHours * 3600000) / 60000;
+  byte timerHours = timerValue / 3600000;
+  byte timerMins = (timerValue - timerHours * 3600000) / 60000;
 
-    //Update EEPROM once per minute
-    if (timerMins != lastEEPROMWrite[timer]) {
-      lastEEPROMWrite[timer] = timerMins;
-      setTimerRecovery(timer, timerValue[timer]/60000 + 1);
-    }
+  //Update EEPROM once per minute
+  if (timerMins != lastEEPROMWrite) {
+    lastEEPROMWrite = timerMins;
+    setTimerRecovery(timerValue/60000 + 1);
   }
 }
 

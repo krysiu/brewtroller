@@ -25,12 +25,9 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 */
 
 
-void brewCore() {
+void flowCore() {
   //Timers: Timer.pde
   updateTimers();
-  
-  //Volumes: Volume.pde
-  updateVols();
   
   //Log: Log.pde
   updateLog();
@@ -38,13 +35,8 @@ void brewCore() {
   //temps: Temp.pde
   updateTemps();
   
-  steamPressure = readPressure(STEAMPRESS_APIN, steamPSens, steamZero);
-  
   //Heat Outputs: Outputs.pde
   processHeatOutputs();
-  
-  //Auto Valve Logic: Outputs.pde
-  processAutoValve();
   
   //Step Logic: StepLogic.pde
   stepCore();
