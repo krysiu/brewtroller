@@ -196,7 +196,25 @@ void screenEnter(byte screen) {
 
       if (lastOption == 1) editProgramMenu();
       else if (lastOption == 2) startProgramMenu();
-
+      else if (lastOption == 3) setSetpoint(getValue(PSTR("Setpoint"), setpoint, 3, 0, 999, TUNIT));
+      else if (lastOption == 4) {
+        setTimer(getTimerValue(PSTR("Set Timer"), timerValue / 60000));
+        //Force Preheated
+        preheated = 1;
+      }
+      else if (lastOption == 5) {
+        pauseTimer();
+        //Force Preheated
+        preheated = 1;
+      }
+      else if (lastOption == 6) {
+        if(actPgm != PROGRAM_IDLE) {
+          if (stepAdvance(actStep)) {
+            //Failed to advance step
+            stepAdvanceFailDialog();
+          }
+        }
+      }
       else if (lastOption == 7) {
         //Reset All
         if (confirmAbort()) {
