@@ -33,15 +33,6 @@ void tempInit() {
   tempPin.set(HIGH);
 }
 
-void updateTemps() {
-  #ifdef USEMETRIC
-    temp = read_temp(tempPin, 1, TEMP_ERROR, TEMP_SAMPLES);
-  #else
-    temp = read_temp(tempPin, 0, TEMP_ERROR, TEMP_SAMPLES);
-  #endif
-}
-
-
 /*
   Temperature Reading from a MAX6675
   Ryan McLaughlin <ryanjmclaughlin@gmail.com>
@@ -59,12 +50,10 @@ void updateTemps() {
 
   Modified to use FastPin library by Matt Reba
 */
-
-unsigned int read_temp(pin &tempSSPin, int type, int error, int samples) {
+float read_temp(pin &tempSSPin, int type, int error, int samples) {
   unsigned int value = 0;
   int error_tc;
   float temp;
-  unsigned int temp_out;
   
   for (int i=samples; i>0; i--){
     tempSSPin.set(LOW); // Enable device
@@ -111,8 +100,17 @@ unsigned int read_temp(pin &tempSSPin, int type, int error, int samples) {
     temp = (value*0.25);  // Multiply the value by 25 to get temp in ˚C
   }
   
-  temp_out = temp*10;  // Send the float to an int (X10) for ease of printing.
-  
   /* Output 9999 if there is a TC error, otherwise return 'temp' */
-  if(error_tc != 0) { return 9999; } else { return temp_out; }
+  if(error_tc != 0) { return 9999; } else { return temp; }
 }
+
+void updateTemps() {
+  #ifdef USEMETRIC
+    temp = read_temp(tempPin, 1, TEMP_ERROR, TEMP_SAMPLES);
+  #else
+    temp = read_temp(tempPin, 0, TEMP_ERROR, TEMP_SAMPLES);
+  #endif
+}
+
+
+
