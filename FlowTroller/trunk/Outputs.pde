@@ -27,9 +27,9 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 void pinInit() {
   alarmPin.setup(ALARM_PIN, OUTPUT);
   heatPin.setup(HEAT_PIN, OUTPUT);
-  spiClk.setup(SPI_CLK_PIN, OUTPUT);
-  spiMOSI.setup(SPI_MOSI_PIN, OUTPUT);
-  spiMISO.setup(SPI_MISO_PIN, INPUT);
+//  spiClk.setup(SPI_CLK_PIN, OUTPUT);
+//  spiMOSI.setup(SPI_MOSI_PIN, OUTPUT);
+//  spiMISO.setup(SPI_MISO_PIN, INPUT);
 }
 
 void pidInit() {

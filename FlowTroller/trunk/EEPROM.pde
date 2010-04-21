@@ -75,7 +75,8 @@ void loadSetup() {
 //PID Enabled (72); Bit 1 = HLT, Bit 2 = Mash, Bit 3 = Kettle, Bit 4 = Steam
 //**********************************************************************************
 void setPIDEnabled(boolean setting) {
-  EEPROM.write(72, setting);
+  PIDEnabled = setting;
+  EEPROM.write(72, PIDEnabled);
 }
 
 
@@ -128,11 +129,11 @@ void setHysteresis(byte value) {
 //*****************************************************************************************************************************
 
 //**********************************************************************************
-//setpoint (299)
+//setpoint (299-300)
 //**********************************************************************************
-void setSetpoint(byte value) { 
+void setSetpoint(int value) { 
   setpoint = value;
-  EEPROM.write(299, value);
+  PROMwriteInt(299, value);
 }
 
 //**********************************************************************************

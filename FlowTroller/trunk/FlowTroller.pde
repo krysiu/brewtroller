@@ -1,4 +1,4 @@
-#define BUILD 398 
+#define BUILD 400 
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -114,11 +114,17 @@ void(* softReset) (void) = 0;
 
 //Pin and Interrupt Definitions
 #define HEAT_PIN 0
-#define ENCB_PIN 1
+
+//#define ENCB_PIN 1
+#define ENCB_PIN 4
+
 #define ENCA_PIN 2
-#define SPI_MOSI_PIN 5
-#define SPI_MISO_PIN 6
-#define SPI_CLK_PIN 7
+
+
+//#define SPI_MOSI_PIN 5
+//#define SPI_MISO_PIN 6
+//#define SPI_CLK_PIN 7
+
 #define ENTER_PIN 11
 #define ALARM_PIN 15
 
@@ -130,8 +136,7 @@ void(* softReset) (void) = 0;
 
 //Events
 #define EVENT_STEPINIT 0
-
-//System Information 'Memory Addresses'
+#define EVENT_STEPEXIT 1
 
 //Heat Output, alarm Pins
 pin spiClk, spiMOSI, spiMISO, heatPin, alarmPin;
@@ -165,6 +170,7 @@ char msg[25][21];
 #define PROGRAM_IDLE 255
 byte actProgram = PROGRAM_IDLE;
 byte actStep = PROGRAM_IDLE;
+boolean preheated;
 
 const char BT[] PROGMEM = "FlowTroller";
 const char BTVER[] PROGMEM = "1.0";

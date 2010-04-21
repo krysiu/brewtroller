@@ -54,24 +54,26 @@ boolean stepInit(byte pgm, byte flowStep) {
   timerStatus = 0;
     
   //Call event handler
-  eventHandler(EVENT_STEPINIT, brewStep);  
+  eventHandler(EVENT_STEPINIT, flowStep);  
   return 0;
 }
 
 void stepCore() {
-  if (!preheated && temp >= setpoint) {
-    preheated = 1;
-    //Unpause Timer
-    if (!timerStatus) pauseTimer();
+  if (actStep != PROGRAM_IDLE) {  
+    if (!preheated && temp >= setpoint) {
+      preheated = 1;
+      //Unpause Timer
+      if (!timerStatus) pauseTimer();
+    }
+    //Exit Condition (and skip unused mash steps)
+    if (setpoint == 0 || (preheated && timerValue == 0)) stepAdvance(actStep);
   }
-  //Exit Condition (and skip unused mash steps)
-  if (setpoint == 0 || (preheated && timerValue == 0)) stepAdvance(actStep);
 }
 
 
 //Advances program to next brew step
 //Returns 0 if successful or 1 if unable to advance due to conflict with another step
-boolean stepAdvance(byte brewStep) {
+boolean stepAdvance(byte flowStep) {
   //Save program for next step/rollback
   byte program = actProgram;
   stepExit(flowStep);
@@ -92,10 +94,11 @@ boolean stepAdvance(byte brewStep) {
 //Note: If called directly (as opposed through stepAdvance) acts as a program abort
 void stepExit(byte flowStep) {
   //Mark step idle
-  setProgramStep(flowStep, PROGRAM_IDLE);
+  setProgramStep(PROGRAM_IDLE, PROGRAM_IDLE);
   
   //Perform step closeout functions
   clearTimer();
   resetOutputs();
+  eventHandler(EVENT_STEPEXIT, flowStep);  
 }
 

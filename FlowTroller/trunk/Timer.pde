@@ -24,7 +24,7 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
 
-byte lastEEPROMWrite[2];
+byte lastEEPROMWrite;
 
 void setTimer(unsigned int minutes) {
   timerValue = minutes * 60000;

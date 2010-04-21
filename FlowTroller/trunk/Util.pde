@@ -48,27 +48,3 @@ void truncFloat(char string[], byte length) {
   }
 }
 
-byte sysInfo(byte address) {
-
-}
-
-byte int2byte(int varInt, byte pos) {
-  union u_ib {
-    int i_var;
-    byte b_var[4];
-  };
-  u_ib convert;
-  convert.i_var = varInt;
-  return convert.b_var[pos];
-}
-
-byte float2byte(float varFlt, byte pos) {
-  union u_fb {
-    int f_var;
-    byte b_var[4];
-  };
-  u_fb convert;
-  convert.f_var = varFlt;
-  return convert.b_var[pos];
-}
-

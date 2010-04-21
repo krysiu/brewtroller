@@ -44,11 +44,8 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 
 
 //UI Globals
-#ifdef BTBOARD_3
-  LiquidCrystal lcd(18, 19, 20, 21, 22, 23);
-#else
-  LiquidCrystal lcd(17, 19, 20, 21, 22, 23);
-#endif 
+
+LiquidCrystal lcd(18, 19, 20, 21, 22, 23);
 
 void initLCD(){
   lcd.begin(20, 4);

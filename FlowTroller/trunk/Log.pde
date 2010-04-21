@@ -86,134 +86,41 @@ boolean chkMsg() {
       if (byteIn == '\r') { 
         msgQueued = 1;
         //Configuration Class (CFG) Commands
-        if(strcasecmp(msg[0], "GET_BOIL") == 0) {
-          logBoil();
+        if(strcasecmp(msg[0], "GET_OSET") == 0) {
+          logOSet();
           clearMsg();
-        } else if(strcasecmp(msg[0], "GET_CAL") == 0) {
-          byte val = atoi(msg[1]);
-          if (msgField == 1 && val >= VS_HLT && val <= VS_KETTLE) {
-            logVolCalib(val);
-            clearMsg();
-          } else rejectParam(LOGGLB);
-        } else if(strcasecmp(msg[0], "GET_EVAP") == 0) {
-          logEvap();
-          clearMsg();
-        } else if(strcasecmp(msg[0], "GET_OSET") == 0) {
-          byte val = atoi(msg[1]);
-          if (msgField == 1 && val >= VS_HLT && val <= VS_STEAM) {
-            logOSet(val);
-            clearMsg();
-          } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "GET_PROG") == 0) {
           byte program = atoi(msg[1]);
-          if (msgField == 1 && program >= 0 && program < 30) {
+          if (msgField == 1 && program >= 0 && program < 20) {
             logProgram(program);
-            clearMsg();
-          } else rejectParam(LOGGLB);
-        } else if (strcasecmp(msg[0], "GET_TS") == 0) {
-          byte val = atoi(msg[1]);
-          if (msgField == 1 && val >= TS_HLT && val <= TS_AUX3) {
-            logTSensor(val);
-            clearMsg();
-          } else rejectParam(LOGGLB);
-        } else if(strcasecmp(msg[0], "GET_VLVCFG") == 0) {
-          byte profile = atoi(msg[1]);
-          if (msgField == 1 && profile >= VLV_FILLHLT && profile <= VLV_CHILLBEER) {
-            logVlvProfile(profile);
-            clearMsg();
-          } else rejectParam(LOGGLB);
-        } else if(strcasecmp(msg[0], "GET_VSET") == 0) {
-          byte val = atoi(msg[1]);
-          if (msgField == 1 && val >= VS_HLT && val <= VS_KETTLE) {
-            logVSet(val);
             clearMsg();
           } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "INIT_EEPROM") == 0) {
           clearMsg();
           initEEPROM();
-        } else if(strcasecmp(msg[0], "SCAN_TS") == 0) {
-          clearMsg();
-          byte tsAddr[8];
-          getDSAddr(tsAddr);
-          logStart_P(LOGGLB);
-          logField_P(PSTR("TS_SCAN"));
-          for (byte i=0; i<8; i++) logFieldI(tsAddr[i]);
-          logEnd();
-        } else if(strcasecmp(msg[0], "SET_BOIL") == 0) {
-          if (msgField == 1) {
-            byte val = atoi(msg[1]);
-            setBoilTemp(val);
-            clearMsg();
-            logBoil();
-          } else rejectParam(LOGGLB);
-        } else if(strcasecmp(msg[0], "SET_CAL") == 0) {
-          byte vessel = atoi(msg[1]);
-          if (msgField == 21 && vessel >= VS_HLT && vessel <= VS_KETTLE) {
-            for (byte i = 0; i < 10; i++) setVolCalib(vessel, i, atol(msg[i * 2 + 3]), strtoul(msg[i * 2 + 2], NULL, 10));
-            clearMsg();
-            logVolCalib(vessel);
-          } else rejectParam(LOGGLB);
-        } else if(strcasecmp(msg[0], "SET_EVAP") == 0) {
-          byte val = atoi(msg[1]);
-          if (msgField == 1 && val >= 0 && val <= 100) {
-            setEvapRate(val);
-            clearMsg();
-            logEvap();
-          } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "SET_OSET") == 0) {
-          byte val = atoi(msg[1]);
-          if (msgField == 7 && val >= VS_HLT && val <= VS_STEAM) {
-            setPIDEnabled(val, (byte)atoi(msg[2]));
-            setPIDCycle(val, (byte)atoi(msg[3]));
-            setPIDp(val, (byte)atoi(msg[4]));
-            setPIDi(val, (byte)atoi(msg[5]));
-            setPIDd(val, (byte)atoi(msg[6]));
-            setHysteresis(val, (byte)atoi(msg[7]));
+          if (msgField == 6) {
+            setPIDEnabled((byte)atoi(msg[2]));
+            setPIDCycle((byte)atoi(msg[2]));
+            setPIDp((byte)atoi(msg[3]));
+            setPIDi((byte)atoi(msg[4]));
+            setPIDd((byte)atoi(msg[5]));
+            setHysteresis((byte)atoi(msg[6]));
             clearMsg();
-            logOSet(val);
+            logOSet();
           } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "SET_PROG") == 0) {
           byte program = atoi(msg[1]);
-          if (msgField == 22 && program >= 0 && program < 21) {
+          if (msgField == (NUM_FLOW_STEPS * 2 + 2) && program >= 0 && program < 20) {
             setProgName(program, msg[2]);
-            for (byte i = STEP_DOUGHIN; i <= STEP_MASHOUT; i++) {
-              setProgMashTemp(program, i, atoi(msg[i * 2 + 3]));
-              setProgMashMins(program, i, atoi(msg[i * 2 + 4]));
+
+            for (byte i = 0; i < NUM_FLOW_STEPS; i++) {
+              setProgTemp(program, i, atoi(msg[i * 2 + 3]));
+              setProgMins(program, i, atoi(msg[i * 2 + 4]));
             }
-            setProgSparge(program, atoi(msg[15]));
-            setProgHLT(program, atoi(msg[16]));
-            setProgBatchVol(program, strtoul(msg[17], NULL, 10));
-            setProgGrain(program, strtoul(msg[18], NULL, 10));
-            setProgBoil(program, atol(msg[19]));
-            setProgRatio(program, atol(msg[20]));
-            setProgPitch(program, atoi(msg[21]));
-            setProgAdds(program, atol(msg[22]));
+
             clearMsg();
             logProgram(program);
-          } else rejectParam(LOGGLB);
-        } else if(strcasecmp(msg[0], "SET_TS") == 0) {
-          byte val = atoi(msg[1]);
-          if (msgField == 9 && val >= TS_HLT && val <= TS_AUX3) {
-            byte addr[8];
-            for (byte i=0; i<8; i++) addr[i] = (byte)atoi(msg[i+2]);
-            setTSAddr(val, addr);
-            clearMsg();
-            logTSensor(val);
-          } else rejectParam(LOGGLB);
-        } else if(strcasecmp(msg[0], "SET_VLVCFG") == 0) {
-          byte profile = atoi(msg[1]);
-          if (msgField == 2 && profile >= VS_HLT && profile <= VS_KETTLE) {
-            setValveCfg(profile, strtoul(msg[2], NULL, 10));
-            clearMsg();
-            logVlvProfile(profile);
-          } else rejectParam(LOGGLB);
-        } else if(strcasecmp(msg[0], "SET_VSET") == 0) {
-          byte val = atoi(msg[1]);
-          if (msgField == 3 && val >= VS_HLT && val <= VS_STEAM) {
-            setCapacity(val, strtoul(msg[2], NULL, 10));
-            setVolLoss(val, atol(msg[3]));
-            clearMsg();
-            logVSet(val);
           } else rejectParam(LOGGLB);
 
         //Data Class (DATA) Commands
@@ -237,44 +144,20 @@ boolean chkMsg() {
             setAlarm((boolean)atoi(msg[1]));
             clearMsg();
           } else rejectParam(LOGGLB);
-        } else if(strcasecmp(msg[0], "SET_AUTOVLV") == 0) {
-          byte avSet = atoi(msg[1]);
-          if (msgField == 1) {
-            byte actModes = atoi(msg[1]);
-            for (byte i = AV_FILL; i <= AV_CHILL; i++) 
-              autoValve[i] = actModes & 1<<i;
-            clearMsg();
-          } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "SET_SETPOINT") == 0) {
-          byte vessel = atoi(msg[1]);
-          if (msgField == 2 && vessel <= VS_KETTLE) {
-            setSetpoint(vessel, (byte)atoi(msg[2]));
+          if (msgField == 1) {
+            setSetpoint((byte)atoi(msg[1]));
             clearMsg();
           } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "SET_TIMERSTATUS") == 0) {
-          byte timer = atoi(msg[1]);
-          if (msgField == 2 && timer >= TIMER_MASH && timer <= TIMER_BOIL) {
-            setTimerStatus(timer, (boolean)atoi(msg[1]));
+          if (msgField == 1) {
+            setTimerStatus((boolean)atoi(msg[1]));
             clearMsg();
           } else rejectParam(LOGGLB);
         } else if(strcasecmp(msg[0], "SET_TIMERVALUE") == 0) {
-          byte timer = atoi(msg[1]);
-          if (msgField == 2 && timer >= TIMER_MASH && timer <= TIMER_BOIL) {
-            timerValue[timer] = strtoul(msg[1], NULL, 10);
-            lastTime[timer] = millis();
-            clearMsg();
-          } else rejectParam(LOGGLB);
-        } else if(strcasecmp(msg[0], "SET_VLV") == 0) {
-          if (msgField == 2) {
-            setValves(strtoul(msg[1], NULL, 10), atoi(msg[2]));
-            clearMsg();
-          } else rejectParam(LOGGLB);
-        } else if(strcasecmp(msg[0], "SET_VLVPRF") == 0) {
-          if (msgField == 2) {
-            setValves(VLV_ALL, 0);
-            unsigned long actProfiles = strtoul(msg[1], NULL, 10);
-            for (byte i = VLV_FILLHLT; i <= VLV_DRAIN; i++) 
-              if ((actProfiles & 1<<i)) setValves(vlvConfig[i], atoi(msg[2]));
+          if (msgField == 1) {
+            timerValue = strtoul(msg[1], NULL, 10);
+            lastTime = millis();
             clearMsg();
           } else rejectParam(LOGGLB);
 
@@ -285,8 +168,7 @@ boolean chkMsg() {
             clearMsg();
             if (level == 0) {
               resetOutputs();
-              clearTimer(TIMER_MASH);
-              clearTimer(TIMER_BOIL);
+              clearTimer();
             } else if (level == 1) {
               logStart_P(LOGSYS);
               logField_P(PSTR("SOFT_RESET"));
@@ -359,41 +241,24 @@ void updateLog() {
       if (logCount == 0) {
         logStart_P(LOGDATA);
         logField_P(PSTR("STEPPRG"));
-        for (byte i = 0; i < NUM_BREW_STEPS; i++)
-          logFieldI(stepProgram[i]);
+        logFieldI(actStep);
+        logFieldI(actProgram);
         logEnd();
       } else if (logCount == 1) {
-        for (byte timer = TIMER_MASH; timer <= TIMER_BOIL; timer++) {
-          logStart_P(LOGDATA);
-          logField_P(PSTR("TIMER"));
-          logFieldI(timer);
-          logFieldI(timerValue[timer]);
-          logFieldI(timerStatus[timer]);
-          logEnd();
-        }
+        logStart_P(LOGDATA);
+        logField_P(PSTR("TIMER"));
+        logFieldI(timerValue);
+        logFieldI(timerStatus);
+        logEnd();
+
         logStart_P(LOGDATA);
         logField_P(PSTR("ALARM"));
         logFieldI(alarmStatus);
         logEnd();
-      } else if (logCount >= 2 && logCount <= 4) {
-        byte i = logCount - 2;
-        logStart_P(LOGDATA);
-        logField_P(PSTR("VOL"));
-        logFieldI(i);
-        ftoa(volAvg[i]/1000.0, buf, 3);
-        logField(buf);
-        #ifdef USEMETRIC
-          logFieldI(0);
-        #else
-          logFieldI(1);
-        #endif
-        logEnd();
-      } else if (logCount >= 5 && logCount <= 13) {
-        byte i = logCount - 5;
+      } else if (logCount == 2) {
         logStart_P(LOGDATA);
         logField_P(PSTR("TEMP"));
-        logFieldI(i);
-        ftoa(temp[i], buf, 3);
+        ftoa(temp, buf, 3);
         logField(buf);
         #ifdef USEMETRIC
           logFieldI(0);
@@ -401,34 +266,19 @@ void updateLog() {
           logFieldI(1);
         #endif
         logEnd();
-      } else if (logCount == 14) {
-        logStart_P(LOGDATA);
-        logField_P(PSTR("STEAM"));
-        ftoa(steamPressure, buf, 3);
-        logField(buf);
-        #ifdef USEMETRIC
-          logFieldI(0);
-        #else
-          logFieldI(1);
-        #endif
-        logEnd();
-      } else if (logCount >= 15 && logCount <= 18) {
+      } else if (logCount == 3) {
         byte pct;
-        byte i = logCount - 15;
-        if (PIDEnabled[i]) pct = PIDOutput[i] / PIDCycle[i] / 10;
-        else if (heatStatus[i]) pct = 100;
+        if (PIDEnabled) pct = PIDOutput / PIDCycle / 10;
+        else if (heatStatus) pct = 100;
         else pct = 0;
         logStart_P(LOGDATA);
         logField_P(PSTR("HEATPWR"));
-        logFieldI(i);
         logFieldI(pct);
         logEnd();
-      } else if (logCount >= 19 && logCount <= 22) {
-        byte i = logCount - 19;
+      } else if (logCount == 4) {
         logStart_P(LOGDATA);
         logField_P(PSTR("SETPOINT"));
-        logFieldI(i);
-        ftoa(setpoint[i], buf, 0);
+        ftoa(setpoint, buf, 0);
         logField(buf);
         #ifdef USEMETRIC
           logFieldI(0);
@@ -436,98 +286,28 @@ void updateLog() {
           logFieldI(1);
         #endif
         logEnd();
-      } else if (logCount == 23) {
-        logStart_P(LOGDATA);
-        logField_P(PSTR("AUTOVLV"));
-        byte modeMask = 0;
-        for (byte i = AV_FILL; i <= AV_CHILL; i++)
-          if (autoValve[i]) modeMask |= 1<<i;
-        logFieldI(modeMask);
-        logEnd();
-        logStart_P(LOGDATA);
-        logField_P(PSTR("VLVBITS"));
-        logFieldI(vlvBits);
-        logEnd();
-      } else if (logCount == 24) {
-        logStart_P(LOGDATA);
-        logField_P(PSTR("VLVPRF"));
-        unsigned int profileMask = 0;
-        for (byte i = VLV_FILLHLT; i <= VLV_DRAIN; i++) 
-          if (vlvConfig[i] != 0 && (vlvBits & vlvConfig[i]) == vlvConfig[i]) profileMask |= 1<<i;
-        logFieldI(profileMask);
-        logEnd();
+
         //Logic below times start of log to start of log. Interval is reset if exceeds two intervals.
         if (millis() - lastLog > LOG_INTERVAL * 2) lastLog = millis(); else lastLog += LOG_INTERVAL;
       }
       logCount++;
-      if (logCount > 24) logCount = 0;
+      if (logCount > 4) logCount = 0;
     }
   }
   if (chkMsg()) rejectMsg(LOGGLB);
 }
 
 #if defined USESERIAL
-void logTSensor(byte sensor) {
-  logStart_P(LOGGLB);
-  logField_P(PSTR("TS_ADDR"));
-  logFieldI(sensor);
-  for (byte i=0; i<8; i++) logFieldI(tSensor[sensor][i]);
-  logEnd();
-}
 
-void logOSet(byte vessel) {
+void logOSet() {
   logStart_P(LOGGLB);
   logField_P(PSTR("OUTPUT_SET"));
-  logFieldI(vessel);
-  logFieldI(PIDEnabled[vessel]);
-  logFieldI(PIDCycle[vessel]);
-  logFieldI(getPIDp(vessel));
-  logFieldI(getPIDi(vessel));
-  logFieldI(getPIDd(vessel));
-  logFieldI(hysteresis[vessel]);
-  logEnd();
-}
-
-void logBoil() {
-  logStart_P(LOGGLB);
-  logField_P(PSTR("BOIL_TEMP"));
-  logFieldI(getBoilTemp());
-  logEnd();
-}
-
-void logVolCalib(byte vessel) {
-  logStart_P(LOGGLB);
-  logField_P(PSTR("VOL_CALIB"));
-  logFieldI(vessel);
-
-  for (byte i = 0; i < 10; i++) {
-      logFieldI(calibVols[vessel][i]);
-      logFieldI(calibVals[vessel][i]);
-  }
-  logEnd();
-}
-
-void logVSet(byte vessel) {
-  logStart_P(LOGGLB);
-  logField_P(PSTR("VOL_SET"));
-  logFieldI(vessel);
-  logFieldI(getCapacity(vessel));
-  logFieldI(getVolLoss(vessel));
-  logEnd();
-}
-
-void logEvap() {
-  logStart_P(LOGGLB);
-  logField_P(PSTR("EVAP_RATE"));
-  logFieldI(getEvapRate());
-  logEnd();
-}
-
-void logVlvProfile (byte profile) {
-  logStart_P(LOGGLB);
-  logField_P(PSTR("VLV_PROFILE"));
-  logFieldI(profile);
-  logFieldI(vlvConfig[profile]);  
+  logFieldI(PIDEnabled);
+  logFieldI(PIDCycle);
+  logFieldI(getPIDp());
+  logFieldI(getPIDi());
+  logFieldI(getPIDd());
+  logFieldI(hysteresis);
   logEnd();
 }
 
@@ -538,18 +318,10 @@ void logProgram(byte program) {
   getProgName(program, buf);
   logField(buf);
   
-  for (byte i = STEP_DOUGHIN; i <= STEP_MASHOUT; i++) {
-    logFieldI(getProgMashTemp(program, i));
-    logFieldI(getProgMashMins(program, i));
+  for (byte i = 0; i < NUM_FLOW_STEPS; i++) {
+    logFieldI(getProgTemp(program, i));
+    logFieldI(getProgMins(program, i));
   }
-  logFieldI(getProgSparge(program));
-  logFieldI(getProgHLT(program));
-  logFieldI(getProgBatchVol(program));
-  logFieldI(getProgGrain(program));
-  logFieldI(getProgBoil(program));
-  logFieldI(getProgRatio(program));
-  logFieldI(getProgPitch(program));
-  logFieldI(getProgAdds(program));
   logEnd();
 }
 
