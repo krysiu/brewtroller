@@ -1,4 +1,4 @@
-#define BUILD 379 
+#define BUILD 405 
 /*
    Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -48,6 +48,7 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 //**********************************************************************************
 // The Brewtroller 3.0 board uses MUX instead of direct on-board outputs.
 // 
+//#define BTBOARD_22
 #define BTBOARD_3
 //**********************************************************************************
 
@@ -157,9 +158,9 @@ using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 // When using cool outputs for devices with compressors like refrigerators you may
 // need to specify a minimum delay before enabling the output. This is intended to
 // eliminate quick cycling of the output On/Off. Specify a limit in seconds for each
-// zone in the array below. Maximum value is 255 seconds or approximately 4.2 min.
+// zone in the array below. Maximum value is 65535 seconds or approximately 18 hrs.
 //
-byte coolDelay[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+unsigned int coolDelay[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 //**********************************************************************************
 
 //**********************************************************************************

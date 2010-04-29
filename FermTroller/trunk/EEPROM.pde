@@ -112,9 +112,6 @@ void loadSetup() {
     logOSet(i);
   }
 
-//600-631 coolOffTime counters
-for (byte zone = 0; zone <= NUM_ZONES; zone++) coolOnTime[zone] = EEPROM.read(600 + zone) * 1000;
-
   //2046 FermTroller FingerPrint
   //2047 EEPROM Version
 }
@@ -218,9 +215,3 @@ void saveSetpoints() { for (byte i = 0; i < NUM_ZONES; i++) { EEPROM.write(4 + i
 unsigned int getTimerRecovery() { return PROMreadInt(95); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(95, newMins); }
 
-//EEPROM bytes 600-631
-//Store seconds of Cool-On delay remaining in EEPROM for each zone
-void setCoolDelaySecs(byte zone) {
-  if (coolOnTime[zone] > millis()) EEPROM.write(600 + zone, round((coolOnTime[zone] - millis()) / 1000));
-  else EEPROM.write(600 + zone, 0);
-}

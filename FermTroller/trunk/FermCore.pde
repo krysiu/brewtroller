@@ -160,7 +160,6 @@ void fermCore() {
           }
         }
       }
-      setCoolDelaySecs(i);
     }
   }
   
