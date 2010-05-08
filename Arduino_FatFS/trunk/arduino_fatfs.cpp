@@ -18,34 +18,33 @@ extern "C" {
 
 #include "arduino_fatfs.h"
 
+// ******************** note all paths must start with 0 for volume 0 (only volume supported) and use / slahes instead of \ for folder seperations 
+// I.E. 0:/logs/log10.txt
+// names must also be in 8.3 format LFN and unicode not supported, all files opened must have the complete path in the name passed in, there is no "current directory" open. 
+
 FATFS FF::fatfs_obj; // stores working copy of FS
-DIR FF::dir_obj; // stores working copy of DIR
-char * FF::dir_path; // stores last accessed directory path
-int FF::MMC_CS; // stores pin number for MMC card's CS pin
-void * FF::stream_dest; // function pointer for stream destination function
+FIL   FF::fil_obj[3]; // once a file has been opened, this will store the information for that file, so you can read/write 
+                      // the file without having to re-open it each time. 
+//char * FF::dir_path; // stores last accessed directory path
+//int FF::MMC_CS; // stores pin number for MMC card's CS pin
+//void * FF::stream_dest; // function pointer for stream destination function
+const char FF::log_file_dir[8] = {'0',':','/','l','o','g','s','/',NULL};
+const char FF::web_page_dir[8] = {'0',':','/','h','t','m','l','/',NULL};
 
 /*
 Constructor, do not actually call, it's been done for you
 */
 
-FF::FF()
-{
-	dir_path = (char *)calloc(max_path_len, sizeof(dir_path)); // allocate memory for path
-}
+//FF::FF()
+//{
+//	dir_path = (char *)calloc(max_path_len, sizeof(dir_path)); // allocate memory for path
+//}
 
 /*
 Chip Select / Deselect Functions for the MMC Card's CS pin
 */
 
-void FF::MMC_SELECT()
-{
-	digitalWrite(MMC_CS, LOW);
-}
 
-void FF::MMC_DESELECT()
-{
-	digitalWrite(MMC_CS, HIGH);
-}
 
 ///////////////////////////////////
 // begin list of public methods
@@ -54,36 +53,57 @@ void FF::MMC_DESELECT()
 //! Initialization Function
 /*!
   \param cs_pin is the Arduino pin connected to the MMC card's CS pin
-  \param rx is a pointer to the SPI recieve function, it must return a byte and accept no parameters
-  \param tx is a pointer to the SPI transmit function, it must accept a byte as a parameter and return nothing
   \return error code, see comments in FF.h for FRESULT enumeration
 	  
 Notes:
-
-The reason why the SPI functions are not built in is because some people
-may wish to use software SPI, or want to share SPI functions with other other code
-so this reduces redundant code.
-
-If error is detected due to a hardware error, you can re-call this function to re-initialize the MMC card.
+the value returned in the in is from the enum FRESULT in ff.h
 
 */
-
-//Added drv param - Matt Reba
-int FF::begin(int cs_pin, unsigned char (* rx)(void), void (* tx)(unsigned char), byte drv)
+int FF::begin(int cs_pin)
 {
-	MMC_CS = cs_pin; // set CS pin number
-	pinMode(MMC_CS, OUTPUT); // set CS pin to output
-	MMC_DESELECT(0);
-	disk_attach_spi_functs(tx, rx, MMC_SELECT, MMC_DESELECT); // attach SPI functions
+    int res;
+	DIR dj;
 	
-	// start disk and mount FS, then open root directory
+	pinMode(cs_pin, OUTPUT); // set CS pin to output	
+	set_MMC_CS(cs_pin); // set the global for the CS pin in the mmc module
 
-        //Removing disk_initialize() as it is called from f_mount() - Matt Reba
-	//disk_initialize();
+	f_mount(0, &fatfs_obj);
+	res = f_opendir(&dj, &web_page_dir); // this will initialize the SD card as well as attempt to open this directory. 
+	
+	if( res != FR_OK) // if the open did not work, note that ALL SD cards come pre-formatted and thus if there isnt a file system already on the SD card, there isnt much we can do, it's a gonner. 
+	{
+		if(res == FR_NO_PATH)
+			f_mkdir(&web_page_dir);
+		else
+			return(res);
 
-        //Added drv param - Matt Reba
-	f_mount(drv, &fatfs_obj);
-	return open_dir((char *)"/");
+	}
+
+	res = f_opendir(&dj, &log_file_dir);
+
+	if(res != FR_OK)
+	{
+		if(res == FR_NO_PATH)
+			f_mkdir(&log_file_dir);
+		else
+			return(res);
+	}
+
+	return(); 
+}
+
+//! Grab a string that has the expected html directory
+const char * FF::get_html_dir(void)
+{
+	const char * p = &web_page_dir;
+	return(p);
+}
+
+//! Grab a string that has the expected log directory
+const char * FF::get_logs_dir(void)
+{
+	const char * p = &log_file_dir;
+	return(p);
 }
 
 //! Opens a file with a path
@@ -92,31 +112,77 @@ int FF::begin(int cs_pin, unsigned char (* rx)(void), void (* tx)(unsigned char)
   \return error code, see comments in FF.h for FRESULT enumeration
 	  
 Notes:
-path is not relative to current directory
+path is not relative to current directory, must be complete path 
+file info is saved in the FIL struct chosen by file_num.
+the value returned in the in is from the enum FRESULT in ff.h
 
 */
-int FF::open_file(char * fn)
+int FF::open_file(char * fn, byte file_num)
 {
-	return f_open(fn);
+	return(f_open(&fil_obj[file_num], fn, FA_OPEN_EXISTING));
 }
 
-//! Read last file opened into a buffer
+//! read file specified by file num
 /*!
   \param dest is a pointer to a buffer, make sure there is enough room in this buffer
+  \param offset is the byte offset from the start of the file that you would like to start reading from
   \param to_read is the maximum number of bytes you want to read into the buffer
-  \param read_from is a pointer to a integer which will contain the number of bytes actually read
+  \param bytes_read is a pointer to a integer which will contain the number of bytes actually read
   \return error code, see comments in FF.h for FRESULT enumeration
 	  
 Notes:
-
-use read_from to determin whether you've reached the end of the file
-a file must be opened for this to work
+the value returned in the in is from the enum FRESULT in ff.h
 
 */
-int FF::read_file(char * dest, int to_read, int * read_from)
+int FF::read_file(char * dest, DWORD offset, UINT to_read, UINT * bytes_read, byte file_num)
 {
-	fatfs_obj.flag &= ~FA_STREAM; // disable streaming
-	return f_read((void *)dest, to_read, (WORD *)read_from);	
+	int res;
+    res = f_lseek(&fil_obj[file_num], offset);  //update the RW pointer and sector/cluster numbers of the file object to match the offset of where we'd like to start reading from
+    if(res != FR_OK)                            // if we failed to see the file pointer
+		return(res);
+	return(f_read(&fil_obj[file_num], (void *)dest, to_read, bytes_read));	// read the data!
+}
+
+
+//! write file specified by file num
+/*!
+  \param dest is a pointer to a buffer where the data to write is taken from, make sure it has as much data as you set in to_write
+  \param offset is the byte offset from the start of the file you would like to start writting from
+  \param to_write is the number of bytes you want to write into the file
+  \param bytes_written is a pointer to a integer which will contain the number of bytes actually written
+  \return error code, see comments in FF.h for FRESULT enumeration
+	  
+Notes:
+the value returned in the in is from the enum FRESULT in ff.h
+
+*/
+int FF::write_file(char * dest, DWORD offset, UINT to_write, UINT * bytes_written, byte file_num)
+{
+    int res;
+	res = f_lseek(&fil_obj[file_num], offset);  //update the RW pointer and sector/cluster numbers of the file object to match the offset of where we'd like to start writting from
+	if(res != FR_OK)                  // if our file pointer seek did not work
+		return(res);
+	res = f_write(&fil_obj[file_num], (void *)dest, to_write, bytes_written); // write the data!
+	if(res != FR_OK)                  // if our write failed. 
+		return(res);
+	res = f_sync(&fil_obj[file_num]); // sync the file object to force an update of the directory information for this file (so that file closing is not required, and so that once this write is called
+	                                  // and returns, we know the data is commited. 
+	return(res);
+}
+
+//! get the information of a file specified by Path
+/*!
+  \param fno is a pointer to the file info struct to be filled with the file info
+  \param Path is the complete path of the file to grab the info for 
+  \return error code, see comments in FF.h for FRESULT enumeration
+	  
+Notes:
+the value returned in the in is from the enum FRESULT in ff.h
+*/
+
+int FF::get_file_info(FILINFO * fno, char * Path)
+{
+	return(f_stat(Path, fno));
 }
 
 //! Attach functions for streaming
@@ -150,11 +216,11 @@ If not needed, these functions can be empty functions, but they must be provided
 This function must be called at least once before calling stream_file
 
 */
-void FF::setup_stream(void (* pre_block)(void), void (* pre_byte)(void), char (* dest)(char), void (* post_byte)(void), void (* post_block)(void))
-{
-	disk_attach_stream_functs(pre_byte, post_byte, pre_block, post_block); // attach functions
-	stream_dest = (void *)dest;
-}
+//void FF::setup_stream(void (* pre_block)(void), void (* pre_byte)(void), char (* dest)(char), void (* post_byte)(void), void (* post_block)(void))
+//{
+//	disk_attach_stream_functs(pre_byte, post_byte, pre_block, post_block); // attach functions
+//	stream_dest = (void *)dest;
+//}
 
 //! Stream last file opened to a function
 /*!
@@ -169,12 +235,12 @@ you must setup the stream first
 a file must be opened before
 
 */
-int FF::stream_file(int to_read, int * read_from)
-{
-	fatfs_obj.flag |= FA_STREAM; // enable streaming
-	int res = f_read(stream_dest, to_read, (WORD *)read_from); // perform read
-	return res; // return error
-}
+//int FF::stream_file(int to_read, int * read_from)
+//{
+//	fatfs_obj.flag |= FA_STREAM; // enable streaming
+//	int res = f_read(stream_dest, to_read, (WORD *)read_from); // perform read
+//	return res; // return error
+//}
 
 //! Move file read pointer
 /*!
@@ -182,10 +248,10 @@ int FF::stream_file(int to_read, int * read_from)
   \return error code, see comments in FF.h for FRESULT enumeration
   
 */
-int FF::lseek_file(long p)
-{
-	return f_lseek(p);
-}
+//int FF::lseek_file(long p)
+//{
+//	return f_lseek(p);
+//}
 
 
 //! Opens a directory as the current directory
@@ -198,15 +264,15 @@ Notes:
 this will rewind directory file index pointer to first file in directory
 
 */
-int FF::open_dir(char * dn)
-{
-	int res = f_opendir(&dir_obj, dn);
-	if (res == 0) // if successful
-	{
-		strcpy(dir_path, dn); // store path
-	}
-	return res; // return error if any
-}
+//int FF::open_dir(char * dn)
+//{
+//	int res = f_opendir(&dir_obj, dn);
+//	if (res == 0) // if successful
+//	{
+//		strcpy(dir_path, dn); // store path
+//	}
+//	return res; // return error if any
+//}
 
 
 //! Reopens current directory, which rewinds the file index
@@ -218,10 +284,10 @@ Notes:
 this will rewind directory file index pointer to first file in directory
 
 */
-int FF::rewind_dir()
-{
-	return f_opendir(&dir_obj, dir_path);
-}
+//int FF::rewind_dir()
+//{
+//	return f_opendir(&dir_obj, dir_path);
+//}
 
 //! Opens the parent directory of the current directory, and become the current directory
 /*!
@@ -231,25 +297,25 @@ Notes:
 this will rewind directory file index pointer to first file in directory
 
 */
-int FF::up_dir()
-{
-	int res;
-	int i;
-	for (i = strlen(dir_path) - 1; i != -1 && dir_path[i] != '/'; i--); // finds last slash
-	if (i >= 1) // if not already in root
-	{
-		char * path = (char *)calloc(i + 1, sizeof(path)); // make string
-		path = (char *)memcpy((void *)path, dir_path, sizeof(path) * (i + 1)); // copy up to slash
-		path[i] = 0; // null terminate
-		res = open_dir(path); // attempt to open
-		free(path); // free string
-	}
-	else
-	{
-		res = open_dir((char *)"/"); // reopen root
-	}
-	return res;
-}
+//int FF::up_dir()
+//{
+//	int res;
+//	int i;
+//	for (i = strlen(dir_path) - 1; i != -1 && dir_path[i] != '/'; i--); // finds last slash
+//	if (i >= 1) // if not already in root
+//	{
+//		char * path = (char *)calloc(i + 1, sizeof(path)); // make string
+//		path = (char *)memcpy((void *)path, dir_path, sizeof(path) * (i + 1)); // copy up to slash
+//		path[i] = 0; // null terminate
+//		res = open_dir(path); // attempt to open
+//		free(path); // free string
+//	}
+//	else
+//	{
+//		res = open_dir((char *)"/"); // reopen root
+//	}
+//	return res;
+//}
 
 //! Saves the FILINFO of the next file in currently open directory
 /*!
@@ -273,44 +339,39 @@ int err = FFS.read_dir(&fnfo);
 if (fnfo.fattrib & AM_DIR) print("is a directory"); else print("is a file");
 
 */
-int FF::read_dir(FILINFO * fnfo)
-{
-	return f_readdir(&dir_obj, fnfo);
-}
+//int FF::read_dir(FILINFO * fnfo)
+//{
+//	return f_readdir(&dir_obj, fnfo);
+//}
 
-//! Opens a file using a FILINFO struct
+//! Creates a file using a FILINFO struct, in the directory dir, strogint the information in the static FIL object
+//! designated by file_num
 /*!
   \param fnfo is the pointer to the user's FILINFO struct
+  \param dir is the directory to create the file
+  \param file_num is the index into the FIL array to hold the file information after creation in local memory
   \return error code, see comments in FF.h for FRESULT enumeration
 
 Notes:
-
-the actual file path opened is the last path used in open_dir joined with the file name provided by fnfo
-this means that the FILINFO must be read from the same directory or else this will fail
-if fnfo is a directory, that directory will be opened and become the current directory
+the value returned in the in is from the enum FRESULT in ff.h
 
 */
-int FF::open(FILINFO * fnfo)
+int FF::create_file(FILINFO * fnfo, char * dir, byte file_num)
 {
 	int res; // stores error code
 	char * fpath; // stores string for file path
-	fpath = (char *)calloc(strlen(fnfo->fname) + strlen(dir_path) + 1, sizeof(fpath)); // create memory space for file path
-	strcpy(fpath, dir_path); // copy dir_path into fpath so the strcat doesn't destroy dir_path
+	fpath = (char *)calloc(strlen(fnfo->fname) + strlen(dir) + 1, sizeof(fpath)); // create memory space for file path
+	strcpy(fpath, dir); // copy dir into fpath so the strcat doesn't destroy dir_path
 	if (fpath[strlen(fpath) - 1] != '/')
 	{
 		fpath = strcat(fpath, "/");	 // join path with slash character
 	}
 	fpath = strcat(fpath, fnfo->fname);	 // join path with file name
-	if (fnfo->fattrib & AM_DIR) // is a directory
-	{
-		res = open_dir(fpath); // open directory
-	}
-	else // is a file
-	{
-		res = f_open(fpath); // open the file, store error
-	}
+	
+	res = f_open(&fil_obj[file_num], fpath, FA_CREATE_NEW); // create the file and store the file info in fil_obj[file_num]
+	
 	free(fpath); // free memory for path since it's no longer needed
-	return res; // return error code
+	return(res); // return error code
 }
 
 //! Returns current directory path as a string
@@ -318,10 +379,10 @@ int FF::open(FILINFO * fnfo)
   \return pointer to a string containing the current directory path
 
 */
-char * FF::cur_dir()
-{
-	return dir_path;
-}
+//char * FF::cur_dir()
+//{
+//	return dir_path;
+//}
 
 //////////////////////////////////////
 // end list of public methods

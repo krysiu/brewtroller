@@ -26,21 +26,27 @@ class FF
 {
   private:
     static FATFS fatfs_obj;
-    static int MMC_CS;
-    static void MMC_SELECT(void);
-    static void MMC_DESELECT(void);
+	static FIL fil_obj[3];
+	const char log_file_dir[8]; 
+	const char web_page_dir[8];
+
   public:
     FF();
 
-//Added drv (byte) param - Matt Reba
-    int begin(int, unsigned char (*)(void), void (*)(unsigned char), byte);
-	void buffer_mode();
-	void stream_mode();
-	int open_file(char *);
-	int read_file(void *, int, int *);
-	int lseek_file(int);
-	int open_dir(DIR *, char *);
-	int read_dir(DIR *, FILINFO *);
+    int begin(byte);
+//	void buffer_mode();
+//	void stream_mode();
+	int open_file(char *, byte);
+	int create_file(FILINFO *, char *, byte);
+	int read_file(char *, DWORD, UINT, UINT *, byte);
+	int write_file(char *, DWORD, UINT, UINT *, byte);
+	int get_file_info(FILINFO *, char *);
+	const char * get_html_dir(void);
+	const char * get_logs_dir(void);
+	
+//	int lseek_file(int);
+//	int open_dir(DIR *, char *);
+//	int read_dir(DIR *, FILINFO *);
 };
 
 extern FF FFS;

@@ -1459,7 +1459,7 @@ BYTE check_fs (	/* 0:The FAT boot record, 1:Valid boot record but not an FAT, 2:
 /*-----------------------------------------------------------------------*/
 /* Make sure that the file system is valid                               */
 /*-----------------------------------------------------------------------*/
-
+// note that they expect the string to start with 0: or 1: etc for the drive, not the clasic lettering system. 
 
 FRESULT chk_mounted (	/* FR_OK(0): successful, !=0: any error occured */
 	const XCHAR **path,	/* Pointer to pointer to the path name (drive number) */
@@ -2101,7 +2101,7 @@ FRESULT f_chdir (
 
 FRESULT f_lseek (
 	FIL *fp,		/* Pointer to the file object */
-	DWORD ofs		/* File pointer from top of file */
+	DWORD ofs		/* File pointer from top of file, or more accurately the byte offset from the start of the file you want to point to */
 )
 {
 	FRESULT res;
@@ -2377,7 +2377,7 @@ FRESULT f_getfree (
 
 
 /*-----------------------------------------------------------------------*/
-/* Truncate File                                                         */
+/* Truncate File (to the current R/W pointer location)                                             */
 /*-----------------------------------------------------------------------*/
 
 FRESULT f_truncate (

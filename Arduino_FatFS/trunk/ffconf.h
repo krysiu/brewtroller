@@ -53,7 +53,7 @@
 / Locale and Namespace Configurations
 /----------------------------------------------------------------------------*/
 
-#define _CODE_PAGE	932
+#define _CODE_PAGE	437 //932
 /* The _CODE_PAGE specifies the OEM code page to be used on the target system.
 /  Incorrect setting of the code page can cause a file open failure.
 /
@@ -86,7 +86,7 @@
 */
 
 
-#define	_USE_LFN	1		/* 0, 1 or 2 */
+#define	_USE_LFN	0		/* 0, 1 or 2 */
 #define	_MAX_LFN	64		/* Maximum LFN length to handle (12 to 255) */
 /* The _USE_LFN option switches the LFN support.
 /
@@ -105,7 +105,7 @@
 */
 
 
-#define _FS_RPATH	1		/* 0 or 1 */
+#define _FS_RPATH	0		/* 0 or 1 */
 /* When _FS_RPATH is set to 1, relative path feature is enabled and f_chdir,
 /  f_chdrive function are available.
 /  Note that output of the f_readdir fnction is affected by this option. */
@@ -116,7 +116,7 @@
 / Physical Drive Configurations
 /----------------------------------------------------------------------------*/
 
-#define _DRIVES		2
+#define _DRIVES		1  // 2  
 /* Number of volumes (logical drives) to be used. */
 
 

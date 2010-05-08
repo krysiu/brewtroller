@@ -8,6 +8,8 @@
 
 #include <avr/io.h>
 #include "diskio.h"
+#include "WProgram.h"
+
 
 
 /* Definitions for MMC/SDC command */
@@ -57,6 +59,9 @@ BYTE Timer1, Timer2;	/* 100Hz decrement timer */
 static
 BYTE CardType;			/* Card type flags */
 
+static
+BYTE MMC_CS;
+
 
 /*-----------------------------------------------------------------------*/
 /* Transmit a byte to MMC via SPI  (Platform dependent)                  */
@@ -64,6 +69,10 @@ BYTE CardType;			/* Card type flags */
 
 #define xmit_spi(dat) 	SPDR=(dat); loop_until_bit_is_set(SPSR,SPIF)
 
+void set_MMC_CS(BYTE MMC_CS_PIN)
+{
+   MMC_CS = MMC_CS_PIN;
+}
 
 
 /*-----------------------------------------------------------------------*/
@@ -108,21 +117,39 @@ BYTE wait_ready (void)
 /* Deselect the card and release SPI bus                                 */
 /*-----------------------------------------------------------------------*/
 
+void deselect()
+{
+	digitalWrite(MMC_CS, HIGH);
+	rcvr_spi();
+}
+
+/*
 static
 void deselect (void)
 {
 	CS_HIGH();
 	rcvr_spi();
 }
-
+*/
 
 
 /*-----------------------------------------------------------------------*/
 /* Select the card and wait ready                                        */
 /*-----------------------------------------------------------------------*/
 
+BOOL select()
+{
+	digitalWrite(MMC_CS, LOW);
+	if (wait_ready() != 0xFF) {
+		deselect();
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/*
 static
-BOOL select (void)	/* TRUE:Successful, FALSE:Timeout */
+BOOL select (void)	// TRUE:Successful, FALSE:Timeout 
 {
 	CS_LOW();
 	if (wait_ready() != 0xFF) {
@@ -131,7 +158,7 @@ BOOL select (void)	/* TRUE:Successful, FALSE:Timeout */
 	}
 	return TRUE;
 }
-
+*/
 
 
 
@@ -273,8 +300,8 @@ DSTATUS disk_initialize (
 	if (drv) return STA_NOINIT;			/* Supports only single drive */
 	if (Stat & STA_NODISK) return Stat;	/* No card in the socket */
 
-	power_on();							/* Force socket power on */
-	FCLK_SLOW();
+	//power_on();							/* Force socket power on */
+	//FCLK_SLOW();
 	for (n = 10; n; n--) rcvr_spi();	/* 80 dummy clocks */
 
 	ty = 0;
@@ -305,9 +332,9 @@ DSTATUS disk_initialize (
 
 	if (ty) {			/* Initialization succeded */
 		Stat &= ~STA_NOINIT;		/* Clear STA_NOINIT */
-		FCLK_FAST();
+		//FCLK_FAST();
 	} else {			/* Initialization failed */
-		power_off();
+		//power_off();
 	}
 
 	return Stat;
@@ -431,16 +458,16 @@ DRESULT disk_ioctl (
 	if (ctrl == CTRL_POWER) {
 		switch (*ptr) {
 		case 0:		/* Sub control code == 0 (POWER_OFF) */
-			if (chk_power())
-				power_off();		/* Power off */
+			//if (chk_power())
+			//	power_off();		/* Power off */
 			res = RES_OK;
 			break;
 		case 1:		/* Sub control code == 1 (POWER_ON) */
-			power_on();				/* Power on */
+			//power_on();				/* Power on */
 			res = RES_OK;
 			break;
 		case 2:		/* Sub control code == 2 (POWER_GET) */
-			*(ptr+1) = (BYTE)chk_power();
+			*(ptr+1) = 1;//(BYTE)chk_power(); (power always on here)
 			res = RES_OK;
 			break;
 		default :
