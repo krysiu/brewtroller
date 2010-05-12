@@ -9,6 +9,7 @@
 #include <avr/io.h>
 #include "diskio.h"
 #include "WProgram.h"
+#include "pin.h"
 
 
 
@@ -60,7 +61,12 @@ static
 BYTE CardType;			/* Card type flags */
 
 static
-BYTE MMC_CS;
+BYTE MMCport;
+
+static
+BYTE MMCmask;	
+
+
 
 
 /*-----------------------------------------------------------------------*/
@@ -69,10 +75,6 @@ BYTE MMC_CS;
 
 #define xmit_spi(dat) 	SPDR=(dat); loop_until_bit_is_set(SPSR,SPIF)
 
-void set_MMC_CS(BYTE MMC_CS_PIN)
-{
-   MMC_CS = MMC_CS_PIN;
-}
 
 
 /*-----------------------------------------------------------------------*/
@@ -111,6 +113,127 @@ BYTE wait_ready (void)
 	return res;
 }
 
+void pinsetup(BYTE p, BYTE dir)
+{
+	if( p > _P_MAX)
+		return;
+
+	MMCmask = 0x00;
+
+
+	if(_PA(p))
+	{
+		MMCmask = _PA_MASK(p);
+		if(dir == OUTPUT)
+			DDRA |= MMCmask;
+		else
+			DDRA &= ~MMCmask;
+		MMCport=PA;
+		return;
+	}
+
+	else if(_PB(p))
+	{
+		MMCmask = _PB_MASK(p);
+		if(dir == OUTPUT)
+			DDRB |= MMCmask;
+		else
+			DDRB &= ~MMCmask;
+		MMCport=PB;
+		return;
+	}
+
+	else if(_PC(p))
+	{
+		MMCmask = _PC_MASK(p);
+		if(dir == OUTPUT)
+			DDRC |= MMCmask;
+		else
+			DDRC &= ~MMCmask;
+		MMCport=PC;
+		return;
+	}
+	else if(_PD(p))
+	{
+		MMCmask = _PD_MASK(p);
+		if(dir == OUTPUT)
+			DDRD |= MMCmask;
+		else
+			DDRD &= ~MMCmask;
+		MMCport=PD;
+		return;
+	}
+	return;
+}
+
+void setpin(void)
+{
+	switch(MMCport)
+	{
+	case PD:
+		{
+			PORTD |= MMCmask;
+			break;
+		}
+
+	case PB:
+		{
+			PORTB |= MMCmask;
+			break;
+		}
+	
+	case PC:
+		{
+			PORTC |= MMCmask;
+			break;
+		}
+
+	case PA:
+		{
+			PORTA |= MMCmask;
+			break;
+		}
+
+	defualt:
+			break;
+	}
+	return;
+}
+
+void clearpin(void)
+{
+	switch(MMCport)
+	{
+	case PD:
+		{
+			PORTD &= ~MMCmask;
+			break;
+		}
+
+	case PB:
+		{
+			PORTB &= ~MMCmask;
+			break;
+		}
+	
+	case PC:
+		{
+			PORTC &= ~MMCmask;
+			break;
+		}
+
+	case PA:
+		{
+			PORTA &= ~MMCmask;
+			break;
+		}
+
+	default:
+			break;
+	}
+	return;
+}
+
 
 
 /*-----------------------------------------------------------------------*/
@@ -119,7 +242,7 @@ BYTE wait_ready (void)
 
 void deselect()
 {
-	digitalWrite(MMC_CS, HIGH);
+	setpin();
 	rcvr_spi();
 }
 
@@ -139,7 +262,7 @@ void deselect (void)
 
 BOOL select()
 {
-	digitalWrite(MMC_CS, LOW);
+	clearpin();
 	if (wait_ready() != 0xFF) {
 		deselect();
 		return FALSE;

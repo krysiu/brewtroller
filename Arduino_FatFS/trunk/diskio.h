@@ -34,7 +34,8 @@ DRESULT disk_write (BYTE, const BYTE*, DWORD, BYTE);
 #endif
 DRESULT disk_ioctl (BYTE, BYTE, void*);
 void	disk_timerproc (void);
-void    set_MMC_CS(BYTE);
+void    pinsetup(BYTE, BYTE);
+
 
 
 

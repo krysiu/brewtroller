@@ -135,6 +135,10 @@ FATFS *FatFs[_DRIVES];	/* Pointer to the file system objects (logical drives) */
 static
 WORD Fsid;				/* File system mount ID */
 
+static
+int (*TimeFunctionPointer)(void);
+
+
 #if _FS_RPATH
 static
 BYTE Drive;				/* Current drive */
@@ -233,6 +237,24 @@ void unlock_fs (
 }
 #endif
 
+/*-----------------------------------------------------------------------*/
+/* Set the function pointer to be used to get the time                 */
+/*-----------------------------------------------------------------------*/
+
+void set_time_function_pointer( int (*Fpointer)(void))
+{
+   TimeFunctionPointer = Fpointer;
+}
+
+/*-----------------------------------------------------------------------*/
+/* Set the function pointer to be used to get the time                 */
+/*-----------------------------------------------------------------------*/
+
+DWORD get_fattime (void)
+{
+   DWORD needsformating = (*TimeFunctionPointer)();
+   return(needsformating);
+}
 
 
 /*-----------------------------------------------------------------------*/

@@ -436,6 +436,8 @@ FRESULT f_forward (FIL*, UINT(*)(const BYTE*,UINT), UINT, UINT*);	/* Forward dat
 FRESULT f_mkfs (BYTE, BYTE, WORD);					/* Create a file system on the drive */
 FRESULT f_chdir (const XCHAR*);						/* Change current directory */
 FRESULT f_chdrive (BYTE);							/* Change current drive */
+void    set_time_function_pointer(void *);    // set the function pointer to be used to get the time in get_fattime()
+
 
 #if _USE_STRFUNC
 int f_putc (int, FIL*);								/* Put a character to the file */
