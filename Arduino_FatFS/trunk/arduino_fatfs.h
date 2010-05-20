@@ -9,6 +9,12 @@
  * 
  */
 
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// note that if you are going to use this class as part of another class rather than invoking this as a singluar object its self
+// you must change all the function calls in Arduino_fatfs.cpp that call functions IN Arduino_fatfs.cpp to this->Foo or else 
+// you may confuse the compiler and cause it to call the wrong function for the wrong object. The same must happen
+// for all references to fil_obj (aka this->fil_obj)
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #ifndef FF_h
 #define FF_h
@@ -40,18 +46,19 @@ class FF
 	int read(unsigned char *, DWORD);          // same but read from current R/W pointer in fil_obj
 	int print(const char *);           // take in a " " string and print it at the current cursor in file fil_obj
 	int print_P(const char *);        // take in a " " string in program memory and print it at the current cursor in fil_obj
+	int print_P(int *);                    // print the integer to file in fil_obj starting at the current cursor as a string of the integer
+	int print_P(unsigned int *);                    // print the integer to file in fil_obj starting at the current cursor as a string of the integer
 	int print(int);                    // print the integer to file in fil_obj starting at the current cursor as a string of the integer
 	int print(unsigned int);           // same but unsigned
 	int println(const char *);         // take ing a " " string and print it at the current cursor as a string with an EOL into file fil_obj
 	int println(int);                  // same as print(int) but with an EOL added
 	int println(unsigned int);         // same as print(unsigned int) but with an EOL added
 	int readln(unsigned char *, DWORD);        // read a line from file in fil_obj starting at the current cursor and going until DWORD bytes has been read or you reach EOL into buffer pointed to by the char pointer
-	int writeln(unsigned char *, DWORD);        // write a line into file in fil_obj starting at the current cursor writting DWORD bytes from buffer pointed to by the char pointer
 	int set_cursor(DWORD);           // set the cursor location
 	int write(unsigned char *, DWORD, DWORD);   // write from location pointed to by char pointer into file fil_obj starting at DWORD for DWORD bytes
 	int write(unsigned char *, DWORD);          // write from location pointed to by char pointer itno file fil_obj starting at the current R/W pointer for DWORD bytes
 	int get_file_info(FILINFO *);     // return the file info into the structure pointed to by the FILINFO pointer 
-	void SetTimerFunction(int (*)(void)); // takes a function pointer that points to a function who returns int and has no arguments and assigns it to a function pointer of the same type to be called when we want to get the current time
+	void SetTimerFunction(unsigned int (*)(void)); // takes a function pointer that points to a function who returns int and has no arguments and assigns it to a function pointer of the same type to be called when we want to get the current time
 	
 };
 

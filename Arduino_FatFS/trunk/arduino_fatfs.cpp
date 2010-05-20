@@ -168,19 +168,18 @@ int FF::open(char * fn, boolean WP, boolean Create)
 	return(res);
 }
 
-//! read file specified by file num
+//! read from file specified by fil obj. 
 /*!
   \param dest is a pointer to a buffer, make sure there is enough room in this buffer
   \param offset is the byte offset from the start of the file that you would like to start reading from
-  \param to_read is the maximum number of bytes you want to read into the buffer
-  \param bytes_read is a pointer to a integer which will contain the number of bytes actually read
+  \param NumBytes is the maximum number of bytes you want to read into the buffer
   \return num bytes read
 	  
 Notes:
 the value returned in the in is from the enum FRESULT in ff.h
 
 */
-int FF::read(char * dest, DWORD offset, DWORD NumBytes)
+int FF::read(unsigned char * dest, DWORD offset, DWORD NumBytes)
 {
 	int res;
 	UINT bytes_read;
@@ -202,7 +201,7 @@ int FF::read(char * dest, DWORD offset, DWORD NumBytes)
 	return((int)bytes_read);
 }
 
-int FF::read(char * dest, DWORD NumBytes)
+int FF::read(unsigned char * dest, DWORD NumBytes)
 {
 	int res;
 	UINT bytes_read;
@@ -220,19 +219,18 @@ int FF::read(char * dest, DWORD NumBytes)
 	return((int)bytes_read);
 }
 
-//! write file specified by file num
+//! write into file specified by fil obj
 /*!
   \param dest is a pointer to a buffer where the data to write is taken from, make sure it has as much data as you set in to_write
   \param offset is the byte offset from the start of the file you would like to start writting from
-  \param to_write is the number of bytes you want to write into the file
-  \param bytes_written is a pointer to a integer which will contain the number of bytes actually written
+  \param NumBytes is the number of bytes you want to write into the file
   \return number of bytes written
 	  
 Notes:
 the value returned in the in is from the enum FRESULT in ff.h
 
 */
-int FF::write(char * dest, DWORD offset, DWORD NumBytes)
+int FF::write(unsigned char * dest, DWORD offset, DWORD NumBytes)
 {
     int res;
 	UINT bytes_written;
@@ -260,7 +258,7 @@ int FF::write(char * dest, DWORD offset, DWORD NumBytes)
 	return(bytes_written);
 }
 
-int FF::write(char * dest, DWORD NumBytes)
+int FF::write(unsigned char * dest, DWORD NumBytes)
 {
     int res;
 	UINT bytes_written;
@@ -283,6 +281,318 @@ int FF::write(char * dest, DWORD NumBytes)
 	return(bytes_written);
 }
 
+//! print string into fil specied by fil obj
+/*!
+  \param String is a pointer to a string to be written to the file
+  	  
+Notes:
+returns number of bytes written
+also does not write the null at the end of the string to the file
+
+*/
+int FF::print(const char * String)
+{
+    int StringLength = strlen(String);
+	int byteswritten;
+	DWORD currentFP;
+
+	currentFP = fil_obj.fptr;
+
+	byteswritten = write(String, CursorLoc, StringLength));
+
+	f_lseek(&fil_obj, currentFP); // return the file pointer to its original location
+	
+	return(byteswritten);
+}
+
+//! print string into fil specied by fil obj
+/*!
+  \param int is an intiger to be printed as ASCII to the file in fil_obj (no leading zeros)
+  	  
+Notes:
+returns number of bytes written
+also does not write the null at the end of the string to the file
+
+*/
+int FF::print(int num)
+{
+    char string[12]; // for an int we will only ever need 12 chars (10 for numbers 1 for negative, and 1 for null)
+    char string2[12];
+	char i = 0;
+	char k = 0;
+	char base = 10;
+	DWORD currentFP;
+	int byteswritten;
+	
+    if (num < 0) 
+    {
+        string2[0] = '-';
+		k++;
+        num = -num;
+    }
+	else if(num == 0)
+	{
+	    string2[0] = '0';
+		k++;
+	}
+
+	while (num > 0) 
+	{
+        string[i++] = num % base;
+        num /= base;
+	}
+
+	string2[i+k] = NULL; // end the string
+
+    for (; i > 0; i--)
+    {
+        string2[k++] = '0' + string[i - 1]; // convert to ASCII
+    }
+
+	currentFP = fil_obj.fptr;
+
+	byteswritten = write(&string2, CursorLoc, strlen(&string));
+
+	f_lseek(&fil_obj, currentFP);
+
+	return(byteswritten);
+    
+}
+
+
+int FF::print(unsigned int num)
+{
+    char string[12]; // for an int we will only ever need 12 chars (10 for numbers 1 for negative, and 1 for null)
+    char string2[12];
+	char i = 0;
+	char k = 0;
+	char base = 10;
+	DWORD currentFP;
+	int byteswritten;
+	
+    if(num == 0)
+	{
+	    string2[0] = '0';
+		k++;
+	}
+
+	while (num > 0) 
+	{
+        string[i++] = num % base;
+        num /= base;
+	}
+
+	string2[i+k] = NULL; // end the string
+
+    for (; i > 0; i--)
+    {
+        string2[k++] = '0' + string[i - 1]; // convert to ASCII
+    }
+
+	currentFP = fil_obj.fptr;
+
+	byteswritten = write(&string2, CursorLoc, strlen(&string));
+
+	f_lseek(&fil_obj, currentFP);
+
+	return(byteswritten);
+    
+}
+
+//! print string into fil specied by fil obj (string is in progmem)
+/*!
+  \param int is an intiger to be printed as ASCII to the file in fil_obj (no leading zeros)
+  	  
+Notes:
+returns number of bytes written
+also does not write the null at the end of the string to the file
+
+*/
+
+int FF::print_P(const char * String)
+{
+    char * fpath;
+	int i;
+	int byteswritten;
+    	
+    fpath = (char *)calloc(strlen(String) + 1, sizeof(fpath)); // get enough space to make a copy of the entire string so we can chop it up and play with it
+
+	for(i = 0; i <= strlen(String); i++)
+	{
+	    *(fpath + i) = (char)pgm_read_byte(String + i); // coppy the string from program memory into our temporary memory space
+	}
+
+    byteswritten = print((const char *)fpath); // print the string to the file
+
+	free(fpath); // free the space
+
+	return(byteswritten);
+}
+
+int FF::print_P(int * num)
+{
+    int tempnum;
+
+	tempnum = pgm_read_dword(num);
+
+    return(print(tempnum));
+}
+
+int FF::print_P(unsigned int * num)
+{
+    unsigned int tempnum;
+
+	tempnum = pgm_read_dword(num);
+
+    return(print(tempnum));
+}
+
+//! print string into fil specied by fil obj and add an EOL to it
+/*!
+  \param int is an intiger to be printed as ASCII to the file in fil_obj (no leading zeros)
+  	  
+Notes:
+returns number of bytes written
+also does not write the null at the end of the string to the file
+
+*/
+
+int FF::println(const char * String)
+{
+    char * fpath;
+	int byteswritten;
+
+	fpath = (char *)calloc(strlen(String) + 3, sizeof(fpath)); // get enough space to make a copy of the entire string so we can chop it up and play with it
+
+	*(fpath + strlen(String) + 1) = '\r'; 
+	*(fpath + strlen(String) + 2) = '\n';
+	*(fpath + strlen(String) + 3) = NULL;
+
+	byteswritten = print((const char *) fpath);
+
+	free(fpath);
+
+	return(byteswritten);
+}
+
+int FF::println(int num)
+{
+    char string[12]; // for an int we will only ever need 12 chars (10 for numbers 1 for negative, and 1 for null)
+    char string2[12];
+	char i = 0;
+	char k = 0;
+	char base = 10;
+	DWORD currentFP;
+	int byteswritten;
+	
+    if (num < 0) 
+    {
+        string2[0] = '-';
+		k++;
+        num = -num;
+    }
+	else if(num == 0)
+	{
+	    string2[0] = '0';
+		k++;
+	}
+
+	while (num > 0) 
+	{
+        string[i++] = num % base;
+        num /= base;
+	}
+
+	string2[i + k + 2] = NULL; // end the string
+	string2[i + k + 1] = '\n';
+	string2[i + k] = '\r';
+
+    for (; i > 0; i--)
+    {
+        string2[k++] = '0' + string[i - 1]; // convert to ASCII
+    }
+
+	currentFP = fil_obj.fptr;
+
+	byteswritten = write(&string2, CursorLoc, strlen(&string));
+
+	f_lseek(&fil_obj, currentFP);
+
+	return(byteswritten);
+}
+
+int FF::println(unsigned int num)
+{
+    char string[12]; // for an int we will only ever need 12 chars (10 for numbers 1 for negative, and 1 for null)
+    char string2[12];
+	char i = 0;
+	char k = 0;
+	char base = 10;
+	DWORD currentFP;
+	int byteswritten;
+	
+    if(num == 0)
+	{
+	    string2[0] = '0';
+		k++;
+	}
+
+	while (num > 0) 
+	{
+        string[i++] = num % base;
+        num /= base;
+	}
+
+	string2[i + k + 2] = NULL; // end the string
+	string2[i + k + 1] = '\n';
+	string2[i + k] = '\r';
+
+    for (; i > 0; i--)
+    {
+        string2[k++] = '0' + string[i - 1]; // convert to ASCII
+    }
+
+	currentFP = fil_obj.fptr;
+
+	byteswritten = write(&string2, CursorLoc, strlen(&string));
+
+	f_lseek(&fil_obj, currentFP);
+
+	return(byteswritten);
+}
+
+//! read from the file in fil_obj until \r\n is encountered or we reach the limit
+/*!
+  \param buff is a pointer to the buffer that will hold the data we are reading
+  \param limit is the max number of bytes we will read into the above buffer unless we encounter \r\n first
+  	  
+Notes:
+returns number of bytes read including the \r\n
+*/
+
+int readln(unsigned char * buff, DWORD limit)
+{
+    int bytesread = 0;
+	int tempbytes;
+
+	while(bytesread <= limit)
+	{
+	    tempbytes = read((unsigned char *)(buff + bytesread), 1);
+		
+		if(tempbytes == 0) // this means we had a problem
+			return(0);
+
+		bytesread += tempbytes;
+
+		if(( *(buff + bytesread) == '\n') && ( *(buff + bytesread - 1) == '\r') // EOL reached
+		    return(bytesread);
+		
+	}
+
+	return(bytesread);
+}
+
+
 //! set the call back function to get the current time
 /*!
   \param fpointer is a function pointer to a function that takes no argument and returns an int
@@ -291,7 +601,7 @@ Notes:
 
 */
 
-void SetTimerFunction(int (*fpointer)(void))
+void SetTimerFunction(unsigned int (*fpointer)(void))
 {
     set_time_function_pointer(fpointer);
 }

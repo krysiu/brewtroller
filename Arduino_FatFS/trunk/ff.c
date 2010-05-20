@@ -136,7 +136,7 @@ static
 WORD Fsid;				/* File system mount ID */
 
 static
-int (*TimeFunctionPointer)(void);
+unsigned int (*TimeFunctionPointer)(void);
 
 
 #if _FS_RPATH
@@ -241,7 +241,7 @@ void unlock_fs (
 /* Set the function pointer to be used to get the time                 */
 /*-----------------------------------------------------------------------*/
 
-void set_time_function_pointer( int (*Fpointer)(void))
+void set_time_function_pointer(unsigned int (*Fpointer)(void))
 {
    TimeFunctionPointer = Fpointer;
 }
