@@ -1,4 +1,4 @@
-#define BUILD 405 
+#define BUILD 422 
 /*
    Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -326,7 +326,7 @@ unsigned long lastLog;
 byte logCount;
 
 const char BT[] PROGMEM = "FermTroller";
-const char BTVER[] PROGMEM = "v0.1";
+const char BTVER[] PROGMEM = "v1.0";
 
 //Log Message Classes
 const char LOGCMD[] PROGMEM = "CMD";
