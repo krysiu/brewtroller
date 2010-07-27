@@ -25,7 +25,25 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 */
 
 void eventHandler(byte eventID, int eventParam) {
-#ifndef NOUI
+  //Global Event handler
+  if (eventID == EVENT_STEPINIT) {
+    //Nothing to do here (Pass to UI handler below)
+  }
+  else if (eventID == EVENT_SETPOINT) {
+    //Setpoint Change (Update AutoValve Logic)
+    if (eventParam == VS_MASH) { 
+      if (setpoint[VS_MASH]) autoValve[AV_MASH] = 1; 
+      else { 
+        autoValve[AV_MASH] = 0; 
+        if (vlvConfigIsActive(VLV_MASHIDLE)) setValves(vlvConfig[VLV_MASHIDLE], 0); 
+        if (vlvConfigIsActive(VLV_MASHHEAT)) setValves(vlvConfig[VLV_MASHHEAT], 0); 
+      } 
+    }
+  }
+
+  
+  #ifndef NOUI
+  //Pass Event Info to UI Even Handler
   uiEvent(eventID, eventParam);
 #endif
 }

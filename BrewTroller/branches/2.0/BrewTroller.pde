@@ -1,4 +1,4 @@
-#define BUILD 433 
+#define BUILD 435 
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -574,6 +574,7 @@ void(* softReset) (void) = 0;
 
 //Events
 #define EVENT_STEPINIT 0
+#define EVENT_SETPOINT 1
 
 //Heat Output Pin Array
 pin heatPin[4], alarmPin;
