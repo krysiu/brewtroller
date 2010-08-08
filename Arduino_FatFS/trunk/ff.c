@@ -243,7 +243,7 @@ void unlock_fs (
 
 void set_time_function_pointer(unsigned int (*Fpointer)(void))
 {
-   TimeFunctionPointer = Fpointer;
+   TimeFunctionPointer = &Fpointer;
 }
 
 /*-----------------------------------------------------------------------*/

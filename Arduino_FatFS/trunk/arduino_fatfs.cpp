@@ -15,7 +15,7 @@ extern "C" {
 #include "diskio.h"
 #include "ff.h"
 #include "integer.h"
-
+#include <avr/pgmspace.h>
 }
 
 #include "arduino_fatfs.h"
@@ -193,7 +193,7 @@ int FF::read(unsigned char * dest, DWORD offset, DWORD NumBytes)
 	if(res != FR_OK)
 		return(0);
 
-	res = f_lseek(&fil_obj, (offset + bytes_read); // update the R/W pointer to point just beyond where we last read
+	res = f_lseek(&fil_obj, (offset + bytes_read)); // update the R/W pointer to point just beyond where we last read
 
 	if(res != FR_OK)
 		return(0);
@@ -211,7 +211,7 @@ int FF::read(unsigned char * dest, DWORD NumBytes)
 	if(res != FR_OK)
 		return(0);
 
-	res = f_lseek(&fil_obj, (fil_obj.fptr + bytes_read); // update the R/W pointer to point just beyond where we last read
+	res = f_lseek(&fil_obj, (fil_obj.fptr + bytes_read)); // update the R/W pointer to point just beyond where we last read
 
     if(res != FR_OK)
 		return(0);
@@ -245,7 +245,7 @@ int FF::write(unsigned char * dest, DWORD offset, DWORD NumBytes)
 	if(res != FR_OK)                  // if our write failed. 
 		return(0);
 
-	res = f_lseek(&fil_obj, (offset + bytes_written); // move the RW pointer to just past where we last wrote
+	res = f_lseek(&fil_obj, (offset + bytes_written)); // move the RW pointer to just past where we last wrote
 
 	if(res != FR_OK)                  // if our write failed. 
 		return(0);
@@ -268,7 +268,7 @@ int FF::write(unsigned char * dest, DWORD NumBytes)
 	if(res != FR_OK)                  // if our write failed. 
 		return(0);
 
-	res = f_lseek(&fil_obj, (fil_obj.fptr + bytes_written); // move the RW pointer to just past where we last wrote
+	res = f_lseek(&fil_obj, (fil_obj.fptr + bytes_written)); // move the RW pointer to just past where we last wrote
 
 	if(res != FR_OK)                  // if our write failed. 
 		return(0);
@@ -298,7 +298,7 @@ int FF::print(const char * String)
 
 	currentFP = fil_obj.fptr;
 
-	byteswritten = write(String, CursorLoc, StringLength));
+	byteswritten = write(String, CursorLoc, StringLength);
 
 	f_lseek(&fil_obj, currentFP); // return the file pointer to its original location
 	
@@ -584,7 +584,7 @@ int readln(unsigned char * buff, DWORD limit)
 
 		bytesread += tempbytes;
 
-		if(( *(buff + bytesread) == '\n') && ( *(buff + bytesread - 1) == '\r') // EOL reached
+		if(( *(buff + bytesread) == '\n') && ( *(buff + bytesread - 1) == '\r')) // EOL reached
 		    return(bytesread);
 		
 	}

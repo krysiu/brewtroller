@@ -9,7 +9,6 @@
 #include <avr/io.h>
 #include "diskio.h"
 #include "WProgram.h"
-#include "pin.h"
 
 
 
