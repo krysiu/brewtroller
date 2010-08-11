@@ -15,7 +15,7 @@ typedef unsigned int	UINT;
 /* These types must be 8-bit integer */
 typedef signed char		CHAR;
 typedef unsigned char	UCHAR;
-typedef unsigned char	BYTE;
+typedef unsigned char	BYTE2;
 
 /* These types must be 16-bit integer */
 typedef short			SHORT;

@@ -27,7 +27,7 @@ extern "C" {
 
 //FATFS FF::fatfs_obj; // stores working copy of FS
 //FIL   FF::fil_obj[3]; // once a file has been opened, this will store the information for that file, so you can read/write 
-                      // the file without having to re-open it each time. 
+// the file without having to re-open it each time. 
 //char * FF::dir_path; // stores last accessed directory path
 //int FF::MMC_CS; // stores pin number for MMC card's CS pin
 //void * FF::stream_dest; // function pointer for stream destination function
@@ -290,9 +290,9 @@ returns number of bytes written
 also does not write the null at the end of the string to the file
 
 */
-int FF::print(const char * String)
+int FF::print(unsigned char * String)
 {
-    int StringLength = strlen(String);
+    int StringLength = strlen((const char*)String);
 	int byteswritten;
 	DWORD currentFP;
 
@@ -351,7 +351,7 @@ int FF::print(int num)
 
 	currentFP = fil_obj.fptr;
 
-	byteswritten = write(&string2, CursorLoc, strlen(&string));
+	byteswritten = write((unsigned char*)&string2, (DWORD)CursorLoc, (DWORD)strlen((const char*)&string));
 
 	f_lseek(&fil_obj, currentFP);
 
@@ -391,7 +391,7 @@ int FF::print(unsigned int num)
 
 	currentFP = fil_obj.fptr;
 
-	byteswritten = write(&string2, CursorLoc, strlen(&string));
+	byteswritten = write((unsigned char*)&string2, (DWORD)CursorLoc, (DWORD)strlen((const char*)&string));
 
 	f_lseek(&fil_obj, currentFP);
 
@@ -409,20 +409,20 @@ also does not write the null at the end of the string to the file
 
 */
 
-int FF::print_P(const char * String)
+int FF::print_P(unsigned char * String)
 {
     char * fpath;
 	int i;
 	int byteswritten;
     	
-    fpath = (char *)calloc(strlen(String) + 1, sizeof(fpath)); // get enough space to make a copy of the entire string so we can chop it up and play with it
+    fpath = (char *)calloc(strlen((const char*)String) + 1, sizeof(fpath)); // get enough space to make a copy of the entire string so we can chop it up and play with it
 
-	for(i = 0; i <= strlen(String); i++)
+	for(i = 0; i <= strlen((const char*)String); i++)
 	{
 	    *(fpath + i) = (char)pgm_read_byte(String + i); // coppy the string from program memory into our temporary memory space
 	}
 
-    byteswritten = print((const char *)fpath); // print the string to the file
+    byteswritten = print((unsigned char*)fpath); // print the string to the file
 
 	free(fpath); // free the space
 
@@ -457,18 +457,18 @@ also does not write the null at the end of the string to the file
 
 */
 
-int FF::println(const char * String)
+int FF::println(unsigned char * String)
 {
     char * fpath;
 	int byteswritten;
 
-	fpath = (char *)calloc(strlen(String) + 3, sizeof(fpath)); // get enough space to make a copy of the entire string so we can chop it up and play with it
+	fpath = (char *)calloc(strlen((const char*)String) + 3, sizeof(fpath)); // get enough space to make a copy of the entire string so we can chop it up and play with it
 
-	*(fpath + strlen(String) + 1) = '\r'; 
-	*(fpath + strlen(String) + 2) = '\n';
-	*(fpath + strlen(String) + 3) = NULL;
+	*(fpath + strlen((const char*)String) + 1) = '\r'; 
+	*(fpath + strlen((const char*)String) + 2) = '\n';
+	*(fpath + strlen((const char*)String) + 3) = NULL;
 
-	byteswritten = print((const char *) fpath);
+	byteswritten = print((unsigned char*) fpath);
 
 	free(fpath);
 
@@ -514,7 +514,7 @@ int FF::println(int num)
 
 	currentFP = fil_obj.fptr;
 
-	byteswritten = write(&string2, CursorLoc, strlen(&string));
+	byteswritten = write((unsigned char*)&string2, (DWORD)CursorLoc, (DWORD)strlen((const char*)&string));
 
 	f_lseek(&fil_obj, currentFP);
 
@@ -554,7 +554,7 @@ int FF::println(unsigned int num)
 
 	currentFP = fil_obj.fptr;
 
-	byteswritten = write(&string2, CursorLoc, strlen(&string));
+	byteswritten = write((unsigned char*)&string2, (DWORD)CursorLoc, (DWORD)strlen((const char*)&string));
 
 	f_lseek(&fil_obj, currentFP);
 
@@ -570,14 +570,14 @@ Notes:
 returns number of bytes read including the \r\n
 */
 
-int readln(unsigned char * buff, DWORD limit)
+int FF::readln(unsigned char * buff, DWORD limit)
 {
     int bytesread = 0;
 	int tempbytes;
 
 	while(bytesread <= limit)
 	{
-	    tempbytes = read((unsigned char *)(buff + bytesread), 1);
+	    tempbytes = read((unsigned char*)(buff + bytesread), 1);
 		
 		if(tempbytes == 0) // this means we had a problem
 			return(0);
@@ -614,7 +614,7 @@ Notes:
 
 */
 
-int set_cursor(DWORD location)       
+int FF::set_cursor(DWORD location)       
 {
     CursorLoc = location;
 }
@@ -837,4 +837,4 @@ the value returned in the in is from the enum FRESULT in ff.h
 // end list of public methods
 //////////////////////////////////////
 
-FF FFS = FF(); // create usuable instance
+//FF FFS = FF(); // create usuable instance

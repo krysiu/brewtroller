@@ -69,7 +69,7 @@
 
 
 /* Status of Disk Functions */
-typedef BYTE	DSTATUS;
+typedef BYTE2	DSTATUS;
 
 /* Results of Disk Functions */
 typedef enum {
@@ -84,15 +84,15 @@ typedef enum {
 /*---------------------------------------*/
 /* Prototypes for disk control functions */
 
-DSTATUS disk_initialize (BYTE);
-DSTATUS disk_status (BYTE);
-DRESULT disk_read (BYTE, BYTE*, DWORD, BYTE);
+DSTATUS disk_initialize (BYTE2);
+DSTATUS disk_status (BYTE2);
+DRESULT disk_read (BYTE2, BYTE2*, DWORD, BYTE2);
 #if	_READONLY == 0
-DRESULT disk_write (BYTE, const BYTE*, DWORD, BYTE);
+DRESULT disk_write (BYTE2, const BYTE2*, DWORD, BYTE2);
 #endif
-DRESULT disk_ioctl (BYTE, BYTE, void*);
+DRESULT disk_ioctl (BYTE2, BYTE2, void*);
 void	disk_timerproc (void);
-void    pinsetup(BYTE, BYTE);
+void    pinsetup(BYTE2, BYTE2);
 
 
 
