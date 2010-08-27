@@ -368,13 +368,13 @@ void setValveCfg(byte profile, unsigned long value) {
 }
 
 //*****************************************************************************************************************************
-// Program Load/Save Functions (786- 2045)
+// Program Load/Save Functions (786-1985) - 20 Program Slots Total
 //*****************************************************************************************************************************
 #define PROGRAM_SIZE 60
 #define PROGRAM_START_ADDR 786
 
 //**********************************************************************************
-//Program Name (P:0-19) P:20 = Free
+//Program Name (P:1-19)
 //**********************************************************************************
 void setProgName(byte preset, char name[20]) {
   for (byte i = 0; i < 19; i++) EEPROM.write(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + i, name[i]);
@@ -384,6 +384,10 @@ void getProgName(byte preset, char name[20]) {
   for (byte i = 0; i < 19; i++) name[i] = EEPROM.read(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + i);
   name[19] = '\0';
 }
+
+//**********************************************************************************
+//OPEN (P:20)
+//**********************************************************************************
 
 //**********************************************************************************
 //Sparge Temp (P:21)

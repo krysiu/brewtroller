@@ -106,7 +106,7 @@ boolean chkMsg() {
           } else rejectParam();
         } else if(strcasecmp(msg[0], "GET_PROG") == 0) {
           byte program = atoi(msg[1]);
-          if (msgField == 1 && program >= 0 && program < 30) {
+          if (msgField == 1 && program >= 0 && program < 20) {
             logProgram(program);
             clearMsg();
           } else rejectParam();
@@ -174,7 +174,7 @@ boolean chkMsg() {
           } else rejectParam();
         } else if(strcasecmp(msg[0], "SET_PROG") == 0) {          
           byte program = atoi(msg[1]);
-          if (msgField == 22 && program >= 0 && program < 21) {
+          if (msgField == 22 && program >= 0 && program < 20) {
             char pName[20];
             strncpy(pName,msg[2],19); // Trunc the Program Name to 19 chars
             pName[19] = '\0';
