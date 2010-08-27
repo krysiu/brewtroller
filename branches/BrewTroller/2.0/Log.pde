@@ -172,10 +172,13 @@ boolean chkMsg() {
             clearMsg();
             logOSet(val);
           } else rejectParam();
-        } else if(strcasecmp(msg[0], "SET_PROG") == 0) {
+        } else if(strcasecmp(msg[0], "SET_PROG") == 0) {          
           byte program = atoi(msg[1]);
           if (msgField == 22 && program >= 0 && program < 21) {
-            setProgName(program, msg[2]);
+            char pName[20];
+            strncpy(pName,msg[2],19); // Trunc the Program Name to 19 chars
+            pName[19] = '\0';
+            setProgName(program, pName);
             for (byte i = MASH_DOUGHIN; i <= MASH_MASHOUT; i++) {
               setProgMashTemp(program, i, atoi(msg[i * 2 + 3]));
               setProgMashMins(program, i, atoi(msg[i * 2 + 4]));

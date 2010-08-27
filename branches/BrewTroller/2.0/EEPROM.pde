@@ -374,7 +374,7 @@ void setValveCfg(byte profile, unsigned long value) {
 #define PROGRAM_START_ADDR 786
 
 //**********************************************************************************
-//Program Name (P:0-20)
+//Program Name (P:0-19) P:20 = Free
 //**********************************************************************************
 void setProgName(byte preset, char name[20]) {
   for (byte i = 0; i < 19; i++) EEPROM.write(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + i, name[i]);
