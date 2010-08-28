@@ -563,6 +563,11 @@ void logProgram(byte program) {
   logFieldI(getProgRatio(program));
   logFieldI(getProgPitch(program));
   logFieldI(getProgAdds(program));
+  #ifdef USEMETRIC
+    logFieldI(0);
+  #else
+    logFieldI(1);
+  #endif
   logEnd();
 }
 
