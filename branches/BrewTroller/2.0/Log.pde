@@ -24,6 +24,14 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
 
+#define CMD_MSG_FIELDS 25
+#define CMD_FIELD_CHARS 21
+
+boolean msgQueued;
+unsigned long lastLog;
+byte logCount, msgField;
+char msg[CMD_MSG_FIELDS][CMD_FIELD_CHARS];
+
 void logInit() {
   #if defined USESERIAL
     Serial.begin(BAUD_RATE);
@@ -308,7 +316,7 @@ boolean chkMsg() {
         break;
 
       } else if (byteIn == '\t') {
-        if (msgField < 25) {
+        if (msgField < CMD_MSG_FIELDS) {
           msgField++;
         } else {
           logString_P(LOGCMD, PSTR("MSG_OVERFLOW"));
@@ -316,7 +324,7 @@ boolean chkMsg() {
         }
       } else {
         byte charCount = strlen(msg[msgField]);
-        if (charCount < 20) { 
+        if (charCount < CMD_FIELD_CHARS - 1) { 
           msg[msgField][charCount] = byteIn; 
           msg[msgField][charCount + 1] = '\0';
         } else {
@@ -333,7 +341,7 @@ boolean chkMsg() {
 void clearMsg() {
   msgQueued = 0;
   msgField = 0;
-  for (byte i = 0; i < 20; i++) msg[i][0] = '\0';
+  for (byte i = 0; i < CMD_MSG_FIELDS; i++) msg[i][0] = '\0';
 }
 
 void rejectMsg() {

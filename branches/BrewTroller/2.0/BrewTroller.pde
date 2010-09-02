@@ -1,4 +1,4 @@
-#define BUILD 503 
+#define BUILD 505 
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -641,10 +641,7 @@ boolean timerStatus[2], alarmStatus;
 
 //Log Globals
 boolean logData = LOG_INITSTATUS;
-boolean msgQueued;
-unsigned long lastLog;
-byte logCount, msgField;
-char msg[25][21];
+
 
 //Brew Step Logic Globals
 //Active program for each brew step
