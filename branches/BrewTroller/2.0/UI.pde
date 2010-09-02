@@ -1045,13 +1045,15 @@ unsigned int editHopSchedule (unsigned int sched) {
   unsigned int retVal = sched;
   byte lastOption = 0;
   while (1) {
-    if (retVal & 1) strcpy_P(menuopts[0], PSTR("Boil: On")); else strcpy_P(menuopts[0], PSTR("Boil: Off"));
+    if (retVal & 1) strcpy_P(menuopts[0], PSTR("At Boil: On")); else strcpy_P(menuopts[0], PSTR("At Boil: Off"));
     for (byte i = 0; i < 10; i++) {
       strcpy(menuopts[i + 1], itoa(hoptimes[i], buf, 10));
-      strcat_P(menuopts[i + 1], PSTR(" Min: "));
+      if (i == 0) strcat_P(menuopts[i + 1], PSTR(" Min: "));
+      else if (i < 9) strcat_P(menuopts[i + 1], PSTR("  Min: "));
+      else strcat_P(menuopts[i + 1], PSTR("   Min: "));
       if (retVal & (1<<(i + 1))) strcat_P(menuopts[i + 1], PSTR("On")); else strcat_P(menuopts[i + 1], PSTR("Off"));
     }
-    if (retVal & 2048) strcpy_P(menuopts[11], PSTR("0 Min: On")); else strcpy_P(menuopts[11], PSTR("0 Min: Off"));
+    if (retVal & 2048) strcpy_P(menuopts[11], PSTR("0   Min: On")); else strcpy_P(menuopts[11], PSTR("0   Min: Off"));
     strcpy_P(menuopts[12], EXIT);
 
     lastOption = scrollMenu("Boil Additions", 13, lastOption);
