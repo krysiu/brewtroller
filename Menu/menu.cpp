@@ -9,28 +9,25 @@ menu::menu() {
 	_topItem = 0;
 }
 
-void menu::begin(byte rows, byte cols) {
+void menu::begin(byte rows, byte cols, byte maxOpts) {
 	_rows = rows;
 	_cols = cols;
-    this->clear();
+	_maxOpts = maxOpts;
+	//Free existing space
+	free(_menuItems);
+	//Alloc memory space
+    _menuItems = (menuItem *) malloc(_maxOpts * sizeof(menuItem));
+	this->clear();
 }
 
 void menu::clear() {
 	_selected = 0;
 	_topItem = 0;
 	_itemCount = 0;
-	free(_menuItems);
-	_alloced = 0;
 }
 
 void menu::addItem(char disp[], byte ref) {
-	if (_itemCount + 1 > _alloced) {
-		void *_tmp = realloc(_menuItems, (_alloced + ALLOC_BLOCK * sizeof(menuItem)));
-		if (!_tmp) return; //Failed realloc: Abort
-		_alloced += ALLOC_BLOCK;
-		_menuItems = (menuItem *)_tmp;
-	}
-
+	if (_itemCount >= _maxOpts) return;
 	strcpy(_menuItems[_itemCount].name, disp);
 	_menuItems[_itemCount].value = ref;
 	_itemCount++;
