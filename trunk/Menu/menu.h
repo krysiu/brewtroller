@@ -3,8 +3,6 @@
 
 #include <WProgram.h>
 
-#define ALLOC_BLOCK 5
-
 typedef struct {
   char name[21];
   byte value;
@@ -15,7 +13,7 @@ class menu
 {
 public:
 	menu(void);
-	void begin(byte, byte);
+	void begin(byte, byte, byte);
 	void clear(void);
 	void addItem(char[], byte);
 	void setSelected(byte);
@@ -29,10 +27,10 @@ public:
 private:
 	byte 	_rows,
 			_cols,
+			_maxOpts,
 			_itemCount,
 			_selected,
-			_topItem,
-			_alloced;
+			_topItem;
 			
 	menuItem *_menuItems;
 };

@@ -76,7 +76,7 @@ void uiInit() {
   initLCD();
   Encoder.begin(ENCA_PIN, ENCB_PIN, ENTER_PIN, ENTER_INT, ENCODER_TYPE);
   //Create a main menu displayed as 3 rows of 19 char menu options
-  MainMenu.begin(3, 19);
+  MainMenu.begin(3, 19, 21);
 }
 
 byte scrollMenu(char sTitle[], byte numOpts) {
