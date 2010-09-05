@@ -1,4 +1,4 @@
-#define BUILD 508 
+#define BUILD 515 
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -409,6 +409,9 @@ Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
 
 // DEBUG_TIMERALARM: Enables logging of Timer and Alarm values
 //#define DEBUG_TIMERALARM
+
+// DEBUG_VOLCALIB: Enables logging of Volume Calibration values
+#define DEBUG_VOLCALIB
 //**********************************************************************************
 
 //*****************************************************************************************************************************

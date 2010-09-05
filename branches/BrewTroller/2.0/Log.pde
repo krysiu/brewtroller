@@ -590,4 +590,14 @@ void logDebugPIDGain(byte vessel) {
   logEnd();
 }
 #endif
+
+#ifdef DEBUG_VOLCALIB
+void logVolCalib(char* logText, int value) {
+  logStart_P(LOGDEBUG);
+  logField(logText);
+  logFieldI(value);  
+  logEnd();
+}
+#endif
+
 #endif
