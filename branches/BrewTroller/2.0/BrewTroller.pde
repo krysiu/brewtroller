@@ -1,4 +1,4 @@
-#define BUILD 516 
+#define BUILD 519 
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -412,6 +412,11 @@ Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
 
 // DEBUG_VOLCALIB: Enables logging of Volume Calibration values
 //#define DEBUG_VOLCALIB
+
+// DEBUG_PROG_CALC_VOLS: Enables logging of PreBoil, Sparge, and Total water calcs 
+// based on the running program
+//#define DEBUG_PROG_CALC_VOLS
+
 //**********************************************************************************
 
 //*****************************************************************************************************************************
