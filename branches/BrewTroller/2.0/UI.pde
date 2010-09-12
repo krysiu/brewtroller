@@ -876,12 +876,11 @@ void startProgramMenu() {
   if (profile < 20) {
     while(1) {
       unsigned long spargeVol = calcSpargeVol(profile);
-      unsigned long mashVol = calcStrikeVol(profile);
-      unsigned long grainVol = calcGrainVolume(profile);
+      unsigned long mashVol = calcStrikeVol(profile) + calcGrainVolume(profile);
       unsigned long preboilVol = calcPreboilVol(profile);
-      if (spargeVol > getCapacity(TS_HLT)) warnHLT(spargeVol);
-      if (mashVol + grainVol > getCapacity(TS_MASH)) warnMash(mashVol, grainVol);
-      if (preboilVol > getCapacity(TS_KETTLE)) warnBoil(preboilVol);
+      if (spargeVol > getCapacity(TS_HLT)) warnVessel(VS_HLT, spargeVol);
+      if (mashVol > getCapacity(TS_MASH)) warnVessel(VS_MASH, mashVol);
+      if (preboilVol > getCapacity(TS_KETTLE)) warnVessel(VS_KETTLE, preboilVol);
       
       strcpy_P(menuopts[0], PSTR("Edit Program"));
       strcpy_P(menuopts[1], PSTR("Grain Temp:"));
@@ -994,12 +993,11 @@ void editProgram(byte pgm) {
     else if (lastOption == 9) setProgAdds(pgm, editHopSchedule(getProgAdds(pgm)));
     else return;
     unsigned long spargeVol = calcSpargeVol(pgm);
-    unsigned long mashVol = calcStrikeVol(pgm);
-    unsigned long grainVol = calcGrainVolume(pgm);
+    unsigned long mashVol = calcStrikeVol(pgm) + calcGrainVolume(pgm);
     unsigned long preboilVol = calcPreboilVol(pgm);
-    if (spargeVol > getCapacity(TS_HLT)) warnHLT(spargeVol);
-    if (mashVol + grainVol > getCapacity(TS_MASH)) warnMash(mashVol, grainVol);
-    if (preboilVol > getCapacity(TS_KETTLE)) warnBoil(preboilVol);
+    if (spargeVol > getCapacity(TS_HLT)) warnVessel(VS_HLT, spargeVol);
+    if (mashVol > getCapacity(TS_MASH)) warnVessel(VS_MASH, mashVol);
+    if (preboilVol > getCapacity(TS_KETTLE)) warnVessel(VS_KETTLE, preboilVol);
   }
 }
 
@@ -1075,53 +1073,86 @@ byte MLHeatSrcMenu (byte MLHeatSrc) {
   else return lastOption;
 }
 
-void warnHLT(unsigned long spargeVol) {
+void warnVessel(int vessel, unsigned long target){
   clearLCD();
-  printLCD_P(0, 0, PSTR("HLT Capacity Issue"));
-  printLCD_P(1, 0, PSTR("Sparge Vol:"));
-  vftoa(spargeVol, buf, 3);
+  unsigned long capacity;
+  switch (vessel) {
+    case VS_HLT:
+      printLCD_P(0, 0, PSTR("HLT Capacity Issue"));
+      capacity = getCapacity(VS_HLT);
+      break;
+      // break is optional
+    case VS_MASH:
+      printLCD_P(0, 0, PSTR("MLT Capacity Issue"));
+      capacity = getCapacity(VS_MASH);
+      break;
+    case VS_KETTLE:
+      printLCD_P(0, 0, PSTR("Boil Capacity Issue"));
+      capacity = getCapacity(VS_KETTLE);
+      break;
+  }
+  printLCD_P(1, 0, PSTR("Target Vol:"));
+  printLCD_P(2, 0, PSTR("Capacity:"));
+  vftoa(target, buf, 3);
   truncFloat(buf, 5);
   printLCD(1, 11, buf);
+  vftoa(capacity, buf, 3);
+  truncFloat(buf, 5);
+  printLCD(2, 9, buf);
   printLCD_P(1, 16, VOLUNIT);
   printLCD(3, 4, ">");
   printLCD_P(3, 6, CONTINUE);
   printLCD(3, 15, "<");
-  while (!Encoder.ok()) brewCore();
+  while (!Encoder.ok()) brewCore(); 
 }
 
-
-void warnMash(unsigned long mashVol, unsigned long grainVol) {
-  clearLCD();
-  printLCD_P(0, 0, PSTR("Mash Capacity Issue"));
-  printLCD_P(1, 0, PSTR("Strike Vol:"));
-  vftoa(mashVol, buf, 3);
-  truncFloat(buf, 5);
-  printLCD(1, 11, buf);
-  printLCD_P(1, 16, VOLUNIT);
-  printLCD_P(2, 0, PSTR("Grain Vol:"));
-  vftoa(grainVol, buf, 3);
-  truncFloat(buf, 5);
-  printLCD(2, 11, buf);
-  printLCD_P(2, 16, VOLUNIT);
-  printLCD(3, 4, ">");
-  printLCD_P(3, 6, CONTINUE);
-  printLCD(3, 15, "<");
-  while (!Encoder.ok()) brewCore();
-}
-
-void warnBoil(unsigned long preboilVol) {
-  clearLCD();
-  printLCD_P(0, 0, PSTR("Boil Capacity Issue"));
-  printLCD_P(1, 0, PSTR("Preboil Vol:"));
-  vftoa(preboilVol, buf, 3);
-  truncFloat(buf, 5);
-  printLCD(1, 12, buf);
-  printLCD_P(1, 17, VOLUNIT);
-  printLCD(3, 4, ">");
-  printLCD_P(3, 6, CONTINUE);
-  printLCD(3, 15, "<");
-  while (!Encoder.ok()) brewCore();
-}
+//void warnHLT(unsigned long spargeVol) {
+//  clearLCD();
+//  printLCD_P(0, 0, PSTR("HLT Capacity Issue"));
+//  printLCD_P(1, 0, PSTR("Sparge Vol:"));
+//  vftoa(spargeVol, buf, 3);
+//  truncFloat(buf, 5);
+//  printLCD(1, 11, buf);
+//  printLCD_P(1, 16, VOLUNIT);
+//  printLCD(3, 4, ">");
+//  printLCD_P(3, 6, CONTINUE);
+//  printLCD(3, 15, "<");
+//  while (!Encoder.ok()) brewCore();
+//}
+//
+//
+//void warnMash(unsigned long mashVol, unsigned long grainVol) {
+//  clearLCD();
+//  printLCD_P(0, 0, PSTR("Mash Capacity Issue"));
+//  printLCD_P(1, 0, PSTR("Strike Vol:"));
+//  vftoa(mashVol, buf, 3);
+//  truncFloat(buf, 5);
+//  printLCD(1, 11, buf);
+//  printLCD_P(1, 16, VOLUNIT);
+//  printLCD_P(2, 0, PSTR("Grain Vol:"));
+//  vftoa(grainVol, buf, 3);
+//  truncFloat(buf, 5);
+//  printLCD(2, 11, buf);
+//  printLCD_P(2, 16, VOLUNIT);
+//  printLCD(3, 4, ">");
+//  printLCD_P(3, 6, CONTINUE);
+//  printLCD(3, 15, "<");
+//  while (!Encoder.ok()) brewCore();
+//}
+//
+//void warnBoil(unsigned long preboilVol) {
+//  clearLCD();
+//  printLCD_P(0, 0, PSTR("Boil Capacity Issue"));
+//  printLCD_P(1, 0, PSTR("Preboil Vol:"));
+//  vftoa(preboilVol, buf, 3);
+//  truncFloat(buf, 5);
+//  printLCD(1, 12, buf);
+//  printLCD_P(1, 17, VOLUNIT);
+//  printLCD(3, 4, ">");
+//  printLCD_P(3, 6, CONTINUE);
+//  printLCD(3, 15, "<");
+//  while (!Encoder.ok()) brewCore();
+//}
 
 //*****************************************************************************************************************************
 //Generic Menu Functions

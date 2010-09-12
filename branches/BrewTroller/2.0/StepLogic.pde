@@ -134,11 +134,9 @@ boolean stepInit(byte pgm, byte brewStep) {
     }
   } else if (brewStep == STEP_REFILL) {
   //Step Init: Refill
-    if (getProgMLHeatSrc(pgm) == VS_HLT) {
-      tgtVol[VS_HLT] = calcSpargeVol(pgm);
-      tgtVol[VS_MASH] = 0;
-    }
-
+    if (getProgMLHeatSrc(pgm) == VS_HLT && calcSpargeVol(pgm) + calcStrikeVol(pgm) > getCapacity(VS_HLT)) tgtVol[VS_HLT] = calcSpargeVol(pgm);
+    else tgtVol[VS_HLT] = 0;
+    
   } else if (brewStep == STEP_DOUGHIN) {
   //Step Init: Dough In
     setSetpoint(TS_HLT, getProgHLT(pgm));
@@ -258,7 +256,11 @@ boolean stepInit(byte pgm, byte brewStep) {
 }
 
 void stepCore() {
-  if (stepIsActive(STEP_FILL)) stepFill(STEP_FILL);
+  if (stepIsActive(STEP_FILL)) {
+    #ifdef AUTO_FILL_EXIT 
+      if (volAvg[VS_HLT] >= tgtVol[VS_HLT] && volAvg[VS_MASH] >= tgtVol[VS_MASH]) stepAdvance(STEP_FILL);
+    #endif 
+  }
 
   if (stepIsActive(STEP_PREHEAT)) {
     if ((setpoint[VS_MASH] && temp[VS_MASH] >= setpoint[VS_MASH])
@@ -279,7 +281,12 @@ void stepCore() {
     if (autoValve[AV_SPARGEIN] && volAvg[VS_HLT] <= tgtVol[VS_HLT]) autoValve[AV_SPARGEIN] = 0;
   }
 
-  if (stepIsActive(STEP_REFILL)) stepFill(STEP_REFILL);
+  if (stepIsActive(STEP_REFILL)) {
+    if (tgtVol[VS_HLT] == 0) stepAdvance(STEP_REFILL);
+    #ifdef AUTO_FILL_EXIT
+      if (volAvg[VS_HLT] >= tgtVol[VS_HLT] && volAvg[VS_MASH] >= tgtVol[VS_MASH]) stepAdvance(STEP_REFILL); 
+    #endif 
+  }
 
   for (byte brewStep = STEP_DOUGHIN; brewStep <= STEP_MASHOUT; brewStep++) if (stepIsActive(brewStep)) stepMash(brewStep);
   
@@ -358,21 +365,6 @@ void stepCore() {
       if (vlvConfigIsActive(VLV_KETTLELID)) setValves(vlvConfig[VLV_KETTLELID], 0);
     }
   }
-}
-
-//stepCore logic for Fill and Refill
-void stepFill(byte brewStep) {
-  //Skip unnecessary refills
-  if (brewStep == STEP_REFILL) {
-    byte pgm = stepProgram[brewStep];
-    unsigned long HLTFillVol = calcSpargeVol(pgm);
-    if (getProgMLHeatSrc(pgm) == VS_HLT) HLTFillVol += calcStrikeVol(pgm);
-    if (HLTFillVol <= getCapacity(VS_HLT)) stepAdvance(brewStep);
-  }
-
-  #ifdef AUTO_FILL_EXIT
-    if (volAvg[VS_HLT] >= tgtVol[VS_HLT] && volAvg[VS_MASH] >= tgtVol[VS_MASH]) stepAdvance(brewStep);
-  #endif
 }
 
 //stepCore Logic for all mash steps
