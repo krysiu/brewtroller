@@ -1,6 +1,12 @@
 /*
 Copyright (c) 2007, Jim Studt
 
+Version 2.1: Modification by Tom Harkaway, August 2010:
+   Modify long delayMicroseconds calls to shorter calls in a loop. Although
+   the Arduino 0018 documentation indicates that the delayMicroseconds
+   call does not disable interrupts, it behaves as if it still does, at least
+   it appears that way in the Sanguino environment. This was causing dropped
+   serial characters at anything greater than 38.4k baud.
 
 Version 2.0: Modifications by Paul Stoffregen, January 2010:
 http://www.pjrc.com/teensy/td_libs_OneWire.html
@@ -131,13 +137,27 @@ uint8_t OneWire::reset(void)
 	DIRECT_WRITE_LOW(reg, mask);
 	DIRECT_MODE_OUTPUT(reg, mask);	// drive output low
 	sei();
-	delayMicroseconds(500);
+	
+	
+	//delayMicroseconds(500);
+	for (int i=0; i<20; i++)
+	{
+		delayMicroseconds(25);
+	}
+	
+	
 	cli();
 	DIRECT_MODE_INPUT(reg, mask);	// allow it to float
 	delayMicroseconds(80);
 	r = !DIRECT_READ(reg, mask);
 	sei();
-	delayMicroseconds(420);
+	
+	//delayMicroseconds(420);
+	for (int i=0; i<21; i++)
+	{
+		delayMicroseconds(20);
+	}
+	
 	return r;
 }
 
@@ -157,12 +177,20 @@ void OneWire::write_bit(uint8_t v)
 		delayMicroseconds(10);
 		DIRECT_WRITE_HIGH(reg, mask);	// drive output high
 		sei();
-		delayMicroseconds(55);
+		
+		//delayMicroseconds(55);
+		delayMicroseconds(27);
+		delayMicroseconds(28);
+
 	} else {
 		cli();
 		DIRECT_WRITE_LOW(reg, mask);
 		DIRECT_MODE_OUTPUT(reg, mask);	// drive output low
+		//sei();
 		delayMicroseconds(65);
+		//delayMicroseconds(32);
+		//delayMicroseconds(33);
+		//cli();
 		DIRECT_WRITE_HIGH(reg, mask);	// drive output high
 		sei();
 		delayMicroseconds(5);
@@ -187,7 +215,9 @@ uint8_t OneWire::read_bit(void)
 	delayMicroseconds(9);
 	r = DIRECT_READ(reg, mask);
 	sei();
-	delayMicroseconds(53);
+	//delayMicroseconds(53);
+	delayMicroseconds(28);
+	delayMicroseconds(27);
 	return r;
 }
 
