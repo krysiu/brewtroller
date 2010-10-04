@@ -1,4 +1,4 @@
-#define BUILD 521 
+#define BUILD 552 
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -96,7 +96,7 @@ Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
 
 // HLT_AS_KETTLE: This option remaps the Kettle temp sensor, volume sensor and heat
 // output to the HLT's devices to  allow the HLT to be reused as a kettle.
-//#define HLT_AS_KETTLE
+#define HLT_AS_KETTLE
 
 // MASH_PREHEAT_SENSOR: This option allows for an alternate temperature sensor to
 // control the mash heat output during the Preheat step. This is used to control the
