@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeerXmlSupportLibrary", "BeerXMLSupportLibrary\BeerXmlSupportLibrary.csproj", "{3AAAD5E7-241C-4FD7-A2DF-F4650395765D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrewTroller Communicator", "BrewTrollerCommunicator\BrewTroller Communicator.csproj", "{43C8A123-C983-48E1-AED4-E46278E2D74B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BTSerialComTester", "BTSerialComTester\BTSerialComTester.csproj", "{04931F9C-B21D-49D1-BDDF-D336F59235F7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3AAAD5E7-241C-4FD7-A2DF-F4650395765D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AAAD5E7-241C-4FD7-A2DF-F4650395765D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3AAAD5E7-241C-4FD7-A2DF-F4650395765D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3AAAD5E7-241C-4FD7-A2DF-F4650395765D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43C8A123-C983-48E1-AED4-E46278E2D74B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43C8A123-C983-48E1-AED4-E46278E2D74B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43C8A123-C983-48E1-AED4-E46278E2D74B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43C8A123-C983-48E1-AED4-E46278E2D74B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04931F9C-B21D-49D1-BDDF-D336F59235F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04931F9C-B21D-49D1-BDDF-D336F59235F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04931F9C-B21D-49D1-BDDF-D336F59235F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04931F9C-B21D-49D1-BDDF-D336F59235F7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
