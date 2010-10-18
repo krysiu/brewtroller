@@ -1,4 +1,4 @@
-#define BUILD 552 
+#define BUILD 573 
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -96,7 +96,7 @@ Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
 
 // HLT_AS_KETTLE: This option remaps the Kettle temp sensor, volume sensor and heat
 // output to the HLT's devices to  allow the HLT to be reused as a kettle.
-#define HLT_AS_KETTLE
+//#define HLT_AS_KETTLE
 
 // MASH_PREHEAT_SENSOR: This option allows for an alternate temperature sensor to
 // control the mash heat output during the Preheat step. This is used to control the
@@ -295,31 +295,31 @@ Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
 #define BTPD_HLT_TEMP 0x20
 
 // BTPD_MASH_TEMP: Displays Mash temp and setpoint on specified channel
-#define BTPD_MASH_TEMP 0x21
+//#define BTPD_MASH_TEMP 0x21
 
 // BTPD_KETTLE_TEMP: Displays Kettle temp and setpoint on specified channel
-#define BTPD_KETTLE_TEMP 0x22
+//#define BTPD_KETTLE_TEMP 0x22
 
 // BTPD_H2O_TEMPS: Displays H2O In and H2O Out temps on specified channels
-#define BTPD_H2O_TEMPS 0x23
+//#define BTPD_H2O_TEMPS 0x23
 
 // BTPD_FERM_TEMP: Displays Beer Out temp and Pitch temp on specified channel
-#define BTPD_FERM_TEMP 0x24
+//#define BTPD_FERM_TEMP 0x24
 
 // BTPD_FERM_TEMP: Displays Beer Out temp and Pitch temp on specified channel
-#define BTPD_TIMERS 0x25
+//#define BTPD_TIMERS 0x25
 
 // BTPD_HLT_VOL: Displays current and target HLT volume
-#define BTPD_HLT_VOL 0x26
+//#define BTPD_HLT_VOL 0x26
 
 // BTPD_MASH_VOL: Displays current and target Mash volume
-#define BTPD_MASH_VOL 0x27
+//#define BTPD_MASH_VOL 0x27
 
 // BTPD_KETTLE_VOL: Displays current and target Kettle volume
-#define BTPD_KETTLE_VOL 0x28
+//#define BTPD_KETTLE_VOL 0x28
 
 // BTPD_STEAM_PRESS: Displays current and target Steam pressure
-#define BTPD_STEAM_PRESS 0x29
+//#define BTPD_STEAM_PRESS 0x29
 //**********************************************************************************
 
 //**********************************************************************************
@@ -687,7 +687,6 @@ void setup() {
   #ifndef NOUI
     uiInit();
   #endif
-
   #ifdef BTPD_SUPPORT
     btpdInit();
   #endif
@@ -700,7 +699,6 @@ void setup() {
 
   //PID Initialization (Outputs.pde)
   pidInit();
-
 }
 
 void loop() {
