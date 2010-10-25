@@ -1,4 +1,4 @@
-/*  
+/*
    Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
     This file is part of BrewTroller.
@@ -16,57 +16,50 @@
     You should have received a copy of the GNU General Public License
     along with BrewTroller.  If not, see <http://www.gnu.org/licenses/>.
 
-
-BrewTroller - Open Source Brewing Computer
+FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
 Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 
 Documentation, Forums and more information available at http://www.brewtroller.com
-*/
 
+Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
+With Sanguino Software v1.4 (http://code.google.com/p/sanguino/downloads/list)
+using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrary)
+using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
+*/
 
 #include <OneWire.h>
 //One Wire Bus on 
-OneWire ds(TEMP_PIN);
-unsigned long convStart;
-
-void updateTemps() {
-  if (convStart == 0) {
-    convertAll();
-    convStart = millis();
-  } else if (millis() - convStart >= 750) {
-    for (byte i = TS_HLT; i <= TS_AUX3; i++) temp[i] = read_temp(tSensor[i]);
-    convStart = 0;
-  }
-}
+OneWire ds(5);
 
 void getDSAddr(byte addrRet[8]){
   byte scanAddr[8];
   ds.reset_search();
   byte limit = 0;
-  //Scan at most 20 sensors (In case the One Wire Search loop issue occurs)
-  while (limit <= 20) {
+  //Scan at most 10 sensors (In case the One Wire Search loop issue occurs)
+  while (limit <= 10) {
     if (!ds.search(scanAddr)) {
       //No Sensor found, Return
       ds.reset_search();
       return;
     }
     boolean found = 0;
-    for (byte i = TS_HLT; i <= TS_AUX3; i++) {
-      boolean match = 1;
-      for (byte j = 0; j < 8; j++) {
-        if (scanAddr[j] != tSensor[i][j]) {
-          match = 0;
+    for (byte i = 0; i < NUM_ZONES + 1; i++) {
+      if (scanAddr[0] == tSensor[i][0] &&
+          scanAddr[1] == tSensor[i][1] &&
+          scanAddr[2] == tSensor[i][2] &&
+          scanAddr[3] == tSensor[i][3] &&
+          scanAddr[4] == tSensor[i][4] &&
+          scanAddr[5] == tSensor[i][5] &&
+          scanAddr[6] == tSensor[i][6] &&
+          scanAddr[7] == tSensor[i][7])
+      { 
+          found = 1;
           break;
-        }
-      }
-      if (match) { 
-        found = 1;
-        break;
       }
     }
     if (!found) {
-      for (byte k = 0; k < 8; k++) addrRet[k] = scanAddr[k];
+      for (byte i = 0; i < 8; i++) addrRet[i] = scanAddr[i];
       return;
     }
     limit++;

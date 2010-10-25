@@ -1,4 +1,4 @@
-/*  
+/*
    Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
     This file is part of BrewTroller.
@@ -16,14 +16,17 @@
     You should have received a copy of the GNU General Public License
     along with BrewTroller.  If not, see <http://www.gnu.org/licenses/>.
 
-
-BrewTroller - Open Source Brewing Computer
+FermTroller - Open Source Fermentation Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
 Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 
 Documentation, Forums and more information available at http://www.brewtroller.com
-*/
 
+Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
+With Sanguino Software v1.4 (http://code.google.com/p/sanguino/downloads/list)
+using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrary)
+using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
+*/
 
 void ftoa(float val, char retStr[], byte precision) {
   char lbuf[11];
@@ -48,247 +51,114 @@ void truncFloat(char string[], byte length) {
   }
 }
 
-#ifdef SYSINFO
-byte sysInfo(byte address) {
-  byte retValue = 0;
-  if (address == SYSINFO_BTBOARD) {
-    #if defined BTBOARD_1
-      retValue =  1;
-    #elif defined BTBOARD_22
-      retValue =  2;
-    #elif defined BTBOARD_3
-      retValue =  3;
-    #endif
-    
-    #ifdef USEMETRIC
-      retValue &=  1<<4;
-    #endif
-
-    #ifdef USESTEAM
-      retValue &=  1<<5;
-    #endif
-
-    #ifdef DEBUG
-      retValue &=  1<<6;
-    #endif
-
-    #ifdef SMART_HERMS_HLT
-      retValue &=  1<<7;
-    #endif
-  }
-  else if (address == SYSINFO_AUTOSTEP) {
-    #ifdef AUTO_FILL
-      retValue =  1;
-    #endif
-    #ifdef AUTO_MASH_HOLD_EXIT
-      retValue &= 1<<1;
-    #endif
-  }
-  else if (address == SYSINFO_BOILRECIRC) {
-    #ifdef AUTO_BOIL_RECIRC
-      retValue = byte(AUTO_BOIL_RECIRC);
-    #else
-      retValue = byte(255);
-    #endif
-  }
-  else if (address == SYSINFO_MUXBOARDS) {
-    #ifdef MUXBOARDS
-      retValue = byte(MUXBOARDS);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_PIDLIMIT_HLT) {
-    #ifdef PIDLIMIT_HLT
-      retValue = byte(PIDLIMIT_HLT);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_PIDLIMIT_MASH) {
-    #ifdef PIDLIMIT_MASH
-      retValue = byte(PIDLIMIT_MASH);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_PIDLIMIT_KETTLE) {
-    #ifdef PIDLIMIT_KETTLE
-      retValue = byte(PIDLIMIT_KETTLE);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_PIDLIMIT_STEAM) {
-    #ifdef PIDLIMIT_STEAM
-      retValue = byte(PIDLIMIT_STEAM);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_KETTLELID) {
-    #ifdef KETTLELID_THRESH
-      retValue = byte(KETTLELID_THRESH);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_PREBOILALARM) {
-    #ifdef PREBOIL_ALARM
-      retValue = byte(PREBOIL_ALARM);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_HLTMAX) {
-    #ifdef HLT_MAX_TEMP
-      retValue = byte(HLT_MAX_TEMP);
-    #endif
-  }
-
-  else if (address == SYSINFO_MASH_HEATLOSS_1) {
-    #ifdef MASH_HEAT_LOSS
-      retValue = float2byte(MASH_HEAT_LOSS, 0);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_MASH_HEATLOSS_2) {
-    #ifdef MASH_HEAT_LOSS
-      retValue = float2byte(MASH_HEAT_LOSS, 1);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_MASH_HEATLOSS_3) {
-    #ifdef MASH_HEAT_LOSS
-      retValue = float2byte(MASH_HEAT_LOSS, 2);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_MASH_HEATLOSS_4) {
-    #ifdef MASH_HEAT_LOSS
-      retValue = float2byte(MASH_HEAT_LOSS, 3);
-    #else
-      retValue = 255;
-    #endif
-  }
-
-  else if (address == SYSINFO_HOPADD_DELAY_1) {
-    #ifdef HOPADD_DELAY
-      retValue = int2byte(HOPADD_DELAY, 0);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_HOPADD_DELAY_2) {
-    #ifdef HOPADD_DELAY
-      retValue = int2byte(HOPADD_DELAY, 1);
-    #else
-      retValue = 255;
-    #endif
-  }
-  
-  else if (address == SYSINFO_STRIKEOFFSET_1) {
-    #ifdef STRIKE_TEMP_OFFSET
-      retValue = float2byte(STRIKE_TEMP_OFFSET, 0);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_STRIKEOFFSET_2) {
-    #ifdef STRIKE_TEMP_OFFSET
-      retValue = float2byte(STRIKE_TEMP_OFFSET, 1);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_STRIKEOFFSET_3) {
-    #ifdef STRIKE_TEMP_OFFSET
-      retValue = float2byte(STRIKE_TEMP_OFFSET, 2);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_STRIKEOFFSET_4) {
-    #ifdef STRIKE_TEMP_OFFSET
-      retValue = float2byte(STRIKE_TEMP_OFFSET, 3);
-    #else
-      retValue = 255;
-    #endif
-  }
-
-  else if (address == SYSINFO_LOGINTERVAL_1) {
-    #ifdef LOG_INTERVAL
-      retValue = int2byte(LOG_INTERVAL, 0);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_LOGINTERVAL_2) {
-    #ifdef LOG_INTERVAL
-      retValue = int2byte(LOG_INTERVAL, 1);
-    #else
-      retValue = 255;
-    #endif
-  }
-
-  else if (address == SYSINFO_UILEVEL) {
-    #ifdef NOUI
-      //No UI
-      retValue = 0;
-    #elif defined UI_NO_SETUP
-      //'Light' UI
-      retValue = 1;
-    //Space reserved for alternate UI
-    #else
-      //'Stock' UI
-      retValue = 255;
-    #endif
-  }
-  
-  else if (address == SYSINFO_VOLINT_1) {
-    #ifdef VOLUME_READ_INTERVAL
-      retValue = int2byte(VOLUME_READ_INTERVAL, 0);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_VOLINT_2) {
-    #ifdef VOLUME_READ_INTERVAL
-      retValue = int2byte(VOLUME_READ_INTERVAL, 1);
-    #else
-      retValue = 255;
-    #endif
-  }
-  else if (address == SYSINFO_VOLCOUNT) {
-    #ifdef VOLUME_READ_COUNT
-      retValue = byte(VOLUME_READ_COUNT);
-    #else
-      retValue = 255;
-    #endif
-  }
-  return retValue;
+int availableMemory() {
+  int size = 4096;
+  byte *buf;
+  while ((buf = (byte *) malloc(--size)) == NULL);
+  free(buf);
+  return size;
 }
 
-byte int2byte(int varInt, byte pos) {
-  union u_ib {
-    int i_var;
-    byte b_var[4];
-  };
-  u_ib convert;
-  convert.i_var = varInt;
-  return convert.b_var[pos];
+void resetOutputs() {
+  for (byte i = 0; i < NUM_ZONES; i++) {
+    setpoint[i] = 0;
+    heatStatus[i] = 0;
+    coolStatus[i] = 0;
+    if (COOLPIN_OFFSET > i) {
+      if (!muxOuts[i]) digitalWrite(outputPin[i], LOW);
+    }
+    if (NUM_OUTS - COOLPIN_OFFSET > i) {
+      if (!muxOuts[i + COOLPIN_OFFSET]) digitalWrite(outputPin[i + COOLPIN_OFFSET], LOW);
+    }
+    #ifdef USE_MUX
+      digitalWrite(MUX_OE_PIN, HIGH);
+      //ground latchPin and hold low for as long as you are transmitting
+      digitalWrite(MUX_LATCH_PIN, 0);
+      //clear everything out just in case to prepare shift register for bit shifting
+      digitalWrite(MUX_DATA_PIN, 0);
+      digitalWrite(MUX_CLOCK_PIN, 0);
+
+      //for each bit in the long myDataOut
+      for (byte i = 32; i > 0; i--)  {
+        digitalWrite(MUX_CLOCK_PIN, 0);
+        //create bitmask to grab the bit associated with our counter i and set data pin accordingly (NOTE: 32 - i causes bits to be sent most significant to least significant)
+        digitalWrite(MUX_DATA_PIN, 0);
+        //register shifts bits on upstroke of clock pin  
+        digitalWrite(MUX_CLOCK_PIN, 1);
+        //zero the data pin after shift to prevent bleed through
+        digitalWrite(MUX_DATA_PIN, 0);
+      }
+
+      //stop shifting
+      digitalWrite(MUX_CLOCK_PIN, 0);
+      digitalWrite(MUX_LATCH_PIN, 1);
+      //Enable outputs
+      digitalWrite(MUX_OE_PIN, LOW);
+    #endif
+  }
 }
 
-byte float2byte(float varFlt, byte pos) {
-  union u_fb {
-    int f_var;
-    byte b_var[4];
-  };
-  u_fb convert;
-  convert.f_var = varFlt;
-  return convert.b_var[pos];
+void setTimer(unsigned int minutes) {
+  timerValue = minutes * 60000;
+  lastTime = millis();
+  timerStatus = 1;
 }
-#endif
+
+void pauseTimer() {
+  if (timerStatus) {
+    //Pause
+    timerStatus = 0;
+  } else {
+    //Unpause
+    timerStatus = 1;
+    lastTime = millis();
+    timerLastWrite = 0;
+  }
+}
+
+void clearTimer() {
+  timerValue = 0;
+  timerStatus = 0;
+}
+
+void printTimer(byte iRow, byte iCol) {
+  if (alarmStatus || timerValue > 0) {
+    if (timerStatus) {
+      unsigned long now = millis();
+      if (timerValue > now - lastTime) {
+        timerValue -= now - lastTime;
+      } else {
+        timerValue = 0;
+        timerStatus = 0;
+        setAlarm(1);
+        printLCD(iRow, iCol + 5, "!");
+      }
+      lastTime = now;
+    } else if (!alarmStatus) printLCD(iRow, iCol, "PAUSED");
+
+    unsigned int timerHours = timerValue / 3600000;
+    unsigned int timerMins = (timerValue - timerHours * 3600000) / 60000;
+    unsigned int timerSecs = (timerValue - timerHours * 3600000 - timerMins * 60000) / 1000;
+
+    //Update EEPROM once per minute
+    if (timerLastWrite/60 != timerValue/60000) setTimerRecovery(timerValue/60000 + 1);
+    //Update LCD once per second
+    if (timerLastWrite != timerValue/1000) {
+      printLCDRPad(iRow, iCol, "", 6, ' ');
+      printLCD_P(iRow, iCol+2, PSTR(":"));
+      if (timerHours > 0) {
+        printLCDLPad(iRow, iCol, itoa(timerHours, buf, 10), 2, '0');
+        printLCDLPad(iRow, iCol + 3, itoa(timerMins, buf, 10), 2, '0');
+      } else {
+        printLCDLPad(iRow, iCol, itoa(timerMins, buf, 10), 2, '0');
+        printLCDLPad(iRow, iCol+ 3, itoa(timerSecs, buf, 10), 2, '0');
+      }
+      timerLastWrite = timerValue/1000;
+    }
+  } else printLCDRPad(iRow, iCol, "", 6, ' ');
+}
+
+void setAlarm(boolean value) {
+  alarmStatus = value;
+  digitalWrite(ALARM_PIN, value);
+}
