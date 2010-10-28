@@ -209,7 +209,7 @@ namespace BrewTrollerCommunicator
 		public static bool ValidateBoilPower(decimal power) { return power >= 0 && power <= 100; }
 		public static bool ValidateEvapRate(decimal evapRate) { return evapRate >= 0 && evapRate <= 20; }
 		public static bool ValidateGrainTemp(decimal temp) { return temp >= 0 && temp <= 150; }
-		public static bool ValidateDelayTime(decimal time) { return time >= 0 && time <= 480; }
+		public static bool ValidateDelayTime(decimal time) { return time >= 0 && time <= 1439; }
 
 	}
 
@@ -263,13 +263,15 @@ namespace BrewTrollerCommunicator
 
 			VesselType = (BTVesselType)btBuf[offset++];
 
-			Capacity = (btBuf[offset++] << 0) +
-					   (btBuf[offset++] << 8) +
-					   (btBuf[offset++] << 16) +
-					   (btBuf[offset++] << 24);
+			Capacity = (btBuf[offset++] << 24) |
+					   (btBuf[offset++] << 16) |
+					   (btBuf[offset++] << 8)  |
+					   (btBuf[offset++] << 0);
+			Capacity /= 1000;
 
-			DeadSpace = (btBuf[offset++] << 0) +
-						(btBuf[offset++] << 8);
+			DeadSpace = (btBuf[offset++] << 8) |
+						(btBuf[offset++] << 0);
+			DeadSpace /= 1000;
 		}
 
 		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
@@ -555,11 +557,13 @@ namespace BrewTrollerCommunicator
 				throw new Exception("BTVolumeSetting.HydrateFromBinary: Buffer Size Error.");
 
 			ID = (BTProfileID)btBuf[offset++];
-			Mask = (UInt32)((btBuf[offset++] << 0) |
-							(btBuf[offset++] << 8) |
-							(btBuf[offset++] << 16) |
-							(btBuf[offset++] << 24));
-			// message supports 64 valve/pump currently only 32 are supported
+			Mask = 0;
+			for (var i = 0; i < 8; i++)
+			{
+				// message supports 64 valve/pump, current BT only supports 32
+				Mask <<= 8;
+				Mask |= btBuf[offset++];
+			}
 
 		}
 
@@ -570,7 +574,7 @@ namespace BrewTrollerCommunicator
 
 		public override string ToString()
 		{
-			return String.Format("{0} Profile: 0x{1:x}({1}) ", ID, Mask);
+			return String.Format("{0} Profile: 0x{1:x8}({1}) ", ID, Mask);
 		}
 
 		public string ToString(string format, IFormatProvider formatProvider)
@@ -709,16 +713,16 @@ namespace BrewTrollerCommunicator
 
 			VesselType = (BTVesselType)btBuf[offset++];
 
-			for (int i = 0; i < 10; i++)
+			for (var i = 0; i < 10; i++)
 			{
-				int vol = (btBuf[offset++] << 0) +
-						  (btBuf[offset++] << 8) +
-						  (btBuf[offset++] << 16) +
-						  (btBuf[offset++] << 24);
-				decimal dVol = (decimal)vol / 1000;
+				var vol = (btBuf[offset++] << 24) |
+						  (btBuf[offset++] << 16) |
+						  (btBuf[offset++] << 8)  |
+						  (btBuf[offset++] << 0);
+				var dVol = (decimal)vol / 1000;
 
-				int val = (btBuf[offset++] << 0) +
-						  (btBuf[offset++] << 8);
+				var val = (btBuf[offset++] << 8) |
+						  (btBuf[offset++] << 0);
 
 				_btCalibrationPoints[i] = new BTCalibrationPoint() { PointID = i, Volume = dVol, Value = val };
 			}
@@ -1095,10 +1099,13 @@ namespace BrewTrollerCommunicator
 
 		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
 		{
+			// scale the value
 			int iVal = (int)(Value * ScaleFactor);
-			for (var i = 0; i < ByteCount; i++)
+
+			//put bytes in buffer in reverse order
+			for (var i = ByteCount - 1; i >= 0; i--)
 			{
-				cmdBuf[offset++] = (byte)(iVal & 0xff);
+				cmdBuf[offset + i] = (byte)(iVal & 0xff);
 				iVal >>= 8;
 			}
 			return ByteCount;
@@ -1123,12 +1130,12 @@ namespace BrewTrollerCommunicator
 
 		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
 		{
-			Value = btBuf[0] != 0;
+			Value = btBuf[offset] != 0;
 		}
 
 		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
 		{
-			cmdBuf[0] = (byte)(Value ? 1 : 0);
+			cmdBuf[offset] = (byte)(Value ? 1 : 0);
 			return 1;
 		}
 
