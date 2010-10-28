@@ -1,0 +1,41 @@
+## Process this file with automake to produce Makefile.in
+
+## Created by Anjuta
+
+AM_CPPFLAGS = \
+	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
+	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
+	-DPACKAGE_DATA_DIR=\""$(datadir)"\" 
+
+AM_CFLAGS =\
+	 -Wall\
+	 -g
+
+bin_PROGRAMS = btnic
+
+btnic_SOURCES = \
+	main.c \
+	cfg.c \
+	cfg.h \
+	conn.c \
+	conn.h \
+	crc16.c \
+	crc16.h \
+	globals.h \
+	log.c \
+	log.h \
+	queue.c \
+	queue.h \
+	sig.c \
+	sig.h \
+	sock.c \
+	sock.h \
+	state.c \
+	state.h \
+	tty.c \
+	tty.h
+
+btnic_LDFLAGS = 
+
+btnic_LDADD = 
+
