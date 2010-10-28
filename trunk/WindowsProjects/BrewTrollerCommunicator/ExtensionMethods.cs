@@ -77,10 +77,19 @@ namespace BrewTrollerCommunicator
 		public static byte LSB(this UInt16 iVal) { return (byte)((iVal >> 0) & 0xff); }
 		public static byte MSB(this UInt16 iVal) { return (byte)((iVal >> 8) & 0xff); }
 
-		public static byte Byte0(this UInt32 iVal) { return (byte)((iVal >>  0) & 0xff); }
+		public static byte LSB(this Int16 iVal) { return (byte)((iVal >> 0) & 0xff); }
+		public static byte MSB(this Int16 iVal) { return (byte)((iVal >> 8) & 0xff); }
+
+		public static byte Byte0(this UInt32 iVal) { return (byte)((iVal >> 0) & 0xff); }
 		public static byte Byte1(this UInt32 iVal) { return (byte)((iVal >>  8) & 0xff); }
 		public static byte Byte2(this UInt32 iVal) { return (byte)((iVal >> 16) & 0xff); }
 		public static byte Byte3(this UInt32 iVal) { return (byte)((iVal >> 24) & 0xff); }
+
+		public static byte Byte0(this Int32 iVal) { return (byte)((iVal >> 0) & 0xff); }
+		public static byte Byte1(this Int32 iVal) { return (byte)((iVal >> 8) & 0xff); }
+		public static byte Byte2(this Int32 iVal) { return (byte)((iVal >> 16) & 0xff); }
+		public static byte Byte3(this Int32 iVal) { return (byte)((iVal >> 24) & 0xff); }
+
 	}
 
 }

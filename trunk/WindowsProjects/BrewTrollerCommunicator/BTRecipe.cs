@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Xml.Serialization;
 using BeerXMLSupportLibrary;
@@ -25,9 +26,39 @@ using BeerXMLSupportLibrary;
 
 namespace BrewTrollerCommunicator
 {
+	/// <summary> BrewTroller Recipe </summary>
+	/// <remarks>
+	/// A BrewTroller Recipe contains the values needed by the BrewTroller to control a 
+	/// brewing cycle. BTRecipe is basically a wrapper for a BeerXML v2.7 recipe. For
+	/// more information on the BeerXML v2 standard see www.beerxml.com.
+	/// 
+	/// The underlying BeerXML object in a BTRecipe contains much more information that
+	/// required by the BT. This information can be exposed or not as determined by the 
+	/// features of the program that is using this library.
+	/// 
+	/// All of the fields required by the BT are exposed directly in a BTRecipe object
+	/// as properties. Get and Set operation on these properties access the proper 
+	/// value in the underlying XML object.
+	/// </remarks>
+	/// 
 	public class BTRecipe : IFormattable, IBTDataClass
 	{
-		private enum MashStepID
+		// Underlying BeerXML recipe object.
+		// 
+		public RecipeType Xml { get; set; }
+
+		[XmlIgnore]
+		public byte RecipeSlot { get; set; }
+
+		public BTUnits Units { get; set; }
+
+		public string Name
+		{
+			get { return Xml.name; }
+			set { Xml.name = value; }
+		}
+
+		public enum MashStepID
 		{
 			PreHeat,
 			DoughIn,
@@ -37,19 +68,6 @@ namespace BrewTrollerCommunicator
 			Sacch2Rest,
 			MashOut
 		}
-
-		public RecipeType Xml { get; set; }
-
-		[XmlIgnore]
-		public byte RecipeSlot { get; set; }
-
-		public string Name
-		{
-			get { return Xml.name; }
-			set { Xml.name = value; }
-		}
-
-		public BTUnits Units { get; set; }
 
 		public MashStepType PreHeat
 		{
@@ -139,8 +157,8 @@ namespace BrewTrollerCommunicator
 
 		public UInt32 Additions { get; set; }
 
-		private readonly List<MashStepType> _mashSteps;
-		public List<MashStepType> MashSteps { get { return _mashSteps; } }
+		private readonly SortedList<MashStepID, MashStepType> _mashSteps;
+		public SortedList<MashStepID, MashStepType> MashSteps { get { return _mashSteps; } }
 
 		public bool AdditionStart { get { return Additions.GetBit(0); } set { Additions = Additions.SetBit(0, value); } }
 		public bool Addition105 { get { return Additions.GetBit(1); } set { Additions = Additions.SetBit(1, value); } }
@@ -162,20 +180,44 @@ namespace BrewTrollerCommunicator
 		public const string BTRecipeID = "BrewTroller 3.3 Recipe";
 
 
+		/// <summary> Construct a BTRecipe </summary>
+		/// 
 		public BTRecipe(BTUnits units)
 		{
 			Units = units;
 			Xml = new RecipeType();
 			InitializeXml();
-			_mashSteps = new List<MashStepType> { DoughIn, AcidRest, ProteinRest, Sacch1Rest, Sacch2Rest, MashOut };
+			_mashSteps = new SortedList<MashStepID, MashStepType> 
+			{ 
+				{MashStepID.PreHeat, PreHeat},
+				{MashStepID.DoughIn, DoughIn},
+				{MashStepID.AcidRest, AcidRest}, 
+				{MashStepID.ProteinRest, ProteinRest}, 
+				{MashStepID.Sacch1Rest, Sacch1Rest}, 
+				{MashStepID.Sacch2Rest, Sacch2Rest}, 
+				{MashStepID.MashOut, MashOut}
+			};
 		}
 
+		/// <summary> Construct a BTRecipe object from an BeerXML recipe </summary>
+		/// 
 		public BTRecipe(RecipeType recipe)
 		{
 			Xml = recipe;
 			Units = (BatchVolume != null && BatchVolume.volume == VolumeUnitType.l) ? BTUnits.Metric : BTUnits.US;
-
+			_mashSteps = new SortedList<MashStepID, MashStepType> 
+			{ 
+				{MashStepID.PreHeat, PreHeat},
+				{MashStepID.DoughIn, DoughIn},
+				{MashStepID.AcidRest, AcidRest}, 
+				{MashStepID.ProteinRest, ProteinRest}, 
+				{MashStepID.Sacch1Rest, Sacch1Rest}, 
+				{MashStepID.Sacch2Rest, Sacch2Rest}, 
+				{MashStepID.MashOut, MashOut}
+			};
 		}
+
+
 
 		public void HydrateFromParamList(int schema, List<string> rspParams)
 		{
@@ -184,7 +226,7 @@ namespace BrewTrollerCommunicator
 			try
 			{
 				// skip recipe slot
-				int index = 1;
+				var index = 1;
 
 				Name = rspParams[index++].Trim();
 
@@ -264,7 +306,7 @@ namespace BrewTrollerCommunicator
 		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
 		{
 			var index = offset;
-			if (len != 51)
+			if (len != 52)
 				throw new Exception("BTRecipe.HydrateFromBinary: Buffer Size Error.");
 
 			// recipe slot
@@ -287,25 +329,20 @@ namespace BrewTrollerCommunicator
 			ASCIIEncoding encoder = new ASCIIEncoding();
 			Name = encoder.GetString(nameArray).Trim();
 
-			// mash steps
-
-			// step count
-			int mashStepCount = btBuf[index++];
-			if (mashStepCount != 6)
-				throw new Exception("BTRecipe.HydrateFromBinary: Invalid number of mash steps.");
-
-			// DoughIn, Acid Rest, Protein Rest, Sacch1 Rest, Sacch2 Rest, Mash Out
-			for (var step = 0; step < 6; step++)
+			// mash steps DoughIn, Acid Rest, Protein Rest, Sacch1 Rest, Sacch2 Rest, Mash Out
+			//		PreHeat is handled separately
+			foreach (var mashStep in MashSteps.Where(mashStep => mashStep.Key != MashStepID.PreHeat))
 			{
-				_mashSteps[step].step_temperature =
-						  new TemperatureType
-						  {
-							  Value = btBuf[index++],
-							  degrees = Units == BTUnits.US ? TemperatureUnitType.F
-																  : TemperatureUnitType.C
-						  };
-				_mashSteps[step].step_time =
-						  new TimeType { Value = btBuf[index++], duration = TimeUnitType.min };
+				mashStep.Value.step_temperature =
+					new TemperatureType
+						{
+							Value = btBuf[index++],
+							degrees = Units == BTUnits.US ? TemperatureUnitType.F
+							          	: TemperatureUnitType.C
+						};
+
+				mashStep.Value.step_time =
+					new TimeType { Value = btBuf[index++], duration = TimeUnitType.min };
 			}
 
 			// mash heat source
@@ -319,6 +356,7 @@ namespace BrewTrollerCommunicator
 								   ? TemperatureUnitType.F
 								   : TemperatureUnitType.C
 			};
+
 			// pitch temp
 			PitchTemp = new TemperatureType
 			{
@@ -327,6 +365,7 @@ namespace BrewTrollerCommunicator
 								   ? TemperatureUnitType.F
 								   : TemperatureUnitType.C
 			};
+
 			// HLT Setpoint
 			HLTSetpoint = new TemperatureType
 			{
@@ -335,38 +374,43 @@ namespace BrewTrollerCommunicator
 								  ? TemperatureUnitType.F
 								  : TemperatureUnitType.C
 			};
+
 			// batch volume
-			decimal dVal = (btBuf[index++] << 24) +
-							(btBuf[index++] << 16) +
-							(btBuf[index++] << 8) +
+			decimal dVal = (btBuf[index++] << 24) |
+							(btBuf[index++] << 16) |
+							(btBuf[index++] << 8) |
 							(btBuf[index++] << 0);
 			BatchVolume = new VolumeType
 			{
 				Value = dVal / 1000,
 				volume = Units == BTUnits.US
-									   ? VolumeUnitType.gal
-									   : VolumeUnitType.l
+								   ? VolumeUnitType.gal
+								   : VolumeUnitType.l
 			};
+
 			// grain weight
+			dVal = (btBuf[index++] << 24) |
+					(btBuf[index++] << 16) |
+					(btBuf[index++] << 8) |
+					(btBuf[index++] << 0);
 			GrainWeight = new MassType
 			{
-				Value = (btBuf[index++] << 24) +
-						(btBuf[index++] << 16) +
-						(btBuf[index++] << 8) +
-						(btBuf[index++] << 0),
+				Value = dVal / 1000,
 				mass = (Units == BTUnits.US)
-							   ? MassUnitType.lb
-							   : MassUnitType.kg
+								? MassUnitType.lb
+								: MassUnitType.kg
 			};
 			// boil time
 			BoilTime = new TimeType
 			{
-				Value = (btBuf[index++] << 8) +
+				Value = (btBuf[index++] << 8) |
 						(btBuf[index++] << 0),
 				duration = TimeUnitType.min
 			};
+
 			// mash ratio
-			dVal = btBuf[index++] + (btBuf[index++] << 8);
+			dVal = (btBuf[index++] << 8) |
+					(btBuf[index++] << 0);
 			MashRatio = dVal / 100;
 
 			// boil additions
@@ -379,9 +423,6 @@ namespace BrewTrollerCommunicator
 		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
 		{
 			var index = offset;
-
-			//Recipe Slot
-			cmdBuf[index++] = RecipeSlot;
 
 			// units
 			cmdBuf[index++] = (byte)Units;
@@ -398,12 +439,11 @@ namespace BrewTrollerCommunicator
 			}
 			cmdBuf[index++] = 0;
 
-			// mash steps
-			cmdBuf[index++] = (byte)MashSteps.Count;
-			foreach (var step in MashSteps)
+			// mash steps (PreHeat get sent separately)
+			foreach (var mashStep in MashSteps.Where(mashStep => mashStep.Key != MashStepID.PreHeat))
 			{
-				cmdBuf[index++] = (byte)step.step_temperature.Value;
-				cmdBuf[index++] = (byte)step.step_time.Value;
+				cmdBuf[index++] = (byte)mashStep.Value.step_temperature.Value;
+				cmdBuf[index++] = (byte)mashStep.Value.step_time.Value;
 			}
 
 			// mash heat source
@@ -448,7 +488,7 @@ namespace BrewTrollerCommunicator
 			cmdBuf[index++] = uiVal.Byte1();
 			cmdBuf[index++] = uiVal.Byte0();
 
-			return index;
+			return (byte)(index - offset);
 		}
 
 
@@ -565,7 +605,7 @@ namespace BrewTrollerCommunicator
 
 		private static HopAdditionTypeAddition[] GetHopsAdditions(BTUnits units)
 		{
-			var hopAdditionList = new List<HopAdditionTypeAddition>
+			var hopAdditionList = new List<HopAdditionTypeAddition>()
     	{
     		NewHopAddition(9999, units),
     		NewHopAddition(105, units),
@@ -616,6 +656,7 @@ namespace BrewTrollerCommunicator
 
 			return grainBill;
 		}
+
 
 		private static HopAdditionTypeAddition NewHopAddition(int additionTime, BTUnits units)
 		{
@@ -732,8 +773,8 @@ namespace BrewTrollerCommunicator
 			case "verbose":
 				return VerboseRecipeText();
 
-			case "G":	return ToString();
-			default:	return ToString();
+			case "G": return ToString();
+			default: return ToString();
 			}
 		}
 
@@ -743,14 +784,14 @@ namespace BrewTrollerCommunicator
 			sb.AppendFormat("Name:         \"{0}\"\n", Name);
 			sb.AppendFormat("Units:        {0}\n", Units);
 			sb.AppendFormat("# Mash Steps: {0}\n", MashSteps.Count);
-			sb.AppendFormat("Sparge Temp:  {0:N3} {1}\n", SpargeTemp.Value, SpargeTemp.degrees);
-			sb.AppendFormat("Pitch Temp:   {0:N3} {1}\n", PitchTemp.Value, PitchTemp.degrees);
+			sb.AppendFormat("Sparge Temp:  {0:N0} {1}\n", SpargeTemp.Value, SpargeTemp.degrees);
+			sb.AppendFormat("Pitch Temp:   {0:N0} {1}\n", PitchTemp.Value, PitchTemp.degrees);
 			sb.AppendFormat("Batch Volume: {0:N3} {1}\n", BatchVolume.Value, BatchVolume.volume);
 			sb.AppendFormat("Mash Heat:    {0}\n", MashHeatSource);
-			sb.AppendFormat("HLT SetPoint: {0:N3} {1}\n", HLTSetpoint.Value, HLTSetpoint.degrees);
+			sb.AppendFormat("HLT SetPoint: {0:N0} {1}\n", HLTSetpoint.Value, HLTSetpoint.degrees);
 			sb.AppendFormat("Grain Weight: {0:N3} {1}\n", GrainWeight.Value, GrainWeight.mass);
-			sb.AppendFormat("Boil Time:    {0:N3} {1}\n", BoilTime.Value, BoilTime.duration);
-			sb.AppendFormat("Mash Ratio:   {0}\n", MashRatio);
+			sb.AppendFormat("Boil Time:    {0:N0} {1}\n", BoilTime.Value, BoilTime.duration);
+			sb.AppendFormat("Mash Ratio:   {0:N2} / 1\n", MashRatio);
 			sb.AppendFormat("Boil Adds:    0x{0:X4}\n", Additions);
 			return sb.ToString();
 		}
@@ -806,19 +847,20 @@ namespace BrewTrollerCommunicator
 
 			RecipeSlot = btBuf[index++];
 
-			decimal dVal = (btBuf[index++] << 0) + (btBuf[index++] << 8) + (btBuf[index++] << 16) + (btBuf[index++] << 24);
+			decimal dVal;
+			dVal = (btBuf[index++] << 24) + (btBuf[index++] << 16) + (btBuf[index++] << 8) + (btBuf[index++] << 0);
 			Grain = new VolumeType { Value = dVal / 1000, volume = volUnits };
 
-			dVal = (btBuf[index++] << 0) + (btBuf[index++] << 8) + (btBuf[index++] << 16) + (btBuf[index++] << 24);
+			dVal = (btBuf[index++] << 24) + (btBuf[index++] << 16) + (btBuf[index++] << 8) + (btBuf[index++] << 0);
 			GrainLoss = new VolumeType { Value = dVal / 1000, volume = volUnits };
 
-			dVal = (btBuf[index++] << 0) + (btBuf[index++] << 8) + (btBuf[index++] << 16) + (btBuf[index++] << 24);
+			dVal = (btBuf[index++] << 24) + (btBuf[index++] << 16) + (btBuf[index++] << 8) + (btBuf[index++] << 0);
 			Preboil = new VolumeType { Value = dVal / 1000, volume = volUnits };
 
-			dVal = (btBuf[index++] << 0) + (btBuf[index++] << 8) + (btBuf[index++] << 16) + (btBuf[index++] << 24);
+			dVal = (btBuf[index++] << 24) + (btBuf[index++] << 16) + (btBuf[index++] << 8) + (btBuf[index++] << 0);
 			Strike = new VolumeType { Value = dVal / 1000, volume = volUnits };
 
-			dVal = (btBuf[index++] << 0) + (btBuf[index++] << 8) + (btBuf[index++] << 16) + (btBuf[index++] << 24);
+			dVal = (btBuf[index++] << 24) + (btBuf[index++] << 16) + (btBuf[index++] << 8) + (btBuf[index++] << 0);
 			Sparge = new VolumeType { Value = dVal / 1000, volume = volUnits };
 		}
 
@@ -837,8 +879,8 @@ namespace BrewTrollerCommunicator
 		{
 			switch (format)
 			{
-			case "G":	return ToString();
-			default:	return ToString();
+			case "G": return ToString();
+			default: return ToString();
 			}
 		}
 
@@ -885,10 +927,10 @@ namespace BrewTrollerCommunicator
 			RecipeSlot = btBuf[index++];
 			var tempUnits = (Units == BTUnits.US) ? TemperatureUnitType.F : TemperatureUnitType.C;
 
-			decimal dVal = btBuf[index++] << 0;
+			decimal dVal = btBuf[index++];
 			Strike = new TemperatureType { Value = dVal, degrees = tempUnits };
 
-			dVal = btBuf[index++] << 0;
+			dVal = btBuf[index++];
 			FirstStep = new TemperatureType { Value = dVal, degrees = tempUnits };
 
 		}
@@ -908,8 +950,8 @@ namespace BrewTrollerCommunicator
 		{
 			switch (format)
 			{
-			case "G":	return ToString();
-			default:	return ToString();
+			case "G": return ToString();
+			default: return ToString();
 			}
 		}
 

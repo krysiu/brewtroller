@@ -47,48 +47,69 @@ namespace BrewTrollerCommunicator
 		{
 			var iVal = 0;
 
-			if (rspParams.Count == 2)
+			switch (rspParams.Count)
 			{
-				// version
-				var verSplit = rspParams[0].Split(new[] { '.' });
-				if (verSplit.Length > 0)
-					int.TryParse(verSplit[0], out iVal);
-				MajorVersion = iVal;
-				if (verSplit.Length > 1)
-					int.TryParse(verSplit[1], out iVal);
-				MinorVersion = iVal;
+			case 2:
+				{
+					// version
+					var verSplit = rspParams[0].Split(new[] { '.' });
+					if (verSplit.Length > 0)
+						int.TryParse(verSplit[0], out iVal);
+					MajorVersion = iVal;
+					if (verSplit.Length > 1)
+						int.TryParse(verSplit[1], out iVal);
+					MinorVersion = iVal;
 
-				// build
-				int.TryParse(rspParams[1], out iVal);
-				BuildNumber = iVal;
+					// build
+					int.TryParse(rspParams[1], out iVal);
+					BuildNumber = iVal;
 
-				ComType = BTComType.ASCII;
-				ComSchema = 0;
-				Units = BTUnits.Unknown;
+					ComType = BTComType.ASCII;
+					ComSchema = 0;
+					Units = BTUnits.Unknown;
+				}
+				break;
+			case 4:
+				{
+					// version
+					var verSplit = rspParams[0].Split(new[] { '.' });
+					if (verSplit.Length > 0)
+						int.TryParse(verSplit[0], out iVal);
+					MajorVersion = iVal;
+					if (verSplit.Length > 1)
+						int.TryParse(verSplit[1], out iVal);
+					MinorVersion = iVal;
+
+					// build
+					int.TryParse(rspParams[1], out iVal);
+					BuildNumber = iVal;
+
+					// schema
+					int.TryParse(rspParams[2], out iVal);
+					ComSchema = iVal;
+
+					int.TryParse(rspParams[3], out iVal);
+					Units = (BTUnits)iVal;
+
+				}
+				break;
+			default:
+				ComType = BTComType.Unknown;
+				break;
 			}
-			else if (rspParams.Count == 4)
+
+			// ComType
+			if (ComSchema < 10)
 			{
-				// version
-				var verSplit = rspParams[0].Split(new[] { '.' });
-				if (verSplit.Length > 0)
-					int.TryParse(verSplit[0], out iVal);
-				MajorVersion = iVal;
-				if (verSplit.Length > 1)
-					int.TryParse(verSplit[1], out iVal);
-				MinorVersion = iVal;
-
-				// build
-				int.TryParse(rspParams[1], out iVal);
-				BuildNumber = iVal;
-
-				// schema
-				int.TryParse(rspParams[2], out iVal);
-				ComSchema = iVal;
-
-				int.TryParse(rspParams[3], out iVal);
-				Units = (BTUnits)iVal;
-
-				ComType = (ComSchema >= 10) ? BTComType.Binary : BTComType.ASCII;
+				ComType = BTComType.ASCII;
+			}
+			else if (ComSchema >= 10 && ComSchema < 19)
+			{
+				ComType = BTComType.Binary;
+			}
+			else if (ComSchema >= 20 && ComSchema < 29)
+			{
+				ComType = BTComType.BTNic;
 			}
 			else
 			{
