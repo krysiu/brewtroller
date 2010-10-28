@@ -160,7 +160,17 @@ along with BTSerialComTester.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
 		<comment>Text for StatusBar</comment>
 	</data>
 	<data name="WarningMsg_InitializeEE">
-		<value xml:space="preserve">Initializing the EEPROM will replace the current configuration settings. Are you sure you want to continue?</value>
+		<value xml:space="preserve">Initializing the EEPROM will replace the current configuration settings.
+    
+EEPROM will be cleared and following defaults applied:
+  Heat Outputs : P=3, I=4, D=2, Cycle=0.4sec, Hysteresis = 5F (3C)
+  Grain Temp : 60F (16C)
+  Boil Temp : 212F (100C)
+  Boil Power : 100%
+  All Steps : Idle
+  All Programs : Erased
+
+Are you sure you want to continue?</value>
 		<comment>
 			Warning message when initializing BT EEPROM
 		</comment>
