@@ -31,6 +31,7 @@
 			this.btnConnect = new System.Windows.Forms.Button();
 			this.btnGetVersion = new System.Windows.Forms.Button();
 			this.grpGetCommands = new System.Windows.Forms.GroupBox();
+			this.btnGetLogStatus = new System.Windows.Forms.Button();
 			this.btnGetAlarm = new System.Windows.Forms.Button();
 			this.btnGetLog = new System.Windows.Forms.Button();
 			this.btnLogging = new System.Windows.Forms.Button();
@@ -56,7 +57,7 @@
 			this.btnGetBoilTemp = new System.Windows.Forms.Button();
 			this.lblUnits = new System.Windows.Forms.Label();
 			this.btnHelp = new System.Windows.Forms.Button();
-			this.lblMode = new System.Windows.Forms.Label();
+			this.lblComType = new System.Windows.Forms.Label();
 			this.cboComPorts = new System.Windows.Forms.ComboBox();
 			this.grpSetCommands = new System.Windows.Forms.GroupBox();
 			this.btnSetAlarm = new System.Windows.Forms.Button();
@@ -76,7 +77,7 @@
 			this.updnBoilTemp = new System.Windows.Forms.NumericUpDown();
 			this.btnSetBoil = new System.Windows.Forms.Button();
 			this.lblVerLbl = new System.Windows.Forms.Label();
-			this.lblModeLbl = new System.Windows.Forms.Label();
+			this.lblComTypeLbl = new System.Windows.Forms.Label();
 			this.lblVersion = new System.Windows.Forms.Label();
 			this.lblBuild = new System.Windows.Forms.Label();
 			this.lblBuildLbl = new System.Windows.Forms.Label();
@@ -119,6 +120,8 @@
 			this.btnRestoreEEPROM = new System.Windows.Forms.Button();
 			this.tabLogging = new System.Windows.Forms.TabPage();
 			this.grpConnect = new System.Windows.Forms.GroupBox();
+			this.lblBTFW = new System.Windows.Forms.Label();
+			this.lblCom = new System.Windows.Forms.Label();
 			this.statusBar = new System.Windows.Forms.StatusStrip();
 			this.tsStatus = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -167,6 +170,7 @@
 			// 
 			// grpGetCommands
 			// 
+			this.grpGetCommands.Controls.Add(this.btnGetLogStatus);
 			this.grpGetCommands.Controls.Add(this.btnGetAlarm);
 			this.grpGetCommands.Controls.Add(this.btnGetLog);
 			this.grpGetCommands.Controls.Add(this.btnLogging);
@@ -195,20 +199,30 @@
 			this.grpGetCommands.TabStop = false;
 			this.grpGetCommands.Text = "BT Get Commands";
 			// 
+			// btnGetLogStatus
+			// 
+			this.btnGetLogStatus.Location = new System.Drawing.Point(200, 198);
+			this.btnGetLogStatus.Name = "btnGetLogStatus";
+			this.btnGetLogStatus.Size = new System.Drawing.Size(75, 23);
+			this.btnGetLogStatus.TabIndex = 21;
+			this.btnGetLogStatus.Text = "Log Status";
+			this.btnGetLogStatus.UseVisualStyleBackColor = true;
+			this.btnGetLogStatus.Click += new System.EventHandler(this.btnGetLogStatus_Click);
+			// 
 			// btnGetAlarm
 			// 
 			this.btnGetAlarm.Location = new System.Drawing.Point(200, 168);
 			this.btnGetAlarm.Name = "btnGetAlarm";
 			this.btnGetAlarm.Size = new System.Drawing.Size(75, 23);
 			this.btnGetAlarm.TabIndex = 20;
-			this.btnGetAlarm.Text = "Alarm Sts.";
+			this.btnGetAlarm.Text = "Alarm";
 			this.btnGetAlarm.UseVisualStyleBackColor = true;
 			this.btnGetAlarm.Click += new System.EventHandler(this.btnGetAlarm_Click);
 			// 
 			// btnGetLog
 			// 
 			this.btnGetLog.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-			this.btnGetLog.Location = new System.Drawing.Point(200, 250);
+			this.btnGetLog.Location = new System.Drawing.Point(200, 257);
 			this.btnGetLog.Name = "btnGetLog";
 			this.btnGetLog.Size = new System.Drawing.Size(75, 23);
 			this.btnGetLog.TabIndex = 19;
@@ -220,7 +234,7 @@
 			// 
 			this.btnLogging.DialogResult = System.Windows.Forms.DialogResult.Cancel;
 			this.btnLogging.Enabled = false;
-			this.btnLogging.Location = new System.Drawing.Point(200, 221);
+			this.btnLogging.Location = new System.Drawing.Point(200, 228);
 			this.btnLogging.Name = "btnLogging";
 			this.btnLogging.Size = new System.Drawing.Size(75, 23);
 			this.btnLogging.TabIndex = 18;
@@ -322,7 +336,7 @@
 			this.btnGetDelayTime.Name = "btnGetDelayTime";
 			this.btnGetDelayTime.Size = new System.Drawing.Size(75, 23);
 			this.btnGetDelayTime.TabIndex = 13;
-			this.btnGetDelayTime.Text = "Start Delay";
+			this.btnGetDelayTime.Text = "Cycle Delay";
 			this.btnGetDelayTime.UseVisualStyleBackColor = true;
 			this.btnGetDelayTime.Click += new System.EventHandler(this.btnGetDelayTime_Click);
 			// 
@@ -487,7 +501,7 @@
 			// lblUnits
 			// 
 			this.lblUnits.AutoSize = true;
-			this.lblUnits.Location = new System.Drawing.Point(440, 18);
+			this.lblUnits.Location = new System.Drawing.Point(448, 23);
 			this.lblUnits.Name = "lblUnits";
 			this.lblUnits.Size = new System.Drawing.Size(29, 13);
 			this.lblUnits.TabIndex = 12;
@@ -504,15 +518,15 @@
 			this.btnHelp.UseVisualStyleBackColor = true;
 			this.btnHelp.Click += new System.EventHandler(this.btnHelp_Click);
 			// 
-			// lblMode
+			// lblComType
 			// 
-			this.lblMode.AutoSize = true;
-			this.lblMode.BackColor = System.Drawing.SystemColors.Control;
-			this.lblMode.Location = new System.Drawing.Point(262, 18);
-			this.lblMode.Name = "lblMode";
-			this.lblMode.Size = new System.Drawing.Size(33, 13);
-			this.lblMode.TabIndex = 5;
-			this.lblMode.Text = "mode";
+			this.lblComType.AutoSize = true;
+			this.lblComType.BackColor = System.Drawing.SystemColors.Control;
+			this.lblComType.Location = new System.Drawing.Point(261, 28);
+			this.lblComType.Name = "lblComType";
+			this.lblComType.Size = new System.Drawing.Size(33, 13);
+			this.lblComType.TabIndex = 5;
+			this.lblComType.Text = "mode";
 			// 
 			// cboComPorts
 			// 
@@ -554,7 +568,7 @@
 			this.btnSetAlarm.Name = "btnSetAlarm";
 			this.btnSetAlarm.Size = new System.Drawing.Size(75, 23);
 			this.btnSetAlarm.TabIndex = 21;
-			this.btnSetAlarm.Text = "Alarm";
+			this.btnSetAlarm.Text = "Set Alarm";
 			this.btnSetAlarm.UseVisualStyleBackColor = true;
 			this.btnSetAlarm.Click += new System.EventHandler(this.btnSetAlarm_Click);
 			// 
@@ -591,7 +605,7 @@
 			// 
 			this.updnDelayTime.Location = new System.Drawing.Point(93, 137);
 			this.updnDelayTime.Maximum = new decimal(new int[] {
-            300,
+            1439,
             0,
             0,
             0});
@@ -608,7 +622,7 @@
 			this.btnSetDelayTime.Name = "btnSetDelayTime";
 			this.btnSetDelayTime.Size = new System.Drawing.Size(75, 23);
 			this.btnSetDelayTime.TabIndex = 12;
-			this.btnSetDelayTime.Text = "Start Delay";
+			this.btnSetDelayTime.Text = "Cycle Delay";
 			this.btnSetDelayTime.UseVisualStyleBackColor = true;
 			this.btnSetDelayTime.Click += new System.EventHandler(this.btnSetDelayTime_Click);
 			// 
@@ -640,7 +654,7 @@
 			this.btnSetGrainTemp.TabIndex = 10;
 			this.btnSetGrainTemp.Text = "Grain Temp.";
 			this.btnSetGrainTemp.UseVisualStyleBackColor = true;
-			this.btnSetGrainTemp.Click += new System.EventHandler(this.setGrainTemp_Click);
+			this.btnSetGrainTemp.Click += new System.EventHandler(this.btnSetGrainTemp_Click);
 			// 
 			// lblEvapUnits
 			// 
@@ -752,26 +766,26 @@
 			// 
 			this.lblVerLbl.AutoSize = true;
 			this.lblVerLbl.BackColor = System.Drawing.SystemColors.Control;
-			this.lblVerLbl.Location = new System.Drawing.Point(311, 18);
+			this.lblVerLbl.Location = new System.Drawing.Point(326, 28);
 			this.lblVerLbl.Name = "lblVerLbl";
-			this.lblVerLbl.Size = new System.Drawing.Size(45, 13);
+			this.lblVerLbl.Size = new System.Drawing.Size(29, 13);
 			this.lblVerLbl.TabIndex = 8;
-			this.lblVerLbl.Text = "Version:";
+			this.lblVerLbl.Text = "Ver.:";
 			// 
-			// lblModeLbl
+			// lblComTypeLbl
 			// 
-			this.lblModeLbl.AutoSize = true;
-			this.lblModeLbl.Location = new System.Drawing.Point(227, 18);
-			this.lblModeLbl.Name = "lblModeLbl";
-			this.lblModeLbl.Size = new System.Drawing.Size(37, 13);
-			this.lblModeLbl.TabIndex = 9;
-			this.lblModeLbl.Text = "Mode:";
+			this.lblComTypeLbl.AutoSize = true;
+			this.lblComTypeLbl.Location = new System.Drawing.Point(226, 28);
+			this.lblComTypeLbl.Name = "lblComTypeLbl";
+			this.lblComTypeLbl.Size = new System.Drawing.Size(34, 13);
+			this.lblComTypeLbl.TabIndex = 9;
+			this.lblComTypeLbl.Text = "Type:";
 			// 
 			// lblVersion
 			// 
 			this.lblVersion.AutoSize = true;
 			this.lblVersion.BackColor = System.Drawing.SystemColors.Control;
-			this.lblVersion.Location = new System.Drawing.Point(354, 18);
+			this.lblVersion.Location = new System.Drawing.Point(354, 28);
 			this.lblVersion.Name = "lblVersion";
 			this.lblVersion.Size = new System.Drawing.Size(23, 13);
 			this.lblVersion.TabIndex = 10;
@@ -781,7 +795,7 @@
 			// 
 			this.lblBuild.AutoSize = true;
 			this.lblBuild.BackColor = System.Drawing.SystemColors.Control;
-			this.lblBuild.Location = new System.Drawing.Point(354, 35);
+			this.lblBuild.Location = new System.Drawing.Point(354, 43);
 			this.lblBuild.Name = "lblBuild";
 			this.lblBuild.Size = new System.Drawing.Size(29, 13);
 			this.lblBuild.TabIndex = 12;
@@ -791,7 +805,7 @@
 			// 
 			this.lblBuildLbl.AutoSize = true;
 			this.lblBuildLbl.BackColor = System.Drawing.SystemColors.Control;
-			this.lblBuildLbl.Location = new System.Drawing.Point(323, 35);
+			this.lblBuildLbl.Location = new System.Drawing.Point(323, 43);
 			this.lblBuildLbl.Name = "lblBuildLbl";
 			this.lblBuildLbl.Size = new System.Drawing.Size(33, 13);
 			this.lblBuildLbl.TabIndex = 11;
@@ -801,7 +815,7 @@
 			// 
 			this.lblUnitsLbl.AutoSize = true;
 			this.lblUnitsLbl.BackColor = System.Drawing.SystemColors.Control;
-			this.lblUnitsLbl.Location = new System.Drawing.Point(404, 18);
+			this.lblUnitsLbl.Location = new System.Drawing.Point(412, 23);
 			this.lblUnitsLbl.Name = "lblUnitsLbl";
 			this.lblUnitsLbl.Size = new System.Drawing.Size(34, 13);
 			this.lblUnitsLbl.TabIndex = 13;
@@ -810,7 +824,7 @@
 			// lblSchema
 			// 
 			this.lblSchema.AutoSize = true;
-			this.lblSchema.Location = new System.Drawing.Point(262, 35);
+			this.lblSchema.Location = new System.Drawing.Point(262, 43);
 			this.lblSchema.Name = "lblSchema";
 			this.lblSchema.Size = new System.Drawing.Size(44, 13);
 			this.lblSchema.TabIndex = 14;
@@ -820,7 +834,7 @@
 			// 
 			this.lblSchemaLbl.AutoSize = true;
 			this.lblSchemaLbl.BackColor = System.Drawing.SystemColors.Control;
-			this.lblSchemaLbl.Location = new System.Drawing.Point(215, 35);
+			this.lblSchemaLbl.Location = new System.Drawing.Point(215, 43);
 			this.lblSchemaLbl.Name = "lblSchemaLbl";
 			this.lblSchemaLbl.Size = new System.Drawing.Size(49, 13);
 			this.lblSchemaLbl.TabIndex = 15;
@@ -950,9 +964,9 @@
 			// 
 			this.lblAlarm.BackColor = System.Drawing.Color.Red;
 			this.lblAlarm.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.lblAlarm.Location = new System.Drawing.Point(407, 35);
+			this.lblAlarm.Location = new System.Drawing.Point(407, 39);
 			this.lblAlarm.Name = "lblAlarm";
-			this.lblAlarm.Size = new System.Drawing.Size(74, 23);
+			this.lblAlarm.Size = new System.Drawing.Size(74, 20);
 			this.lblAlarm.TabIndex = 17;
 			this.lblAlarm.Text = "Alarm!";
 			this.lblAlarm.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1087,7 +1101,7 @@
 			this.btnReadEE.TabIndex = 0;
 			this.btnReadEE.Text = "Read";
 			this.btnReadEE.UseVisualStyleBackColor = true;
-			this.btnReadEE.Click += new System.EventHandler(this.btnReadEE_Click);
+			this.btnReadEE.Click += new System.EventHandler(this.btnReadEEPROM_Click);
 			// 
 			// btnInitializeEE
 			// 
@@ -1097,7 +1111,7 @@
 			this.btnInitializeEE.TabIndex = 17;
 			this.btnInitializeEE.Text = "Initialize";
 			this.btnInitializeEE.UseVisualStyleBackColor = true;
-			this.btnInitializeEE.Click += new System.EventHandler(this.btnInitializeEE_Click);
+			this.btnInitializeEE.Click += new System.EventHandler(this.btnInitializeEEPROM_Click);
 			// 
 			// updnReadLengthEE
 			// 
@@ -1255,15 +1269,17 @@
 			// 
 			// grpConnect
 			// 
+			this.grpConnect.Controls.Add(this.lblBTFW);
+			this.grpConnect.Controls.Add(this.lblCom);
 			this.grpConnect.Controls.Add(this.btnConnect);
 			this.grpConnect.Controls.Add(this.lblAlarm);
-			this.grpConnect.Controls.Add(this.lblMode);
+			this.grpConnect.Controls.Add(this.lblComType);
 			this.grpConnect.Controls.Add(this.lblSchema);
 			this.grpConnect.Controls.Add(this.cboComPorts);
 			this.grpConnect.Controls.Add(this.lblSchemaLbl);
 			this.grpConnect.Controls.Add(this.lblVerLbl);
 			this.grpConnect.Controls.Add(this.lblUnits);
-			this.grpConnect.Controls.Add(this.lblModeLbl);
+			this.grpConnect.Controls.Add(this.lblComTypeLbl);
 			this.grpConnect.Controls.Add(this.lblUnitsLbl);
 			this.grpConnect.Controls.Add(this.lblVersion);
 			this.grpConnect.Controls.Add(this.lblBuild);
@@ -1273,6 +1289,30 @@
 			this.grpConnect.Size = new System.Drawing.Size(514, 64);
 			this.grpConnect.TabIndex = 19;
 			this.grpConnect.TabStop = false;
+			// 
+			// lblBTFW
+			// 
+			this.lblBTFW.AutoSize = true;
+			this.lblBTFW.BackColor = System.Drawing.SystemColors.Control;
+			this.lblBTFW.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.lblBTFW.ForeColor = System.Drawing.Color.Maroon;
+			this.lblBTFW.Location = new System.Drawing.Point(327, 12);
+			this.lblBTFW.Name = "lblBTFW";
+			this.lblBTFW.Size = new System.Drawing.Size(47, 13);
+			this.lblBTFW.TabIndex = 19;
+			this.lblBTFW.Text = "BT S/W";
+			// 
+			// lblCom
+			// 
+			this.lblCom.AutoSize = true;
+			this.lblCom.BackColor = System.Drawing.SystemColors.Control;
+			this.lblCom.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.lblCom.ForeColor = System.Drawing.Color.Maroon;
+			this.lblCom.Location = new System.Drawing.Point(217, 11);
+			this.lblCom.Name = "lblCom";
+			this.lblCom.Size = new System.Drawing.Size(79, 13);
+			this.lblCom.TabIndex = 18;
+			this.lblCom.Text = "Communication";
 			// 
 			// statusBar
 			// 
@@ -1361,7 +1401,7 @@
 		private System.Windows.Forms.Button getRecipe;
 		private System.Windows.Forms.ComboBox cboRecipeSlot;
 		private System.Windows.Forms.Button btnHelp;
-		private System.Windows.Forms.Label lblMode;
+		private System.Windows.Forms.Label lblComType;
 		private System.Windows.Forms.ComboBox cboComPorts;
 		private System.Windows.Forms.Label lblUnits;
 		private System.Windows.Forms.GroupBox grpSetCommands;
@@ -1374,7 +1414,7 @@
 		private System.Windows.Forms.NumericUpDown updnEvapRate;
 		private System.Windows.Forms.Button btnSetEvapRate;
 		private System.Windows.Forms.Label lblVerLbl;
-		private System.Windows.Forms.Label lblModeLbl;
+		private System.Windows.Forms.Label lblComTypeLbl;
 		private System.Windows.Forms.Label lblVersion;
 		private System.Windows.Forms.Label lblBuild;
 		private System.Windows.Forms.Label lblBuildLbl;
@@ -1437,6 +1477,9 @@
 		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
 		private System.Windows.Forms.NumericUpDown updnWriteLengthEE;
 		private System.Windows.Forms.CheckBox chkHexWriteLength;
+		private System.Windows.Forms.Button btnGetLogStatus;
+		private System.Windows.Forms.Label lblCom;
+		private System.Windows.Forms.Label lblBTFW;
 	}
 }
 

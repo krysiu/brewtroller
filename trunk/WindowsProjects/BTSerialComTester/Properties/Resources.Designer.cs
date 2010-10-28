@@ -151,7 +151,17 @@ namespace BTSerialComTester.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Initializing the EEPROM will replace the current configuration settings. Are you sure you want to continue?.
+        ///   Looks up a localized string similar to Initializing the EEPROM will replace the current configuration settings.
+        ///    
+        ///EEPROM will be cleared and following defaults applied:
+        ///  Heat Outputs : P=3, I=4, D=2, Cycle=0.4sec, Hysteresis = 5F (3C)
+        ///  Grain Temp : 60F (16C)
+        ///  Boil Temp : 212F (100C)
+        ///  Boil Power : 100%
+        ///  All Steps : Idle
+        ///  All Programs : Erased
+        ///
+        ///Are you sure you want to continue?.
         /// </summary>
         internal static string WarningMsg_InitializeEE {
             get {
