@@ -39,6 +39,8 @@ namespace BTSerialComTester
 		private bool _logEnabled;
 		private bool _alarmState;
 
+		BT_EEPROM _eePROM = new BT_EEPROM();
+
 		public BTSerialComTester()
 		{
 			InitializeComponent();
@@ -106,7 +108,7 @@ namespace BTSerialComTester
 			if (_btCom.IsConnected)
 			{
 				rtbResults.Text = String.Format("Successfully connected to BT using '{0}'.", cboComPorts.SelectedItem);
-				lblMode.Text = _btCom.Version.ComType.ToString();
+				lblComType.Text = _btCom.Version.ComType.ToString();
 				lblSchema.Text = _btCom.Version.ComSchema.ToString();
 				lblUnits.Text = _btCom.Version.Units.ToString();
 				lblVersion.Text = _btCom.Version.Version;
@@ -125,11 +127,14 @@ namespace BTSerialComTester
 				btnGetAlarm.Enabled = _btCom.Version.ComSchema > 0;
 				btnLogging.Enabled = true;
 				btnGetLog.Enabled = _btCom.Version.ComSchema > 0;
+				btnGetLogStatus.Enabled = _btCom.Version.ComSchema > 0;
+				grpPerfTest.Enabled = _btCom.Version.ComSchema > 0;
 			}
 			else
 			{
-				lblMode.BackColor = SystemColors.Control;
-				lblMode.Text = String.Empty;
+				lblComType.BackColor = SystemColors.Control;
+				lblComType.Text = String.Empty;
+				lblSchema.Text = String.Empty;
 				lblUnits.Text = String.Empty;
 				lblVersion.Text = String.Empty;
 				lblBuild.Text = String.Empty;
@@ -139,12 +144,68 @@ namespace BTSerialComTester
 			grpSetCommands.Enabled = _btCom.IsConnected;
 			grpPerfTest.Enabled = _btCom.IsConnected;
 
-			grpEEPROM.Enabled = false; // _btCom.IsConnected;
+			grpEEPROM.Enabled = _btCom.IsConnected && _btCom.Version.ComSchema > 0;
 
 
 		}
 
 
+		private void btnHelp_Click(object sender, EventArgs e)
+		{
+			using (AboutBox aboutDlg = new AboutBox())
+			{
+				aboutDlg.ShowDialog();
+			}
+		}
+
+		private void btnDisplayErrors_Click(object sender, EventArgs e)
+		{
+			using (TextReader tr = new StreamReader(Settings.Default.ErrorLogFile))
+			{
+				try
+				{
+					rtbResults.Text = tr.ReadToEnd();
+				}
+				catch
+				{
+				}
+				finally
+				{
+					tr.Close();
+				}
+			}
+
+		}
+
+		private void DisplayComError(Exception ex)
+		{
+			rtbResults.Text = ex.Message;
+			tsStatus.Text = ex.Message;
+			if (ex.InnerException != null)
+			{
+				rtbResults.Text += Resources.NewLinePlusSpace + ex.InnerException.Message;
+				tsStatus.Text = ex.InnerException.Message;
+			}
+		}
+
+		private void cboComPorts_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			Settings.Default.LastComPort = cboComPorts.SelectedItem.ToString();
+			Settings.Default.Save();
+		}
+
+
+
+		private void ClearSts()
+		{
+			tsStatus.Text = String.Empty;
+		}
+
+		private void DoneSts()
+		{
+			tsStatus.Text = Resources.StatusBar_Done;
+		}
+		
 		private void btnConnect_Click(object sender, EventArgs e)
 		{
 			if (_btCom.IsConnected)
@@ -190,400 +251,33 @@ namespace BTSerialComTester
 			}
 		}
 
-		private void btnGetBoilTemp_Click(object sender, EventArgs e)
+		private void btnInitializeEEPROM_Click(object sender, EventArgs e)
 		{
+			var rslt = MessageBox.Show(Resources.WarningMsg_InitializeEE,
+									   Resources.MsgBoxHeader_InitializeEEPROM,
+									   MessageBoxButtons.OKCancel,
+									   MessageBoxIcon.Warning);
+			if (rslt == DialogResult.Cancel)
+				return;
+
+			var currentCursor = Cursor.Current;
+			Cursor = Cursors.WaitCursor;
 			try
 			{
-				var boilTemp = _btCom.GetBoilTemp();
-				rtbResults.Text = String.Format("{0} F", boilTemp);
+				_btCom.GetBoilTemp();		// just to get the current timestamp
+				_btCom.InitializeEEPROM();
 			}
-			catch (Exception ex)
+			catch (System.Exception ex)
 			{
 				DisplayComError(ex);
 			}
-		}
-
-		private void btnGetBoilPower_Click(object sender, EventArgs e)
-		{
-			try
+			finally
 			{
-				var boilPower = _btCom.GetBoilPower();
-				rtbResults.Text = String.Format("{0} %", boilPower);
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
+				Cursor = currentCursor;
 			}
 		}
 
-		private void btnGetCal_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				var calibration = _btCom.GetVesselCalibration((BTVesselType)cboCalibration.SelectedIndex);
-				rtbResults.Text = calibration.ToString();
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnGetEvap_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				var evapRate = _btCom.GetEvapRate();
-				rtbResults.Text = String.Format("{0:n2} %/hr.", evapRate * 100);
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnGetPID_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				var pid = _btCom.GetHeatOutputConfig((BTHeatOutputID)cboVessel.SelectedIndex);
-				rtbResults.Text = pid.ToString();
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnGetProfile_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				var profile = _btCom.GetValveProfile((BTProfileID)cboProfile.SelectedIndex);
-				rtbResults.Text = profile.ToString();
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnGetTemps_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				var tsAddr = _btCom.GetTempSensorAddress((TSLocation)cboTemps.SelectedIndex);
-				rtbResults.Text = tsAddr.ToString();
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnGetVolume_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				var volume = _btCom.GetVolumeSetting((BTVesselType)cboVolume.SelectedIndex);
-				rtbResults.Text = volume.ToString();
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnGetRecipe_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				var recipe = _btCom.GetRecipe(cboRecipeSlot.SelectedIndex);
-				rtbResults.Text = recipe.ToString("verbose", null);
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnGetCalcVols_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				var calcVols = _btCom.GetCalcVols(cboRecipeSlot.SelectedIndex);
-				rtbResults.Text = calcVols.ToString("verbose", null);
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnGetCalcTemps_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				var calcTemps = _btCom.GetCalcTemps(cboRecipeSlot.SelectedIndex);
-				rtbResults.Text = calcTemps.ToString("verbose", null);
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-
-		private void btnGetGrainTemp_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				var grainTemp = _btCom.GetGrainTemp();
-				rtbResults.Text = String.Format("{0} F", grainTemp);
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnGetDelayTime_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				var delayTime = _btCom.GetDelayTime();
-				rtbResults.Text = String.Format("{0} min.", delayTime);
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-
-		private void btnSetBoilTemp_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				_btCom.SetBoilTemp(updnBoilTemp.Value);
-				rtbResults.Text = String.Empty;
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnSetBoilPower_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				_btCom.SetBoilPower(updnBoilPower.Value);
-				rtbResults.Text = String.Empty;
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnSetEvapRate_Click_1(object sender, EventArgs e)
-		{
-			try
-			{
-				decimal evapRate = updnEvapRate.Value;
-				_btCom.SetEvapRate(evapRate);
-				rtbResults.Text = String.Empty;
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void setGrainTemp_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				decimal grainTemp = updnGrainTemp.Value;
-				_btCom.SetGrainTemp(grainTemp);
-				rtbResults.Text = String.Empty;
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnSetDelayTime_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				decimal delayTime = updnDelayTime.Value;
-				_btCom.SetDelayTime(delayTime);
-				rtbResults.Text = String.Empty;
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnGetAlarm_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				_alarmState = _btCom.GetAlarm();
-				rtbResults.Text = String.Format("Alarm is {0}!", _alarmState ? "On" : "Off");
-				lblAlarm.Visible = _alarmState;
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void btnSetAlarm_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				_btCom.SetAlarm(!_alarmState);
-				btnGetAlarm_Click(null, null);
-				btnSetAlarm.Text = _alarmState ? "Clear Alarm" : "Set Alarm";
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-
-
-
-		private void btnHelp_Click(object sender, EventArgs e)
-		{
-			using (AboutBox aboutDlg = new AboutBox())
-			{
-				aboutDlg.ShowDialog();
-			}
-		}
-
-		private void cboComPorts_SelectedIndexChanged(object sender, EventArgs e)
-		{
-			Settings.Default.LastComPort = cboComPorts.SelectedItem.ToString();
-			Settings.Default.Save();
-		}
-
-		private void btnLog_Click(object sender, EventArgs e)
-		{
-			if (_logEnabled)
-			{
-				_btCom.SetLogStatus(false);
-				btnLogging.Text = Resources.LogOn;
-				btnLogging.BackColor = SystemColors.Control;
-				_logEnabled = false;
-			}
-			else
-			{
-				_btCom.SetLogStatus(true);
-				btnLogging.BackColor = Color.LightGreen;
-				btnLogging.Text = Resources.LogOff;
-				_logEnabled = true;
-				try
-				{
-					var sb = new StringBuilder();
-					while (true)
-					{
-						var btStr = _btCom.GetBTResponse(3000);
-						sb.AppendFormat("{0}\n", btStr);
-						if (!btStr.Contains("VLVPRF")) 
-							continue;
-						rtbResults.Text = sb.ToString();
-						sb.Length = 0;
-						Application.DoEvents();
-					}
-				}
-				catch
-				{
-
-				}
-			}
-		}
-
-		private void btnGetLog_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				rtbResults.Text = _btCom.GetLog();
-			}
-			catch (Exception ex)
-			{
-				DisplayComError(ex);
-			}
-		}
-
-		private void DisplayComError(Exception ex)
-		{
-			rtbResults.Text = ex.Message;
-			tsStatus.Text = ex.Message;
-			if (ex.InnerException != null)
-			{
-				rtbResults.Text += Resources.NewLinePlusSpace + ex.InnerException.Message;
-				tsStatus.Text = ex.InnerException.Message;
-			}
-		}
-
-		private void btnStartSpeedTest_Click(object sender, EventArgs e)
-		{
-			if (File.Exists(Settings.Default.ErrorLogFile))
-				File.Delete(Settings.Default.ErrorLogFile);
-			btnStartSpeedTest.BackColor = Color.LimeGreen;
-			_btCom.ComRetries = 1;
-			var errorCount = 0;
-			tbErrorCount.Text = String.Empty;
-			tbErrorCount.BackColor = SystemColors.Control;
-
-			for (int i = 0; i < updnTestCount.Value; i++)
-			{
-				try
-				{
-					rtbResults.Text = _btCom.GetLog();
-				}
-				catch (Exception)
-				{
-					errorCount++;
-					tbErrorCount.Text = errorCount.ToString();
-					tbErrorCount.BackColor = Color.Red;
-				}
-				tbCurrentCount.Text = (i + 1).ToString();
-				Application.DoEvents();
-			}
-			btnStartSpeedTest.BackColor = SystemColors.Control;
-			_btCom.ComRetries = 3;
-		}
-
-		private void btnDisplayErrors_Click(object sender, EventArgs e)
-		{
-			using (TextReader tr = new StreamReader(Settings.Default.ErrorLogFile))
-			{
-				try
-				{
-					rtbResults.Text = tr.ReadToEnd();
-				}
-				catch
-				{
-				}
-				finally
-				{
-					tr.Close();
-				}
-			}
-
-		}
-
-		BT_EEPROM _eePROM = new BT_EEPROM();
-
-		private void btnReadEE_Click(object sender, EventArgs e)
+		private void btnReadEEPROM_Click(object sender, EventArgs e)
 		{
 			try
 			{
@@ -603,15 +297,15 @@ namespace BTSerialComTester
 			ClearSts();
 			_eePROM.Address = (UInt16)updnWriteAddressEE.Value;
 			var strRec = txtDataEE.Text;
-			if (strRec.Length %2 == 1)
-				strRec = strRec.Substring(0, strRec.Length-1);
-			_eePROM.ByteCount = strRec.Length/2;
+			if (strRec.Length % 2 == 1)
+				strRec = strRec.Substring(0, strRec.Length - 1);
+			_eePROM.ByteCount = strRec.Length / 2;
 			for (var i = 0; i < txtDataEE.Text.Length / 2; i++)
 			{
 				byte btVal;
-				if (!byte.TryParse(strRec.Substring(i*2, 2), NumberStyles.HexNumber, null, out btVal))
+				if (!byte.TryParse(strRec.Substring(i * 2, 2), NumberStyles.HexNumber, null, out btVal))
 					throw new ArgumentException("Unable to parse Data");
-				_eePROM.Data[_eePROM.Address+i] = btVal;
+				_eePROM.Data[_eePROM.Address + i] = btVal;
 			}
 			try
 			{
@@ -625,16 +319,6 @@ namespace BTSerialComTester
 			DoneSts();
 		}
 
-		private void ClearSts()
-		{
-			tsStatus.Text = String.Empty;
-		}
-
-		private void DoneSts()
-		{
-			tsStatus.Text = Resources.StatusBar_Done;
-		}
-		
 		private void btnBackupEEPROM_Click(object sender, EventArgs e)
 		{
 			try
@@ -650,7 +334,7 @@ namespace BTSerialComTester
 					{
 						dlg.InitialDirectory = Path.GetDirectoryName(Settings.Default.LastEEPromFile);
 					}
-	
+
 					if (dlg.ShowDialog() == DialogResult.Cancel)
 						return;
 
@@ -717,6 +401,366 @@ namespace BTSerialComTester
 			}
 		}
 
+		private void btnGetRecipe_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var recipe = _btCom.GetRecipe(cboRecipeSlot.SelectedIndex);
+				rtbResults.Text = recipe.ToString("verbose", null);
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetCalcTemps_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var calcTemps = _btCom.GetCalcTemps(cboRecipeSlot.SelectedIndex);
+				rtbResults.Text = calcTemps.ToString("verbose", null);
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+
+		private void btnGetCalcVols_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var calcVols = _btCom.GetCalcVols(cboRecipeSlot.SelectedIndex);
+				rtbResults.Text = calcVols.ToString("verbose", null);
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnLog_Click(object sender, EventArgs e)
+		{
+			if (_logEnabled)
+			{
+				_btCom.SetLogStatus(false);
+				btnLogging.Text = Resources.LogOn;
+				btnLogging.BackColor = SystemColors.Control;
+				_logEnabled = false;
+			}
+			else
+			{
+				_btCom.SetLogStatus(true);
+				btnLogging.BackColor = Color.LightGreen;
+				btnLogging.Text = Resources.LogOff;
+				_logEnabled = true;
+				try
+				{
+					var sb = new StringBuilder();
+					while (true)
+					{
+						var btStr = _btCom.GetBTResponse(3000);
+						sb.AppendFormat("{0}\n", btStr);
+						if (!btStr.Contains("VLVPRF"))
+							continue;
+						rtbResults.Text = sb.ToString();
+						sb.Length = 0;
+						Application.DoEvents();
+					}
+				}
+				catch
+				{
+
+				}
+			}
+		}
+
+		private void btnGetLog_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				rtbResults.Text = _btCom.GetLog();
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetBoilTemp_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var boilTemp = _btCom.GetBoilTemp();
+				rtbResults.Text = String.Format("{0} F", boilTemp);
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnSetBoilTemp_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				_btCom.SetBoilTemp(updnBoilTemp.Value);
+				rtbResults.Text = String.Empty;
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetBoilPower_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var boilPower = _btCom.GetBoilPower();
+				rtbResults.Text = String.Format("{0} %", boilPower);
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnSetBoilPower_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				_btCom.SetBoilPower(updnBoilPower.Value);
+				rtbResults.Text = String.Empty;
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetDelayTime_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var delayTime = _btCom.GetDelayTime();
+				rtbResults.Text = String.Format("{0} min.", delayTime);
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+
+		private void btnSetDelayTime_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				decimal delayTime = updnDelayTime.Value;
+				_btCom.SetDelayTime(delayTime);
+				rtbResults.Text = String.Empty;
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetCal_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var calibration = _btCom.GetVesselCalibration((BTVesselType)cboCalibration.SelectedIndex);
+				rtbResults.Text = calibration.ToString();
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetEvap_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var evapRate = _btCom.GetEvapRate();
+				rtbResults.Text = String.Format("{0:n0} %/hr.", evapRate);
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnSetEvapRate_Click_1(object sender, EventArgs e)
+		{
+			try
+			{
+				decimal evapRate = updnEvapRate.Value;
+				_btCom.SetEvapRate(evapRate);
+				rtbResults.Text = String.Empty;
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetGrainTemp_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var grainTemp = _btCom.GetGrainTemp();
+				rtbResults.Text = String.Format("{0} F", grainTemp);
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnSetGrainTemp_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				decimal grainTemp = updnGrainTemp.Value;
+				_btCom.SetGrainTemp(grainTemp);
+				rtbResults.Text = String.Empty;
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetPID_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var pid = _btCom.GetHeatOutputConfig((BTHeatOutputID)cboVessel.SelectedIndex);
+				rtbResults.Text = pid.ToString();
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetProfile_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var profile = _btCom.GetValveProfile((BTProfileID)cboProfile.SelectedIndex);
+				rtbResults.Text = profile.ToString();
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetTemps_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var tsAddr = _btCom.GetTempSensorAddress((TSLocation)cboTemps.SelectedIndex);
+				rtbResults.Text = tsAddr.ToString();
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetVolume_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				var volume = _btCom.GetVolumeSetting((BTVesselType)cboVolume.SelectedIndex);
+				rtbResults.Text = volume.ToString();
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetAlarm_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				_alarmState = _btCom.GetAlarm();
+				rtbResults.Text = String.Format("Alarm is {0}!", _alarmState ? "On" : "Off");
+				lblAlarm.Visible = _alarmState;
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnSetAlarm_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				_btCom.SetAlarm(!_alarmState);
+				btnGetAlarm_Click(null, null);
+				btnSetAlarm.Text = _alarmState ? "Clear Alarm" : "Set Alarm";
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+		private void btnGetLogStatus_Click(object sender, EventArgs e)
+		{
+			try
+			{
+				_logEnabled = _btCom.GetLogStatus();
+				rtbResults.Text = String.Format("Auto Logging is {0}!", _logEnabled ? "On" : "Off");
+			}
+			catch (Exception ex)
+			{
+				DisplayComError(ex);
+			}
+		}
+
+
+
+
+		private void btnStartSpeedTest_Click(object sender, EventArgs e)
+		{
+			if (File.Exists(Settings.Default.ErrorLogFile))
+				File.Delete(Settings.Default.ErrorLogFile);
+			btnStartSpeedTest.BackColor = Color.LimeGreen;
+			_btCom.ComRetries = 1;
+			var errorCount = 0;
+			tbErrorCount.Text = String.Empty;
+			tbErrorCount.BackColor = SystemColors.Control;
+
+			for (int i = 0; i < updnTestCount.Value; i++)
+			{
+				try
+				{
+					rtbResults.Text = _btCom.GetLog();
+				}
+				catch (Exception)
+				{
+					errorCount++;
+					tbErrorCount.Text = errorCount.ToString();
+					tbErrorCount.BackColor = Color.Red;
+				}
+				tbCurrentCount.Text = (i + 1).ToString();
+				Application.DoEvents();
+			}
+			btnStartSpeedTest.BackColor = SystemColors.Control;
+			_btCom.ComRetries = 3;
+		}
+
 		private void chkHexReadAddress_CheckedChanged(object sender, EventArgs e)
 		{
 			updnReadAddressEE.Hexadecimal = chkHexReadAddress.Checked;
@@ -732,18 +776,6 @@ namespace BTSerialComTester
 		private void chkHexWriteLength_CheckedChanged(object sender, EventArgs e)
 		{
 			updnWriteLengthEE.Hexadecimal = chkHexWriteLength.Checked;
-		}
-
-		private void btnInitializeEE_Click(object sender, EventArgs e)
-		{
-			var rslt = MessageBox.Show(Resources.WarningMsg_InitializeEE,
-									   Resources.MsgBoxHeader_InitializeEEPROM, 
-									   MessageBoxButtons.OKCancel, 
-									   MessageBoxIcon.Warning);
-			if (rslt == DialogResult.Cancel)
-				return;
-
-			_btCom.InitializeEEPROM();
 		}
 
 		//private void cboWriteLengthEE_SelectedIndexChanged(object sender, EventArgs e)
@@ -790,7 +822,6 @@ namespace BTSerialComTester
 			}
 			txtDataEE.Text = sb.ToString();
 		}
-
 
 	}
 
