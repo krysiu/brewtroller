@@ -49,7 +49,7 @@
 #define _PB_FIRST   8
 #define _PB_LAST	15
 #define _PB_MASK(n) (0x01 << ((n) & 0x07))
-#define _PB(n)		(((n) > (_PB_FIRST-1)) && ((n) < (_PB_FIRST+8))
+#define _PB(n)		((n) > (_PB_FIRST-1)) && ((n) < (_PB_FIRST+8))
 
 #define _PC_FIRST   0
 #define _PC_LAST	0
@@ -59,7 +59,7 @@
 #define _PD_FIRST   0
 #define _PD_LAST	7
 #define _PD_MASK(n) (0x01 << ((n) & 0x07))
-#define _PD(n)		(((n) > (_PD_FIRST-1)) && ((n) < (_PD_LAST+8))
+#define _PD(n)		((n) > (_PD_FIRST-1)) && ((n) < (_PD_LAST+8))
 #endif
 
 
