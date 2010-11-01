@@ -138,13 +138,11 @@ uint8_t OneWire::reset(void)
 	DIRECT_MODE_OUTPUT(reg, mask);	// drive output low
 	sei();
 	
-	
 	//delayMicroseconds(500);
 	for (int i=0; i<20; i++)
 	{
 		delayMicroseconds(25);
 	}
-	
 	
 	cli();
 	DIRECT_MODE_INPUT(reg, mask);	// allow it to float
@@ -186,11 +184,11 @@ void OneWire::write_bit(uint8_t v)
 		cli();
 		DIRECT_WRITE_LOW(reg, mask);
 		DIRECT_MODE_OUTPUT(reg, mask);	// drive output low
-		//sei();
-		delayMicroseconds(65);
-		//delayMicroseconds(32);
-		//delayMicroseconds(33);
-		//cli();
+
+		//delayMicroseconds(65);
+		delayMicroseconds(32);
+		delayMicroseconds(33);
+
 		DIRECT_WRITE_HIGH(reg, mask);	// drive output high
 		sei();
 		delayMicroseconds(5);
@@ -215,9 +213,11 @@ uint8_t OneWire::read_bit(void)
 	delayMicroseconds(9);
 	r = DIRECT_READ(reg, mask);
 	sei();
+
 	//delayMicroseconds(53);
 	delayMicroseconds(28);
 	delayMicroseconds(27);
+
 	return r;
 }
 
