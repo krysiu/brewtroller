@@ -38,6 +38,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #ifdef LOG
 #  include "log.h"
 #endif
+#include "cfg.h"
 
 #define BACKLOG 5
 

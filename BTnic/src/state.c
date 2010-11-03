@@ -74,41 +74,42 @@ state_conn_set(conn_t *conn, int state)
   {
     case CONN_RQST:
       conn->ctr = 0;
-      log(5, "conn[%s]: state now is CONN_RQST",
+      conn->len = 0;
 #ifdef IPC_UNIX_SOCKETS
-             conn->sockaddr.sun_path);
+             log(5, "conn[%d]: state now is CONN_RQST", conn->sd);
 #else
-             inet_ntoa(conn->sockaddr.sin_addr));
+             log(5, "conn[%s]: state now is CONN_RQST", inet_ntoa(conn->sockaddr.sin_addr));
 #endif
     break;
     case CONN_TTY:
-      log(5, "conn[%s]: state now is CONN_TTY",
+      
 #ifdef IPC_UNIX_SOCKETS
-             conn->sockaddr.sun_path);
+             log(5, "conn[%d]: state now is CONN_TTY", conn->sd);
 #else
-             inet_ntoa(conn->sockaddr.sin_addr));
+             log(5, "conn[%s]: state now is CONN_TTY", inet_ntoa(conn->sockaddr.sin_addr));
 #endif
     break;
     case CONN_RESP:
       conn->ctr = 0;
 #ifdef DEBUG
-      log(5, "conn[%s]: state now is CONN_RESP",
+      
 #ifdef IPC_UNIX_SOCKETS
-             conn->sockaddr.sun_path);
+             log(5, "conn[%d]: state now is CONN_RESP", conn->sd);
 #else
-             inet_ntoa(conn->sockaddr.sin_addr));
+             log(5, "conn[%s]: state now is CONN_RESP", inet_ntoa(conn->sockaddr.sin_addr));
 #endif
 #endif
       break;
     default:
       /* unknown state, exiting */
 #ifdef DEBUG
-      log(5, "conn_set_state([%s]) - invalid state (%d)",
+      
 #ifdef IPC_UNIX_SOCKETS
-             conn->sockaddr.sun_path, state);
+             log(5, "conn_set_state([%d]) - invalid state (%d)", conn->sd,
 #else
-             inet_ntoa(conn->sockaddr.sin_addr), state);
+             log(5, "conn_set_state([%s]) - invalid state (%d)", inet_ntoa(conn->sockaddr.sin_addr), 
 #endif
+                state);
 #endif
       exit (-1);
   }

@@ -39,7 +39,12 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #include "tty.h"
 #include "conn.h"
 
-#define DEFAULT_SERVERPORT 502
+#ifdef IPC_UNIX_SOCKETS
+    #define CLI_PERM    S_IRWXU | S_IRWXG | S_IRWXO
+    #define CLI_PATH    "/tmp/btsock"
+#else
+    #define DEFAULT_SERVERPORT 502
+#endif
 
 /* Global configuration storage structure */
 typedef struct

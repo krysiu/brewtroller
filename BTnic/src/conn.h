@@ -47,8 +47,8 @@ Documentation, Forums and more information available at http://www.brewtroller.c
  */
 #define DEFAULT_MAXCONN 32
 #define DEFAULT_MAXTRY 3
-#define DEFAULT_RQSTPAUSE 100
-#define DEFAULT_RESPWAIT 10
+#define DEFAULT_RQSTPAUSE 1
+#define DEFAULT_RESPWAIT 1000
 #define DEFAULT_CONNTIMEOUT 60
 
 #define BUFSIZE 256     /* size (in bytes) of data */
@@ -76,6 +76,7 @@ typedef struct conn_t
   struct sockaddr_in sockaddr; /* connection structure */
 #endif
   int ctr;              /* counter of data in the buffer */
+  int len;              /* length of data in buffer */
   unsigned char buf[BUFSIZE];    /* data buffer */
 } conn_t;
 
