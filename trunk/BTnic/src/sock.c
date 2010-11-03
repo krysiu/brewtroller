@@ -170,7 +170,10 @@ int sock_create_server(char *server_ip, unsigned short server_port, int blkmode)
 #endif
     return RC_ERR;
   }
-  
+#ifdef IPC_UNIX_SOCKETS
+    chmod(server_sockaddr.sun_path, CLI_PERM);
+#endif
+
   /* let's listen */
   if (listen(server_s, BACKLOG) == -1)
   {

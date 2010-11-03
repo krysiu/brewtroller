@@ -41,7 +41,9 @@ sock.o: /home/matt/btnic/src/sock.c /home/matt/btnic/src/sock.h \
  /usr/include/bits/sigcontext.h /usr/include/bits/sigstack.h \
  /usr/include/sys/ucontext.h /usr/include/bits/sigthread.h \
  /usr/include/fcntl.h /usr/include/bits/fcntl.h \
- /home/matt/btnic/src/log.h
+ /home/matt/btnic/src/log.h /home/matt/btnic/src/cfg.h \
+ /home/matt/btnic/src/tty.h /home/matt/btnic/src/conn.h \
+ /home/matt/btnic/src/sig.h
 
 /home/matt/btnic/src/sock.h:
 
@@ -222,3 +224,11 @@ sock.o: /home/matt/btnic/src/sock.c /home/matt/btnic/src/sock.h \
 /usr/include/bits/fcntl.h:
 
 /home/matt/btnic/src/log.h:
+
+/home/matt/btnic/src/cfg.h:
+
+/home/matt/btnic/src/tty.h:
+
+/home/matt/btnic/src/conn.h:
+
+/home/matt/btnic/src/sig.h:

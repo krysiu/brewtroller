@@ -53,7 +53,7 @@ cfg_init(void)
   cfg.trxcntl = TRX_ADDC;
 #endif
 #ifdef IPC_UNIX_SOCKETS
-  strncpy(cfg.serveraddr, "/tmp/btsock", INTBUFSIZE);
+  strncpy(cfg.serveraddr, CLI_PATH, INTBUFSIZE);
 #else
   cfg.serverport = DEFAULT_SERVERPORT;
 #endif

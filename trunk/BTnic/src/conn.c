@@ -123,11 +123,11 @@ conn_open(void)
     return;
   }
 #ifdef LOG
-  log(2, "conn_open(): accepting connection from %s",
+  
 #ifdef IPC_UNIX_SOCKETS
-         rmt_addr.sun_path);
+         log(2, "conn_open(): accepting connection from %d", sd);
 #else
-         inet_ntoa(rmt_addr.sin_addr));
+         log(2, "conn_open(): accepting connection from %s", inet_ntoa(rmt_addr.sin_addr));
 #endif
 #endif
   /* compare descriptor of connection with FD_SETSIZE */
@@ -181,11 +181,11 @@ conn_close(conn_t *conn)
 {
   conn_t *nextconn;
 #ifdef LOG
-  log(2, "conn_close(): closing connection from %s",
+  
 #ifdef IPC_UNIX_SOCKETS
-         conn->sockaddr.sun_path);
+         log(2, "conn_close(): closing connection from %d", conn->sd);
 #else
-         inet_ntoa(conn->sockaddr.sin_addr));
+         log(2, "conn_close(): closing connection from %s", inet_ntoa(conn->sockaddr.sin_addr));
 #endif
 #endif
   /* close socket */
@@ -374,7 +374,7 @@ conn_loop(void)
             if (!tty.ptrbuf)
             {/* there no bytes received */
 #ifdef DEBUG
-              log(5, "tty: response timeout", tty.ptrbuf);
+              log(2, "tty: response timeout", tty.ptrbuf);
 #endif
               if (!tty.trynum)
               {
@@ -384,7 +384,7 @@ conn_loop(void)
               else
               { /* retry request */
 #ifdef DEBUG
-                log(5, "tty: attempt to retry request (%u of %u)",
+                log(2, "tty: attempt to retry request (%u of %u)",
                        cfg.maxtry - tty.trynum + 1, cfg.maxtry);
 #endif
                 state_tty_set(&tty, TTY_RQST);
@@ -419,7 +419,7 @@ conn_loop(void)
                 else
                 { /* retry request */
 #ifdef DEBUG
-                  log(5, "tty: attempt to retry request (%u of %u)",
+                  log(2, "tty: attempt to retry request (%u of %u)",
                          cfg.maxtry - tty.trynum + 1, cfg.maxtry);
 #endif
                   state_tty_set(&tty, TTY_RQST);
@@ -499,13 +499,13 @@ conn_loop(void)
           break; /* exiting... */
         }
 #ifdef DEBUG
-        log(7, "tty: written %d bytes", rc);
+        log(5, "tty: written %d bytes", rc);
 #endif
         tty.ptrbuf += rc;
         if (tty.ptrbuf == tty.txlen)
         { /* request transmitting completed, switch to TTY_RESP */
 #ifdef DEBUG
-          log(7, "tty: request written (total %d bytes)", tty.txlen);
+          log(5, "tty: request written (total %d bytes)", tty.txlen);
 #endif
           state_tty_set(&tty, TTY_RESP);
         }
@@ -515,28 +515,24 @@ conn_loop(void)
     {
       if (tty.state == TTY_RESP)
       {
-        /* Read one byte */
-        rc = conn_read(tty.fd, tty.rxbuf + tty.ptrbuf, 1);
+        rc = conn_read(tty.fd, tty.rxbuf + tty.ptrbuf, TTY_BUFSIZE - tty.ptrbuf);
         if (rc <= 0)
         { /* error - we can't continue... */
 #ifdef LOG
-          log(0, "tty: error in read() (%s)", strerror(errno));
+          if (errno > 0)
+              log(0, "tty: error in read() (%s)", strerror(errno));
 #endif
           break; /* exiting... */
         }
 #ifdef DEBUG
-          log(7, "tty read: %c", *(tty.rxbuf + tty.ptrbuf));
+          log(5, "tty: read %d bytes", rc);
 #endif
         tty.ptrbuf += rc;
         if (*(tty.rxbuf + tty.ptrbuf - 1) == '\n')
         { 
-          tty.rxlen = tty.ptrbuf;
-
            /* received response is correct, make conn response */
-                (void)memcpy((void *)(actconn->buf), 
-                  (void *)tty.rxbuf,
-                  tty.rxlen);
-                  
+          (void)memcpy((void *)(actconn->buf), (void *)tty.rxbuf, tty.ptrbuf);
+          actconn->len = tty.ptrbuf;
           state_conn_set(actconn, CONN_RESP);
           /* make inter-request pause */
           state_tty_set(&tty, TTY_PAUSE);
@@ -551,12 +547,12 @@ conn_loop(void)
         if ((rc = conn_read(tty.fd, tty.rxbuf, BUFSIZE)) <= 0)
         { /* error - we can't continue... */
 #ifdef LOG
-          log(0, "tty: error in read() (%s)", strerror(errno));
+          log(9, "tty: error in read() (%s)", strerror(errno));
 #endif
           break; /* exiting... */
         }
 #ifdef DEBUG
-          log(7, "tty: dropped %d bytes", rc);
+          log(2, "tty dropped: %s", tty.rxbuf);
 #endif
       }
     }
@@ -571,16 +567,14 @@ conn_loop(void)
         case CONN_RQST:
           if (FD_ISSET(curconn->sd, &sdsetrd))
           {
-            /* Read one byte at a time */
-            rc = conn_read(curconn->sd, curconn->buf + curconn->ctr, 1);
+            rc = conn_read(curconn->sd, curconn->buf + curconn->ctr, BUFSIZE - curconn->ctr);
 #ifdef DEBUG
-            log(7, "socket(%s) read: %c",
 #ifdef IPC_UNIX_SOCKETS
-                curconn->sockaddr.sun_path,
+                log(5, "socket(%d): read %d bytes", curconn->sd,
 #else
-                inet_ntoa(curconn->sockaddr.sin_addr),
+                log(5, "socket(%s): read %d bytes", inet_ntoa(curconn->sockaddr.sin_addr),
 #endif
-                *(curconn->buf + curconn->ctr));
+                rc);
 #endif
             if (rc <= 0)
             { /* error - drop this connection and go to next queue element */
@@ -588,15 +582,7 @@ conn_loop(void)
               break;
             }
             curconn->ctr += rc;
-  #ifdef DEBUG
-            log(7, "socket(%s) read: %d", 
-#ifdef IPC_UNIX_SOCKETS
-                curconn->sockaddr.sun_path,
-#else
-                inet_ntoa(curconn->sockaddr.sin_addr),
-#endif            
-            *(curconn->buf + curconn->ctr - 1));
-  #endif          
+      
             if (*(curconn->buf + curconn->ctr - 1) == '\r')
             { /* ### packet received completely ### */
               state_conn_set(curconn, CONN_TTY);
@@ -610,14 +596,22 @@ conn_loop(void)
           if (FD_ISSET(curconn->sd, &sdsetwr))
           {
             rc = conn_write(curconn->sd,
-                            curconn->buf + curconn->ctr, tty.rxlen - curconn->ctr);
+                            curconn->buf + curconn->ctr, curconn->len - curconn->ctr);
             if (rc <= 0)
             { /* error - drop this connection and go to next queue element */
               curconn = conn_close(curconn);
               break;
             }
+#ifdef DEBUG
+#ifdef IPC_UNIX_SOCKETS
+            log(6, "socket(%d) wrote %d bytes", curconn->sd,
+#else
+            log(6, "socket(%s) wrote %d bytes", curconn->sockaddr.sin_addr,
+#endif
+                rc);
+#endif
             curconn->ctr += rc;
-            if (curconn->ctr == (int)tty.rxlen)
+            if (curconn->ctr == curconn->len)
               state_conn_set(curconn, CONN_RQST);
           }
           curconn = queue_next_elem(&queue, curconn);
