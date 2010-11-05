@@ -155,7 +155,9 @@ state_tty_set(ttydata_t *mod, int state)
       mod->ptrbuf = 0;
       /* XXX need real recv length? */
       mod->rxlen = 0;
+
       mod->timer = cfg.respwait * 1000l + DV(mod->txlen, mod->speed);
+      
 #ifdef DEBUG
       log(5, "tty: state now is TTY_RESP");
 #endif

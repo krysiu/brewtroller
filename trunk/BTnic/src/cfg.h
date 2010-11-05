@@ -46,6 +46,8 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     #define DEFAULT_SERVERPORT 502
 #endif
 
+#define CFGPATH "/etc/btnic.conf"
+
 /* Global configuration storage structure */
 typedef struct
 {
@@ -85,5 +87,6 @@ typedef struct
 /* Prototypes */
 extern cfg_t cfg;
 void cfg_init(void);
+int cfg_load(char *cfgname);
 
 #endif /* _CFG_H */ 
