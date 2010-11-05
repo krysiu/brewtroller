@@ -46,7 +46,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
  * Default values 
  */
 #define DEFAULT_MAXCONN 32
-#define DEFAULT_MAXTRY 3
+#define DEFAULT_MAXTRY 1
 #define DEFAULT_RQSTPAUSE 1
 #define DEFAULT_RESPWAIT 1000
 #define DEFAULT_CONNTIMEOUT 60

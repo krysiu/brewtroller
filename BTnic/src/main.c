@@ -155,6 +155,7 @@ main(int argc, char *argv[])
 {
   int err = 0, rc;
   char *exename;
+  char cfgFile [INTBUFSIZE];
   
   sig_init();
   cfg_init();
@@ -163,17 +164,21 @@ main(int argc, char *argv[])
     exename = argv[0];
   else
     exename++;
-    
+
+  strncpy(cfgFile, CFGPATH, INTBUFSIZE);
+  cfg_load(cfgFile);
+
   /* command line argument list parsing */
-  while ((rc = getopt(argc, argv,
-               "dh"
-#ifdef TRXCTL
-               "t"
-#endif
-#ifdef LOG
-               "v:L:"
-#endif
-               "p:s:P:C:N:R:W:T:")) != RC_ERR)
+  while ((rc = getopt(argc, argv, 
+	  "dh"
+	#ifdef TRXCTL
+		"t"
+	#endif
+	#ifdef LOG
+		"v:L:"
+	#endif
+		"p:s:P:C:N:R:W:T:"
+  )) != RC_ERR)
   {
     switch (rc)
     {

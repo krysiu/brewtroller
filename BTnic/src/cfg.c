@@ -64,3 +64,42 @@ cfg_init(void)
   cfg.resppause = DV(3, cfg.ttyspeed);
   cfg.conntimeout = DEFAULT_CONNTIMEOUT;
 }
+
+int get_val(char *cfgline, char *keyTest, char *destVal) {
+    int linelen = strcspn(cfgline, "\n\r");
+    int keylen = strlen(keyTest);
+    if (strncmp(cfgline, keyTest, keylen) != 0) return 0;
+    destVal[0] = '\0';
+    strncat(destVal, cfgline + keylen, linelen - keylen);
+    return 1;
+}
+
+int cfg_load(char *cfgname) {
+  FILE *cfgfile;
+  char cfgline[INTBUFSIZE + 1], 
+    strval[INTBUFSIZE + 1];
+    
+  cfgfile = fopen(cfgname, "r");
+  if (!cfgfile) return RC_ERR;
+  
+  while(fgets(cfgline, INTBUFSIZE + 1, cfgfile) != NULL) {
+     if (get_val(cfgline, "dbglvl=", strval)) cfg.dbglvl = (char) atoi(strval);
+     (void) get_val(cfgline, "logname=", cfg.logname);
+     (void) get_val(cfgline, "ttyport=", cfg.ttyport);
+
+    #ifdef IPC_UNIX_SOCKETS
+     (void) get_val(cfgline, "sockpath=", cfg.serveraddr);
+    #else
+      if (get_val(cfgline, "serverport=", strval)) cfg.serverport = atoi(strval);
+    #endif
+      if (get_val(cfgline, "ttyspeed=", strval)) cfg.ttyspeed = atoi(strval);
+      if (get_val(cfgline, "maxconn=", strval)) cfg.maxconn = atoi(strval);
+      if (get_val(cfgline, "maxtry=", strval)) cfg.maxtry = atoi(strval);
+      if (get_val(cfgline, "rqstpause=", strval)) cfg.rqstpause = strtoul(strval, NULL, 10);
+      if (get_val(cfgline, "respwait=", strval)) cfg.respwait = strtoul(strval, NULL, 10);
+      if (get_val(cfgline, "resppause=", strval)) cfg.resppause = strtoul(strval, NULL, 10);
+      if (get_val(cfgline, "conntimeout=", strval)) cfg.conntimeout = atoi(strval);
+  }
+  fclose(cfgfile);
+  return RC_OK;
+}

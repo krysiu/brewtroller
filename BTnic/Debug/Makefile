@@ -86,8 +86,9 @@ am__nobase_list = $(am__nobase_strip_setup); \
 am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__installdirs = "$(DESTDIR)$(btnicdocdir)"
-DATA = $(btnicdoc_DATA)
+am__installdirs = "$(DESTDIR)$(btnicconfdir)" \
+	"$(DESTDIR)$(btnicdocdir)"
+DATA = $(btnicconf_DATA) $(btnicdoc_DATA)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
@@ -268,7 +269,7 @@ target_alias =
 top_build_prefix = 
 top_builddir = .
 top_srcdir = /home/matt/btnic
-SUBDIRS = src po
+SUBDIRS = src po 
 btnicdocdir = ${prefix}/doc/btnic
 btnicdoc_DATA = \
 	README\
@@ -283,12 +284,20 @@ INTLTOOL_FILES = intltool-extract.in \
 	intltool-update.in
 
 EXTRA_DIST = $(btnicdoc_DATA) \
-	$(INTLTOOL_FILES)
+	$(INTLTOOL_FILES)\
+	$(btniccfg_DATA)\
+	$(btnicconf_DATA)
 
 DISTCLEANFILES = intltool-extract \
 	intltool-merge \
 	intltool-update \
 	po/.intltool-merge-cache
+
+btnicconf_DATA = \
+	btnic.conf
+
+btnicconfdir = \
+	/etc
 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
@@ -354,6 +363,26 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
+install-btnicconfDATA: $(btnicconf_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(btnicconfdir)" || $(MKDIR_P) "$(DESTDIR)$(btnicconfdir)"
+	@list='$(btnicconf_DATA)'; test -n "$(btnicconfdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(btnicconfdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(btnicconfdir)" || exit $$?; \
+	done
+
+uninstall-btnicconfDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(btnicconf_DATA)'; test -n "$(btnicconfdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(btnicconfdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(btnicconfdir)" && rm -f $$files
 install-btnicdocDATA: $(btnicdoc_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(btnicdocdir)" || $(MKDIR_P) "$(DESTDIR)$(btnicdocdir)"
@@ -690,7 +719,7 @@ check: check-recursive
 all-am: Makefile $(DATA) config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(btnicdocdir)"; do \
+	for dir in "$(DESTDIR)$(btnicconfdir)" "$(DESTDIR)$(btnicdocdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -741,7 +770,7 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-btnicdocDATA
+install-data-am: install-btnicconfDATA install-btnicdocDATA
 
 install-dvi: install-dvi-recursive
 
@@ -787,7 +816,8 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-btnicdocDATA uninstall-local
+uninstall-am: uninstall-btnicconfDATA uninstall-btnicdocDATA \
+	uninstall-local
 
 .MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) all \
 	ctags-recursive install-am install-strip tags-recursive
@@ -799,15 +829,16 @@ uninstall-am: uninstall-btnicdocDATA uninstall-local
 	distcheck distclean distclean-generic distclean-hdr \
 	distclean-libtool distclean-tags distcleancheck distdir \
 	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-btnicdocDATA install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-recursive \
-	uninstall uninstall-am uninstall-btnicdocDATA uninstall-local
+	install install-am install-btnicconfDATA install-btnicdocDATA \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags tags-recursive uninstall uninstall-am \
+	uninstall-btnicconfDATA uninstall-btnicdocDATA uninstall-local
 
 
 # Remove doc directory on uninstall

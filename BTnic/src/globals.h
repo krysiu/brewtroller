@@ -103,4 +103,10 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 /* IPC Options */
 /* Use Unix Domain Sockets (otherwise TCP is used) */
 #define IPC_UNIX_SOCKETS
+
+/* Skip built in wait time prior to sending request */
+#define NOSILENT
+
 #endif
+
+
