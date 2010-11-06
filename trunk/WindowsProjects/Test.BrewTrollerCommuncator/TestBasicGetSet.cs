@@ -21,9 +21,10 @@ namespace Test.BrewTrollerCommuncator
 			_btCom.Connect("COM10,115200,N,8,1");
 			_btCom.ComRetries = 1;
 			Assert.IsTrue(_btCom.IsConnected);
-			Assert.AreEqual(_btCom.Version.ComType, BTComType.BTNic);
-			Assert.AreEqual(_btCom.Version.ComSchema, 0);
-			Assert.AreEqual(_btCom.Version.BuildNumber, 574, "Build number is not correct.");
+			Assert.AreEqual(_btCom.Version.ComType, BTComType.ASCII);
+				;
+			Assert.AreEqual(_btCom.Version.ComSchema, 1);
+			Assert.AreEqual(_btCom.Version.BuildNumber,604, "Build number is not correct.");
 			Assert.AreEqual(_btCom.Version.Version, "2.1");
 		}
 
@@ -104,18 +105,6 @@ namespace Test.BrewTrollerCommuncator
 
 
 		[TestCase(0)]
-		[TestCase(10)]
-		[TestCase(55)]
-		[TestCase(111)]
-		public void GrainTemp(int temp)
-		{
-			_btCom.SetGrainTemp(temp);
-			var val = _btCom.GetGrainTemp();
-			Assert.AreEqual(temp, val, "Boil Temperature: Get value not equal to Set value.");
-		}
-
-
-		[TestCase(0)]
 		[TestCase(1)]
 		[TestCase(2)]
 		[TestCase(20)]
@@ -125,6 +114,18 @@ namespace Test.BrewTrollerCommuncator
 			_btCom.SetEvapRate(rate);
 			var val = _btCom.GetEvapRate();
 			Assert.AreEqual(rate, val, "Evaporation Rate: Get value not equal to Set value.");
+		}
+
+
+		[TestCase(0)]
+		[TestCase(10)]
+		[TestCase(55)]
+		[TestCase(111)]
+		public void GrainTemp(int temp)
+		{
+			_btCom.SetGrainTemp(temp);
+			var val = _btCom.GetGrainTemp();
+			Assert.AreEqual(temp, val, "Boil Temperature: Get value not equal to Set value.");
 		}
 
 
@@ -165,7 +166,7 @@ namespace Test.BrewTrollerCommuncator
 						SteamTarget = 0,
 						SteamZero = 0
 					};
-			_btCom.SetHeatOutputConfig(id, setConfig);
+			_btCom.SetHeatOutputConfig(setConfig);
 			var getConfig = _btCom.GetHeatOutputConfig(id);
 			Assert.AreEqual(setConfig.ID, getConfig.ID, "Heat Output Config: Get ID not equal to Set ID.");
 			Assert.AreEqual(setConfig.Mode, getConfig.Mode, "Heat Output Config: Get Mode not equal to Set Mode.");
@@ -189,7 +190,7 @@ namespace Test.BrewTrollerCommuncator
 		public void TempSensor(TSLocation location, UInt64 address)
 		{
 			var tsAddress = new TSAddress(location, address);
-			_btCom.SetTempSensorAddress(location, tsAddress);
+			_btCom.SetTempSensorAddress(tsAddress);
 			var val = _btCom.GetTempSensorAddress(location);
 			Assert.AreEqual(tsAddress, val, "Heat Output Config: Get TSAddress not equal to Set TSAddress.");
 		}
@@ -215,7 +216,7 @@ namespace Test.BrewTrollerCommuncator
 			var saveProfile = _btCom.GetValveProfile(profileID);
 
 			var setProfile = new BTValveProfile { ID = profileID, Mask = mask };
-			_btCom.SetValveProfile(profileID, setProfile);
+			_btCom.SetValveProfile(setProfile);
 
 			var getProfile = _btCom.GetValveProfile(profileID);
 			Assert.AreEqual(setProfile, getProfile, "Get ValveProfile does not match Set ValveProfile");
@@ -228,13 +229,13 @@ namespace Test.BrewTrollerCommuncator
 		[TestCase(BTHeatOutputID.HLT)]
 		[TestCase(BTHeatOutputID.Mash)]
 		[TestCase(BTHeatOutputID.Kettle)]
-		public void VesselCalibration(BTVesselType id)
+		public void VesselCalibration(BTVesselID id)
 		{
 			var saveCalib = _btCom.GetVesselCalibration(id);
 
 			var setCalib = new BTVesselCalibration
 			{
-				VesselType = id,
+				ID = id,
 				CalibrationPoint0 = new BTCalibrationPoint { PointID = 0, Volume = 0, Value = 0 },
 				CalibrationPoint1 = new BTCalibrationPoint { PointID = 1, Volume = 100, Value = 230 },
 				CalibrationPoint2 = new BTCalibrationPoint { PointID = 2, Volume = 200, Value = 654 },
@@ -246,39 +247,39 @@ namespace Test.BrewTrollerCommuncator
 				CalibrationPoint8 = new BTCalibrationPoint { PointID = 8, Volume = 800, Value = 4023 },
 				CalibrationPoint9 = new BTCalibrationPoint { PointID = 9, Volume = 1000, Value = 4095 },
 			};
-			_btCom.SetVesselCalibration(id, setCalib);
+			_btCom.SetVesselCalibration(setCalib);
 
 			var getCalib = _btCom.GetVesselCalibration(id);
 			Assert.AreEqual(setCalib, getCalib);
 
-			_btCom.SetVesselCalibration(saveCalib.VesselType, saveCalib);
+			_btCom.SetVesselCalibration(saveCalib);
 			var restoreCalib = _btCom.GetVesselCalibration(id);
 			Assert.AreEqual(saveCalib, restoreCalib);
 
 		}
 
-		[TestCase(BTVesselType.HLT, 100, 0.5)]
-		[TestCase(BTVesselType.HLT, 10, 1.5)]
-		[TestCase(BTVesselType.Mash, 1000, 10.54)]
-		[TestCase(BTVesselType.Mash, 50, 15.5)]
-		[TestCase(BTVesselType.Kettle, 47.6, 0.5)]
-		[TestCase(BTVesselType.Kettle, 100, 1.5)]
-		public void VesselVolume(BTVesselType id, double capacity, double deadspace)
+		[TestCase(BTVesselID.HLT, 100, 0.5)]
+		[TestCase(BTVesselID.HLT, 10, 1.5)]
+		[TestCase(BTVesselID.Mash, 1000, 10.54)]
+		[TestCase(BTVesselID.Mash, 50, 15.5)]
+		[TestCase(BTVesselID.Kettle, 47.6, 0.5)]
+		[TestCase(BTVesselID.Kettle, 100, 1.5)]
+		public void VesselVolume(BTVesselID id, double capacity, double deadspace)
 		{
 			var saveVolume = _btCom.GetVolumeSetting(id);
 
 			var setVolume = new BTVolumeSetting
 			{
-				VesselType = id,
+				ID = id,
 				Capacity = (decimal)capacity,
 				DeadSpace = (decimal)deadspace
 			};
-			_btCom.SetVolumeSetting(id, setVolume);
+			_btCom.SetVolumeSetting(setVolume);
 
 			var getVolume = _btCom.GetVolumeSetting(id);
 			Assert.AreEqual(setVolume, getVolume);
 
-			_btCom.SetVolumeSetting(id, saveVolume);
+			_btCom.SetVolumeSetting(saveVolume);
 			var restoreVolume = _btCom.GetVolumeSetting(id);
 			Assert.AreEqual(saveVolume, restoreVolume);
 
