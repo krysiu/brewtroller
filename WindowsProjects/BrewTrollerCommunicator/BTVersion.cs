@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 
 namespace BrewTrollerCommunicator
@@ -41,9 +42,13 @@ namespace BrewTrollerCommunicator
 			Units = BTUnits.Unknown;
 		}
 
+		public bool IsAsciiSchema0
+		{
+			get { return ComType == BTComType.ASCII && ComSchema == 0; }
+		}
 		public string Version { get { return String.Format("{0}.{1}", MajorVersion, MinorVersion); } }
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			var iVal = 0;
 
@@ -69,28 +74,30 @@ namespace BrewTrollerCommunicator
 					Units = BTUnits.Unknown;
 				}
 				break;
-			case 4:
+			case 5:
 				{
 					// version
 					var verSplit = rspParams[0].Split(new[] { '.' });
-					if (verSplit.Length > 0)
-						int.TryParse(verSplit[0], out iVal);
+					if (verSplit.Length > 0) int.TryParse(verSplit[0], out iVal);
 					MajorVersion = iVal;
-					if (verSplit.Length > 1)
-						int.TryParse(verSplit[1], out iVal);
+					if (verSplit.Length > 1) int.TryParse(verSplit[1], out iVal);
 					MinorVersion = iVal;
 
 					// build
 					int.TryParse(rspParams[1], out iVal);
 					BuildNumber = iVal;
 
-					// schema
+					// type
 					int.TryParse(rspParams[2], out iVal);
+					ComType = (BTComType)iVal;
+
+					// schema
+					int.TryParse(rspParams[3], out iVal);
 					ComSchema = iVal;
 
-					int.TryParse(rspParams[3], out iVal);
+					// units
+					int.TryParse(rspParams[4], out iVal);
 					Units = (BTUnits)iVal;
-
 				}
 				break;
 			default:
@@ -98,47 +105,37 @@ namespace BrewTrollerCommunicator
 				break;
 			}
 
-			// ComType
-			if (ComSchema < 10)
-			{
-				ComType = BTComType.ASCII;
-			}
-			else if (ComSchema >= 10 && ComSchema < 19)
-			{
-				ComType = BTComType.Binary;
-			}
-			else if (ComSchema >= 20 && ComSchema < 29)
-			{
-				ComType = BTComType.BTNic;
-			}
-			else
-			{
-				ComType = BTComType.Unknown;
-			}
-
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
+			// Version is never sent to BT
 			throw new NotImplementedException();
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int recLen)
 		{
-			if (len != 6)
+			const int VersionRecordLength = 7;
+			if (recLen != VersionRecordLength)
 				throw new Exception("BTVersion.HydrateFromBinary: Buffer Size Error.");
+
+			var index = offset;
 
 			ComType = BTComType.Binary;
 
-			MajorVersion = btBuf[offset++];
-			MinorVersion = btBuf[offset++];
-			BuildNumber = btBuf[offset++] + (btBuf[offset++] << 8);
-			ComSchema = btBuf[offset++];
-			Units = (BTUnits)btBuf[offset++];
+			MajorVersion = btBuf[index++];
+			MinorVersion = btBuf[index++];
+			BuildNumber  = btBuf[index++] + (btBuf[index++] << 8);
+			ComType		 = (BTComType)btBuf[index++];
+			ComSchema	 = btBuf[index++];
+			Units		 = (BTUnits)btBuf[index++];
+
+			Debug.Assert(index == offset + VersionRecordLength, "index == offset + VersionRecordLength");
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
+			// Version is never sent to BT
 			throw new NotImplementedException();
 		}
 

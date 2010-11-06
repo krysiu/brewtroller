@@ -98,11 +98,11 @@ namespace BrewTrollerCommunicator
 
 	public enum BTComType
 	{
-		Unknown,
-		Simulator,
-		ASCII,		// original ASCII protocol
-		Binary,		// binary 
-		BTNic		// Non-Broadcasting, Single Byte Command ASCII protocol
+		Unknown		= -1,		// Unknown protocol
+		ASCII		= 0,		// original ASCII protocol
+		BTNic		= 1,		// Non-Broadcasting, Single Byte Command ASCII protocol
+		Binary		= 2,		// binary 
+		Simulator	= 255,		// Simulator protocol (WCF??)
 	}
 
 	# endregion
@@ -143,7 +143,6 @@ namespace BrewTrollerCommunicator
 	}
 
 
-
 	public partial class BTCommunicator : IBTCommunicator, IDisposable
 	{
 		// ASCII characters
@@ -151,12 +150,37 @@ namespace BrewTrollerCommunicator
 		private const byte ACK = 0x06;
 		private const byte NAK = 0x15;
 
-		// record field idx for Unknown, Simulator, ASCII, Binary, BTNic
-		//
-		private readonly int[] _cmdRspField = new [] { -1, 2, 2, 0, 1};
-		private int CmdRspField  { get { return _cmdRspField[(int)Version.ComType]; } }
-		private readonly int[] _firstRspParam = new[] { -1, 3, 3, 1, 2 };
-		private int FirstRspParam { get { return _firstRspParam[(int)Version.ComType]; } }
+		private int CmdRspField
+		{
+			get
+			{
+				Debug.Assert(Version.ComType != BTComType.Unknown, "Version.ComType != BTComType.Unknown");
+				switch (Version.ComType)
+				{
+				case BTComType.ASCII: return 2;
+				case BTComType.BTNic: return 1;
+				case BTComType.Binary: return 0;
+				//case BTComType.Simulator: return -1;
+				default: throw new Exception("Internal Error. Invalid BTComType.");
+				}
+			}
+		}
+
+		private int FirstRspParam 
+		{
+			get
+			{
+				Debug.Assert(Version.ComType != BTComType.Unknown, "Version.ComType != BTComType.Unknown");
+				switch (Version.ComType)
+				{
+				case BTComType.ASCII: return 3;
+				case BTComType.BTNic: return 2;
+				case BTComType.Binary: return 1;
+				//case BTComType.Simulator: return -1;
+				default: throw new Exception("Internal Error. Invalid BTComType.");
+				}
+			}
+		}
 
 		// Binary protocol fields
 		private const byte BinaryLenField = 1;
@@ -659,7 +683,7 @@ namespace BrewTrollerCommunicator
 
 		/// <summary> ASCII Command Processing </summary>
 		/// 
-		private BTResponse ProcessBTCommandASCII(BTCommand btCommand, IBTDataClass btStructure, IEnumerable<int> selector)
+		private BTResponse ProcessBTCommandASCII(BTCommand btCommand, IBTDataClass btStructure, List<int> selector)
 		{
 			var cmdInfo = _btCmdList[btCommand];
 
@@ -680,7 +704,7 @@ namespace BrewTrollerCommunicator
 
 				if (_btCmdList[btCommand].IsSetData)
 				{
-					cmdParams = btStructure.EmitToParamsList(ComSchema);
+					cmdParams.AddRange(btStructure.EmitToParamsList(Version));
 				}
 
 				Clean();
@@ -738,8 +762,8 @@ namespace BrewTrollerCommunicator
 				// log the receive message
 				LogMessage(RxD, BTComMessage.MsgDir.FromBT);
 				//. ****************************************************************
-				if (btCommand == BTCommand.SetEEPROM)
-					return BTResponse.OK;
+				//if (btCommand == BTCommand.SetEEPROM)
+				//    return BTResponse.OK;
 				//. ****************************************************************
 
 				// split the response string
@@ -792,7 +816,7 @@ namespace BrewTrollerCommunicator
 						default:
 							throw NewBTComException(String.Format("Incorrect Response Value - Expected '{0}', received '{1}'.",
 													cmdInfo.BTNicCommand,
-													rspSplit[FirstRspParam]));
+													rspSplit[CmdRspField]));
 						}	
 					}
 					break;
@@ -809,15 +833,15 @@ namespace BrewTrollerCommunicator
 			catch (Exception ex)	// Timeout, IOException, UnauthorizedAccessException
 			{
 				//. ****************************************************************
-				if (btCommand == BTCommand.SetEEPROM)
-					return BTResponse.OK;
+				//if (btCommand == BTCommand.SetEEPROM)
+				//    return BTResponse.OK;
 				//. ****************************************************************
 				throw NewBTComException(String.Format("Exception while reading from Port {0}.", _serialPort.PortName), ex);
 			}
 
 			if (_btCmdList[btCommand].IsGetData)
 			{
-				btStructure.HydrateFromParamList(ComSchema, rspParams);
+				btStructure.HydrateFromParamList(Version, rspParams);
 			}
 
 
@@ -826,7 +850,7 @@ namespace BrewTrollerCommunicator
 
 		/// <summary> Binary Command Processing </summary>
 		/// 
-		private BTResponse ProcessBTCommandBinary(BTCommand btCommand, IBTDataClass btStructure, ICollection<int> selector)
+		private BTResponse ProcessBTCommandBinary(BTCommand btCommand, IBTDataClass btStructure, List<int> selector)
 		{
 			var cmdInfo = _btCmdList[btCommand];
 
@@ -849,7 +873,7 @@ namespace BrewTrollerCommunicator
 				
 				if (_btCmdList[btCommand].IsSetData)
 				{
-					_cmdBuf[BinaryLenField] += btStructure.EmitToBinary(ComSchema, _cmdBuf, (byte)(BinaryDataField + _cmdBuf[BinaryLenField]));
+					_cmdBuf[BinaryLenField] += btStructure.EmitToBinary(Version, _cmdBuf, (byte)(BinaryDataField + _cmdBuf[BinaryLenField]));
 				}
 
 				var cmdBufLen = _cmdBuf[BinaryLenField] + 2;
@@ -895,7 +919,7 @@ namespace BrewTrollerCommunicator
 
 				if (cmdInfo.IsGetData)
 				{
-					btStructure.HydrateFromBinary(ComSchema, _rspBuf, BinaryDataField, rspParamsLen);
+					btStructure.HydrateFromBinary(Version, _rspBuf, BinaryDataField, rspParamsLen);
 				}
 
 			}
@@ -911,7 +935,7 @@ namespace BrewTrollerCommunicator
 
 		/// <summary> ASCII Command Processing </summary>
 		/// 
-		private BTResponse ProcessBTCommandBTNic(BTCommand btCommand, IBTDataClass btStructure, IEnumerable<int> selector)
+		private BTResponse ProcessBTCommandBTNic(BTCommand btCommand, IBTDataClass btStructure, List<int> selector)
 		{
 			var cmdInfo = _btCmdList[btCommand];
 
@@ -932,7 +956,7 @@ namespace BrewTrollerCommunicator
 
 				if (_btCmdList[btCommand].IsSetData)
 				{
-					cmdParams = btStructure.EmitToParamsList(ComSchema);
+					cmdParams = btStructure.EmitToParamsList(Version);
 				}
 
 				Clean();
@@ -1037,7 +1061,7 @@ namespace BrewTrollerCommunicator
 
 			if (_btCmdList[btCommand].IsGetData)
 			{
-				btStructure.HydrateFromParamList(ComSchema, rspParams);
+				btStructure.HydrateFromParamList(Version, rspParams);
 			}
 
 
@@ -1234,66 +1258,66 @@ namespace BrewTrollerCommunicator
 			//
 			_btCmdList = new SortedList<BTCommand, BTCmdInfo>
     		{
-				{BTCommand.GetVersion,			new BTCmdInfo("GET_VER",		BTResponse.Version,			0x10, "G", BTComDataDir.FromBT,	1000) },
-				{BTCommand.Reset,				new BTCmdInfo("RESET",			 BTResponse.OK,				0x11, "c",	BTComDataDir.None,	1000) },
-				{BTCommand.InitEEPROM,			new BTCmdInfo("INIT_EEPROM",	BTResponse.OK,				0x12, "I", BTComDataDir.None,   10000) },
-				{BTCommand.GetEEPROM,			new BTCmdInfo("GET_EEPROM",		BTResponse.EEPROM,			0x23, "~", BTComDataDir.FromBT,	1000) },
-				{BTCommand.SetEEPROM,			new BTCmdInfo("SET_EEPROM",		BTResponse.EEPROM,			0x14, "~", BTComDataDir.Both,   10000) },
-				{BTCommand.GetAlarm,			new BTCmdInfo("GET_ALARM",		BTResponse.AlarmState,		0x15, "e", BTComDataDir.FromBT,	1000) },
-				{BTCommand.SetAlarm,			new BTCmdInfo("SET_ALARM",		BTResponse.OK,				0x16, "V", BTComDataDir.ToBT,	1000) },
-				{BTCommand.ScanTempSensors,		new BTCmdInfo("SCAN_TS",		BTResponse.TempSensorScan,	0x17, "J", BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetVersion,			new BTCmdInfo("GET_VER",		BTResponse.Version,			0x10, "G",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.Reset,				new BTCmdInfo("RESET",			 BTResponse.OK,				0x11, "c",	BTComDataDir.None,		1000) },
+				{BTCommand.InitEEPROM,			new BTCmdInfo("INIT_EEPROM",	BTResponse.OK,				0x12, "I",	BTComDataDir.None,	   10000) },
+				{BTCommand.GetEEPROM,			new BTCmdInfo("GET_EEPROM",		BTResponse.EEPROM,			0x23, "~",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.SetEEPROM,			new BTCmdInfo("SET_EEPROM",		BTResponse.EEPROM,			0x14, "~",	BTComDataDir.Both,		10000) },
+				{BTCommand.GetAlarm,			new BTCmdInfo("GET_ALARM",		BTResponse.AlarmState,		0x15, "e",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.SetAlarm,			new BTCmdInfo("SET_ALARM",		BTResponse.OK,				0x16, "V",	BTComDataDir.ToBT,		1000) },
+				{BTCommand.ScanTempSensors,		new BTCmdInfo("SCAN_TS",		BTResponse.TempSensorScan,	0x17, "J",	BTComDataDir.FromBT,	1000) },
 
-				{BTCommand.GetRecipe,			new BTCmdInfo("GET_PROG",		BTResponse.Recipe,			0x18, "E", BTComDataDir.FromBT,	1000) },
-				{BTCommand.SetRecipe,			new BTCmdInfo("SET_PROG",		BTResponse.Recipe,			0x19, "O", BTComDataDir.ToBT,	1000) },
-				{BTCommand.GetCalcTemps,		new BTCmdInfo("GET_CALCTEMPS",	BTResponse.CalcTemps,		0x1a, "l", BTComDataDir.FromBT,	1000) },
-				{BTCommand.GetCalcVols,			new BTCmdInfo("GET_CALCVOLS",	BTResponse.CalcVols,		0x1b, "m", BTComDataDir.FromBT,	1000) },
-				{BTCommand.GetLogStatus,  		new BTCmdInfo("GET_LOGSTATUS",  BTResponse.LogStatus,		0x1c, "~", BTComDataDir.FromBT,	1000) },
-				{BTCommand.SetLogStatus,		new BTCmdInfo("SET_LOGSTATUS",  BTResponse.OK,				0x1d, "~", BTComDataDir.ToBT,	1000) },
-				{BTCommand.GetLog,			    new BTCmdInfo("GET_LOG",		BTResponse.LogData,			0x1e, "~", BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetRecipe,			new BTCmdInfo("GET_PROG",		BTResponse.Recipe,			0x18, "E",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.SetRecipe,			new BTCmdInfo("SET_PROG",		BTResponse.Recipe,			0x19, "O",	BTComDataDir.ToBT,		1000) },
+				{BTCommand.GetCalcTemps,		new BTCmdInfo("GET_CALCTEMPS",	BTResponse.CalcTemps,		0x1a, "l",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetCalcVols,			new BTCmdInfo("GET_CALCVOLS",	BTResponse.CalcVols,		0x1b, "m",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetLogStatus,  		new BTCmdInfo("GET_LOGSTATUS",  BTResponse.LogStatus,		0x1c, "~",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.SetLogStatus,		new BTCmdInfo("SET_LOGSTATUS",  BTResponse.OK,				0x1d, "~",	BTComDataDir.ToBT,		1000) },
+				{BTCommand.GetLog,			    new BTCmdInfo("GET_LOG",		BTResponse.LogData,			0x1e, "~",	BTComDataDir.FromBT,	1000) },
                                
-				{BTCommand.GetBoilTemp,			new BTCmdInfo("GET_BOIL",	    BTResponse.BoilTemp,		0x20, "A", BTComDataDir.FromBT,	1000) },
-				{BTCommand.GetBoilPower,		new BTCmdInfo("GET_BOILPWR",	BTResponse.BoilPower,		0x21, "f", BTComDataDir.FromBT,	1000) },
-				{BTCommand.GetDelayTime,		new BTCmdInfo("GET_DELAYTIME",	BTResponse.DelayTime,		0x22, "g", BTComDataDir.FromBT,	1000) },
-				{BTCommand.GetEvapRate,			new BTCmdInfo("GET_EVAP",		BTResponse.EvapRate,		0x23, "C", BTComDataDir.FromBT,	1000) },
-				{BTCommand.GetGrainTemp,		new BTCmdInfo("GET_GRAINTEMP",	BTResponse.GrainTemp,		0x24, "h", BTComDataDir.FromBT,	1000) },
-				{BTCommand.GetHeatOutputConfig,	new BTCmdInfo("GET_OSET",		BTResponse.OutputSettings,	0x25, "D", BTComDataDir.FromBT,  1000) },
-				{BTCommand.GetTempSensorAddr,	new BTCmdInfo("GET_TS",		    BTResponse.TempSensorAddr,	0x26, "F", BTComDataDir.FromBT,	1000) },
-				{BTCommand.GetValveProfile,		new BTCmdInfo("GET_VLVCFG",		BTResponse.ValveConfig,		0x27, "d", BTComDataDir.FromBT,	1000) },
-				{BTCommand.GetVesselCalib,		new BTCmdInfo("GET_CAL",	    BTResponse.VesselCalib,		0x28, "B", BTComDataDir.FromBT,	1000) },
-				{BTCommand.GetVolumnSetting,	new BTCmdInfo("GET_VSET",		BTResponse.VolumeSetting,	0x29, "H", BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetBoilTemp,			new BTCmdInfo("GET_BOIL",	    BTResponse.BoilTemp,		0x20, "A",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetBoilPower,		new BTCmdInfo("GET_BOILPWR",	BTResponse.BoilPower,		0x21, "f",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetDelayTime,		new BTCmdInfo("GET_DELAYTIME",	BTResponse.DelayTime,		0x22, "g",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetEvapRate,			new BTCmdInfo("GET_EVAP",		BTResponse.EvapRate,		0x23, "C",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetGrainTemp,		new BTCmdInfo("GET_GRAINTEMP",	BTResponse.GrainTemp,		0x24, "h",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetHeatOutputConfig,	new BTCmdInfo("GET_OSET",		BTResponse.OutputSettings,	0x25, "D",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetTempSensorAddr,	new BTCmdInfo("GET_TS",		    BTResponse.TempSensorAddr,	0x26, "F",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetValveProfile,		new BTCmdInfo("GET_VLVCFG",		BTResponse.ValveConfig,		0x27, "d",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.GetVesselCalib,		new BTCmdInfo("GET_CAL",	    BTResponse.VesselCalib,		0x28, "B",	BTComDataDir.FromBT,	1500) },
+				{BTCommand.GetVolumnSetting,	new BTCmdInfo("GET_VSET",		BTResponse.VolumeSetting,	0x29, "H",	BTComDataDir.FromBT,	1000) },
 
-				{BTCommand.SetBoilTemp,			new BTCmdInfo("SET_BOIL",		BTResponse.BoilTemp,		0x30, "K", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetBoilPower,		new BTCmdInfo("SET_BOILPWR",	BTResponse.BoilPower,		0x31, "i", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetDelayTime,		new BTCmdInfo("SET_DELAYTIME",	BTResponse.DelayTime,		0x32, "j", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetEvapRate,			new BTCmdInfo("SET_EVAP",		BTResponse.EvapRate,		0x33, "M", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetGrainTemp,		new BTCmdInfo("SET_GRAINTEMP",	BTResponse.GrainTemp,		0x34, "k", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetHeatOutputConfig,	new BTCmdInfo("SET_OSET",		BTResponse.OutputSettings,	0x35, "N", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetTempSensorAddr,	new BTCmdInfo("SET_TS",		    BTResponse.TempSensorAddr,  0x36, "P", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetValveProfile,		new BTCmdInfo("SET_VLVCFG",		BTResponse.ValveConfig,     0x37, "Q", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetVesselCalib,		new BTCmdInfo("SET_CAL",		BTResponse.VesselCalib,     0x38, "L", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetVolumeSetting,	new BTCmdInfo("SET_VSET",		BTResponse.VolumeSetting,   0x39, "R", BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetBoilTemp,			new BTCmdInfo("SET_BOIL",		BTResponse.BoilTemp,		0x30, "K",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetBoilPower,		new BTCmdInfo("SET_BOILPWR",	BTResponse.BoilPower,		0x31, "i",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetDelayTime,		new BTCmdInfo("SET_DELAYTIME",	BTResponse.DelayTime,		0x32, "j",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetEvapRate,			new BTCmdInfo("SET_EVAP",		BTResponse.EvapRate,		0x33, "M",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetGrainTemp,		new BTCmdInfo("SET_GRAINTEMP",	BTResponse.GrainTemp,		0x34, "k",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetHeatOutputConfig,	new BTCmdInfo("SET_OSET",		BTResponse.OutputSettings,	0x35, "N",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetTempSensorAddr,	new BTCmdInfo("SET_TS",		    BTResponse.TempSensorAddr,  0x36, "P",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetValveProfile,		new BTCmdInfo("SET_VLVCFG",		BTResponse.ValveConfig,     0x37, "Q",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetVesselCalib,		new BTCmdInfo("SET_CAL",		BTResponse.VesselCalib,     0x38, "L",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetVolumeSetting,	new BTCmdInfo("SET_VSET",		BTResponse.VolumeSetting,   0x39, "R",	BTComDataDir.ToBT,	1000) },
 
 
-				{BTCommand.StepAdvance,			new BTCmdInfo("ADV_STEP",		BTResponse.OK, 0x40, "S", BTComDataDir.None,	1000) },
-				{BTCommand.StepExit,			new BTCmdInfo("EXIT_STEP",		BTResponse.OK, 0x41, "T", BTComDataDir.None,	1000) },
-				{BTCommand.StepInit,			new BTCmdInfo("INIT_STEP",		BTResponse.OK, 0x42, "U", BTComDataDir.None,	1000) },
-				{BTCommand.SetAutoValve,		new BTCmdInfo("SET_AUTOVLV",	BTResponse.OK, 0x43, "W", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetSetpoint,			new BTCmdInfo("SET_SETPOINT",	BTResponse.OK, 0x44, "X", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetTimerStatus,		new BTCmdInfo("SET_TIMERSTATUS",BTResponse.OK, 0x45, "Y", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetTimerValue,		new BTCmdInfo("SETTIMERVALUE",	BTResponse.OK, 0x46, "Z", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetValveState,		new BTCmdInfo("SET_VLV",		BTResponse.OK, 0x47, "a", BTComDataDir.ToBT,	1000) },
-				{BTCommand.SetValvePreference,	new BTCmdInfo("SET_VLVPRF",		BTResponse.OK, 0x48, "b", BTComDataDir.ToBT,	1000) },
+				{BTCommand.StepAdvance,			new BTCmdInfo("ADV_STEP",		BTResponse.OK, 0x40, "S",	BTComDataDir.None,	1000) },
+				{BTCommand.StepExit,			new BTCmdInfo("EXIT_STEP",		BTResponse.OK, 0x41, "T",	BTComDataDir.None,	1000) },
+				{BTCommand.StepInit,			new BTCmdInfo("INIT_STEP",		BTResponse.OK, 0x42, "U",	BTComDataDir.None,	1000) },
+				{BTCommand.SetAutoValve,		new BTCmdInfo("SET_AUTOVLV",	BTResponse.OK, 0x43, "W",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetSetpoint,			new BTCmdInfo("SET_SETPOINT",	BTResponse.OK, 0x44, "X",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetTimerStatus,		new BTCmdInfo("SET_TIMERSTATUS",BTResponse.OK, 0x45, "Y",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetTimerValue,		new BTCmdInfo("SETTIMERVALUE",	BTResponse.OK, 0x46, "Z",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetValveState,		new BTCmdInfo("SET_VLV",		BTResponse.OK, 0x47, "a",	BTComDataDir.ToBT,	1000) },
+				{BTCommand.SetValvePreference,	new BTCmdInfo("SET_VLVPRF",		BTResponse.OK, 0x48, "b",	BTComDataDir.ToBT,	1000) },
 
-				{BTCommand.LogStepProg,			new BTCmdInfo("",	BTResponse.Error,	0x48, "n", BTComDataDir.FromBT,	1000) },
-				{BTCommand.LogTimer,			new BTCmdInfo("",	BTResponse.Error,	0x48, "o", BTComDataDir.FromBT,	1000) },
-				{BTCommand.LogVolume,			new BTCmdInfo("",	BTResponse.Error,	0x48, "p", BTComDataDir.FromBT,	1000) },
-				{BTCommand.LogTemp,				new BTCmdInfo("",	BTResponse.Error,	0x48, "q", BTComDataDir.FromBT,	1000) },
-				{BTCommand.LogSteam,			new BTCmdInfo("",	BTResponse.Error,	0x48, "r", BTComDataDir.FromBT,	1000) },
-				{BTCommand.LogHeatPower,		new BTCmdInfo("",	BTResponse.Error,	0x48, "s", BTComDataDir.FromBT,	1000) },
-				{BTCommand.LogHeatSetpoint,		new BTCmdInfo("",	BTResponse.Error,	0x48, "t", BTComDataDir.FromBT,	1000) },
-				{BTCommand.LogAutoValve,		new BTCmdInfo("",	BTResponse.Error,	0x48, "u", BTComDataDir.FromBT,	1000) },
-				{BTCommand.LogValveBits,		new BTCmdInfo("",	BTResponse.Error,	0x48, "v", BTComDataDir.FromBT,	1000) },
-				{BTCommand.LogValvePref,		new BTCmdInfo("",	BTResponse.Error,	0x48, "w", BTComDataDir.FromBT,	1000) }
+				{BTCommand.LogStepProg,			new BTCmdInfo("",	BTResponse.Error,	0x48, "n",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.LogTimer,			new BTCmdInfo("",	BTResponse.Error,	0x48, "o",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.LogVolume,			new BTCmdInfo("",	BTResponse.Error,	0x48, "p",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.LogTemp,				new BTCmdInfo("",	BTResponse.Error,	0x48, "q",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.LogSteam,			new BTCmdInfo("",	BTResponse.Error,	0x48, "r",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.LogHeatPower,		new BTCmdInfo("",	BTResponse.Error,	0x48, "s",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.LogHeatSetpoint,		new BTCmdInfo("",	BTResponse.Error,	0x48, "t",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.LogAutoValve,		new BTCmdInfo("",	BTResponse.Error,	0x48, "u",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.LogValveBits,		new BTCmdInfo("",	BTResponse.Error,	0x48, "v",	BTComDataDir.FromBT,	1000) },
+				{BTCommand.LogValvePref,		new BTCmdInfo("",	BTResponse.Error,	0x48, "w",	BTComDataDir.FromBT,	1000) }
 			};
 			// verify that all BTResponses have been assigned a keyword
 			Debug.Assert(_btCmdList.Count == Enum.GetNames(typeof(BTCommand)).Length, "_btCmdList.Count == Enum.GetNames(typeof(BTCommand)).Length");

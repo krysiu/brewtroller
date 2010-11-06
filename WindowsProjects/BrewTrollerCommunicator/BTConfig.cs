@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml.Serialization;
 
@@ -34,7 +35,7 @@ namespace BrewTrollerCommunicator
 	}
 
 
-	public enum BTVesselType
+	public enum BTVesselID
 	{
 		HLT = 0,
 		Mash = 1,
@@ -106,16 +107,16 @@ namespace BrewTrollerCommunicator
 		public decimal EvapRate { get; set; }
 
 		// SET_VSET Volume Settings
-		private SerializableDictionary<BTVesselType, BTVolumeSetting> _volumeSettings;
-		public SerializableDictionary<BTVesselType, BTVolumeSetting> VolumeSettings { get { return _volumeSettings; } set { _volumeSettings = value; } }
+		private SerializableDictionary<BTVesselID, BTVolumeSetting> _volumeSettings;
+		public SerializableDictionary<BTVesselID, BTVolumeSetting> VolumeSettings { get { return _volumeSettings; } set { _volumeSettings = value; } }
 
 		// SET_OSET Output Settings
 		private SerializableDictionary<BTHeatOutputID, BTHeatOutputConfig> _heatOutputSettings;
 		public SerializableDictionary<BTHeatOutputID, BTHeatOutputConfig> HeatOutputSettings { get { return _heatOutputSettings; } set { _heatOutputSettings = value; } }
 
 		// SET_CAL Vessel Calibrations
-		private SerializableDictionary<BTVesselType, BTVesselCalibration> _vesselCalibrations;
-		public SerializableDictionary<BTVesselType, BTVesselCalibration> VesselCalibrations { get { return _vesselCalibrations; } set { _vesselCalibrations = value; } }
+		private SerializableDictionary<BTVesselID, BTVesselCalibration> _vesselCalibrations;
+		public SerializableDictionary<BTVesselID, BTVesselCalibration> VesselCalibrations { get { return _vesselCalibrations; } set { _vesselCalibrations = value; } }
 
 		// SET_VLVCFG Valve Profile
 		private SerializableDictionary<BTProfileID, BTValveProfile> _valveProfiles;
@@ -139,18 +140,18 @@ namespace BrewTrollerCommunicator
 
 		public void Initialize()
 		{
-			_vesselCalibrations = new SerializableDictionary<BTVesselType, BTVesselCalibration>
+			_vesselCalibrations = new SerializableDictionary<BTVesselID, BTVesselCalibration>
           	{
-          		{BTVesselType.HLT, new BTVesselCalibration()},
-          		{BTVesselType.Mash, new BTVesselCalibration()},
-          		{BTVesselType.Kettle, new BTVesselCalibration()}
+          		{BTVesselID.HLT, new BTVesselCalibration()},
+          		{BTVesselID.Mash, new BTVesselCalibration()},
+          		{BTVesselID.Kettle, new BTVesselCalibration()}
           	};
 
-			_volumeSettings = new SerializableDictionary<BTVesselType, BTVolumeSetting>
+			_volumeSettings = new SerializableDictionary<BTVesselID, BTVolumeSetting>
           	{
-          		{BTVesselType.HLT, new BTVolumeSetting()},
-          		{BTVesselType.Mash, new BTVolumeSetting()},
-          		{BTVesselType.Kettle, new BTVolumeSetting()}
+          		{BTVesselID.HLT, new BTVolumeSetting()},
+          		{BTVesselID.Mash, new BTVolumeSetting()},
+          		{BTVesselID.Kettle, new BTVolumeSetting()}
           	};
 
 			_heatOutputSettings = new SerializableDictionary<BTHeatOutputID, BTHeatOutputConfig>
@@ -217,19 +218,38 @@ namespace BrewTrollerCommunicator
 	[SerializableAttribute]
 	public class BTVolumeSetting : IFormattable, IBTDataClass
 	{
-		BTVesselType VesselType { get; set; }
+		public BTVesselID ID { get; set; }
 
 		public decimal Capacity { get; set; }
 		public decimal DeadSpace { get; set; }
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+
+		public override bool Equals(object obj)
 		{
-			var rspCount = (schema == 0) ? 4 : 3;
+			if (obj == null || !(obj is BTVolumeSetting))
+				return false;
+
+			var vs = obj as BTVolumeSetting;
+			return (ID == vs.ID && Capacity == vs.Capacity && DeadSpace == vs.DeadSpace);
+		}
+
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
+		public static bool operator ==(BTVolumeSetting vs1, BTVolumeSetting vs2) { return vs1.Equals(vs2); }
+		public static bool operator !=(BTVolumeSetting vs1, BTVolumeSetting vs2) { return !vs1.Equals(vs2); }
+
+
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
+		{
+			var rspCount = (version.IsAsciiSchema0) ? 4 : 3;
 			Debug.Assert(rspParams.Count == rspCount, "rspParams.Count == rspCount");
 
 			try
 			{
-				VesselType = (BTVesselType)(Convert.ToDecimal(rspParams[0]));
+				ID = (BTVesselID)(Convert.ToDecimal(rspParams[0]));
 				Capacity = Convert.ToDecimal(rspParams[1]) / 1000m;
 				DeadSpace = Convert.ToDecimal(rspParams[2]) / 1000m;
 			}
@@ -239,13 +259,13 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			try
 			{
 				return new List<string>
 			               	{
-			               		Convert.ToString(((int)VesselType)),
+			               		Convert.ToString(((int)ID)),
 			               		Convert.ToString(Capacity * 1000m),
 												Convert.ToString(DeadSpace * 1000m)
 			               	};
@@ -256,12 +276,12 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			if (len != 7)
 				throw new Exception("BTVolumeSetting.HydrateFromBinary: Buffer Size Error.");
 
-			VesselType = (BTVesselType)btBuf[offset++];
+			ID = (BTVesselID)btBuf[offset++];
 
 			Capacity = (btBuf[offset++] << 24) |
 					   (btBuf[offset++] << 16) |
@@ -274,14 +294,14 @@ namespace BrewTrollerCommunicator
 			DeadSpace /= 1000;
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			throw new NotImplementedException();
 		}
 
 		public override string ToString()
 		{
-			return String.Format("{0} Volume: Capacity={1:N3} Dead Space={2:n3}", VesselType, Capacity, DeadSpace);
+			return String.Format("{0} Volume: Capacity={1:N3} Dead Space={2:n3}", ID, Capacity, DeadSpace);
 		}
 
 		public string ToString(string format, IFormatProvider formatProvider)
@@ -335,9 +355,9 @@ namespace BrewTrollerCommunicator
 		[XmlIgnoreAttribute]
 		public bool IsNotSteam { get { return ID != BTHeatOutputID.Steam; } }
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
-			Debug.Assert(rspParams.Count == ((schema == 0) ? 7 : 9), "rspParams.Count == 9");
+			Debug.Assert(rspParams.Count == ((version.ComType == BTComType.ASCII && version.ComSchema == 0) ? 7 : 9), "rspParams.Count == 9");
 
 			try
 			{
@@ -347,7 +367,7 @@ namespace BrewTrollerCommunicator
 				PGain = Convert.ToDecimal(rspParams[(int)HeatOutputField.PGain]);
 				IGain = Convert.ToDecimal(rspParams[(int)HeatOutputField.IGain]);
 				DGain = Convert.ToDecimal(rspParams[(int)HeatOutputField.DGain]);
-				if (schema == 0)
+				if (version.IsAsciiSchema0)
 				{
 					Hysteresis = Convert.ToDecimal(rspParams[(int)HeatOutputField.Hysteresis]) / 10m;
 				}
@@ -372,7 +392,7 @@ namespace BrewTrollerCommunicator
 
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			try
 			{
@@ -396,7 +416,7 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			if (len == 0 || len != ((btBuf[offset] == (int)BTHeatOutputID.Steam) ? 11 : 7))
 				throw new Exception("BTHeatOutputConfig.HydrateFromBinary: Buffer Size Error.");
@@ -419,7 +439,7 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			throw new NotImplementedException();
 		}
@@ -520,7 +540,27 @@ namespace BrewTrollerCommunicator
 		[XmlIgnoreAttribute]
 		public bool Valve32 { get { return Mask.GetBit(31); } set { Mask = Mask.SetBit(31, value); } }
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+
+		public override bool Equals(object obj)
+		{
+
+			if (obj == null || !(obj is BTValveProfile))
+				return false;
+
+			var vp = obj as BTValveProfile;
+			return (ID == vp.ID && Mask == vp.Mask);
+		}
+
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
+		public static bool operator ==(BTValveProfile vp1, BTValveProfile vp2) { return (object)vp1 != null && (object)vp2 != null && vp1.Equals(vp2); }
+		public static bool operator !=(BTValveProfile vp1, BTValveProfile vp2) { return !((object)vp1 != null && (object)vp2 != null && vp1.Equals(vp2)); }
+
+
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			Debug.Assert(rspParams.Count == 2, "rspParams.Count == 2");
 
@@ -535,7 +575,7 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			try
 			{
@@ -551,7 +591,7 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			if (len != 9)
 				throw new Exception("BTVolumeSetting.HydrateFromBinary: Buffer Size Error.");
@@ -567,7 +607,7 @@ namespace BrewTrollerCommunicator
 
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			throw new NotImplementedException();
 		}
@@ -638,7 +678,7 @@ namespace BrewTrollerCommunicator
 	{
 		public static readonly int NumberOfCalibrationPoints = 10;
 
-		public BTVesselType VesselType { get; set; }
+		public BTVesselID ID { get; set; }
 
 		private BTCalibrationPoint[] _btCalibrationPoints = new BTCalibrationPoint[NumberOfCalibrationPoints];
 		public BTCalibrationPoint[] CalibrationPoints { get { return _btCalibrationPoints; } set { _btCalibrationPoints = value; } }
@@ -652,37 +692,66 @@ namespace BrewTrollerCommunicator
 		}
 
 		[XmlIgnoreAttribute]
-		public BTCalibrationPoint CalibrationPoint01 { get { return _btCalibrationPoints[0]; } set { _btCalibrationPoints[0] = value; } }
+		public BTCalibrationPoint CalibrationPoint0 { get { return _btCalibrationPoints[0]; } set { _btCalibrationPoints[0] = value; } }
 		[XmlIgnoreAttribute]
-		public BTCalibrationPoint CalibrationPoint02 { get { return _btCalibrationPoints[1]; } set { _btCalibrationPoints[1] = value; } }
+		public BTCalibrationPoint CalibrationPoint1 { get { return _btCalibrationPoints[1]; } set { _btCalibrationPoints[1] = value; } }
 		[XmlIgnoreAttribute]
-		public BTCalibrationPoint CalibrationPoint03 { get { return _btCalibrationPoints[2]; } set { _btCalibrationPoints[2] = value; } }
+		public BTCalibrationPoint CalibrationPoint2 { get { return _btCalibrationPoints[2]; } set { _btCalibrationPoints[2] = value; } }
 		[XmlIgnoreAttribute]
-		public BTCalibrationPoint CalibrationPoint04 { get { return _btCalibrationPoints[3]; } set { _btCalibrationPoints[3] = value; } }
+		public BTCalibrationPoint CalibrationPoint3 { get { return _btCalibrationPoints[3]; } set { _btCalibrationPoints[3] = value; } }
 		[XmlIgnoreAttribute]
-		public BTCalibrationPoint CalibrationPoint05 { get { return _btCalibrationPoints[4]; } set { _btCalibrationPoints[4] = value; } }
+		public BTCalibrationPoint CalibrationPoint4 { get { return _btCalibrationPoints[4]; } set { _btCalibrationPoints[4] = value; } }
 		[XmlIgnoreAttribute]
-		public BTCalibrationPoint CalibrationPoint06 { get { return _btCalibrationPoints[5]; } set { _btCalibrationPoints[5] = value; } }
+		public BTCalibrationPoint CalibrationPoint5 { get { return _btCalibrationPoints[5]; } set { _btCalibrationPoints[5] = value; } }
 		[XmlIgnoreAttribute]
-		public BTCalibrationPoint CalibrationPoint07 { get { return _btCalibrationPoints[6]; } set { _btCalibrationPoints[6] = value; } }
+		public BTCalibrationPoint CalibrationPoint6 { get { return _btCalibrationPoints[6]; } set { _btCalibrationPoints[6] = value; } }
 		[XmlIgnoreAttribute]
-		public BTCalibrationPoint CalibrationPoint08 { get { return _btCalibrationPoints[7]; } set { _btCalibrationPoints[7] = value; } }
+		public BTCalibrationPoint CalibrationPoint7 { get { return _btCalibrationPoints[7]; } set { _btCalibrationPoints[7] = value; } }
 		[XmlIgnoreAttribute]
-		public BTCalibrationPoint CalibrationPoint09 { get { return _btCalibrationPoints[8]; } set { _btCalibrationPoints[8] = value; } }
+		public BTCalibrationPoint CalibrationPoint8 { get { return _btCalibrationPoints[8]; } set { _btCalibrationPoints[8] = value; } }
 		[XmlIgnoreAttribute]
-		public BTCalibrationPoint CalibrationPoint10 { get { return _btCalibrationPoints[9]; } set { _btCalibrationPoints[9] = value; } }
+		public BTCalibrationPoint CalibrationPoint9 { get { return _btCalibrationPoints[9]; } set { _btCalibrationPoints[9] = value; } }
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+
+		public override bool Equals(object obj)
+		{
+
+			if (obj == null || !(obj is BTVesselCalibration))
+				return false;
+
+			var vc = obj as BTVesselCalibration;
+			if (ID != vc.ID)
+				return false;
+
+			for (var i = 0; i < CalibrationPoints.Length; i++)
+				if (CalibrationPoints[i] != vc.CalibrationPoints[i])
+					return false;
+
+			return true;
+			//return !CalibrationPoints.Where((t, i) => t != vc.CalibrationPoints[i]).Any();
+		}
+
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
+		public static bool operator ==(BTVesselCalibration vc1, BTVesselCalibration vc2) { return vc1.Equals(vc2); }
+		public static bool operator !=(BTVesselCalibration vc1, BTVesselCalibration vc2) { return !vc1.Equals(vc2); }
+
+
+
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			Debug.Assert(rspParams.Count == 21, "rspParams.Count == 21");
 
 			try
 			{
-				VesselType = (BTVesselType)(Convert.ToDecimal(rspParams[0]));
+				ID = (BTVesselID)(Convert.ToDecimal(rspParams[0]));
 				for (int i = 0; i < _btCalibrationPoints.Length; i++)
 				{
-					_btCalibrationPoints[i] = new BTCalibrationPoint(i + 1);
-					_btCalibrationPoints[i].HydrateFromParamList(schema, rspParams.GetRange(i * 2 + 1, 2));
+					_btCalibrationPoints[i] = new BTCalibrationPoint(i);
+					_btCalibrationPoints[i].HydrateFromParamList(version, rspParams.GetRange(i * 2 + 1, 2));
 				}
 			}
 			catch (Exception ex)
@@ -691,13 +760,13 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			try
 			{
-				var rspList = new List<string> { Convert.ToString((int)VesselType) };
+				var rspList = new List<string> { Convert.ToString((int)ID) };
 				foreach (var point in _btCalibrationPoints)
-					rspList.AddRange(point.EmitToParamsList(schema));
+					rspList.AddRange(point.EmitToParamsList(version));
 				return rspList;
 			}
 			catch (Exception ex)
@@ -706,12 +775,12 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			if (len != 61)
 				throw new Exception("BTVolumeSetting.HydrateFromBinary: Buffer Size Error.");
 
-			VesselType = (BTVesselType)btBuf[offset++];
+			ID = (BTVesselID)btBuf[offset++];
 
 			for (var i = 0; i < 10; i++)
 			{
@@ -728,7 +797,7 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			throw new NotImplementedException();
 		}
@@ -736,8 +805,8 @@ namespace BrewTrollerCommunicator
 		public override string ToString()
 		{
 			var sb = new StringBuilder();
-			sb.AppendFormat("{0} Calibration: ", VesselType);
-			if (CalibrationPoint01.IsEmpty)
+			sb.AppendFormat("{0} Calibration: ", ID);
+			if (CalibrationPoint0.IsEmpty)
 			{
 				sb.Append("<none>");
 			}
@@ -786,7 +855,27 @@ namespace BrewTrollerCommunicator
 		public BTCalibrationPoint(int id) { PointID = id; }
 
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+		public override bool Equals(object obj)
+		{
+
+			if (obj == null || !(obj is BTCalibrationPoint))
+				return false;
+
+			var vcp = obj as BTCalibrationPoint;
+
+			return (PointID == vcp.PointID && Volume == vcp.Volume && Value == vcp.Value);
+		}
+
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
+		public static bool operator ==(BTCalibrationPoint vcp1, BTCalibrationPoint vcp2) { return vcp1.Equals(vcp2); }
+		public static bool operator !=(BTCalibrationPoint vcp1, BTCalibrationPoint vcp2) { return !vcp1.Equals(vcp2); }
+
+
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			Debug.Assert(rspParams.Count == 2, "rspParams.Count == 2");
 			try
@@ -800,7 +889,7 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			try
 			{
@@ -816,12 +905,12 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			throw new NotImplementedException();
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			throw new NotImplementedException();
 		}
@@ -877,7 +966,37 @@ namespace BrewTrollerCommunicator
 			Address = new byte[8];
 		}
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+		public TSAddress(TSLocation tsLocation, ulong address) : this(tsLocation)
+		{
+			for (var i = 7; i >= 0; i--)
+			{
+				Address[i] = (byte)(address & 0xff);
+				address >>= 8;
+			}
+		}
+
+		public override bool Equals(object obj)
+		{
+
+			if (obj == null || !(obj is TSAddress))
+				return false;
+
+			var ts1 = obj as TSAddress;
+			if (Location != ts1.Location)
+				return false;
+
+			return !Address.Where((t, i) => t != ts1.Address[i]).Any();
+		}
+
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
+		public static bool operator ==(TSAddress ts1, TSAddress ts2) { return ts1.Equals(ts2); }
+		public static bool operator !=(TSAddress ts1, TSAddress ts2) { return !ts1.Equals(ts2); }
+
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			Debug.Assert(rspParams.Count == 9, "rspParams.Count == 9");
 			try
@@ -892,13 +1011,14 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			var paramList = new List<string>();
 			try
 			{
+				paramList.Add(((int)Location).ToString());
 				for (var i = 0; i < 8; i++)
-					paramList.Add(String.Format("{0:X2}", Address[i]));
+					paramList.Add(Address[i].ToString());
 			}
 			catch (Exception ex)
 			{
@@ -907,7 +1027,7 @@ namespace BrewTrollerCommunicator
 			return paramList;
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			if (len != 9)
 				throw new Exception("TSAddress.HydrateFromBinary: Buffer Size Error.");
@@ -917,7 +1037,7 @@ namespace BrewTrollerCommunicator
 				Address[i] = btBuf[offset++];
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			throw new NotImplementedException();
 		}
@@ -953,12 +1073,12 @@ namespace BrewTrollerCommunicator
 		public UInt64 Mask { get; set; }
 		public UInt64 State { get; set; }
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			throw new NotImplementedException();
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			return new List<string>
 			{
@@ -967,12 +1087,12 @@ namespace BrewTrollerCommunicator
 			};
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			throw new NotImplementedException();
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			var uiVal = Mask;
 			for (var i = 7; i >= 0; i++)
@@ -1050,7 +1170,7 @@ namespace BrewTrollerCommunicator
 		public decimal Value { get; set; }
 		public BTUnits Units { get; set; }
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			Debug.Assert(rspParams.Count == (_hasUnits ? 2 : 1), "rspParams.Count == 1/2");
 			try
@@ -1066,7 +1186,7 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			try
 			{
@@ -1082,7 +1202,7 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			if (len != ByteCount)
 				throw new Exception("GenericDecimal.HydrateFromBinary: Buffer Size Error.");
@@ -1097,7 +1217,7 @@ namespace BrewTrollerCommunicator
 			Value = (decimal)iVal / ScaleFactor;
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			// scale the value
 			int iVal = (int)(Value * ScaleFactor);
@@ -1117,23 +1237,23 @@ namespace BrewTrollerCommunicator
 	{
 		public bool Value { get; set; }
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			Debug.Assert(rspParams.Count == 1, "rspParams.Count == 1");
 			Value = rspParams[0] != "0";
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			return new List<string> { Value ? "1" : "0" };
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			Value = btBuf[offset] != 0;
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			cmdBuf[offset] = (byte)(Value ? 1 : 0);
 			return 1;
@@ -1162,17 +1282,40 @@ namespace BrewTrollerCommunicator
 
 	public class BT_EEPROM : IFormattable, IBTDataClass
 	{
-		public byte[] Data = new byte[2048];
+		public const int EEPROM_SIZE = 2048;
 
-		public UInt16 Address { get; set; }
-		public int ByteCount { get; set; }
+		public byte[] Data = new byte[EEPROM_SIZE];
+
+		private int _address;
+		public int Address
+		{
+			get { return _address; }
+			set
+			{
+				if (value < 0) _address = 0;
+				else if (value > EEPROM_SIZE - 1) _address = EEPROM_SIZE-1;
+				else _address = value;
+			}
+		}
+		private int _byteCount;
+
+		public int ByteCount
+		{
+			get { return _byteCount; }
+			set
+			{
+				if (value < 0) _byteCount = 0;
+				else if (value > EEPROM_SIZE) _byteCount = EEPROM_SIZE;
+				else _byteCount = value;
+			}
+		}
 
 		public BT_EEPROM()
 		{
 			Data = new byte[2048];
 		}
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			int checksum = 0;
 
@@ -1183,8 +1326,8 @@ namespace BrewTrollerCommunicator
 			checksum += address.LSB();
 			Address = address;
 
-			int dataLen;
-			if (!int.TryParse(rspParams[1], NumberStyles.HexNumber, null, out dataLen))
+			UInt16 dataLen;
+			if (!UInt16.TryParse(rspParams[1], NumberStyles.HexNumber, null, out dataLen))
 				throw new Exception();
 			checksum += dataLen & 0xff;
 			ByteCount = dataLen;
@@ -1214,7 +1357,7 @@ namespace BrewTrollerCommunicator
 				throw new Exception();
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			if (ByteCount > 255)
 				throw new ArgumentOutOfRangeException("ByteCount");
@@ -1225,8 +1368,8 @@ namespace BrewTrollerCommunicator
 			byte checksum = 0;
 
 			rspList.Add(String.Format("{0:X4}", Address));
-			checksum += Address.MSB();
-			checksum += Address.LSB();
+			checksum += Address.Byte1();
+			checksum += Address.Byte0();
 
 			rspList.Add(String.Format("{0:X2}", ByteCount));
 			checksum += byteCount;
@@ -1250,12 +1393,12 @@ namespace BrewTrollerCommunicator
 			return rspList;
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			throw new NotImplementedException();
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			throw new NotImplementedException();
 		}

@@ -77,24 +77,24 @@ namespace BrewTrollerCommunicator
 		void SetEvapRate(decimal evapRate);
 
 		BTHeatOutputConfig GetHeatOutputConfig(BTHeatOutputID heatOutputID);
-		void SetHeatOutputConfig(BTHeatOutputID heatOutputID, BTHeatOutputConfig btHeatOutConfig);
+		void SetHeatOutputConfig(BTHeatOutputConfig btHeatOutConfig);
 
 		BTRecipe GetRecipe(int recipeSlot);
-		void SetRecipe(int recipeSlot, BTRecipe btRecipe);
+		void SetRecipe(BTRecipe btRecipe);
 
 		TSAddress GetTempSensorAddress(TSLocation tsLocation);
-		void SetTempSensorAddress(TSLocation tsLocation, TSAddress tsAddress);
+		void SetTempSensorAddress(TSAddress tsAddress);
 		TSAddress TempSensorScan();
 
-		BTVesselCalibration GetVesselCalibration(BTVesselType vessel);
-		void SetVesselCalibration(BTVesselType vessel, BTVesselCalibration btVesselCalibration);
+		BTVesselCalibration GetVesselCalibration(BTVesselID vessel);
+		void SetVesselCalibration(BTVesselCalibration btVesselCalibration);
 
 		BTValveProfile GetValveProfile(BTProfileID profileID);
-		void SetValveProfile(BTProfileID profileID, BTValveProfile btValveProfile);
+		void SetValveProfile(BTValveProfile btValveProfile);
 
 
-		BTVolumeSetting GetVolumeSetting(BTVesselType vessel);
-		void SetVolumeSetting(BTVesselType vessel, BTVolumeSetting btVolumeSettings);
+		BTVolumeSetting GetVolumeSetting(BTVesselID vessel);
+		void SetVolumeSetting(BTVolumeSetting btVolumeSettings);
 
 		void AdvanceStep(BTBrewStep step);
 		void ExitStep(BTBrewStep step);
@@ -115,11 +115,11 @@ namespace BrewTrollerCommunicator
 
 	public interface IBTDataClass
 	{
-		void HydrateFromParamList(int schema, List<string> rspParams);
-		List<string> EmitToParamsList(int schema);
+		void HydrateFromParamList(BTVersion version, List<string> rspParams);
+		List<string> EmitToParamsList(BTVersion version);
 
-		void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len);
-		byte EmitToBinary(int schema, byte[] cmdBuf, byte offset);
+		void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len);
+		byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset);
 	}
 
 }
