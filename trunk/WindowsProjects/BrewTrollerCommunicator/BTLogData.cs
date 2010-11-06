@@ -55,17 +55,17 @@ namespace BrewTrollerCommunicator
 			HeatSetpoint = new int[4];
 		}
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			throw new NotImplementedException();
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			if (len != 95)
 				throw new Exception("BTLog.HydrateFromBinary: Buffer Size Error.");
@@ -171,7 +171,7 @@ namespace BrewTrollerCommunicator
 			return retVal;
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			throw new NotImplementedException();
 		}
@@ -212,7 +212,7 @@ namespace BrewTrollerCommunicator
 
 			for (var i = 0; i < VesselVolumeAvg.Length; i++)
 			{
-				sb.AppendFormat("{0,-12}  : Vol={1,5:n3}{2}, Flow={3,-5:n3}{4}\n", (BTVesselType)i, 
+				sb.AppendFormat("{0,-12}  : Vol={1,5:n3}{2}, Flow={3,-5:n3}{4}\n", (BTVesselID)i, 
 				                                            VesselVolumeAvg[i], Units == BTUnits.US ? "gal" : "l",
 				                                            VesselFlowRate[i], Units == BTUnits.US ? "gal/min" : "l/min");
 			}

@@ -48,7 +48,7 @@ namespace BrewTrollerCommunicator
 		public RecipeType Xml { get; set; }
 
 		[XmlIgnore]
-		public byte RecipeSlot { get; set; }
+		public int Slot { get; set; }
 
 		public BTUnits Units { get; set; }
 
@@ -121,7 +121,7 @@ namespace BrewTrollerCommunicator
 
 		// ToDo: figure out where to persist this value
 		// mapped the to water-grain ratio of the DoughIn step
-		public BTVesselType MashHeatSource { get; set; }
+		public BTVesselID MashHeatSource { get; set; }
 
 		// mapped the to water-grain ratio of the DoughIn step
 		public decimal MashRatio
@@ -219,7 +219,7 @@ namespace BrewTrollerCommunicator
 
 
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			Debug.Assert(rspParams.Count == 23, "rspParams.Count == 23");
 
@@ -251,8 +251,8 @@ namespace BrewTrollerCommunicator
 				MashRatio = Convert.ToDecimal(rspParams[index++]) / 100;
 				PitchTemp = NewTemperatureType(Convert.ToDecimal(rspParams[index++]), IsMetric);
 				Additions = Convert.ToUInt32(rspParams[index++]);
-				if (schema > 0)
-					MashHeatSource = (BTVesselType)(Convert.ToInt32(rspParams[index++]));
+				if (!version.IsAsciiSchema0)
+					MashHeatSource = (BTVesselID)(Convert.ToInt32(rspParams[index++]));
 			}
 			catch (Exception ex)
 			{
@@ -260,14 +260,14 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			List<string> paramsList;
 			try
 			{
 				paramsList = new List<string>
        			{
-       				Convert.ToString(RecipeSlot),							// 1
+       				Convert.ToString(Slot),									// 1
        				Name,													// 2
        				Convert.ToString(DoughIn.step_temperature.Value),		// 3
        				Convert.ToString(DoughIn.step_time.Value),				// 4
@@ -293,7 +293,7 @@ namespace BrewTrollerCommunicator
        				//Convert.ToString((int)Units)							// 23 not sent as command parameter, #define configured in BT
 		       	};
 
-				if (schema > 0)
+				if (!version.IsAsciiSchema0)
 					paramsList.Add(Convert.ToString((int)MashHeatSource));
 			}
 			catch (Exception ex)
@@ -303,14 +303,14 @@ namespace BrewTrollerCommunicator
 			return paramsList;
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			var index = offset;
 			if (len != 52)
 				throw new Exception("BTRecipe.HydrateFromBinary: Buffer Size Error.");
 
 			// recipe slot
-			RecipeSlot = btBuf[index++];
+			Slot = btBuf[index++];
 
 			// recipe units
 			Units = (BTUnits)btBuf[index++];
@@ -346,7 +346,7 @@ namespace BrewTrollerCommunicator
 			}
 
 			// mash heat source
-			MashHeatSource = (BTVesselType)btBuf[index++];
+			MashHeatSource = (BTVesselID)btBuf[index++];
 
 			// sparge temp
 			SpargeTemp = new TemperatureType
@@ -420,7 +420,7 @@ namespace BrewTrollerCommunicator
 			Debug.Assert(index == offset + len, "index == offset + len");
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			var index = offset;
 
@@ -605,8 +605,8 @@ namespace BrewTrollerCommunicator
 
 		private static HopAdditionTypeAddition[] GetHopsAdditions(BTUnits units)
 		{
-			var hopAdditionList = new List<HopAdditionTypeAddition>()
-    	{
+			var hopAdditionList = new List<HopAdditionTypeAddition>
+			                      	{
     		NewHopAddition(9999, units),
     		NewHopAddition(105, units),
     		NewHopAddition(90, units),
@@ -815,7 +815,7 @@ namespace BrewTrollerCommunicator
 			Units = units;
 		}
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			Debug.Assert(rspParams.Count == 6, "rspParams.Count == 6");
 			try
@@ -835,12 +835,12 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			var index = offset;
 			var volUnits = (Units == BTUnits.US) ? VolumeUnitType.gal : VolumeUnitType.l;
@@ -864,7 +864,7 @@ namespace BrewTrollerCommunicator
 			Sparge = new VolumeType { Value = dVal / 1000, volume = volUnits };
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			throw new NotImplementedException();
 		}
@@ -898,7 +898,7 @@ namespace BrewTrollerCommunicator
 			Units = units;
 		}
 
-		public void HydrateFromParamList(int schema, List<string> rspParams)
+		public void HydrateFromParamList(BTVersion version, List<string> rspParams)
 		{
 			Debug.Assert(rspParams.Count == 3, "rspParams.Count == 3");
 			try
@@ -916,12 +916,12 @@ namespace BrewTrollerCommunicator
 			}
 		}
 
-		public List<string> EmitToParamsList(int schema)
+		public List<string> EmitToParamsList(BTVersion version)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void HydrateFromBinary(int schema, byte[] btBuf, int offset, int len)
+		public void HydrateFromBinary(BTVersion version, byte[] btBuf, int offset, int len)
 		{
 			var index = offset;
 			RecipeSlot = btBuf[index++];
@@ -935,7 +935,7 @@ namespace BrewTrollerCommunicator
 
 		}
 
-		public byte EmitToBinary(int schema, byte[] cmdBuf, byte offset)
+		public byte EmitToBinary(BTVersion version, byte[] cmdBuf, byte offset)
 		{
 			throw new NotImplementedException();
 		}

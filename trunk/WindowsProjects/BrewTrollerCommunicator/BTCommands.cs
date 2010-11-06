@@ -62,7 +62,7 @@ namespace BrewTrollerCommunicator
 				ComType = _btVersion.ComType;
 
 				// if original schema, get the units from the GetBoilInfo call
-				if (Version.ComSchema == 0)
+				if (Version.ComType == BTComType.ASCII && Version.ComSchema == 0)
 				{
 					Version.Units = GetUnitsFromBoilTemp();
 				}
@@ -138,15 +138,14 @@ namespace BrewTrollerCommunicator
 			return btRecipe;
 		}
 
-
 		/// <summary> Send a recipe to the BrewTroller </summary>
 		/// 
-		public void SetRecipe(int recipeSlot, BTRecipe btRecipe)
+		public void SetRecipe(BTRecipe btRecipe)
 		{
-			if (recipeSlot < 0 || recipeSlot >= BTConfig.NumberOfRecipes)
+			if (btRecipe.Slot < 0 || btRecipe.Slot >= BTConfig.NumberOfRecipes)
 				throw new ArgumentOutOfRangeException("recipeSlot");
 
-			ProcessBTCommand(BTCommand.SetRecipe, btRecipe, new List<int> { recipeSlot });
+			ProcessBTCommand(BTCommand.SetRecipe, btRecipe, null);
 		}
 
 		/// <summary> Get BrewTroller Calculated Temperatures for a specified recipe </summary>
@@ -225,7 +224,7 @@ namespace BrewTrollerCommunicator
 		/// 
 		public decimal GetBoilTemp()
 		{
-			var boilTemp = new GenericDecimal { ByteCount = 1, ScaleFactor = 1, HasUnits = Version.ComSchema == 0 };
+			var boilTemp = new GenericDecimal { ByteCount = 1, ScaleFactor = 1, HasUnits = Version.IsAsciiSchema0 };
 			ProcessBTCommand(BTCommand.GetBoilTemp, boilTemp, null);
 			return boilTemp.Value;
 		}
@@ -285,7 +284,10 @@ namespace BrewTrollerCommunicator
 		{
 			var evapRate = new GenericDecimal { ByteCount = 1, ScaleFactor = 1 };
 			ProcessBTCommand(BTCommand.GetEvapRate, evapRate, null);
-			return evapRate.Value / 100;
+			//. ToDo Decide if rate should be 2% or .02
+			//.	Make SetEvapRate and to string match
+			//. 
+			return evapRate.Value; //. / 100;
 		}
 
 		/// <summary> Set BrewTroller Evaporation Rate  </summary>
@@ -296,24 +298,6 @@ namespace BrewTrollerCommunicator
 				throw new ArgumentOutOfRangeException("rate");
 			var evapRate = new GenericDecimal { ByteCount = 1, ScaleFactor = 1, Value = rate };
 			ProcessBTCommand(BTCommand.SetEvapRate, evapRate, null);
-		}
-
-		/// <summary> Get Configuration Information for a BrewTroller's Heat Output </summary>
-		/// <param name="heatOutputID">ID of Heat Output</param>
-		public BTHeatOutputConfig GetHeatOutputConfig(BTHeatOutputID heatOutputID)
-		{
-			var btHeatOutConfig = new BTHeatOutputConfig();
-			ProcessBTCommand(BTCommand.GetHeatOutputConfig, btHeatOutConfig, new List<int> { (int)heatOutputID });
-			return btHeatOutConfig;
-		}
-
-		/// <summary> Set the configuration for a Heat Output </summary>
-		/// 
-		public void SetHeatOutputConfig(BTHeatOutputID heatOutputID, BTHeatOutputConfig btHeatOutConfig)
-		{
-			throw new NotImplementedException();
-			//var cmdParams = btHeatOutConfig.EmitToParamsList();
-			//SendBTCommand(BTCommand.SetHeatOutputConfig, cmdParams);
 		}
 
 		/// <summary> Get BrewTroller Starting Grain Temp </summary>
@@ -335,6 +319,22 @@ namespace BrewTrollerCommunicator
 			ProcessBTCommand(BTCommand.SetGrainTemp, grainTemp, null);
 		}
 
+		/// <summary> Get Configuration Information for a BrewTroller's Heat Output </summary>
+		/// <param name="heatOutputID">ID of Heat Output</param>
+		public BTHeatOutputConfig GetHeatOutputConfig(BTHeatOutputID heatOutputID)
+		{
+			var btHeatOutConfig = new BTHeatOutputConfig();
+			ProcessBTCommand(BTCommand.GetHeatOutputConfig, btHeatOutConfig, new List<int> { (int)heatOutputID });
+			return btHeatOutConfig;
+		}
+
+		/// <summary> Set the configuration for a Heat Output </summary>
+		/// 
+		public void SetHeatOutputConfig(BTHeatOutputConfig btHeatOutConfig)
+		{
+			ProcessBTCommand(BTCommand.SetHeatOutputConfig, btHeatOutConfig, null);
+		}
+
 		/// <summary> Get the address of a BrewTroller Temperature Sensor </summary>
 		/// <param name="tsLocation">Location of Temperature Sensor</param>
 		public TSAddress GetTempSensorAddress(TSLocation tsLocation)
@@ -346,25 +346,9 @@ namespace BrewTrollerCommunicator
 
 		/// <summary> Set the Address of a BrewTroller Temperature Sensor  </summary>
 		/// 
-		public void SetTempSensorAddress(TSLocation tsLocation, TSAddress tsAddress)
+		public void SetTempSensorAddress(TSAddress tsAddress)
 		{
-			throw new NotImplementedException();
-		}
-
-		/// <summary> Get the Calibration Information for a BrewTroller vessel </summary>
-		/// <param name="vessel">ID of Vessel</param>
-		public BTVesselCalibration GetVesselCalibration(BTVesselType vessel)
-		{
-			var calibration = new BTVesselCalibration();
-			ProcessBTCommand(BTCommand.GetVesselCalib, calibration, new List<int> { (int)vessel });
-			return calibration;
-		}
-
-		/// <summary> Set the calibration information for a Vessel  </summary>
-		/// 
-		public void SetVesselCalibration(BTVesselType vessel, BTVesselCalibration btVesselCalibration)
-		{
-			ProcessBTCommand(BTCommand.SetVesselCalib, btVesselCalibration, new List<int> { (int)vessel });
+			ProcessBTCommand(BTCommand.SetTempSensorAddr, tsAddress, null);
 		}
 
 		/// <summary> Get Profile for a BrewTroller AutoValve </summary>
@@ -378,27 +362,41 @@ namespace BrewTrollerCommunicator
 
 		/// <summary> Set the AutoValve profile for a brew state </summary>
 		/// 
-		public void SetValveProfile(BTProfileID profileID, BTValveProfile btValveProfile)
+		public void SetValveProfile(BTValveProfile btValveProfile)
 		{
-			ProcessBTCommand(BTCommand.SetValveProfile, btValveProfile, new List<int> { (int)profileID });
+			ProcessBTCommand(BTCommand.SetValveProfile, btValveProfile, null);
+		}
+
+		/// <summary> Get the Calibration Information for a BrewTroller vessel </summary>
+		/// <param name="vessel">ID of Vessel</param>
+		public BTVesselCalibration GetVesselCalibration(BTVesselID vessel)
+		{
+			var calibration = new BTVesselCalibration();
+			ProcessBTCommand(BTCommand.GetVesselCalib, calibration, new List<int> { (int)vessel });
+			return calibration;
+		}
+
+		/// <summary> Set the calibration information for a Vessel  </summary>
+		/// 
+		public void SetVesselCalibration(BTVesselCalibration btVesselCalibration)
+		{
+			ProcessBTCommand(BTCommand.SetVesselCalib, btVesselCalibration, null);
 		}
 
 		/// <summary> Get the Volume Settings for a BrewTroller vessel </summary>
 		/// <param name="vessel">ID of Heat Output</param>
-		public BTVolumeSetting GetVolumeSetting(BTVesselType vessel)
+		public BTVolumeSetting GetVolumeSetting(BTVesselID vessel)
 		{
 			var btVolumeSetting = new BTVolumeSetting();
 			ProcessBTCommand(BTCommand.GetVolumnSetting, btVolumeSetting, new List<int> { (int)vessel });
 			return btVolumeSetting;
 		}
 
-
-
 		/// <summary> Set the Volume information for a Vessel </summary>
 		/// 
-		public void SetVolumeSetting(BTVesselType vessel, BTVolumeSetting btVolumeSettings)
+		public void SetVolumeSetting(BTVolumeSetting btVolumeSettings)
 		{
-			ProcessBTCommand(BTCommand.SetVolumeSetting, btVolumeSettings, new List<int> { (int)vessel });
+			ProcessBTCommand(BTCommand.SetVolumeSetting, btVolumeSettings, null);
 		}
 
 		#endregion Configuration Commands
@@ -494,22 +492,75 @@ namespace BrewTrollerCommunicator
 			ProcessBTCommand(BTCommand.InitEEPROM, null, null);
 		}
 
-		public BT_EEPROM GetEEPROM(UInt16 address, int length, BT_EEPROM eeprom)
+		public BT_EEPROM GetEEPROM(BT_EEPROM eePROM)
 		{
-			ProcessBTCommand(BTCommand.GetEEPROM, eeprom, new List<int> { address, length });
-			return eeprom;
-		}
+			if (eePROM.Address < 0 || eePROM.Address > BT_EEPROM.EEPROM_SIZE-1)
+				throw new ArgumentOutOfRangeException("eePROM.Address");
 
-		public BT_EEPROM GetEEPROM(UInt16 address, int length)
-		{
-			var eeprom = new BT_EEPROM();
-			ProcessBTCommand(BTCommand.GetEEPROM, eeprom, new List<int> { address, length });
-			return eeprom;
+			if (eePROM.ByteCount < 0  || eePROM.ByteCount > BT_EEPROM.EEPROM_SIZE)
+				throw new ArgumentOutOfRangeException("eePROM.ByteCount");
+
+			if (!(Version.ComType == BTComType.ASCII || Version.ComType == BTComType.Binary))
+				throw new ArgumentOutOfRangeException(String.Format("The {0} protocol does not support GetEEPROM.", Version.ComType));
+
+			if (eePROM.Address + eePROM.ByteCount > BT_EEPROM.EEPROM_SIZE)
+				eePROM.ByteCount = (UInt16)(BT_EEPROM.EEPROM_SIZE - eePROM.Address);
+
+			var orgAddress = eePROM.Address;
+			var orgCount = eePROM.ByteCount;
+
+			var length = (Version.ComType == BTComType.ASCII) ? 48 : 64;
+
+			var curAddress = orgAddress;
+			var curCount = orgCount;
+			while (curCount > 0)
+			{
+				length = Math.Min(length, curCount);
+				ProcessBTCommand(BTCommand.GetEEPROM, eePROM, new List<int> { curAddress, length });
+				curAddress += length;
+				curCount -= length;
+			}
+
+			// restore address and byte count
+			eePROM.Address = orgAddress;
+			eePROM.ByteCount = orgCount;
+
+			return eePROM;
 		}
 
 		public void SetEEPROM(BT_EEPROM eePROM)
 		{
-			ProcessBTCommand(BTCommand.SetEEPROM, eePROM, null);
+			if (eePROM.Address < 0 || eePROM.Address > BT_EEPROM.EEPROM_SIZE - 1)
+				throw new ArgumentOutOfRangeException("eePROM.Address");
+
+			if (eePROM.ByteCount < 0 || eePROM.ByteCount > BT_EEPROM.EEPROM_SIZE)
+				throw new ArgumentOutOfRangeException("eePROM.ByteCount");
+
+			if (!(Version.ComType == BTComType.ASCII || Version.ComType == BTComType.Binary))
+				throw new ArgumentOutOfRangeException(String.Format("The {0} protocol does not support GetEEPROM.", Version.ComType));
+
+			if (eePROM.Address + eePROM.ByteCount > BT_EEPROM.EEPROM_SIZE)
+				eePROM.ByteCount = (UInt16)(BT_EEPROM.EEPROM_SIZE - eePROM.Address);
+
+			var orgAddress = eePROM.Address;
+			var orgCount = eePROM.ByteCount;
+
+			var length = (Version.ComType == BTComType.ASCII) ? 48 : 64;
+
+			var curAddress = orgAddress;
+			var curCount = orgCount;
+			while (curCount > 0)
+			{
+				eePROM.Address = curAddress;
+				eePROM.ByteCount = Math.Min(length, curCount);
+				ProcessBTCommand(BTCommand.SetEEPROM, eePROM, null);
+				curAddress += length;
+				curCount -= length;
+			}
+
+			// restore address and byte count
+			eePROM.Address = orgAddress;
+			eePROM.ByteCount = orgCount;
 		}
 
 
