@@ -22,9 +22,9 @@ namespace Test.BrewTrollerCommuncator
 			_btCom.Connect("COM10,115200,N,8,1");
 			_btCom.ComRetries = 1;
 			Assert.IsTrue(_btCom.IsConnected);
-			Assert.AreEqual(_btCom.Version.ComType, BTComType.BTNic);
-			Assert.AreEqual(_btCom.Version.ComSchema, 0);
-			Assert.AreEqual(_btCom.Version.BuildNumber, 574, "Build number is not correct.");
+			Assert.AreEqual(_btCom.Version.ComType, BTComType.ASCII);
+			Assert.AreEqual(_btCom.Version.ComSchema, 1);
+			Assert.AreEqual(_btCom.Version.BuildNumber, 604, "Build number is not correct.");
 			Assert.AreEqual(_btCom.Version.Version, "2.1");
 		}
 
@@ -74,10 +74,10 @@ namespace Test.BrewTrollerCommuncator
 			var saveRecipe = _btCom.GetRecipe(slot);
 			
 			var setRecipe = CreateTestRecipe(slot, _btCom.Version.Units); 
-			_btCom.SetRecipe(slot, setRecipe);
+			_btCom.SetRecipe(setRecipe);
 			var getRecipe = _btCom.GetRecipe(slot);
 
-			_btCom.SetRecipe(slot, saveRecipe);
+			_btCom.SetRecipe(saveRecipe);
 			var restoreRecipe = _btCom.GetRecipe(slot);
 
 		}
@@ -104,7 +104,7 @@ namespace Test.BrewTrollerCommuncator
 
 			recipe.SpargeTemp.Value = 150;
 			recipe.HLTSetpoint.Value = 121;
-			recipe.MashHeatSource = BTVesselType.HLT;
+			recipe.MashHeatSource = BTVesselID.HLT;
 			recipe.MashRatio = 1.05m;
 			recipe.BatchVolume.Value = 65.5m;
 			recipe.GrainWeight.Value = 2.34m;
