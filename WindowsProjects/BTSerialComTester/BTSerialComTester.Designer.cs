@@ -1058,7 +1058,7 @@
 			this.rtbEEPROM.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.rtbEEPROM.Location = new System.Drawing.Point(0, 120);
 			this.rtbEEPROM.Name = "rtbEEPROM";
-			this.rtbEEPROM.Size = new System.Drawing.Size(514, 497);
+			this.rtbEEPROM.Size = new System.Drawing.Size(514, 365);
 			this.rtbEEPROM.TabIndex = 6;
 			this.rtbEEPROM.Text = "";
 			// 
@@ -1067,7 +1067,7 @@
 			this.updnWriteLengthEE.Hexadecimal = true;
 			this.updnWriteLengthEE.Location = new System.Drawing.Point(341, 69);
 			this.updnWriteLengthEE.Maximum = new decimal(new int[] {
-            64,
+            2048,
             0,
             0,
             0});
@@ -1117,7 +1117,7 @@
 			// 
 			this.updnReadLengthEE.Location = new System.Drawing.Point(231, 26);
 			this.updnReadLengthEE.Maximum = new decimal(new int[] {
-            64,
+            2048,
             0,
             0,
             0});

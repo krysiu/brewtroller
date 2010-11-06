@@ -146,6 +146,7 @@ namespace BTSerialComTester
 
 			grpEEPROM.Enabled = _btCom.IsConnected && _btCom.Version.ComSchema > 0;
 
+			txtDataEE.Text = "0123456789abcdef";
 
 		}
 
@@ -281,9 +282,9 @@ namespace BTSerialComTester
 		{
 			try
 			{
-				UInt16 address = (UInt16)updnReadAddressEE.Value;
-				int byteCount = (int)updnReadLengthEE.Value;
-				_eePROM = _btCom.GetEEPROM(address, byteCount);
+				_eePROM.Address = (UInt16)updnReadAddressEE.Value;
+				_eePROM.ByteCount = (UInt16)updnReadLengthEE.Value;
+				_btCom.GetEEPROM(_eePROM);
 				rtbEEPROM.Text = _eePROM.HexDump().ToString();
 			}
 			catch (Exception ex)
@@ -299,7 +300,7 @@ namespace BTSerialComTester
 			var strRec = txtDataEE.Text;
 			if (strRec.Length % 2 == 1)
 				strRec = strRec.Substring(0, strRec.Length - 1);
-			_eePROM.ByteCount = strRec.Length / 2;
+			_eePROM.ByteCount = (UInt16)(strRec.Length / 2);
 			for (var i = 0; i < txtDataEE.Text.Length / 2; i++)
 			{
 				byte btVal;
@@ -342,12 +343,8 @@ namespace BTSerialComTester
 					Settings.Default.Save();
 				}
 
-				var eePROM = new BT_EEPROM();
-				for (UInt16 i = 0; i < 2048; i += 64)
-					_btCom.GetEEPROM(i, 64, eePROM);
-
-				eePROM.Address = 0;
-				eePROM.ByteCount = 2048;
+				var eePROM = new BT_EEPROM {Address = 0, ByteCount = BT_EEPROM.EEPROM_SIZE};
+				_btCom.GetEEPROM(eePROM);
 				rtbEEPROM.Text = eePROM.HexDump().ToString();
 
 				eePROM.SaveToFile(Settings.Default.LastEEPromFile);
@@ -573,7 +570,7 @@ namespace BTSerialComTester
 		{
 			try
 			{
-				var calibration = _btCom.GetVesselCalibration((BTVesselType)cboCalibration.SelectedIndex);
+				var calibration = _btCom.GetVesselCalibration((BTVesselID)cboCalibration.SelectedIndex);
 				rtbResults.Text = calibration.ToString();
 			}
 			catch (Exception ex)
@@ -679,7 +676,7 @@ namespace BTSerialComTester
 		{
 			try
 			{
-				var volume = _btCom.GetVolumeSetting((BTVesselType)cboVolume.SelectedIndex);
+				var volume = _btCom.GetVolumeSetting((BTVesselID)cboVolume.SelectedIndex);
 				rtbResults.Text = volume.ToString();
 			}
 			catch (Exception ex)
