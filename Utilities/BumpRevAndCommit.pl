@@ -335,8 +335,8 @@ sub setRevisionInArduinoProject {
     }
     
     while (<$projFile>) { 
-        if (m/^BUILD/) {
-            print $tempFile "BUILD $rev\n";
+        if (m/^#define\s+BUILD/) {
+            print $tempFile "#define BUILD $rev\n";
         } else {
             print $tempFile $_;
         }
