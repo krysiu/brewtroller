@@ -22,6 +22,7 @@
  Main code by Thomas O Fredericks
  Rebounce and duration functions contributed by Eric Lowry
  Write function contributed by Jim Schimpf
+ Edge Detection contributed by Tom Harkaway
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #ifndef Bounce_h
