@@ -101,7 +101,7 @@ void pidInit() {
 }
 
 void resetOutputs() {
-  for (byte i = STEP_FILL; i <= STEP_CHILL; i++) stepExit(i); //Go through each step's exit functions to quit clean.
+//  for (byte i = STEP_FILL; i <= STEP_CHILL; i++) stepExit(i); //Go through each step's exit functions to quit clean.
 }
 
 void resetHeatOutput(byte smokerPit) {  
@@ -203,11 +203,11 @@ boolean vlvConfigIsActive(byte profile) {
 void processAutoValve() {
   //Do Valves
   if (autoValve[AV_FILL]) {
-    if (volAvg[PIT_1] < tgtVol[PIT_1]) setValves(vlvConfig[VLV_FILLHLT], 1);
-      else setValves(vlvConfig[VLV_FILLHLT], 0);
-      
-    if (volAvg[PIT_2] < tgtVol[PIT_2]) setValves(vlvConfig[VLV_FILLMASH], 1);
-      else setValves(vlvConfig[VLV_FILLMASH], 0);
+//    if (volAvg[PIT_1] < tgtVol[PIT_1]) setValves(vlvConfig[VLV_FILLHLT], 1);
+//      else setValves(vlvConfig[VLV_FILLHLT], 0);
+//      
+//    if (volAvg[PIT_2] < tgtVol[PIT_2]) setValves(vlvConfig[VLV_FILLMASH], 1);
+//      else setValves(vlvConfig[VLV_FILLMASH], 0);
   } 
   if (autoValve[AV_HLT]) {
     if (heatStatus[PIT_1]) {
@@ -226,36 +226,21 @@ void processAutoValve() {
     }
   } 
   if (autoValve[AV_SPARGEIN]) {
-    if (volAvg[PIT_1] > tgtVol[PIT_1]) setValves(vlvConfig[VLV_SPARGEIN], 1);
-      else setValves(vlvConfig[VLV_SPARGEIN], 0);
+//    if (volAvg[PIT_1] > tgtVol[PIT_1]) setValves(vlvConfig[VLV_SPARGEIN], 1);
+//      else setValves(vlvConfig[VLV_SPARGEIN], 0);
   }
   if (autoValve[AV_SPARGEOUT]) {
-    if (volAvg[PIT_3] < tgtVol[PIT_3]) setValves(vlvConfig[VLV_SPARGEOUT], 1);
-    else setValves(vlvConfig[VLV_SPARGEOUT], 0);
+//    if (volAvg[PIT_3] < tgtVol[PIT_3]) setValves(vlvConfig[VLV_SPARGEOUT], 1);
+//    else setValves(vlvConfig[VLV_SPARGEOUT], 0);
   }
   if (autoValve[AV_FLYSPARGE]) {
-    if (volAvg[PIT_3] < tgtVol[PIT_3]) {
-      #ifdef SPARGE_IN_PUMP_CONTROL
-      if(volAvg[PIT_3] - prevSpargeVol[0] >= SPARGE_IN_HYSTERESIS)
-      {
-         setValves(vlvConfig[VLV_SPARGEIN], 1);
-         prevSpargeVol[0] = volAvg[PIT_3];
-         prevSpargeVol[1] = volAvg[PIT_1];
-      }
-      else if(prevSpargeVol[1] - volAvg[PIT_1] >= SPARGE_IN_HYSTERESIS)
-      {
-         setValves(vlvConfig[VLV_SPARGEIN], 0);
-         prevSpargeVol[1] = volAvg[PIT_1];
-      }
-      
-      #else
-      setValves(vlvConfig[VLV_SPARGEIN], 1);
-      #endif
-      setValves(vlvConfig[VLV_SPARGEOUT], 1);
-    } else {
-      setValves(vlvConfig[VLV_SPARGEIN], 0);
-      setValves(vlvConfig[VLV_SPARGEOUT], 0);
-    }
+//    if (volAvg[PIT_3] < tgtVol[PIT_3]) {      
+//      setValves(vlvConfig[VLV_SPARGEIN], 1);
+//      setValves(vlvConfig[VLV_SPARGEOUT], 1);
+//    } else {
+//      setValves(vlvConfig[VLV_SPARGEIN], 0);
+//      setValves(vlvConfig[VLV_SPARGEOUT], 0);
+//    }
   }
   if (autoValve[AV_CHILL]) {
     //Needs work

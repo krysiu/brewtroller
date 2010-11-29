@@ -35,9 +35,6 @@ void loadSetup() {
   //          BEEROUT (40-47), AUX1 (48-55), AUX2 (56-63), AUX3 (64-71)
   //**********************************************************************************
   for (byte i = TS_PIT_1; i <= TS_AUX3; i++) PROMreadBytes(i * 8, tSensor[i], 8);
-  #ifdef HLT_AS_KETTLE
-    PROMreadBytes(0, tSensor[TS_PIT_3], 8);
-  #endif
  
   //**********************************************************************************
   //PID Enabled (72); Bit 1 = HLT, Bit 2 = Mash, Bit 3 = Kettle, Bit 4 = Steam
@@ -59,32 +56,25 @@ void loadSetup() {
   //**********************************************************************************
   //boilPwr (112)
   //**********************************************************************************
-  boilPwr = EEPROM.read(112);
+  //boilPwr = EEPROM.read(112);
   //**********************************************************************************
   //steamZero (114)
   //**********************************************************************************
-  steamZero = PROMreadInt(114);
+  //steamZero = PROMreadInt(114);
   //**********************************************************************************
   //steamPSens (117-118)
   //**********************************************************************************
-  steamPSens = PROMreadInt(117);
+  //steamPSens = PROMreadInt(117);
 
   //**********************************************************************************
-  //calibVols HLT (119-158), Mash (159-198), Kettle (199-238)
-  //calibVals HLT (239-258), Mash (259-278), Kettle (279-298)
+  // ***OPEN*** (119-295)
+  //*********************************************************************************
+  
   //**********************************************************************************
-  for (byte smokerPit = PIT_1; smokerPit <= PIT_3; smokerPit++) {
-    for (byte slot = 0; slot < 10; slot++) {
-      calibVols[smokerPit][slot] = PROMreadLong(119 + smokerPit * 40 + slot * 4);
-      calibVals[smokerPit][slot] = PROMreadInt(239 + smokerPit * 20 + slot * 2);
-    }
-  }
-
+  //setpoints (296-301)
   //**********************************************************************************
-  //setpoints (299-301)
-  //**********************************************************************************
-  for (byte i=PIT_1; i<=PIT_3; i++) { 
-    setpoint[i] = EEPROM.read(299 + i) * 100;
+  for (byte i=PIT_1; i<=FOOD_3; i++) { 
+    setpoint[i] = EEPROM.read(296 + i) * 100;
     eventHandler(EVENT_SETPOINT, i);
   }
   
@@ -117,7 +107,7 @@ void loadSetup() {
   //**********************************************************************************
   //Step (313-327) NUM_BREW_STEPS (15)
   //**********************************************************************************
-  for(byte brewStep = 0; brewStep < NUM_BREW_STEPS; brewStep++) stepInit(EEPROM.read(313 + brewStep), brewStep);
+  //for(byte brewStep = 0; brewStep < NUM_BREW_STEPS; brewStep++) stepInit(EEPROM.read(313 + brewStep), brewStep);
 
   //**********************************************************************************
   //401-456 Valve Profiles
@@ -195,106 +185,19 @@ void setHysteresis(byte smokerPit, byte value) {
 }
 
 //**********************************************************************************
-//Capacity Smoker1 (93-96), Smoker2 (97-100), Smoker3 (101-104)
+// ***OPEN*** (93-295)
 //**********************************************************************************
-void setCapacity(byte smokerPit, unsigned long value) {
-  PROMwriteLong(93 + smokerPit * 4, value);
-}
-unsigned long getCapacity(byte smokerPit) { return PROMreadLong(93 + smokerPit * 4); }
-
-//**********************************************************************************
-//volLoss Smoker1 (105-106), Smoker2 (107-108), Smoker3 (109-110)
-//**********************************************************************************
-void setVolLoss(byte smokerPit, unsigned int value) {
-  PROMwriteInt(105 + smokerPit * 2, value);
-}
-unsigned int getVolLoss(byte smokerPit) { return PROMreadInt(105 + smokerPit * 2); }
-
-//**********************************************************************************
-//Boil Temp (111)
-//**********************************************************************************
-byte getBoilTemp() { return EEPROM.read(111); }
-void setBoilTemp(byte boilTemp) { EEPROM.write(111, boilTemp); }
-
-//**********************************************************************************
-//Boil Power (112)
-//**********************************************************************************
-void setBoilPwr(byte value) { 
-  boilPwr = value;
-  EEPROM.write(112, value); 
-}
-
-//**********************************************************************************
-//evapRate (113)
-//**********************************************************************************
-void setEvapRate(byte value) {
-  EEPROM.write(113, value);
-}
-byte getEvapRate() { return EEPROM.read(113); }
-
-//**********************************************************************************
-//steamZero (114-115)
-//**********************************************************************************
-void setSteamZero(unsigned int value) {
-  steamZero = value;
-  PROMwriteInt(114, value);
-}
-
-//**********************************************************************************
-//steamTgt (116)
-//**********************************************************************************
-void setSteamTgt(byte value) { EEPROM.write(116, value); }
-byte getSteamTgt() { return EEPROM.read(116); }
-
-//**********************************************************************************
-//steamPSens (117-118)
-//**********************************************************************************
-void setSteamPSens(unsigned int value) {
-  steamPSens = value;
-  #ifndef PID_FLOW_CONTROL
-  #ifdef USEMETRIC
-    pid[PIT_3].SetInputLimits(0, 50000 / steamPSens);
-  #else
-    pid[PIT_3].SetInputLimits(0, 7250 / steamPSens);
-  #endif
-  #endif
-  PROMwriteInt(117, value);
-}
-
-//**********************************************************************************
-//calibVols HLT (119-158), Mash (159-198), Kettle (199-238)
-//calibVals HLT (239-258), Mash (259-278), Kettle (279-298)
-//**********************************************************************************
-void setVolCalib(byte smokerPit, byte slot, unsigned int value, unsigned long vol) {
-  calibVols[smokerPit][slot] = vol;
-  calibVals[smokerPit][slot] = value;
-  #ifdef HLT_AS_KETTLE
-    if (smokerPit == PIT_1) {
-      //Also copy HLT setting to Kettle
-      calibVols[PIT_3][slot] = vol;
-      calibVals[PIT_3][slot] = value;  
-    }
-    if (smokerPit == PIT_3) {
-      //Store actual calibration in HLT EEPROM Table
-      smokerPit = PIT_1;
-      calibVols[smokerPit][slot] = vol;
-      calibVals[smokerPit][slot] = value;  
-    } 
-  #endif
-  PROMwriteLong(119 + smokerPit * 40 + slot * 4, vol);
-  PROMwriteInt(239 + smokerPit * 20 + slot * 2, value);
-}
 
 //*****************************************************************************************************************************
 // Power Loss Recovery Functions
 //*****************************************************************************************************************************
 
 //**********************************************************************************
-//setpoints (299-301)
+//setpoints (296-301)
 //**********************************************************************************
 void setSetpoint(byte object, byte value) { 
   setpoint[object] = value * 100;
-  EEPROM.write(299 + object, value);
+  EEPROM.write(296 + object, value);
   eventHandler(EVENT_SETPOINT, object);
 }
 
@@ -345,8 +248,8 @@ void setAlarmStatus(boolean value) {
 //**********************************************************************************
 //Triggered Boil Addition Alarms (309-310)
 //**********************************************************************************
-unsigned int getBoilAddsTrig() { return PROMreadInt(309); }
-void setBoilAddsTrig(unsigned int adds) { PROMwriteInt(309, adds); }
+//unsigned int getBoilAddsTrig() { return PROMreadInt(309); }
+//void setBoilAddsTrig(unsigned int adds) { PROMwriteInt(309, adds); }
 
 //**********************************************************************************
 // ***OPEN*** (311-312)
@@ -356,10 +259,10 @@ void setBoilAddsTrig(unsigned int adds) { PROMwriteInt(309, adds); }
 //**********************************************************************************
 //Step (313-327) NUM_BREW_STEPS (15)
 //**********************************************************************************
-void setProgramStep(byte brewStep, byte actPgm) {
-  stepProgram[brewStep] = actPgm;
-  EEPROM.write(313 + brewStep, actPgm); 
-}
+//void setProgramStep(byte brewStep, byte actPgm) {
+//  stepProgram[brewStep] = actPgm;
+//  EEPROM.write(313 + brewStep, actPgm); 
+//}
 
 //**********************************************************************************
 //Reserved (328-397)
@@ -368,16 +271,16 @@ void setProgramStep(byte brewStep, byte actPgm) {
 //**********************************************************************************
 //Delay Start (Mins) (398-399)
 //**********************************************************************************
-unsigned int getDelayMins() { return PROMreadInt(398); }
-void setDelayMins(unsigned int mins) { 
-  if(mins != -1) PROMwriteInt(398, mins); 
-}
+//unsigned int getDelayMins() { return PROMreadInt(398); }
+//void setDelayMins(unsigned int mins) { 
+//  if(mins != -1) PROMwriteInt(398, mins); 
+//}
 
 //**********************************************************************************
 //Grain Temp (400)
 //**********************************************************************************
-void setGrainTemp(byte grainTemp) { EEPROM.write(400, grainTemp); }
-byte getGrainTemp() { return EEPROM.read(400); }
+//void setGrainTemp(byte grainTemp) { EEPROM.write(400, grainTemp); }
+//byte getGrainTemp() { return EEPROM.read(400); }
 
 //*****************************************************************************************************************************
 // Valve Profile Configuration (401-456; 457-785 Reserved)
@@ -405,6 +308,17 @@ void getProgName(byte preset, char name[20]) {
   name[19] = '\0';
 }
 
+// TODO
+byte getProgPitTemp(byte program)
+{
+  return EEPROM.read(296) * 100;
+}
+
+byte getProgFoodTemp(byte program)
+{
+  return EEPROM.read(296) * 100;
+}
+
 //**********************************************************************************
 //OPEN (P:20)
 //**********************************************************************************
@@ -412,22 +326,22 @@ void getProgName(byte preset, char name[20]) {
 //**********************************************************************************
 //Sparge Temp (P:21)
 //**********************************************************************************
-void setProgSparge(byte preset, byte sparge) { EEPROM.write(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 21, sparge); }
-byte getProgSparge(byte preset) { return EEPROM.read(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 21); }
+//void setProgSparge(byte preset, byte sparge) { EEPROM.write(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 21, sparge); }
+//byte getProgSparge(byte preset) { return EEPROM.read(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 21); }
 
 //**********************************************************************************
 //Boil Mins (P:22-23)
 //**********************************************************************************
-void setProgBoil(byte preset, int boilMins) { 
-  if (boilMins != -1) PROMwriteInt(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 22, boilMins); 
-}
-unsigned int getProgBoil(byte preset) { return PROMreadInt(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 22); }
+//void setProgBoil(byte preset, int boilMins) { 
+//  if (boilMins != -1) PROMwriteInt(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 22, boilMins); 
+//}
+//unsigned int getProgBoil(byte preset) { return PROMreadInt(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 22); }
 
 //**********************************************************************************
 //Mash Ratio (P:24-25)
 //**********************************************************************************
-void setProgRatio(byte preset, unsigned int ratio) { PROMwriteInt(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 24, ratio); }
-unsigned int getProgRatio(byte preset) { return PROMreadInt(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 24); }
+//void setProgRatio(byte preset, unsigned int ratio) { PROMwriteInt(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 24, ratio); }
+//unsigned int getProgRatio(byte preset) { return PROMreadInt(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 24); }
 
 //**********************************************************************************
 //Mash Temps (P:26-31)
@@ -450,38 +364,38 @@ byte getProgMashMins(byte preset, byte mashStep) { return EEPROM.read(PROGRAM_ST
 //**********************************************************************************
 //Batch Vol (P:38-41)
 //**********************************************************************************
-unsigned long getProgBatchVol(byte preset) { return PROMreadLong(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 38); }
-void setProgBatchVol (byte preset, unsigned long vol) { PROMwriteLong(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 38, vol); }
+//unsigned long getProgBatchVol(byte preset) { return PROMreadLong(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 38); }
+//void setProgBatchVol (byte preset, unsigned long vol) { PROMwriteLong(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 38, vol); }
 
 //**********************************************************************************
 //Mash Liquor Heat Source (P:42)
 //**********************************************************************************
-void setProgMLHeatSrc(byte preset, byte smokerPit) { EEPROM.write(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 42, smokerPit); }
-byte getProgMLHeatSrc(byte preset) { return EEPROM.read(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 42); }
+//void setProgMLHeatSrc(byte preset, byte smokerPit) { EEPROM.write(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 42, smokerPit); }
+//byte getProgMLHeatSrc(byte preset) { return EEPROM.read(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 42); }
 
 //**********************************************************************************
 //HLT Temp (P:43)
 //**********************************************************************************
-void setProgHLT(byte preset, byte HLT) { EEPROM.write(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 43, HLT); }
-byte getProgHLT(byte preset) { return EEPROM.read(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 43); }
+//void setProgHLT(byte preset, byte HLT) { EEPROM.write(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 43, HLT); }
+//byte getProgHLT(byte preset) { return EEPROM.read(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 43); }
 
 //**********************************************************************************
 //Pitch Temp (P:44)
 //**********************************************************************************
-void setProgPitch(byte preset, byte pitch) { EEPROM.write(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 44, pitch); }
-byte getProgPitch(byte preset) { return EEPROM.read(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 44); }
+//void setProgPitch(byte preset, byte pitch) { EEPROM.write(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 44, pitch); }
+//byte getProgPitch(byte preset) { return EEPROM.read(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 44); }
 
 //**********************************************************************************
 //Boil Addition Alarms (P:45-46)
 //**********************************************************************************
-void setProgAdds(byte preset, unsigned int adds) { PROMwriteInt(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 45, adds); }
-unsigned int getProgAdds(byte preset) { return PROMreadInt(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 45); }
+//void setProgAdds(byte preset, unsigned int adds) { PROMwriteInt(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 45, adds); }
+//unsigned int getProgAdds(byte preset) { return PROMreadInt(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 45); }
 
 //**********************************************************************************
 //Grain Weight (P:47-50)
 //**********************************************************************************
-void setProgGrain(byte preset, unsigned long grain) { PROMwriteLong(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 47, grain); }
-unsigned long getProgGrain(byte preset) { return PROMreadLong(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 47); }
+//void setProgGrain(byte preset, unsigned long grain) { PROMwriteLong(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 47, grain); }
+//unsigned long getProgGrain(byte preset) { return PROMreadLong(PROGRAM_START_ADDR + preset * PROGRAM_SIZE + 47); }
 
 //**********************************************************************************
 //OPEN (P:51-59)
@@ -537,28 +451,8 @@ void initEEPROM() {
     #else
       setHysteresis(smokerPit, 5);      
     #endif
-  }
-
-  //Default Grain Temp = 60F/16C
-  //If F else C
-  #ifdef USEMETRIC
-    setGrainTemp(16);
-  #else
-    setGrainTemp(60);
-  #endif
-
-  //Set Default Boil temp 212F/100C
-  #ifdef USEMETRIC
-    setBoilTemp(100);
-  #else
-    setBoilTemp(212);
-  #endif
-
-  setBoilPwr(100);
-
-  //Set all steps idle
-  for (byte i = 0; i < NUM_BREW_STEPS; i++) setProgramStep(i, PROGRAM_IDLE);
-
+  } 
+  
   //Set cfgVersion = 0
   EEPROM.write(2047, 0);
 
