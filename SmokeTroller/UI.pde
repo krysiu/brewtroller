@@ -108,23 +108,18 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   const byte CHARFIELD[] PROGMEM = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};
   const byte CHARCURSOR[] PROGMEM = {B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
   const byte CHARSEL[] PROGMEM = {B10001, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
-  //const byte BMP0[] PROGMEM = {B00000, B00000, B00000, B00000, B00011, B01111, B11111, B11111};
-  //const byte BMP1[] PROGMEM = {B00000, B00000, B00000, B00000, B11100, B11110, B11111, B11111};
-  //const byte BMP2[] PROGMEM = {B00001, B00011, B00111, B01111, B00001, B00011, B01111, B11111};
-  //const byte BMP3[] PROGMEM = {B11111, B11111, B10001, B00011, B01111, B11111, B11111, B11111};
-  //const byte BMP4[] PROGMEM = {B01111, B01110, B01100, B00001, B01111, B00111, B00011, B11101};
-  //const byte BMP5[] PROGMEM = {B11111, B00111, B00111, B11111, B11111, B11111, B11110, B11001};
-  //const byte BMP6[] PROGMEM = {B11111, B11111, B11110, B11101, B11011, B00111, B11111, B11111};
+  const byte BMP0[] PROGMEM = {B01010, B01001, B10001, B10010, B01000, B00100, B01110, B11111};
+  const byte BMP1[] PROGMEM = {B00111, B01111, B11100, B11011, B11011, B11011, B11100, B11111};
+  const byte BMP2[] PROGMEM = {B11111, B11111, B00000, B11111, B11111, B11111, B00000, B11111};
+  const byte BMP3[] PROGMEM = {B11100, B11110, B00111, B11011, B01011, B11011, B00111, B11111};
+  const byte BMP4[] PROGMEM = {B11111, B11100, B11011, B11010, B11011, B11100, B01111, B00111};
+  const byte BMP5[] PROGMEM = {B11111, B00000, B11111, B10101, B11111, B00000, B11111, B11111};
+  const byte BMP6[] PROGMEM = {B11111, B00111, B11011, B01011, B11011, B00111, B11110, B11100};
   const byte UNLOCK_ICON[] PROGMEM = {B00110, B01001, B01001, B01000, B01111, B01111, B01111, B00000};
   const byte PROG_ICON[] PROGMEM = {B00001, B11101, B10101, B11101, B10001, B10001, B00001, B11111};
   const byte BELL[] PROGMEM = {B00100, B01110, B01110, B01110, B11111, B00000, B00100, B00000};
   
-  // Sudsmaster Beer for Splash Screen
-  const byte BEER1[] PROGMEM = {B00000, B01111, B10000, B10000, B11111, B10000, B10101, B10101};
-  const byte BEER2[] PROGMEM = {B00000, B11000, B00110, B00101, B11101, B00101, B10101, B10101};
-  const byte BEER3[] PROGMEM = {B10101, B10101, B10101, B10101, B10101, B10101, B10000, B01111};
-  const byte BEER4[] PROGMEM = {B10101, B10101, B10101, B10101, B10110, B10100, B00100, B11000};
-  
+ 
   //**********************************************************************************
   // UI Globals
   //**********************************************************************************
@@ -180,6 +175,16 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   // unlockUI:  Unlock active screen to select another
   //**********************************************************************************
   void unlockUI() {
+    
+     #ifdef DEBUG_UI
+      logStart_P(LOGDEBUG);
+      logField_P(PSTR("unlockUI-activeScreen: "));
+      logFieldL(activeScreen);
+//      logField_P(PSTR("unlockUI-ScreenLock: "));
+//      logFieldL(screenLock);
+      logEnd();
+    #endif    
+    
     Encoder.setMin(SCREEN_HOME);
     Encoder.setMax(SCREEN_AUX);
     Encoder.setCount(activeScreen);
@@ -189,24 +194,47 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   }
   
   void lockUI() {
-    screenLock = 1;
-    //Recall screenInit to setup encoder and other functions available only when locked
+    
     #ifdef DEBUG_UI
       logStart_P(LOGDEBUG);
-      logField_P(PSTR("Active Screen: "));
-      logFieldI(activeScreen);
+      logField_P(PSTR("lockUI-Active Screen: "));
+      logFieldL(activeScreen);
+//      logField_P(PSTR("lockUI-ScreenLock: "));
+//      logFieldL(screenLock);
       logEnd();
-    #endif
+    #endif    
+    
+    screenLock = 1;
+    //Recall screenInit to setup encoder and other functions available only when locked   
     screenInit(activeScreen);
   }
   
   //**********************************************************************************
   // screenCore: Called in main loop to handle all UI functions
   //**********************************************************************************
-  void uiCore() {
+  void uiCore() {    
     if (!screenLock) {
       int encValue = Encoder.change();
-      if (encValue >= 0) {
+      //int encValue = Encoder.getCount();
+      
+      #ifdef DEBUG_UI
+        logStart_P(LOGDEBUG);
+        logField_P(PSTR("uiCore-activeScreen: "));
+        logFieldL(activeScreen);     
+//        logField_P(PSTR("uiCore-encValue: "));
+//        logFieldL(encValue);           
+        logEnd();
+      #endif        
+     
+      if (encValue >=0) {
+       #ifdef DEBUG_UI
+        logStart_P(LOGDEBUG);
+        logField_P(PSTR("uiCore-encValue: "));
+        logFieldL(encValue);
+        logField_P(PSTR("uiCore-activeScreen2: "));
+        logFieldL(activeScreen); 
+        logEnd();
+      #endif   
         activeScreen = encValue;
         screenInit(activeScreen);
       }
@@ -221,6 +249,15 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   void screenInit(byte screen) {
     clearLCD();
     
+     #ifdef DEBUG_UI
+      logStart_P(LOGDEBUG);
+      logField_P(PSTR("screenInit-activeScreen: "));
+      logFieldL(activeScreen);
+//      logField_P(PSTR("screenInit-ScreenLock: "));
+//      logFieldL(screenLock);
+      logEnd();
+    #endif
+    
     //Print Program Active Char (Overwritten if no program active)
     if (screen != SCREEN_HOME) {
       lcdSetCustChar_P(6, PROG_ICON);
@@ -230,39 +267,40 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     
     if (screen == SCREEN_HOME) {
       //Screen Init: Home
-      // BEGIN CUSTOM FOR SUDSMASTER
-      lcdSetCustChar_P(0, BEER1);
-      lcdSetCustChar_P(1, BEER2);
-      lcdSetCustChar_P(2, BEER3);
-      lcdSetCustChar_P(3, BEER4); 
-      lcdWriteCustChar(0, 0, 0);
-      lcdWriteCustChar(0, 1, 1);
-      lcdWriteCustChar(1, 0, 2);
-      lcdWriteCustChar(1, 1, 3);  
-      printLCD(0, 2,"SmokeTroller v1.0");
-      printLCD(1, 3,"BBQ Control System");
-      printLCD(2, 5,"powered by");
-      // END CUSTOM FOR SUDSMASTER
-      printLCD_P(3, 0, BT);
-      printLCD_P(3, 12, BTVER);
-      printLCDLPad(3, 16, itoa(BUILD, buf, 10), 4, '0');
+      lcdSetCustChar_P(0, BMP0);
+      lcdSetCustChar_P(1, BMP1);
+      lcdSetCustChar_P(2, BMP2);
+      lcdSetCustChar_P(3, BMP3);
+      lcdSetCustChar_P(4, BMP4);
+      lcdSetCustChar_P(5, BMP5);
+      lcdSetCustChar_P(6, BMP6);
+      lcdWriteCustChar(0, 1, 0);
+      lcdWriteCustChar(1, 0, 1);
+      lcdWriteCustChar(1, 1, 2); 
+      lcdWriteCustChar(1, 2, 3); 
+      lcdWriteCustChar(2, 0, 4); 
+      lcdWriteCustChar(2, 1, 5); 
+      lcdWriteCustChar(2, 2, 6); 
+      printLCD_P(0, 5, BT);
+      printLCD_P(1, 6, PSTR("Version :"));
+      printLCD_P(1, 17, BTVER);
+      printLCD_P(2, 6, PSTR("Build   :"));
+      printLCDLPad(2, 16, itoa(BUILD, buf, 10), 4, '0');
+      printLCD_P(3, 1, PSTR("www.brewtroller.com"));
       
     } else if (screen == SCREEN_PIT1) {
-      //Screen Init: Fill/Refill
-      printLCD_P(0, 0, PSTR("Pit 1"));
-//      if (stepIsActive(STEP_FILL)) printLCD_P(0, 1, PSTR("Fill"));
-//      else if (stepIsActive(STEP_REFILL)) printLCD_P(0, 1, PSTR("Refill"));
-//      else printLCD_P(0, 0, PSTR("Fill"));
-//      printLCD_P(0, 11, PSTR("HLT"));
-//      printLCD_P(0, 16, PSTR("Mash"));
-//      printLCD_P(1, 1, PSTR("Target"));
-//      printLCD_P(2, 1, PSTR("Actual"));
-//      vftoa(tgtVol[PIT_1], buf, 3);
-//      truncFloat(buf, 5);
-//      printLCDLPad(1, 9, buf, 5, ' ');
-//      vftoa(tgtVol[PIT_2], buf, 3);
-//      truncFloat(buf, 5);
-//      printLCDLPad(1, 15, buf, 5, ' ');
+      //Screen Init: Pit 1
+      printLCD_P(0, 0, PSTR("Smoker 1"));
+      printLCD_P(0, 11, PSTR("Pit"));
+      printLCD_P(0, 16, PSTR("Food"));
+      printLCD_P(1, 1, PSTR("Target"));
+      printLCD_P(2, 1, PSTR("Actual"));
+      vftoa(setpoint[PIT_1], buf, 3);
+      truncFloat(buf, 5);
+      printLCDLPad(1, 9, buf, 5, ' ');
+      vftoa(setpoint[PIT_1], buf, 3);
+      truncFloat(buf, 5);
+      printLCDLPad(1, 15, buf, 5, ' ');
   
 //      if (screenLock) {
 //        printLCD_P(3, 0, PSTR(">"));
@@ -275,11 +313,31 @@ Documentation, Forums and more information available at http://www.brewtroller.c
       
     } else if (screen == SCREEN_PIT2) {
       //Screen Init: Pit 2
-      printLCD_P(0, 0, PSTR("Pit 2"));
+      printLCD_P(0, 0, PSTR("Smoker 2"));
+      printLCD_P(0, 11, PSTR("Pit"));
+      printLCD_P(0, 16, PSTR("Food"));
+      printLCD_P(1, 1, PSTR("Target"));
+      printLCD_P(2, 1, PSTR("Actual"));
+      vftoa(setpoint[PIT_2], buf, 3);
+      truncFloat(buf, 5);
+      printLCDLPad(1, 9, buf, 5, ' ');
+      vftoa(setpoint[PIT_2], buf, 3);
+      truncFloat(buf, 5);
+      printLCDLPad(1, 15, buf, 5, ' ');
   
     } else if (screen == SCREEN_PIT3) {
       //Screen Init: Pit 3      
-      printLCD_P(0, 0, PSTR("Pit 3"));
+      printLCD_P(0, 0, PSTR("Smoker 3"));
+      printLCD_P(0, 11, PSTR("Pit"));
+      printLCD_P(0, 16, PSTR("Food"));
+      printLCD_P(1, 1, PSTR("Target"));
+      printLCD_P(2, 1, PSTR("Actual"));
+      vftoa(setpoint[PIT_3], buf, 3);
+      truncFloat(buf, 5);
+      printLCDLPad(1, 9, buf, 5, ' ');
+      vftoa(setpoint[PIT_3], buf, 3);
+      truncFloat(buf, 5);
+      printLCDLPad(1, 15, buf, 5, ' ');
      
     } else if (screen == SCREEN_AUX) {
       //Screen Init: AUX
@@ -305,15 +363,38 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 
     } else if (screen == SCREEN_PIT1) {
       //Screen Init: Pit 1
-      printLCD_P(0, 0, PSTR("Pit 1"));
+      #ifdef DEBUG_UI
+        logStart_P(LOGDEBUG);
+        logField_P(PSTR("screenRefresh-Pit#1-Setpoint: "));
+        logFieldL(setpoint[PIT_1]);
+        logField_P(PSTR("screenRefresh-Food#1-Setpoint: "));
+        logFieldL(setpoint[FOOD_1]);
+        logEnd();
+      #endif
+      if (setpoint[PIT_1] > 0) printLCDLPad(1, 10, itoa(setpoint[PIT_1] / 100, buf, 10), 3, ' ');
+      if (setpoint[FOOD_1] > 0) printLCDLPad(1, 16, itoa(setpoint[FOOD_1] / 100, buf, 10), 3, ' ');
+      if (temp[TS_PIT_1] == -32768) printLCD_P(2, 10, PSTR("---")); else printLCDLPad(2, 10, itoa(temp[TS_PIT_1] / 100, buf, 10), 3, ' ');
+      if (temp[TS_FOOD_1] == -32768) printLCD_P(2, 16, PSTR("---")); else printLCDLPad(2, 16, itoa(temp[TS_FOOD_1] / 100, buf, 10), 3, ' ');
+      byte pct;
+      if (PIDEnabled[PIT_1]) {
+        pct = PIDOutput[PIT_1] / PIDCycle[PIT_1];
+        if (pct == 0) strcpy_P(buf, PSTR("Off"));
+        else if (pct == 100) strcpy_P(buf, PSTR(" On"));
+        else { itoa(pct, buf, 10); strcat(buf, "%"); }
+      } else if (heatStatus[PIT_1]) {
+        strcpy_P(buf, PSTR(" On")); 
+        pct = 100;
+      } else {
+        strcpy_P(buf, PSTR("Off"));
+        pct = 0;
+      }
+      printLCDLPad(3, 11, buf, 3, ' ');
     
     } else if (screen == SCREEN_PIT2) {
       //Screen Init: Pit 2
-      printLCD_P(0, 0, PSTR("Pit 2"));
   
     } else if (screen == SCREEN_PIT3) {
       //Screen Init: Pit 3      
-      printLCD_P(0, 0, PSTR("Pit 3"));
   
     } else if (screen == SCREEN_AUX) {
       //Screen Refresh: AUX
@@ -331,11 +412,22 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   //**********************************************************************************
   // screenEnter:  Check enterStatus and handle based on screenLock and activeScreen
   //**********************************************************************************
-  void screenEnter(byte screen) {
+  void screenEnter(byte screen) {  
+    
     if (Encoder.cancel()) {
       //Unlock screens
       unlockUI();
     } else if (Encoder.ok()) {
+      
+      #ifdef DEBUG_UI
+        logStart_P(LOGDEBUG);
+        logField_P(PSTR("screenEnter-ActiveScreen: "));
+        logFieldL(activeScreen);
+//        logField_P(PSTR("screenEnter-ScreenLock: "));
+//        logFieldL(screenLock);
+        logEnd();
+      #endif      
+      
       if (alarmStatus) setAlarm(0);
       else if (!screenLock) lockUI();
       else {
@@ -356,10 +448,10 @@ Documentation, Forums and more information available at http://www.brewtroller.c
             if (lastOption == 1) editProgramMenu();
             else if (lastOption == 2) {
               startProgramMenu();
-              if (activeScreen == SCREEN_PIT1) {
-                screenInit(activeScreen);
-                break;
-              }
+              //if (activeScreen == SCREEN_PIT1) {
+              //  screenInit(activeScreen);
+              //  break;
+              //}
             }
             else if (lastOption == 3) {             
               //Reset All
@@ -389,7 +481,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
           strcat(menuopts[0], itoa(setpoint[PIT_1] / 100, buf, 10));
           strcat_P(menuopts[0], TUNIT);
           strcpy_P(menuopts[1], PSTR("Food Setpoint: "));
-          strcat(menuopts[1], itoa(setpoint[FOOD_1] / 100, buf, 10));
+          strcat(menuopts[1], itoa(setpoint[PIT_1] / 100, buf, 10));
           strcat_P(menuopts[1], TUNIT);
           strcpy_P(menuopts[2], PSTR("Set Timer"));
           if (timerStatus[TIMER_S1]) strcpy_P(menuopts[3], PSTR("Pause Timer"));
@@ -411,148 +503,39 @@ Documentation, Forums and more information available at http://www.brewtroller.c
             //preheated[VS_MASH] = 1;
           } 
           else if (lastOption == 4) {
-            byte brewstep = PROGRAM_IDLE;
-            if (stepIsActive(STEP_DELAY)) brewstep = STEP_DELAY;
-            else if (stepIsActive(STEP_DOUGHIN)) brewstep = STEP_DOUGHIN;
-            else if (stepIsActive(STEP_PREHEAT)) brewstep = STEP_PREHEAT;
-            else if (stepIsActive(STEP_ACID)) brewstep = STEP_ACID;
-            else if (stepIsActive(STEP_PROTEIN)) brewstep = STEP_PROTEIN;
-            else if (stepIsActive(STEP_SACCH)) brewstep = STEP_SACCH;
-            else if (stepIsActive(STEP_SACCH2)) brewstep = STEP_SACCH2;
-            else if (stepIsActive(STEP_MASHOUT)) brewstep = STEP_MASHOUT;
-            else if (stepIsActive(STEP_MASHHOLD)) brewstep = STEP_MASHHOLD;
-            if(brewstep != PROGRAM_IDLE) {
-              if (stepAdvance(brewstep)) {
-                //Failed to advance step
-                stepAdvanceFailDialog();
-              }
-            } else activeScreen = SCREEN_PIT2;
+            // continue
           } else if (lastOption == 5) {
+            //abort
             if (confirmAbort()) {
-              if (stepIsActive(STEP_DELAY)) stepExit(STEP_DELAY);
-              else if (stepIsActive(STEP_DOUGHIN)) stepExit(STEP_DOUGHIN);
-              else if (stepIsActive(STEP_PREHEAT)) stepExit(STEP_PREHEAT);
-              else if (stepIsActive(STEP_ACID)) stepExit(STEP_ACID);
-              else if (stepIsActive(STEP_PROTEIN)) stepExit(STEP_PROTEIN);
-              else if (stepIsActive(STEP_SACCH)) stepExit(STEP_SACCH);
-              else if (stepIsActive(STEP_SACCH2)) stepExit(STEP_SACCH2);
-              else if (stepIsActive(STEP_MASHOUT)) stepExit(STEP_MASHOUT);
-              else stepExit(STEP_MASHHOLD); //Abort STEP_MASHOUT or manual operation
+
             }
           }
           screenInit(activeScreen); 
   
         } else if (screen == SCREEN_PIT2) {
-          //Screen Enter: Preheat/Mash
-//          strcpy_P(menuopts[0], PSTR("HLT Setpoint: "));
-//          strcat(menuopts[0], itoa(setpoint[PIT_1] / 100, buf, 10));
-//          strcat_P(menuopts[0], TUNIT);
-//          strcpy_P(menuopts[1], PSTR("Mash Setpoint: "));
-//          strcat(menuopts[1], itoa(setpoint[PIT_2] / 100, buf, 10));
-//          strcat_P(menuopts[1], TUNIT);
-//          strcpy_P(menuopts[2], PSTR("Set Timer"));
-//          if (timerStatus[TIMER_S1]) strcpy_P(menuopts[3], PSTR("Pause Timer"));
-//          else strcpy_P(menuopts[3], PSTR("Start Timer"));
-//          strcpy_P(menuopts[4], CONTINUE);
-//          strcpy_P(menuopts[5], ABORT);
-//          strcpy_P(menuopts[6], EXIT);
-//          byte lastOption = scrollMenu("Mash Menu", 7, lastOption);
-//          if (lastOption == 0) setSetpoint(PIT_1, getValue(PSTR("HLT Setpoint"), setpoint[PIT_1] / 100, 3, 0, 255, TUNIT));
-//          else if (lastOption == 1) setSetpoint(PIT_2, getValue(PSTR("Mash Setpoint"), setpoint[PIT_2] / 100, 3, 0, 255, TUNIT));
-//          else if (lastOption == 2) { 
-//            setTimer(TIMER_S1, getTimerValue(PSTR("Mash Timer"), timerValue[TIMER_S1] / 60000, 1));
-//            //Force Preheated
-//            preheated[PIT_2] = 1;
-//          } 
-//          else if (lastOption == 3) {
-//            pauseTimer(TIMER_S1);
-//            //Force Preheated
-//            preheated[PIT_2] = 1;
-//          } 
-//          else if (lastOption == 4) {
-//            byte brewstep = PROGRAM_IDLE;
-//            if (stepIsActive(STEP_DELAY)) brewstep = STEP_DELAY;
-//            else if (stepIsActive(STEP_DOUGHIN)) brewstep = STEP_DOUGHIN;
-//            else if (stepIsActive(STEP_PREHEAT)) brewstep = STEP_PREHEAT;
-//            else if (stepIsActive(STEP_ACID)) brewstep = STEP_ACID;
-//            else if (stepIsActive(STEP_PROTEIN)) brewstep = STEP_PROTEIN;
-//            else if (stepIsActive(STEP_SACCH)) brewstep = STEP_SACCH;
-//            else if (stepIsActive(STEP_SACCH2)) brewstep = STEP_SACCH2;
-//            else if (stepIsActive(STEP_MASHOUT)) brewstep = STEP_MASHOUT;
-//            else if (stepIsActive(STEP_MASHHOLD)) brewstep = STEP_MASHHOLD;
-//            if(brewstep != PROGRAM_IDLE) {
-//              if (stepAdvance(brewstep)) {
-//                //Failed to advance step
-//                stepAdvanceFailDialog();
-//              }
-//            } else activeScreen = SCREEN_SPARGE;
-//          } else if (lastOption == 5) {
-//            if (confirmAbort()) {
-//              if (stepIsActive(STEP_DELAY)) stepExit(STEP_DELAY);
-//              else if (stepIsActive(STEP_DOUGHIN)) stepExit(STEP_DOUGHIN);
-//              else if (stepIsActive(STEP_PREHEAT)) stepExit(STEP_PREHEAT);
-//              else if (stepIsActive(STEP_ACID)) stepExit(STEP_ACID);
-//              else if (stepIsActive(STEP_PROTEIN)) stepExit(STEP_PROTEIN);
-//              else if (stepIsActive(STEP_SACCH)) stepExit(STEP_SACCH);
-//              else if (stepIsActive(STEP_SACCH2)) stepExit(STEP_SACCH2);
-//              else if (stepIsActive(STEP_MASHOUT)) stepExit(STEP_MASHOUT);
-//              else stepExit(STEP_MASHHOLD); //Abort STEP_MASHOUT or manual operation
-//            }
-//          }
-//          screenInit(activeScreen);
+          //Screen Enter: Pit 2
           
         } else if (screen == SCREEN_PIT3) {
-          //Screen Enter: Sparge
-//          int encValue = Encoder.getCount();
-//          if (encValue == 0) continueClick();
-//          else if (encValue == 1) { resetSpargeValves(); setValves(vlvConfig[VLV_SPARGEIN], 1); }
-//          else if (encValue == 2) { resetSpargeValves(); setValves(vlvConfig[VLV_SPARGEOUT], 1); }
-//          else if (encValue == 3) { resetSpargeValves(); setValves(vlvConfig[VLV_SPARGEIN], 1); setValves(vlvConfig[VLV_SPARGEOUT], 1); }
-//          else if (encValue == 4) { resetSpargeValves(); setValves(vlvConfig[VLV_MASHHEAT], 1); }
-//          else if (encValue == 5) { resetSpargeValves();  setValves(vlvConfig[VLV_MASHIDLE], 1); }
-//          else if (encValue == 6) { resetSpargeValves(); }
-//          else if (encValue == 7) {
-//            strcpy_P(menuopts[0], PSTR("Auto In"));
-//            strcpy_P(menuopts[1], PSTR("Auto Out"));
-//            strcpy_P(menuopts[2], PSTR("Auto Fly"));
-//            strcpy_P(menuopts[3], PSTR("HLT Target"));
-//            strcpy_P(menuopts[4], PSTR("Kettle Target"));
-//            strcpy_P(menuopts[5], PSTR("Continue"));
-//            strcpy_P(menuopts[6], PSTR("Abort"));
-//            strcpy_P(menuopts[7], EXIT);
-//            byte lastOption = scrollMenu("Sparge Menu", 8, lastOption);
-//            if (lastOption == 0) { resetSpargeValves(); if(tgtVol[PIT_1]) autoValve[AV_SPARGEIN] = 1; }
-//            else if (lastOption == 1) { resetSpargeValves(); if(tgtVol[PIT_3]) autoValve[AV_SPARGEOUT] = 1; }
-//            else if (lastOption == 2) { resetSpargeValves(); if(tgtVol[PIT_3]) autoValve[AV_FLYSPARGE] = 1; }
-//            else if (lastOption == 3) tgtVol[PIT_1] = getValue(PSTR("HLT Target Vol"), tgtVol[PIT_1], 7, 3, 9999999, VOLUNIT);
-//            else if (lastOption == 4) tgtVol[PIT_3] = getValue(PSTR("Kettle Target Vol"), tgtVol[PIT_3], 7, 3, 9999999, VOLUNIT);
-//            else if (lastOption == 5) continueClick();
-//            else if (lastOption == 6) {
-//              if (confirmAbort()) {
-//                if (stepIsActive(STEP_ADDGRAIN)) stepExit(STEP_ADDGRAIN);
-//                else stepExit(STEP_SPARGE); //Abort STEP_SPARGE or manual operation
-//              }
-//            }
-//            screenInit(activeScreen);
-          }
+          //Screen Enter: Pit 3
+
         }
       }
     }
-
-  void continueClick() {
-    byte brewstep = PROGRAM_IDLE;
-    if (stepIsActive(STEP_FILL)) brewstep = STEP_FILL;
-    else if (stepIsActive(STEP_REFILL)) brewstep = STEP_REFILL;
-    else if (stepIsActive(STEP_SPARGE)) brewstep = STEP_SPARGE;
-    else if (stepIsActive(STEP_ADDGRAIN)) brewstep = STEP_ADDGRAIN;
-    if(brewstep != PROGRAM_IDLE) {
-      if (stepAdvance(brewstep)) {
-        //Failed to advance step
-        stepAdvanceFailDialog();
-      }
-    } else activeScreen = activeScreen + 1; 
-    screenInit(activeScreen); 
   }
+
+//  void continueClick() {
+//    
+//    #ifdef DEBUG_UI
+//      logStart_P(LOGDEBUG);
+//      logField_P(PSTR("continueClick\r\n"));
+//      logField_P(PSTR("continueClick-ActiveScreen: "));
+//      logFieldL(activeScreen);
+//      logField_P(PSTR("continueClick-ScreenLock: "));
+//      logFieldL(screenLock);
+//      logEnd();
+//    #endif   
+//    screenInit(activeScreen); 
+//  }
   
   void resetSpargeValves() {
     autoValve[AV_SPARGEIN] = 0;
@@ -597,19 +580,10 @@ Documentation, Forums and more information available at http://www.brewtroller.c
         getProgName(profile, progName);
         lastOption = scrollMenu(progName, 3, lastOption);
         if (lastOption == 0) editProgram(profile);
-        else if (lastOption == 1) {			
-	      if (stepInit(profile, STEP_FILL)) {
-		    clearLCD();
-			printLCD_P(1, 0, PSTR("Program start failed"));
-			printLCD(3, 4, ">");
-			printLCD_P(3, 6, CONTINUE);
-			printLCD(3, 15, "<");
-			while (!Encoder.ok()) smokeCore();
-		  } else {
-			activeScreen = SCREEN_PIT1;
-			//screenInit called by screenEnter upon return
-			break;
-		  }
+        else if (lastOption == 1) {
+    	  //activeScreen = SCREEN_PIT1;
+    	  //screenInit called by screenEnter upon return
+    	  //break;
         } else break;
       }
     }
@@ -622,19 +596,19 @@ Documentation, Forums and more information available at http://www.brewtroller.c
       strcpy_P(menuopts[1], PSTR("Food Temp:"));
       strcpy_P(menuopts[2], EXIT);
   
-      vftoa(getProgBatchVol(pgm), buf, 3);
+      vftoa(getProgPitTemp(pgm), buf, 3);
       truncFloat(buf, 5);
       strcat(menuopts[0], buf);
       strcat_P(menuopts[0], VOLUNIT);
   
-      vftoa(getProgGrain(pgm), buf, 3);
+      vftoa(getProgFoodTemp(pgm), buf, 3);
       truncFloat(buf, 7);
       strcat(menuopts[1], buf);
       strcat_P(menuopts[1], WTUNIT); 
      
       lastOption = scrollMenu("Program Parameters", 3, lastOption);
-      if (lastOption == 0) setProgBatchVol(pgm, getValue(PSTR("Pit Temp"), getProgBatchVol(pgm), 7, 3, 9999999, VOLUNIT));
-      else if (lastOption == 1) setProgGrain(pgm, getValue(PSTR("Food Temp"), getProgGrain(pgm), 7, 3, 9999999, WTUNIT));      
+      if (lastOption == 0) { } //setProgPitTemp(pgm, getValue(PSTR("Pit Temp"), getProgBatchVol(pgm), 7, 3, 9999999, VOLUNIT));
+      else if (lastOption == 1) { } //setProgFoodTemp(pgm, getValue(PSTR("Food Temp"), getProgGrain(pgm), 7, 3, 9999999, WTUNIT));      
       else return;      
     }
   }

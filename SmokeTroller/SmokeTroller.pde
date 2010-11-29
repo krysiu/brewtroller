@@ -1,4 +1,4 @@
-#define BUILD 618 
+#define BUILD 621 
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -99,10 +99,6 @@ byte vSensor[3] = { HLTVOL_APIN, MASHVOL_APIN, KETTLEVOL_APIN};
 byte tSensor[9][8];
 int temp[9];
 
-//Volume in (thousandths of gal/l)
-unsigned long tgtVol[3], volAvg[3], calibVols[3][10];
-unsigned int calibVals[3][10];
-
 //Valve Variables
 unsigned long vlvConfig[NUM_VLVCFGS], vlvBits;
 boolean autoValve[NUM_AV];
@@ -111,7 +107,7 @@ boolean autoValve[NUM_AV];
 char menuopts[21][20], buf[20];
 
 //Output Globals
-double PIDInput[3], PIDOutput[3], setpoint[3];
+double PIDInput[3], PIDOutput[3], setpoint[6];
 byte PIDCycle[3], hysteresis[3];
 unsigned long cycleStart[3] = {0,0,0};
 boolean heatStatus[3], PIDEnabled[3];
@@ -136,8 +132,8 @@ boolean logData = LOG_INITSTATUS;
 //Brew Step Logic Globals
 //Active program for each brew step
 #define PROGRAM_IDLE 255
-byte stepProgram[NUM_BREW_STEPS];
-boolean preheated[3], doAutoBoil;
+//byte stepProgram[NUM_BREW_STEPS];
+//boolean preheated[3], doAutoBoil;
 
 //Bit 1 = Boil; Bit 2-11 (See Below); Bit 12 = End of Boil; Bit 13-15 (Open); Bit 16 = Preboil (If Compile Option Enabled)
 unsigned int hoptimes[10] = { 105, 90, 75, 60, 45, 30, 20, 15, 10, 5 };
@@ -159,7 +155,7 @@ const char LOGDATA[] PROGMEM = "DATA";
 
 void setup() {
   //Initialize Brew Steps to 'Idle'
-  for(byte brewStep = 0; brewStep < NUM_BREW_STEPS; brewStep++) stepProgram[brewStep] = PROGRAM_IDLE;
+  //for(byte brewStep = 0; brewStep < NUM_BREW_STEPS; brewStep++) stepProgram[brewStep] = PROGRAM_IDLE;
   
   //Log initialization (Log.pde)
   logInit();

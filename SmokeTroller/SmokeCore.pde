@@ -47,7 +47,7 @@ void smokeCore() {
   processAutoValve();
   
   //Step Logic: StepLogic.pde
-  stepCore();
+  //stepCore();
   
   //BTPD Support
   #ifdef BTPD_SUPPORT

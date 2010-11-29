@@ -70,10 +70,9 @@
 #define PIT_1 0
 #define PIT_2 1
 #define PIT_3 2
-
-#define FOOD_1 0
-#define FOOD_2 1
-#define FOOD_3 2
+#define FOOD_1 3
+#define FOOD_2 4
+#define FOOD_3 5
 
 //Auto-Valve Modes
 #define AV_FILL 0
