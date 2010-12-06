@@ -28,32 +28,32 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #include "Enum.h"
 
 void eventHandler(byte eventID, int eventParam) {
-  //Global Event handler
-  if (eventID == EVENT_STEPINIT) {
-    //Nothing to do here (Pass to UI handler below)
-  }
-  else if (eventID == EVENT_SETPOINT) {
-    //Setpoint Change (Update AutoValve Logic)
-    if (eventParam == PIT_1) { 
-      if (setpoint[PIT_1]) autoValve[AV_HLT] = 1; 
-      else { 
-        autoValve[AV_HLT] = 0; 
-        if (vlvConfigIsActive(VLV_HLTHEAT)) setValves(vlvConfig[VLV_HLTHEAT], 0); 
-      } 
-    }
-    else if (eventParam == PIT_2) { 
-      if (setpoint[PIT_2]) autoValve[AV_MASH] = 1; 
-      else { 
-        autoValve[AV_MASH] = 0; 
-        if (vlvConfigIsActive(VLV_MASHIDLE)) setValves(vlvConfig[VLV_MASHIDLE], 0); 
-        if (vlvConfigIsActive(VLV_MASHHEAT)) setValves(vlvConfig[VLV_MASHHEAT], 0); 
-      } 
-    }
-  }
-
-  
-  #ifndef NOUI
-  //Pass Event Info to UI Even Handler
-  uiEvent(eventID, eventParam);
-#endif
+//  //Global Event handler
+//  if (eventID == EVENT_STEPINIT) {
+//    //Nothing to do here (Pass to UI handler below)
+//  }
+//  else if (eventID == EVENT_SETPOINT) {
+//    //Setpoint Change (Update AutoValve Logic)
+//    if (eventParam == PIT_1) { 
+//      if (setpoint[PIT_1]) autoValve[AV_HLT] = 1; 
+//      else { 
+//        autoValve[AV_HLT] = 0; 
+//        if (vlvConfigIsActive(VLV_HLTHEAT)) setValves(vlvConfig[VLV_HLTHEAT], 0); 
+//      } 
+//    }
+//    else if (eventParam == PIT_2) { 
+//      if (setpoint[PIT_2]) autoValve[AV_MASH] = 1; 
+//      else { 
+//        autoValve[AV_MASH] = 0; 
+//        if (vlvConfigIsActive(VLV_MASHIDLE)) setValves(vlvConfig[VLV_MASHIDLE], 0); 
+//        if (vlvConfigIsActive(VLV_MASHHEAT)) setValves(vlvConfig[VLV_MASHHEAT], 0); 
+//      } 
+//    }
+//  }
+//
+//  
+//  #ifndef NOUI
+//  //Pass Event Info to UI Even Handler
+//  uiEvent(eventID, eventParam);
+//  #endif
 }

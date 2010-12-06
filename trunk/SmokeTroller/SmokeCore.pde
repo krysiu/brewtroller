@@ -29,28 +29,28 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 
 void smokeCore() {
   //Timers: Timer.pde
-  updateTimers();
+  //updateTimers();
   
   //temps: Temp.pde
-  updateTemps();
+  //updateTemps();
  
   //Alarm update allows to have a beeping alarm
-  updateBuzzer();
+  //updateBuzzer();
  
   //Heat Outputs: Outputs.pde
-  processHeatOutputs();
+  //processHeatOutputs();
   
   //Log: Log.pde
-  updateLog();  
+  //updateLog();  
 
   //Auto Valve Logic: Outputs.pde
-  processAutoValve();
+  //processAutoValve();
   
   //Step Logic: StepLogic.pde
   //stepCore();
   
   //BTPD Support
-  #ifdef BTPD_SUPPORT
-    updateBTPD();
-  #endif
+  //#ifdef BTPD_SUPPORT
+  //  updateBTPD();
+  //#endif
 }

@@ -107,31 +107,18 @@
 #define TIMER_S2 1
 #define TIMER_S3 2
 
-//Brew Steps
-#define NUM_BREW_STEPS 15
+//Smoke Steps
+#define NUM_SMOKE_STEPS 4
 
-#define STEP_FILL 0
-#define STEP_DELAY 1
-#define STEP_PREHEAT 2
-#define STEP_ADDGRAIN 3
-#define STEP_REFILL 4
-#define STEP_DOUGHIN 5
-#define STEP_ACID 6
-#define STEP_PROTEIN 7
-#define STEP_SACCH 8
-#define STEP_SACCH2 9
-#define STEP_MASHOUT 10
-#define STEP_MASHHOLD 11
-#define STEP_SPARGE 12
-#define STEP_BOIL 13
-#define STEP_CHILL 14
+#define STEP_ONE 0
+#define STEP_TWO 1
+#define STEP_THREE 2
+#define STEP_FOUR 3
 
-#define MASH_DOUGHIN 0
-#define MASH_ACID 1
-#define MASH_PROTEIN 2
-#define MASH_SACCH 3
-#define MASH_SACCH2 4
-#define MASH_MASHOUT 5
+#define PIT_STEP_ONE 0
+#define PIT_STEP_TWO 1
+#define PIT_STEP_THREE 2
+#define PIT_STEP_FOUR 3
 
 //Zones
 #define ZONE_MASH 0

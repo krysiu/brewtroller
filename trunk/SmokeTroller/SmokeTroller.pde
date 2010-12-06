@@ -1,4 +1,4 @@
-#define BUILD 621 
+#define BUILD 622 
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -92,9 +92,6 @@ pin heatPin[3], alarmPin;
   pin muxLatchPin, muxDataPin, muxClockPin, muxOEPin;
 #endif
 
-//Volume Sensor Pin Array
-byte vSensor[3] = { HLTVOL_APIN, MASHVOL_APIN, KETTLEVOL_APIN};
-
 //8-byte Temperature Sensor Address x9 Sensors
 byte tSensor[9][8];
 int temp[9];
@@ -111,10 +108,6 @@ double PIDInput[3], PIDOutput[3], setpoint[6];
 byte PIDCycle[3], hysteresis[3];
 unsigned long cycleStart[3] = {0,0,0};
 boolean heatStatus[3], PIDEnabled[3];
-unsigned int steamPSens, steamZero;
-//Steam Pressure in thousandths
-unsigned long steamPressure;
-byte boilPwr;
 
 PID pid[3] = {
   PID(&PIDInput[PIT_1], &PIDOutput[PIT_1], &setpoint[PIT_1], 3, 4, 1),  
@@ -161,18 +154,18 @@ void setup() {
   logInit();
 
   //Pin initialization (Outputs.pde)
-  pinInit();
+  //pinInit();
   
-  tempInit();
+  //tempInit();
   
   //User Interface Initialization (UI.pde)
   #ifndef NOUI
     uiInit();
   #endif
 
-  #ifdef BTPD_SUPPORT
-    btpdInit();
-  #endif
+  //#ifdef BTPD_SUPPORT
+  //  btpdInit();
+  //#endif
 
   //Check for cfgVersion variable and update EEPROM if necessary (EEPROM.pde)
   checkConfig();
@@ -181,7 +174,7 @@ void setup() {
   loadSetup();
 
   //PID Initialization (Outputs.pde)
-  pidInit();
+  //pidInit();
 
 }
 
