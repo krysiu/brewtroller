@@ -24,7 +24,7 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
 
-#ifndef NOUI
+//#ifndef NOUI
   #include "Config.h"
   #include "Enum.h"
   #include <encoder.h>
@@ -79,27 +79,27 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   const char PIT3IDLE[] PROGMEM = "Pit 3 Idle";  
     
   #ifndef UI_NO_SETUP
-  const char HLTCYCLE[] PROGMEM = "PIT 1 PID Cycle";
-  const char HLTGAIN[] PROGMEM = "PIT 1 PID Gain";
-  const char HLTHY[] PROGMEM = "PIT 1 Hysteresis";
-  const char MASHCYCLE[] PROGMEM = "PIT 2 PID Cycle";
-  const char MASHGAIN[] PROGMEM = "PIT 2 PID Gain";
-  const char MASHHY[] PROGMEM = "PIT 2 Hysteresis";
-  const char KETTLECYCLE[] PROGMEM = "PIT 3 PID Cycle";
-  const char KETTLEGAIN[] PROGMEM = "PIT 3 PID Gain";
-  const char KETTLEHY[] PROGMEM = "PIT 3 Hysteresis"; 
+    const char HLTCYCLE[] PROGMEM = "PIT 1 PID Cycle";
+    const char HLTGAIN[] PROGMEM = "PIT 1 PID Gain";
+    const char HLTHY[] PROGMEM = "PIT 1 Hysteresis";
+    const char MASHCYCLE[] PROGMEM = "PIT 2 PID Cycle";
+    const char MASHGAIN[] PROGMEM = "PIT 2 PID Gain";
+    const char MASHHY[] PROGMEM = "PIT 2 Hysteresis";
+    const char KETTLECYCLE[] PROGMEM = "PIT 3 PID Cycle";
+    const char KETTLEGAIN[] PROGMEM = "PIT 3 PID Gain";
+    const char KETTLEHY[] PROGMEM = "PIT 3 Hysteresis"; 
   #endif  
 
   #ifdef USEMETRIC
-  const char VOLUNIT[] PROGMEM = "l";
-  const char WTUNIT[] PROGMEM = "kg";
-  const char TUNIT[] PROGMEM = "C";
-  const char PUNIT[] PROGMEM = "kPa";
+    const char VOLUNIT[] PROGMEM = "l";
+    const char WTUNIT[] PROGMEM = "kg";
+    const char TUNIT[] PROGMEM = "C";
+    const char PUNIT[] PROGMEM = "kPa";
   #else
-  const char VOLUNIT[] PROGMEM = "gal";
-  const char WTUNIT[] PROGMEM = "lb";
-  const char TUNIT[] PROGMEM = "F";
-  const char PUNIT[] PROGMEM = "psi";
+    const char VOLUNIT[] PROGMEM = "gal";
+    const char WTUNIT[] PROGMEM = "lb";
+    const char TUNIT[] PROGMEM = "F";
+    const char PUNIT[] PROGMEM = "psi";
   #endif
   
   //**********************************************************************************
@@ -176,12 +176,12 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   //**********************************************************************************
   void unlockUI() {
     
-     #ifdef DEBUG_UI
+    #ifdef DEBUG_UI
       logStart_P(LOGDEBUG);
       logField_P(PSTR("unlockUI-activeScreen: "));
       logFieldL(activeScreen);
-//      logField_P(PSTR("unlockUI-ScreenLock: "));
-//      logFieldL(screenLock);
+      //logField_P(PSTR("unlockUI-ScreenLock: "));
+      //logFieldL(screenLock);
       logEnd();
     #endif    
     
@@ -227,14 +227,14 @@ Documentation, Forums and more information available at http://www.brewtroller.c
       #endif        
      
       if (encValue >=0) {
-       #ifdef DEBUG_UI
-        logStart_P(LOGDEBUG);
-        logField_P(PSTR("uiCore-encValue: "));
-        logFieldL(encValue);
-        logField_P(PSTR("uiCore-activeScreen2: "));
-        logFieldL(activeScreen); 
-        logEnd();
-      #endif   
+        #ifdef DEBUG_UI
+          logStart_P(LOGDEBUG);
+          logField_P(PSTR("uiCore-encValue: "));
+          logFieldL(encValue);
+          logField_P(PSTR("uiCore-activeScreen2: "));
+          logFieldL(activeScreen); 
+          logEnd();
+        #endif   
         activeScreen = encValue;
         screenInit(activeScreen);
       }
@@ -249,7 +249,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   void screenInit(byte screen) {
     clearLCD();
     
-     #ifdef DEBUG_UI
+    #ifdef DEBUG_UI
       logStart_P(LOGDEBUG);
       logField_P(PSTR("screenInit-activeScreen: "));
       logFieldL(activeScreen);
@@ -428,8 +428,9 @@ Documentation, Forums and more information available at http://www.brewtroller.c
         logEnd();
       #endif      
       
-      if (alarmStatus) setAlarm(0);
-      else if (!screenLock) lockUI();
+//      if (alarmStatus) setAlarm(0);
+//      else if
+      if (!screenLock) lockUI();
       else {
         if (screen == SCREEN_HOME) {
           byte lastOption = 0;
@@ -456,15 +457,15 @@ Documentation, Forums and more information available at http://www.brewtroller.c
             else if (lastOption == 3) {             
               //Reset All
               if (confirmAbort()) {
-                resetOutputs();
-                clearTimer(TIMER_S1);
-                clearTimer(TIMER_S2);
+//                resetOutputs();
+//                clearTimer(TIMER_S1);
+//                clearTimer(TIMER_S2);
               }
             }
             #ifndef UI_NO_SETUP        
               else if (lastOption == 4) menuSetup();
             #endif
-            else if (lastOption == 0){
+            else if (lastOption == 0) {
               //On exit of the Main menu go back to Splash/Home screen.
               activeScreen = SCREEN_HOME;
               screenInit(activeScreen);
@@ -490,15 +491,16 @@ Documentation, Forums and more information available at http://www.brewtroller.c
           strcpy_P(menuopts[5], ABORT);
           strcpy_P(menuopts[6], EXIT);
           byte lastOption = scrollMenu("Mash Menu", 7, lastOption);
-          if (lastOption == 0) setSetpoint(PIT_1, getValue(PSTR("Pit 1 Setpoint"), setpoint[PIT_1] / 100, 3, 0, 255, TUNIT));
-          else if (lastOption == 1) setSetpoint(FOOD_1, getValue(PSTR("Food Setpoint"), setpoint[FOOD_1] / 100, 3, 0, 255, TUNIT));
-          else if (lastOption == 2) { 
-            setTimer(TIMER_S1, getTimerValue(PSTR("Mash Timer"), timerValue[TIMER_S1] / 60000, 1));
+          //if (lastOption == 0) setSetpoint(PIT_1, getValue(PSTR("Pit 1 Setpoint"), setpoint[PIT_1] / 100, 3, 0, 255, TUNIT));
+          //else if (lastOption == 1) setSetpoint(FOOD_1, getValue(PSTR("Food Setpoint"), setpoint[FOOD_1] / 100, 3, 0, 255, TUNIT));
+          //else if
+          if (lastOption == 2) { 
+            //setTimer(TIMER_S1, getTimerValue(PSTR("Mash Timer"), timerValue[TIMER_S1] / 60000, 1));
             //Force Preheated
             //preheated[VS_MASH] = 1;
           } 
           else if (lastOption == 3) {
-            pauseTimer(TIMER_S1);
+            //pauseTimer(TIMER_S1);
             //Force Preheated
             //preheated[VS_MASH] = 1;
           } 
@@ -538,13 +540,13 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 //  }
   
   void resetSpargeValves() {
-    autoValve[AV_SPARGEIN] = 0;
-    autoValve[AV_SPARGEOUT] = 0;
-    autoValve[AV_FLYSPARGE] = 0;
-    setValves(vlvConfig[VLV_SPARGEIN], 0);
-    setValves(vlvConfig[VLV_SPARGEOUT], 0);
-    setValves(vlvConfig[VLV_MASHHEAT], 0);
-    setValves(vlvConfig[VLV_MASHIDLE], 0);
+//    autoValve[AV_SPARGEIN] = 0;
+//    autoValve[AV_SPARGEOUT] = 0;
+//    autoValve[AV_FLYSPARGE] = 0;
+//    setValves(vlvConfig[VLV_SPARGEIN], 0);
+//    setValves(vlvConfig[VLV_SPARGEOUT], 0);
+//    setValves(vlvConfig[VLV_MASHHEAT], 0);
+//    setValves(vlvConfig[VLV_MASHIDLE], 0);
   }
   
   void stepAdvanceFailDialog() {
@@ -568,51 +570,84 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   }
   
   void startProgramMenu() {
-    for (byte i = 0; i < 20; i++) getProgName(i, menuopts[i]);
-    byte profile = scrollMenu("Start Program", 20, 0);
-    if (profile < 20) {
-      byte lastOption = 0; 
-      while(1) {    
-        strcpy_P(menuopts[0], PSTR("Edit Program"));        
-        strcpy_P(menuopts[1], PSTR("Start"));
-        strcpy_P(menuopts[2], EXIT);
-        char progName[20];
-        getProgName(profile, progName);
-        lastOption = scrollMenu(progName, 3, lastOption);
-        if (lastOption == 0) editProgram(profile);
-        else if (lastOption == 1) {
-    	  //activeScreen = SCREEN_PIT1;
-    	  //screenInit called by screenEnter upon return
-    	  //break;
-        } else break;
-      }
-    }
+//    for (byte i = 0; i < 20; i++) getProgName(i, menuopts[i]);
+//    byte profile = scrollMenu("Start Program", 20, 0);
+//    if (profile < 20) {
+//      byte lastOption = 0; 
+//      while(1) {    
+//        strcpy_P(menuopts[0], PSTR("Edit Program"));        
+//        strcpy_P(menuopts[1], PSTR("Start"));
+//        strcpy_P(menuopts[2], EXIT);
+//        char progName[20];
+//        getProgName(profile, progName);
+//        lastOption = scrollMenu(progName, 3, lastOption);
+//        if (lastOption == 0) editProgram(profile);
+//        else if (lastOption == 1) {
+//    	  //activeScreen = SCREEN_PIT1;
+//    	  //screenInit called by screenEnter upon return
+//    	  //break;
+//        } else break;
+//      }
+//    }
   }
   
   void editProgram(byte pgm) {
     byte lastOption = 0;
     while (1) {
-      strcpy_P(menuopts[0], PSTR("Pit Temp:"));
-      strcpy_P(menuopts[1], PSTR("Food Temp:"));
-      strcpy_P(menuopts[2], EXIT);
-  
-      vftoa(getProgPitTemp(pgm), buf, 3);
-      truncFloat(buf, 5);
-      strcat(menuopts[0], buf);
-      strcat_P(menuopts[0], VOLUNIT);
-  
-      vftoa(getProgFoodTemp(pgm), buf, 3);
-      truncFloat(buf, 7);
-      strcat(menuopts[1], buf);
-      strcat_P(menuopts[1], WTUNIT); 
-     
-      lastOption = scrollMenu("Program Parameters", 3, lastOption);
-      if (lastOption == 0) { } //setProgPitTemp(pgm, getValue(PSTR("Pit Temp"), getProgBatchVol(pgm), 7, 3, 9999999, VOLUNIT));
-      else if (lastOption == 1) { } //setProgFoodTemp(pgm, getValue(PSTR("Food Temp"), getProgGrain(pgm), 7, 3, 9999999, WTUNIT));      
+      strcpy_P(menuopts[0], PSTR("Food Temp:"));
+      strcpy_P(menuopts[1], PSTR("Pit Temp:"));
+      strcpy_P(menuopts[2], PSTR("Step Schedule"));
+      strcpy_P(menuopts[3], EXIT);
+          
+      // Food Temp 
+      strncat(menuopts[0], itoa(getProgFoodTemp(pgm), buf, 10), 3);
+      strcat(menuopts[0], TUNIT);
+      
+      // Pit Temp
+      strncat(menuopts[1], itoa(getProgPitTemp(pgm), buf, 10), 3);
+      strcat_P(menuopts[1], TUNIT); 
+           
+      lastOption = scrollMenu("Program Parameters", 4, lastOption);
+      if (lastOption == 0) setProgFoodTemp(pgm, getValue(PSTR("Food Temp"), getProgFoodTemp(pgm), 3, 0, MAX_FOOD_TEMP, TUNIT));      
+      else if (lastOption == 1) setProgPitTemp(pgm, getValue(PSTR("Pit Temp"), getProgPitTemp(pgm), 3, 0, MAX_PIT_TEMP, TUNIT));
+      else if (lastOption == 2) editStepSchedule(pgm);
       else return;      
     }
   }
-
+  
+  void editStepSchedule(byte pgm) {
+    byte lastOption = 0;
+    while (1) {
+      strcpy_P(menuopts[0], PSTR("Step 1:"));
+      strcpy_P(menuopts[1], PSTR("Step 1:"));
+      strcpy_P(menuopts[2], PSTR("Step 2:"));
+      strcpy_P(menuopts[3], PSTR("Step 2:"));
+      strcpy_P(menuopts[4], PSTR("Step 3:"));
+      strcpy_P(menuopts[5], PSTR("Step 3:"));
+      strcpy_P(menuopts[6], PSTR("Step 4:"));
+      strcpy_P(menuopts[7], PSTR("Step 4:"));     
+      strcpy_P(menuopts[8], EXIT);
+  
+      for (byte i = PIT_STEP_ONE; i <= PIT_STEP_FOUR; i++) {  
+        strncat(menuopts[i * 2], itoa(getProgStepMins(pgm, i), buf, 10), 3);
+        strcat(menuopts[i * 2], " min");
+  
+        strncat(menuopts[i * 2 + 1], itoa(getProgStepTemp(pgm, i), buf, 10), 3);
+        strcat_P(menuopts[i * 2 + 1], TUNIT);
+      }
+      
+      lastOption = scrollMenu("Step Schedule", 9, lastOption);
+      if (lastOption == 0) setProgStepMins(pgm, PIT_STEP_ONE, getTimerValue(PSTR("Step 1"), getProgStepMins(pgm, PIT_STEP_ONE), MAX_STEP_TIME_HOURS));
+      else if (lastOption == 1) setProgStepTemp(pgm, PIT_STEP_ONE, getValue(PSTR("Step 1"), getProgStepTemp(pgm, PIT_STEP_ONE), 3, 0, MAX_PIT_TEMP, TUNIT));
+      else if (lastOption == 2) setProgStepMins(pgm, PIT_STEP_TWO, getTimerValue(PSTR("Step 2"), getProgStepMins(pgm, PIT_STEP_TWO), MAX_STEP_TIME_HOURS));
+      else if (lastOption == 3) setProgStepTemp(pgm, PIT_STEP_TWO, getValue(PSTR("Step 2"), getProgStepTemp(pgm, PIT_STEP_TWO), 3, 0, MAX_PIT_TEMP, TUNIT));
+      else if (lastOption == 4) setProgStepMins(pgm, PIT_STEP_THREE, getTimerValue(PSTR("Step 3"), getProgStepMins(pgm, PIT_STEP_THREE), MAX_STEP_TIME_HOURS));
+      else if (lastOption == 5) setProgStepTemp(pgm, PIT_STEP_THREE, getValue(PSTR("Step 3"), getProgStepTemp(pgm, PIT_STEP_THREE), 3, 0, MAX_PIT_TEMP, TUNIT));
+      else if (lastOption == 6) setProgStepMins(pgm, PIT_STEP_FOUR, getTimerValue(PSTR("Step 4"), getProgStepMins(pgm, PIT_STEP_FOUR), MAX_STEP_TIME_HOURS));
+      else if (lastOption == 7) setProgStepTemp(pgm, PIT_STEP_FOUR, getValue(PSTR("Step 4"), getProgStepTemp(pgm, PIT_STEP_FOUR), 3, 0, MAX_PIT_TEMP, TUNIT));     
+      else return;
+    }
+  }
   
   //*****************************************************************************************************************************
   //Generic Menu Functions
@@ -1035,7 +1070,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   //*****************************************************************************************************************************
   // System Setup Menus
   //*****************************************************************************************************************************
-  #ifndef UI_NO_SETUP
+
   void menuSetup() {
     byte lastOption = 0;
     while(1) {
@@ -1053,16 +1088,16 @@ Documentation, Forums and more information available at http://www.brewtroller.c
         clearLCD();
         printLCD_P(0, 0, PSTR("Reset Configuration?"));
         strcpy_P(menuopts[0], INIT_EEPROM);
-          strcpy_P(menuopts[1], CANCEL);
-          if (getChoice(2, 3) == 0) {
+        strcpy_P(menuopts[1], CANCEL);
+        if (getChoice(2, 3) == 0) {
             EEPROM.write(2047, 0);
             initEEPROM();
             checkConfig();
-          }
+        }
       } else return;
     }
   }
-  
+
   void assignSensor() {
     Encoder.setMin(0);
     Encoder.setMax(8);
@@ -1080,14 +1115,14 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     strcpy_P(dispTitle[8], PSTR("AUX 3"));
     boolean redraw = 1;
     int encValue, oldEncValue;
-    
+  
     while (1) {
       if (redraw) {
         //First time entry or back from the sub-menu.
         redraw = 0;
         encValue = Encoder.getCount();
       } else encValue = Encoder.change();
-      
+    
       if (encValue >= 0) {
         //The user has navigated toward a new temperature probe screen.
         oldEncValue = encValue;  //Will allow partial screen refresh when viewing the same screen.
@@ -1100,6 +1135,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
         //The user is still viewing the same screen (no change on the static data but refresh the temperature value).
           displayAssignSensorTemp(oldEncValue);  //Only refresh the current screen.
       }
+      
       if (Encoder.cancel()) return;
       else if (Encoder.ok()) {
         encValue = Encoder.getCount();
@@ -1113,19 +1149,17 @@ Documentation, Forums and more information available at http://www.brewtroller.c
           clearLCD();
           printLCDCenter(0, 0, dispTitle[encValue], 20);
           printLCD_P(1,0,PSTR("Disconnect all other"));
-          printLCD_P(2,2,PSTR("temp sensors now"));
-          {
-            strcpy_P(menuopts[0], CONTINUE);
-            strcpy_P(menuopts[1], CANCEL);
-            if (getChoice(2, 3) == 0) {
-              byte addr[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-              getDSAddr(addr);
-              setTSAddr(encValue, addr);
-            }
-          }
+          printLCD_P(2,2,PSTR("temp sensors now"));            
+          strcpy_P(menuopts[0], CONTINUE);
+          strcpy_P(menuopts[1], CANCEL);
+          if (getChoice(2, 3) == 0) {
+            byte addr[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+//              getDSAddr(addr);
+//              setTSAddr(encValue, addr);
+          }            
         } else if (selected == 1) {
           byte addr[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-          setTSAddr(encValue, addr);
+          //setTSAddr(encValue, addr);
         }
         else if (selected > 2) return;
   
@@ -1137,7 +1171,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
       smokeCore();
     }
   }
-  
+
   void displayAssignSensorTemp(int encValue) {
     printLCD_P(3, 10, TUNIT); 
     if (temp[encValue] == -32768) {
@@ -1146,166 +1180,167 @@ Documentation, Forums and more information available at http://www.brewtroller.c
       printLCDLPad(3, 7, itoa(temp[encValue] / 100, buf, 10), 3, ' ');
     }
   }
-  
+
   void cfgOutputs() {
-    byte lastOption = 0;
-    while(1) {
-      if (PIDEnabled[PIT_1]) strcpy_P(menuopts[0], PSTR("Pit 1 Mode: PID")); else strcpy_P(menuopts[0], PSTR("Pit 1 Mode: On/Off"));
-      strcpy_P(menuopts[1], HLTCYCLE);
-      strcpy_P(menuopts[2], HLTGAIN);
-      strcpy_P(menuopts[3], HLTHY);
-      if (PIDEnabled[PIT_2]) strcpy_P(menuopts[4], PSTR("Pit 2 Mode: PID")); else strcpy_P(menuopts[4], PSTR("Pit 2 Mode: On/Off"));
-      strcpy_P(menuopts[5], MASHCYCLE);
-      strcpy_P(menuopts[6], MASHGAIN);
-      strcpy_P(menuopts[7], MASHHY);
-      if (PIDEnabled[PIT_3]) strcpy_P(menuopts[8], PSTR("Pit 3 Mode: PID")); else strcpy_P(menuopts[8], PSTR("Pit 3 Mode: On/Off"));
-      strcpy_P(menuopts[9], KETTLECYCLE);
-      strcpy_P(menuopts[10], KETTLEGAIN);
-      strcpy_P(menuopts[11], KETTLEHY);    
-      strcpy_P(menuopts[12], EXIT);
-  
-      lastOption = scrollMenu("Configure Outputs", 13, lastOption);
-      if (lastOption == 0) {
-        if (PIDEnabled[PIT_1]) 
-          setPIDEnabled(PIT_1, 0); 
-        else
-          setPIDEnabled(PIT_1, 1);
-      }
-      
-      else if (lastOption == 1) {     
-        setPIDCycle(PIT_1, getValue(HLTCYCLE, PIDCycle[PIT_1], 3, 1, 255, SEC));
-        pid[PIT_1].SetOutputLimits(0, PIDCycle[PIT_1] * PIDLIMIT_PIT1);     
-      } 
-      
-      else if (lastOption == 2) {
-        setPIDGain("PIT 1 PID Gain", PIT_1);
-      } 
-      
-      else if (lastOption == 3) setHysteresis(PIT_1, getValue(HLTHY, hysteresis[PIT_1], 3, 1, 255, TUNIT));
-        
-      else if (lastOption == 4) {
-        if (PIDEnabled[PIT_2]) setPIDEnabled(PIT_2, 0);
-        else setPIDEnabled(PIT_2, 1);
-      }
-      
-      else if (lastOption == 5) {      
-        setPIDCycle(PIT_2, getValue(MASHCYCLE, PIDCycle[PIT_2], 3, 1, 255, SEC));
-        pid[PIT_2].SetOutputLimits(0, PIDCycle[PIT_2] * PIDLIMIT_PIT2);     
-      } 
-      
-      else if (lastOption == 6) setPIDGain("Pit 2 PID Gain", PIT_2);
-        
-      else if (lastOption == 7) setHysteresis(PIT_2, getValue(MASHHY, hysteresis[PIT_2], 3, 1, 255, TUNIT));
-      
-      else if (lastOption == 8) {
-        if (PIDEnabled[PIT_3]) 
-          setPIDEnabled(PIT_3, 0);
-        else
-          setPIDEnabled(PIT_3, 1);
-      }
-      
-      else if (lastOption == 9) {      
-        setPIDCycle(PIT_3, getValue(KETTLECYCLE, PIDCycle[PIT_3], 3, 1, 255, SEC));
-        pid[PIT_3].SetOutputLimits(0, PIDCycle[PIT_3] * PIDLIMIT_PIT3); 
-      } 
-      
-      else if (lastOption == 10) setPIDGain("Pit 3 PID Gain", PIT_3);
-      
-      else if (lastOption == 11) setHysteresis(PIT_3, getValue(KETTLEHY, hysteresis[PIT_3], 3, 1, 255, TUNIT));    
-      
-      else return;
-      
-      smokeCore();
-    } 
+//      byte lastOption = 0;
+//      while(1) {
+//        if (PIDEnabled[PIT_1]) strcpy_P(menuopts[0], PSTR("Pit 1 Mode: PID")); else strcpy_P(menuopts[0], PSTR("Pit 1 Mode: On/Off"));
+//        strcpy_P(menuopts[1], HLTCYCLE);
+//        strcpy_P(menuopts[2], HLTGAIN);
+//        strcpy_P(menuopts[3], HLTHY);
+//        if (PIDEnabled[PIT_2]) strcpy_P(menuopts[4], PSTR("Pit 2 Mode: PID")); else strcpy_P(menuopts[4], PSTR("Pit 2 Mode: On/Off"));
+//        strcpy_P(menuopts[5], MASHCYCLE);
+//        strcpy_P(menuopts[6], MASHGAIN);
+//        strcpy_P(menuopts[7], MASHHY);
+//        if (PIDEnabled[PIT_3]) strcpy_P(menuopts[8], PSTR("Pit 3 Mode: PID")); else strcpy_P(menuopts[8], PSTR("Pit 3 Mode: On/Off"));
+//        strcpy_P(menuopts[9], KETTLECYCLE);
+//        strcpy_P(menuopts[10], KETTLEGAIN);
+//        strcpy_P(menuopts[11], KETTLEHY);    
+//        strcpy_P(menuopts[12], EXIT);
+//    
+//        lastOption = scrollMenu("Configure Outputs", 13, lastOption);
+//        if (lastOption == 0) {
+//          if (PIDEnabled[PIT_1]) 
+//            setPIDEnabled(PIT_1, 0); 
+//          else
+//            setPIDEnabled(PIT_1, 1);
+//        }
+//        
+//        else if (lastOption == 1) {     
+//          setPIDCycle(PIT_1, getValue(HLTCYCLE, PIDCycle[PIT_1], 3, 1, 255, SEC));
+//          pid[PIT_1].SetOutputLimits(0, PIDCycle[PIT_1] * PIDLIMIT_PIT1);     
+//        } 
+//        
+//        else if (lastOption == 2) {
+//          setPIDGain("PIT 1 PID Gain", PIT_1);
+//        } 
+//        
+//        else if (lastOption == 3) setHysteresis(PIT_1, getValue(HLTHY, hysteresis[PIT_1], 3, 1, 255, TUNIT));
+//          
+//        else if (lastOption == 4) {
+//          if (PIDEnabled[PIT_2]) setPIDEnabled(PIT_2, 0);
+//          else setPIDEnabled(PIT_2, 1);
+//        }
+//        
+//        else if (lastOption == 5) {      
+//          setPIDCycle(PIT_2, getValue(MASHCYCLE, PIDCycle[PIT_2], 3, 1, 255, SEC));
+//          pid[PIT_2].SetOutputLimits(0, PIDCycle[PIT_2] * PIDLIMIT_PIT2);     
+//        } 
+//        
+//        else if (lastOption == 6) setPIDGain("Pit 2 PID Gain", PIT_2);
+//          
+//        else if (lastOption == 7) setHysteresis(PIT_2, getValue(MASHHY, hysteresis[PIT_2], 3, 1, 255, TUNIT));
+//        
+//        else if (lastOption == 8) {
+//          if (PIDEnabled[PIT_3]) 
+//            setPIDEnabled(PIT_3, 0);
+//          else
+//            setPIDEnabled(PIT_3, 1);
+//        }
+//        
+//        else if (lastOption == 9) {      
+//          setPIDCycle(PIT_3, getValue(KETTLECYCLE, PIDCycle[PIT_3], 3, 1, 255, SEC));
+//          pid[PIT_3].SetOutputLimits(0, PIDCycle[PIT_3] * PIDLIMIT_PIT3); 
+//        } 
+//        
+//        else if (lastOption == 10) setPIDGain("Pit 3 PID Gain", PIT_3);
+//        
+//        else if (lastOption == 11) setHysteresis(PIT_3, getValue(KETTLEHY, hysteresis[PIT_3], 3, 1, 255, TUNIT));    
+//        
+//        else return;
+//        
+//        smokeCore();
+//      } 
   }
-  
+
   void setPIDGain(char sTitle[], byte smokerPit) {
-    byte retP = pid[smokerPit].GetP_Param();
-    byte retI = pid[smokerPit].GetI_Param();
-    byte retD = pid[smokerPit].GetD_Param();
-    byte cursorPos = 0; //0 = p, 1 = i, 2 = d, 3 = OK
-    boolean cursorState = 0; //0 = Unselected, 1 = Selected
-    Encoder.setMin(0);
-    Encoder.setMax(3);
-    Encoder.setCount(0);
-    
-    clearLCD();
-    printLCD(0,0,sTitle);
-    printLCD_P(1, 0, PSTR("P:     I:     D:    "));
-    printLCD_P(3, 8, OK);
-    boolean redraw = 1;
-    while(1) {
-      int encValue;
-      if (redraw) {
-        redraw = 0;
-        encValue = Encoder.getCount();
-      }
-      else encValue = Encoder.change();
-      if (encValue >= 0) {
-        if (cursorState) {
-          if (cursorPos == 0) retP = encValue;
-          else if (cursorPos == 1) retI = encValue;
-          else if (cursorPos == 2) retD = encValue;
-        } else {
-          cursorPos = encValue;
-          if (cursorPos == 0) {
-            printLCD_P(1, 2, PSTR(">"));
-            printLCD_P(1, 9, PSTR(" "));
-            printLCD_P(1, 16, PSTR(" "));
-            printLCD_P(3, 7, PSTR(" "));
-            printLCD_P(3, 10, PSTR(" "));
-          } else if (cursorPos == 1) {
-            printLCD_P(1, 2, PSTR(" "));
-            printLCD_P(1, 9, PSTR(">"));
-            printLCD_P(1, 16, PSTR(" "));
-            printLCD_P(3, 7, PSTR(" "));
-            printLCD_P(3, 10, PSTR(" "));
-          } else if (cursorPos == 2) {
-            printLCD_P(1, 2, PSTR(" "));
-            printLCD_P(1, 9, PSTR(" "));
-            printLCD_P(1, 16, PSTR(">"));
-            printLCD_P(3, 7, PSTR(" "));
-            printLCD_P(3, 10, PSTR(" "));
-          } else if (cursorPos == 3) {
-            printLCD_P(1, 2, PSTR(" "));
-            printLCD_P(1, 9, PSTR(" "));
-            printLCD_P(1, 16, PSTR(" "));
-            printLCD_P(3, 7, PSTR(">"));
-            printLCD_P(3, 10, PSTR("<"));
-          }
-        }
-        printLCDLPad(1, 3, itoa(retP, buf, 10), 3, ' ');
-        printLCDLPad(1, 10, itoa(retI, buf, 10), 3, ' ');
-        printLCDLPad(1, 17, itoa(retD, buf, 10), 3, ' ');
-      }
-      if (Encoder.ok()) {
-        if (cursorPos == 3) {
-          setPIDp(smokerPit, retP);
-          setPIDi(smokerPit, retI);
-          setPIDd(smokerPit, retD);
-          #ifdef DEBUG_PID_GAIN
-            logDebugPIDGain(smokerPit);
-          #endif
-          break;
-        }
-        cursorState = cursorState ^ 1;
-        if (cursorState) {
-          Encoder.setMin(0);
-          Encoder.setMax(255);
-          if (cursorPos == 0) Encoder.setCount(retP);
-          else if (cursorPos == 1) Encoder.setCount(retI);
-          else if (cursorPos == 2) Encoder.setCount(retD);
-        } else {
-          Encoder.setMin(0);
-          Encoder.setMax(3);
-          Encoder.setCount(cursorPos);
-        }
-      } else if (Encoder.cancel()) break;
-      smokeCore();
-    }
-    smokeCore();
+//      byte retP = pid[smokerPit].GetP_Param();
+//      byte retI = pid[smokerPit].GetI_Param();
+//      byte retD = pid[smokerPit].GetD_Param();
+//      byte cursorPos = 0; //0 = p, 1 = i, 2 = d, 3 = OK
+//      boolean cursorState = 0; //0 = Unselected, 1 = Selected
+//      Encoder.setMin(0);
+//      Encoder.setMax(3);
+//      Encoder.setCount(0);
+//    
+//      clearLCD();
+//      printLCD(0,0,sTitle);
+//      printLCD_P(1, 0, PSTR("P:     I:     D:    "));
+//      printLCD_P(3, 8, OK);
+//      boolean redraw = 1;
+//      while(1) {
+//        int encValue;
+//        if (redraw) {
+//          redraw = 0;
+//          encValue = Encoder.getCount();
+//        }
+//        else encValue = Encoder.change();
+//        if (encValue >= 0) {
+//          if (cursorState) {
+//            if (cursorPos == 0) retP = encValue;
+//            else if (cursorPos == 1) retI = encValue;
+//            else if (cursorPos == 2) retD = encValue;
+//          } 
+//          else {
+//            cursorPos = encValue;
+//            if (cursorPos == 0) {
+//              printLCD_P(1, 2, PSTR(">"));
+//              printLCD_P(1, 9, PSTR(" "));
+//              printLCD_P(1, 16, PSTR(" "));
+//              printLCD_P(3, 7, PSTR(" "));
+//              printLCD_P(3, 10, PSTR(" "));
+//            } else if (cursorPos == 1) {
+//              printLCD_P(1, 2, PSTR(" "));
+//              printLCD_P(1, 9, PSTR(">"));
+//              printLCD_P(1, 16, PSTR(" "));
+//              printLCD_P(3, 7, PSTR(" "));
+//              printLCD_P(3, 10, PSTR(" "));
+//            } else if (cursorPos == 2) {
+//              printLCD_P(1, 2, PSTR(" "));
+//              printLCD_P(1, 9, PSTR(" "));
+//              printLCD_P(1, 16, PSTR(">"));
+//              printLCD_P(3, 7, PSTR(" "));
+//              printLCD_P(3, 10, PSTR(" "));
+//            } else if (cursorPos == 3) {
+//              printLCD_P(1, 2, PSTR(" "));
+//              printLCD_P(1, 9, PSTR(" "));
+//              printLCD_P(1, 16, PSTR(" "));
+//              printLCD_P(3, 7, PSTR(">"));
+//              printLCD_P(3, 10, PSTR("<"));
+//            }
+//          }
+//          printLCDLPad(1, 3, itoa(retP, buf, 10), 3, ' ');
+//          printLCDLPad(1, 10, itoa(retI, buf, 10), 3, ' ');
+//          printLCDLPad(1, 17, itoa(retD, buf, 10), 3, ' ');
+//        }
+//        if (Encoder.ok()) {
+//          if (cursorPos == 3) {
+//  //          setPIDp(smokerPit, retP);
+//  //          setPIDi(smokerPit, retI);
+//  //          setPIDd(smokerPit, retD);
+//            #ifdef DEBUG_PID_GAIN
+//              logDebugPIDGain(smokerPit);
+//            #endif
+//            break;
+//          }
+//          cursorState = cursorState ^ 1;
+//          if (cursorState) {
+//            Encoder.setMin(0);
+//            Encoder.setMax(255);
+//            if (cursorPos == 0) Encoder.setCount(retP);
+//            else if (cursorPos == 1) Encoder.setCount(retI);
+//            else if (cursorPos == 2) Encoder.setCount(retD);
+//          } else {
+//            Encoder.setMin(0);
+//            Encoder.setMax(3);
+//            Encoder.setCount(cursorPos);
+//          }
+//        } else if (Encoder.cancel()) break;
+//        smokeCore();
+//      }
+//      smokeCore();
   }
-  
+
   void cfgValves() {
     byte lastOption = 0;
     while (1) {
@@ -1323,32 +1358,32 @@ Documentation, Forums and more information available at http://www.brewtroller.c
         byte vc = lastOption;
         if (vc == 2) vc = 13; /* Map HLTHEAT to vlvConfig[13] */
         else if (vc > 2) vc--; /* Subtract 1 for Add Grain - Drain to map to vlvConfig[2] - vlvConfig[12] */
-        setValveCfg(vc, cfgValveProfile(menuopts[lastOption], vlvConfig[vc]));
+        //setValveCfg(vc, cfgValveProfile(menuopts[lastOption], vlvConfig[vc]));
       }
     }
   }
-  
+
   unsigned long cfgValveProfile (char sTitle[], unsigned long defValue) {
     unsigned long retValue = defValue;
     //firstBit: The left most bit being displayed
     byte firstBit, encMax;
     
-  #ifdef ONBOARDPV
-    encMax = 12;
-  #else
-    encMax = MUXBOARDS * 8 + 1;
-  #endif
+    #ifdef ONBOARDPV
+      encMax = 12;
+    #else
+      encMax = MUXBOARDS * 8 + 1;
+    #endif
     Encoder.setMin(0);
     Encoder.setCount(0);
     Encoder.setMax(encMax);
     //(Set to MAX + 1 to force redraw)
     firstBit = encMax + 1;
-    
+  
     clearLCD();
     printLCD(0,0,sTitle);
     printLCD_P(3, 3, PSTR("Test"));
     printLCD_P(3, 13, PSTR("Save"));
-    
+  
     boolean redraw = 1;
     while(1) {
       int encValue;
@@ -1389,19 +1424,20 @@ Documentation, Forums and more information available at http://www.brewtroller.c
           printLCD_P(2, encValue - firstBit + 1, PSTR("^"));
         }
       }
-      
+    
       if (Encoder.ok()) {
         encValue = Encoder.getCount();
         if (encValue == encMax) return retValue;
         else if (encValue == encMax - 1) {
-          setValves(VLV_ALL, 0);
-          setValves(retValue, 1);
+//          setValves(VLV_ALL, 0);
+//          setValves(retValue, 1);
           printLCD_P(3, 2, PSTR("["));
           printLCD_P(3, 7, PSTR("]"));
-          while (!Encoder.ok()) delay(100);
-          setValves(VLV_ALL, 0);
+//          while (!Encoder.ok()) delay(100);
+//          setValves(VLV_ALL, 0);
           redraw = 1;
-        } else {
+        } 
+        else {
           retValue = retValue ^ ((unsigned long)1<<encValue);
           for (byte i = firstBit; i < min(encMax - 1, firstBit + 18); i++) if (retValue & ((unsigned long)1<<i)) printLCD_P(1, i - firstBit + 1, PSTR("1")); else printLCD_P(1, i - firstBit + 1, PSTR("0"));
         }
@@ -1409,5 +1445,5 @@ Documentation, Forums and more information available at http://www.brewtroller.c
       smokeCore();
     }
   }
-  #endif
-#endif
+
+//#endif

@@ -41,32 +41,32 @@ void logInit() {
 }
 
 #if defined USESERIAL
-void logASCIIVersion() {
-  printFieldUL(millis());   // timestamp
-  printFieldPS(LOGSYS);     // keyword "SYS"
-  Serial.print("VER\t");  // Version record
-  printFieldPS(BTVER);      // BT Version
-  printFieldUL(BUILD);      // Build #
-  #if COMTYPE > 0 || COMSCHEMA > 0
-    printFieldUL(COMTYPE);  // Protocol Type
-    printFieldUL(COMSCHEMA);// Protocol Schema
-    #ifdef USEMETRIC      // Metric or US units
-      Serial.print("0");
-    #else
-      Serial.print("1");
+  void logASCIIVersion() {
+    printFieldUL(millis());   // timestamp
+    printFieldPS(LOGSYS);     // keyword "SYS"
+    Serial.print("VER\t");  // Version record
+    printFieldPS(BTVER);      // BT Version
+    printFieldUL(BUILD);      // Build #
+    #if COMTYPE > 0 || COMSCHEMA > 0
+      printFieldUL(COMTYPE);  // Protocol Type
+      printFieldUL(COMSCHEMA);// Protocol Schema
+      #ifdef USEMETRIC      // Metric or US units
+        Serial.print("0");
+      #else
+        Serial.print("1");
+      #endif
     #endif
-  #endif
-  Serial.println();
-}
+    Serial.println();
+  }
 
-void printFieldUL (unsigned long uLong) {
-  Serial.print(uLong, DEC);
-  Serial.print("\t");
-}
-
-void printFieldPS (const char *sText) {
-  while (pgm_read_byte(sText) != 0) Serial.print(pgm_read_byte(sText++));
-  Serial.print("\t");
-}
+  void printFieldUL (unsigned long uLong) {
+    Serial.print(uLong, DEC);
+    Serial.print("\t");
+  }
+  
+  void printFieldPS (const char *sText) {
+    while (pgm_read_byte(sText) != 0) Serial.print(pgm_read_byte(sText++));
+    Serial.print("\t");
+  }
 
 #endif
