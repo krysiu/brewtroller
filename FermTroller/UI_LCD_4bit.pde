@@ -28,6 +28,9 @@ using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrar
 using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 */
 
+#include "Config.h"
+#include "Enum.h"
+
 #include <LiquidCrystal.h>
 
 // LiquidCrystal display with:

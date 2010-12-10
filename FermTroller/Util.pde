@@ -28,6 +28,9 @@ using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrar
 using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 */
 
+#include "Config.h"
+#include "Enum.h"
+
 void ftoa(float val, char retStr[], byte precision) {
   char lbuf[11];
   itoa(val, retStr, 10);  
@@ -57,45 +60,6 @@ int availableMemory() {
   while ((buf = (byte *) malloc(--size)) == NULL);
   free(buf);
   return size;
-}
-
-void resetOutputs() {
-  for (byte i = 0; i < NUM_ZONES; i++) {
-    setpoint[i] = 0;
-    heatStatus[i] = 0;
-    coolStatus[i] = 0;
-    if (COOLPIN_OFFSET > i) {
-      if (!muxOuts[i]) digitalWrite(outputPin[i], LOW);
-    }
-    if (NUM_OUTS - COOLPIN_OFFSET > i) {
-      if (!muxOuts[i + COOLPIN_OFFSET]) digitalWrite(outputPin[i + COOLPIN_OFFSET], LOW);
-    }
-    #ifdef USE_MUX
-      digitalWrite(MUX_OE_PIN, HIGH);
-      //ground latchPin and hold low for as long as you are transmitting
-      digitalWrite(MUX_LATCH_PIN, 0);
-      //clear everything out just in case to prepare shift register for bit shifting
-      digitalWrite(MUX_DATA_PIN, 0);
-      digitalWrite(MUX_CLOCK_PIN, 0);
-
-      //for each bit in the long myDataOut
-      for (byte i = 32; i > 0; i--)  {
-        digitalWrite(MUX_CLOCK_PIN, 0);
-        //create bitmask to grab the bit associated with our counter i and set data pin accordingly (NOTE: 32 - i causes bits to be sent most significant to least significant)
-        digitalWrite(MUX_DATA_PIN, 0);
-        //register shifts bits on upstroke of clock pin  
-        digitalWrite(MUX_CLOCK_PIN, 1);
-        //zero the data pin after shift to prevent bleed through
-        digitalWrite(MUX_DATA_PIN, 0);
-      }
-
-      //stop shifting
-      digitalWrite(MUX_CLOCK_PIN, 0);
-      digitalWrite(MUX_LATCH_PIN, 1);
-      //Enable outputs
-      digitalWrite(MUX_OE_PIN, LOW);
-    #endif
-  }
 }
 
 void setTimer(unsigned int minutes) {
