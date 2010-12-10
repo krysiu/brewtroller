@@ -1,4 +1,4 @@
-#define BUILD 422 
+#define BUILD 623
 /*
    Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -29,148 +29,10 @@ using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrar
 using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 */
 
+#include "Config.h"
+#include "Enum.h"
 
-//*****************************************************************************************************************************
-// USER COMPILE OPTIONS
-//*****************************************************************************************************************************
-
-//**********************************************************************************
-// UNIT (Metric/US)
-//**********************************************************************************
-// By default BrewTroller will use US Units
-// Uncomment USEMETRIC below to use metric instead
-// 
-//#define USEMETRIC
-//**********************************************************************************
-
-//**********************************************************************************
-// BrewTroller Board Version
-//**********************************************************************************
-// The Brewtroller 3.0 board uses MUX instead of direct on-board outputs.
-// 
-//#define BTBOARD_22
-#define BTBOARD_3
-//**********************************************************************************
-
-//**********************************************************************************
-// ENCODER TYPE
-//**********************************************************************************
-// You must uncomment one and only one of the following ENCODER_ definitions
-// Use ENCODER_ALPS for ALPS and Panasonic Encoders
-// Use ENCODER_CUI for older CUI encoders
-// 
-#define ENCODER_ALPS
-//#define ENCODER_CUI
-//**********************************************************************************
-
-//**********************************************************************************
-// Number of Zones
-//**********************************************************************************
-// Theoretical maximum value is 32 zones
-//
-// Default for BTBOARD_2.x is 6 zones
-// Default for BTBOARD_3 is 8 zones
-// 
-//#define NUM_ZONES 6
-//**********************************************************************************
-
-//**********************************************************************************
-// Number of Outputs
-//**********************************************************************************
-// The total number of outputs used
-// 12 is the theoretical maximum for non-MUX
-// MUX enabled systems could support up to 32 outputs
-// 
-// Default for BTBOARD_2.x is 12 outputs
-// Default for BTBOARD_3 is 16 outputs
-//
-//#define NUM_OUTS 12
-//**********************************************************************************
-
-//**********************************************************************************
-// Number of Cool/Heat Outputs
-//**********************************************************************************
-// The number of output pins dedicated to heat
-// Increase to trade cool outputs for heat.
-// Decrease to trade heat outputs for cool.
-// If there are fewer heat or cool outputs than zones, the outputs will be applied
-// starting with Zone 1. Higher zones will lack those outputs.
-// 
-// Default for BTBOARD_2.x is 6 (6+6)
-// Default for BTBOARD_3 is 8 (8+8)
-//
-// Examples:
-//   NUM_ZONES 6, NUM_OUTS 12, COOLPIN_OFFSET 6 gives 6 zones with heat on 1-6 and cool on 1-6 (Default)
-//   NUM_ZONES 8, NUM_OUTS 12, COOLPIN_OFFSET 8 gives 8 zones with heat on 1-8 and cool on 1-4
-//   NUM_ZONES 8, NUM_OUTS 12, COOLPIN_OFFSET 4 gives 8 zones with heat on 1-4 and cool on 1-8
-//   NUM_ZONES 12, NUM_OUTS 12, COOLPIN_OFFSET 0 gives 12 zones with cool on 1-12
-//   NUM_ZONES 12, NUM_OUTS 12, COOLPIN_OFFSET 12 gives 12 zones with heat on 1-12
-//
-//#define COOLPIN_OFFSET 6
-//**********************************************************************************
-
-//**********************************************************************************
-// Number of PID Outputs
-//**********************************************************************************
-//WARNING: A value greater than 5 on 3.x boards will conflict with MUX outputs.
-//Output pin 5 is not connected on the 3.x board. A value of 0-4 is recommended for 3.x boards.
-//Theoretical limit for is 12 on 2.x boards, matching NUM_OUTS. 
-//PID is only used on heat so a value > 6 would only be useful if you were using > 6 zones.
-// 
-// Default for BTBOARD_2.x is 6
-// Default for BTBOARD_3 is 4
-//
-//#define NUM_PID_OUTS 6
-//**********************************************************************************
-
-//**********************************************************************************
-// Enable MUX
-//**********************************************************************************
-// 3.x boards use MUX by default. Use this setting to enable MUX on 2.x boards
-//
-//#define USE_MUX
-//**********************************************************************************
-
-//**********************************************************************************
-// LOG INTERVAL
-//**********************************************************************************
-// Specifies how often data is logged via serial in milliseconds. If real time
-// display of data is being used a smaller interval is best (1000 ms). A larger
-// interval can be used for logging applications to reduce log file size (5000 ms).
-
-#define LOG_INTERVAL 2000
-//**********************************************************************************
-
-//**********************************************************************************
-// LCD Timing Fix
-//**********************************************************************************
-// Some LCDs seem to have issues with displaying garbled characters but introducing
-// a delay seems to help or resolve completely. You may comment out the following
-// lines to remove this delay between a print of each character.
-//
-//#define LCD_DELAY_CURSOR 60
-//#define LCD_DELAY_CHAR 60
-//**********************************************************************************
-
-//**********************************************************************************
-// Cool Cycle Limit
-//**********************************************************************************
-// When using cool outputs for devices with compressors like refrigerators you may
-// need to specify a minimum delay before enabling the output. This is intended to
-// eliminate quick cycling of the output On/Off. Specify a limit in seconds for each
-// zone in the array below. Maximum value is 65535 seconds or approximately 18 hrs.
-//
-unsigned int coolDelay[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-//**********************************************************************************
-
-//**********************************************************************************
-// DEBUG
-//**********************************************************************************
-// Enables Serial Out with Additional Debug Data
-//
-//#define DEBUG
-//**********************************************************************************
-
+void(* softReset) (void) = 0;
 
 //*****************************************************************************************************************************
 // BEGIN CODE
@@ -178,70 +40,14 @@ unsigned int coolDelay[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 #include <avr/pgmspace.h>
 #include <PID_Beta6.h>
 
-//Pin and Interrupt Definitions
-#define ENCA_PIN 2
-#define ENCB_PIN 4
-#define TEMP_PIN 5
-#define ENTER_PIN 11
-#define ALARM_PIN 15
-#define ENTER_INT 1
-#define ENCA_INT 2
-
 //Output Pin Array
 //BTBOARD_3 uses only the first four pins and uses MUX for the remaining outputs
 byte outputPin[12] = { 0, 1, 3, 6, 7, 10, 12, 13, 14, 24, 18, 16 };
 
-//BTBOARD_3 Defaults: MUX, 16 Outputs, 8 Zones, 8 Heat Pins + 8 Cool Pins, 4 PID Heat Outputs
-#if defined BTBOARD_3 && !defined USE_MUX
-  #define USE_MUX
-#endif
-
-#if defined BTBOARD_3 && !defined NUM_OUTS
-  #define NUM_OUTS 16
-#endif
-
-#if defined BTBOARD_3 && !defined NUM_ZONES
-  #define NUM_ZONES 8
-#endif
-
-#if defined BTBOARD_3 && !defined COOLPIN_OFFSET
-  #define COOLPIN_OFFSET 8
-#endif
-
-#if defined USE_MUX && !defined NUM_PID_OUTS
-  #define NUM_PID_OUTS 4
-#endif
-
-//BTBOARD_2.x Defaults: 12 Outputs, 6 Zones, 6 Heat Pins + 6 Cool Pins, 6 PID Heat Outputs
-#if !defined BTBOARD_3 && !defined NUM_OUTS
-  #define NUM_OUTS 12
-#endif
-
-#if !defined BTBOARD_3 && !defined NUM_ZONES
-  #define NUM_ZONES 6
-#endif
-
-#if !defined BTBOARD_3 && !defined COOLPIN_OFFSET
-  #define COOLPIN_OFFSET 6
-#endif
-
-#if !defined BTBOARD_3 && !defined NUM_PID_OUTS
-  #define NUM_PID_OUTS 6
-#endif
-
 #ifdef USE_MUX
-  #define MUX_LATCH_PIN 12
-  #define MUX_CLOCK_PIN 13
-  #define MUX_DATA_PIN 14
-  #define MUX_OE_PIN 10
   boolean muxOuts[32] = {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 #else
   boolean muxOuts[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-#endif
-
-//Safety catch if using fewer zones than defined PID outputs
-#if NUM_PID_OUTS > NUM_ZONES
-  #define NUM_PID_OUTS NUM_ZONES
 #endif
 
 //Encoder Globals
@@ -253,7 +59,6 @@ byte enterStatus = 0;
 //8-byte Temperature Sensor Address x6 Sensors
 byte tSensor[NUM_ZONES + 1][8];
 float temp[NUM_ZONES + 1];
-unsigned long convStart = 0;
 
 //Shared menuOptions Array
 char menuopts[45][20];
@@ -370,53 +175,26 @@ const byte BMP6[] PROGMEM = {B11111, B00111, B00111, B11111, B11111, B11111, B11
 const byte BMP7[] PROGMEM = {B11111, B11111, B11110, B11101, B11011, B00111, B11111, B11111};
   
 void setup() {
-  Serial.begin(9600);
-  Serial.println();
+  logInit();
+  pinInit();
+  tempInit();
 
-  logStart_P(LOGSYS);
-  logField_P(PSTR("VER"));
-  logField_P(BTVER);
-  logField(itoa(BUILD, buf, 10));
-  logEnd();
-  
-  pinMode(ENCA_PIN, INPUT);
-  pinMode(ENCB_PIN, INPUT);
-  pinMode(ENTER_PIN, INPUT);
-  pinMode(ALARM_PIN, OUTPUT);
-  for (byte i = 0; i < 12; i++) if (!muxOuts[i]) pinMode(outputPin[i], OUTPUT);
- 
-  #ifdef USE_MUX
-    pinMode(MUX_LATCH_PIN, OUTPUT);
-    pinMode(MUX_CLOCK_PIN, OUTPUT);
-    pinMode(MUX_DATA_PIN, OUTPUT);
-    pinMode(MUX_OE_PIN, OUTPUT);
+  //User Interface Initialization (UI.pde)
+  #ifndef NOUI
+    uiInit();
   #endif
-  resetOutputs();
-  initLCD();
-  
-  //Encoder Setup
-  #ifdef ENCODER_ALPS
-    attachInterrupt(2, doEncoderALPS, CHANGE);
-  #endif
-  #ifdef ENCODER_CUI
-    attachInterrupt(2, doEncoderCUI, RISING);
-  #endif
-  attachInterrupt(1, doEnter, CHANGE);
 
-  //Memory Check
-  //printLCD(0,0,itoa(availableMemory(), buf, 10)); delay (5000);
-  
+  #ifdef BTPD_SUPPORT
+    btpdInit();
+  #endif
+
   //Check for cfgVersion variable and format EEPROM if necessary
   checkConfig();
   
   //Load global variable values stored in EEPROM
   loadSetup();
 
-  for (byte i = 0; i < NUM_PID_OUTS; i++) {
-      pid[i].SetInputLimits(0, 255);
-      pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
-      pid[i].SetTunings(PIDp[i], PIDi[i], PIDd[i]);
-  }
+  pidInit();
   
   if (pwrRecovery == 1) {
     logPLR();

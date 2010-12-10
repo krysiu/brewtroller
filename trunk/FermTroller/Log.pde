@@ -28,7 +28,19 @@ using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrar
 using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 */
 
-void(* softReset) (void) = 0;
+#include "Config.h"
+#include "Enum.h"
+
+void logInit() {
+  Serial.begin(9600);
+  Serial.println();
+
+  logStart_P(LOGSYS);
+  logField_P(PSTR("VER"));
+  logField_P(BTVER);
+  logField(itoa(BUILD, buf, 10));
+  logEnd();
+}
 
 void logPLR() {
   logStart_P(LOGGLB);
@@ -239,4 +251,66 @@ void logOSet(byte zone) {
   }
   logFieldI(hysteresis[zone]);
   logEnd();
+}
+
+void updateLog() {
+  //Log data every 2s
+  //Log 1 of 6 chunks per cycle to improve responsiveness to calling function
+  if (millis() - lastLog > LOG_INTERVAL) {
+    if (logCount == 0) {
+      logPgm();
+    } else if (logCount == 1) {
+      logStart_P(LOGDATA);
+      logField_P(PSTR("TIMER"));
+      logFieldI(timerValue);
+      logFieldI(timerStatus);
+      logEnd();
+      logStart_P(LOGDATA);
+      logField_P(PSTR("ALARM"));
+      logFieldI(alarmStatus);
+      logEnd();
+    } else if (logCount >= 2 && logCount <= NUM_ZONES + 2) {
+      byte i = logCount - 2;
+      logStart_P(LOGDATA);
+      logField_P(PSTR("TEMP"));
+      logFieldI(i);
+      ftoa(temp[i], buf, 3);
+      logField(buf);
+      #ifdef USEMETRIC
+        logFieldI(0);
+      #else
+        logFieldI(1);
+      #endif
+      logEnd();
+    } else if (logCount >= NUM_ZONES + 3 && logCount <= NUM_ZONES * 2 + 2) {
+      int pct;
+      byte i = logCount - NUM_ZONES - 3;
+      if (coolStatus[i]) pct = -100;
+      else {
+        if (PIDEnabled[i]) pct = PIDOutput[i] / PIDCycle[i] / 10;
+        else if (heatStatus[i]) pct = 100;
+        else pct = 0;
+      }
+      logStart_P(LOGDATA);
+      logField_P(PSTR("HEATPWR"));
+      logFieldI(i);
+      logFieldI(pct);
+      logEnd();
+    } else if (logCount >= NUM_ZONES * 2 + 3 && logCount <= NUM_ZONES * 3 + 2) {
+      byte i = logCount - NUM_ZONES * 2 - 3;
+      logStart_P(LOGDATA);
+      logField_P(PSTR("SETPOINT"));
+      logFieldI(i);
+      ftoa(setpoint[i], buf, 0);
+      logField(buf);
+      #ifdef USEMETRIC
+        logFieldI(0);
+      #else
+        logFieldI(1);
+      #endif
+      logEnd();
+    } else if (logCount == NUM_ZONES * 3 + 3) { if (millis() - lastLog > LOG_INTERVAL * 2) lastLog = millis(); else lastLog += LOG_INTERVAL; }
+    if (logCount == NUM_ZONES * 3 + 3) logCount = 0;
+    else logCount++;
+  }
 }

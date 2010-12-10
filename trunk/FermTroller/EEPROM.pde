@@ -28,7 +28,10 @@ using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrar
 using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 */
 
-#include <avr/EEPROM.h>
+#include "Config.h"
+#include "Enum.h"
+
+#include <avr/eeprom.h>
 #include <EEPROM.h>
 
 void saveSetup() {
@@ -86,7 +89,7 @@ void loadSetup() {
   
   //Setpoints
   //EEPROM bytes 4-35 (Was 89-94)
-  for (byte i = 0; i < NUM_ZONES; i++) setpoint[i] = EEPROM.read(4 + i);
+  for (byte i = 0; i < NUM_ZONES; i++) setpoint[i] = EEPROM.read(4 + i) * 100;
   
   //95 - 96 Timer Recovery
 
@@ -210,7 +213,7 @@ void setPwrRecovery(byte funcValue) {
 
   //Setpoints
   //EEPROM bytes 4-35 (Was 89-94)
-void saveSetpoints() { for (byte i = 0; i < NUM_ZONES; i++) { EEPROM.write(4 + i, setpoint[i]); } }
+void saveSetpoints() { for (byte i = 0; i < NUM_ZONES; i++) { EEPROM.write(4 + i, setpoint[i] / 100); } }
 
 unsigned int getTimerRecovery() { return PROMreadInt(95); }
 void setTimerRecovery(unsigned int newMins) { PROMwriteInt(95, newMins); }
