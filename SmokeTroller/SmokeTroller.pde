@@ -1,4 +1,4 @@
-#define BUILD 622 
+#define BUILD 625 
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -96,23 +96,26 @@ pin heatPin[3], alarmPin;
 byte tSensor[9][8];
 int temp[9];
 
-//Valve Variables
-unsigned long vlvConfig[NUM_VLVCFGS], vlvBits;
-boolean autoValve[NUM_AV];
+////Valve Variables
+//unsigned long vlvConfig[NUM_VLVCFGS], vlvBits;
+//boolean autoValve[NUM_AV];
 
 //Shared buffers
 char menuopts[21][20], buf[20];
 
+//Pit Names
+char pitName[3][11];
+
 //Output Globals
-double PIDInput[3], PIDOutput[3], setpoint[6];
+double PIDInput[3], PIDOutput[3], pitSetPoint[3], foodSetPoint[3];
 byte PIDCycle[3], hysteresis[3];
 unsigned long cycleStart[3] = {0,0,0};
 boolean heatStatus[3], PIDEnabled[3];
 
 PID pid[3] = {
-  PID(&PIDInput[PIT_1], &PIDOutput[PIT_1], &setpoint[PIT_1], 3, 4, 1),  
-  PID(&PIDInput[PIT_2], &PIDOutput[PIT_2], &setpoint[PIT_2], 3, 4, 1),  
-  PID(&PIDInput[PIT_3], &PIDOutput[PIT_3], &setpoint[PIT_3], 3, 4, 1) 
+  PID(&PIDInput[PIT_1], &PIDOutput[PIT_1], &pitSetPoint[PIT_1], 3, 4, 1),  
+  PID(&PIDInput[PIT_2], &PIDOutput[PIT_2], &pitSetPoint[PIT_2], 3, 4, 1),  
+  PID(&PIDInput[PIT_3], &PIDOutput[PIT_3], &pitSetPoint[PIT_3], 3, 4, 1) 
 };
 
 //Timer Globals
@@ -130,7 +133,6 @@ boolean logData = LOG_INITSTATUS;
 
 //Bit 1 = Boil; Bit 2-11 (See Below); Bit 12 = End of Boil; Bit 13-15 (Open); Bit 16 = Preboil (If Compile Option Enabled)
 unsigned int hoptimes[10] = { 105, 90, 75, 60, 45, 30, 20, 15, 10, 5 };
-byte pitchTemp;
 
 const char BT[] PROGMEM = "SmokeTroller";
 const char BTVER[] PROGMEM = "1.0";
@@ -146,7 +148,8 @@ const char LOGDATA[] PROGMEM = "DATA";
 // Setup
 //**********************************************************************************
 
-void setup() {
+void setup() {    
+
   //Initialize Brew Steps to 'Idle'
   //for(byte brewStep = 0; brewStep < NUM_BREW_STEPS; brewStep++) stepProgram[brewStep] = PROGRAM_IDLE;
   

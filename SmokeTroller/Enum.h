@@ -67,62 +67,17 @@
 #define TS_AUX3 8
 #define NUM_TS 9
 
+//Smoker Pits
 #define PIT_1 0
 #define PIT_2 1
 #define PIT_3 2
-#define FOOD_1 3
-#define FOOD_2 4
-#define FOOD_3 5
-
-//Auto-Valve Modes
-#define AV_FILL 0
-#define AV_MASH 1
-#define AV_SPARGEIN 2
-#define AV_SPARGEOUT 3
-#define AV_FLYSPARGE 4
-#define AV_CHILL 5
-#define AV_HLT 6
-#define NUM_AV 7
-
-//Valve Array Element Constants and Variables
-#define VLV_ALL 4294967295
-#define VLV_FILLHLT 0
-#define VLV_FILLMASH 1
-#define VLV_ADDGRAIN 2
-#define VLV_MASHHEAT 3
-#define VLV_MASHIDLE 4
-#define VLV_SPARGEIN 5
-#define VLV_SPARGEOUT 6
-#define VLV_HOPADD 7
-#define VLV_KETTLELID 8
-#define VLV_CHILLH2O 9
-#define VLV_CHILLBEER 10
-#define VLV_BOILRECIRC 11
-#define VLV_DRAIN 12
-#define VLV_HLTHEAT 13
-#define NUM_VLVCFGS 14
-
-//Timers
-#define TIMER_S1 0
-#define TIMER_S2 1
-#define TIMER_S3 2
 
 //Smoke Steps
 #define NUM_SMOKE_STEPS 4
-
 #define STEP_ONE 0
 #define STEP_TWO 1
 #define STEP_THREE 2
 #define STEP_FOUR 3
-
-#define PIT_STEP_ONE 0
-#define PIT_STEP_TWO 1
-#define PIT_STEP_THREE 2
-#define PIT_STEP_FOUR 3
-
-//Zones
-#define ZONE_MASH 0
-#define ZONE_BOIL 1
 
 //Events
 #define EVENT_STEPINIT 0
