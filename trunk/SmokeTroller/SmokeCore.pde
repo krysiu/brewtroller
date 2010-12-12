@@ -29,7 +29,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 
 void smokeCore() {
   //Timers: Timer.pde
-  //updateTimers();
+  updateTimers();
   
   //temps: Temp.pde
   //updateTemps();

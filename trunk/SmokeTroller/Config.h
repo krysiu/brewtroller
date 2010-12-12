@@ -225,7 +225,7 @@
   //#define DEBUG_PROG_CALC_VOLS
   
   // DEBUG_UI: Enables logging of UI debugging info
-  //#define DEBUG_UI
+  #define DEBUG_UI
   
   //**********************************************************************************
 
