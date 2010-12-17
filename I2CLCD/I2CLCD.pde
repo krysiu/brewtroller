@@ -24,17 +24,40 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
 
-
 #include <LiquidCrystal.h>
 #include <Wire.h>
+#include <EEPROM.h>
 
-LiquidCrystal lcd(3, 4, 5, 6, 7, 8, 9, 14, 15, 16);
+#define LCDRS_PIN 3
+#define LCDENABLE_PIN 4
+#define LCDDATA1_PIN 5
+#define LCDDATA2_PIN 6
+#define LCDDATA3_PIN 7
+#define LCDDATA4_PIN 8
+#define LCDDATA5_PIN 9
+#define LCDDATA6_PIN 14
+#define LCDDATA7_PIN 15
+#define LCDDATA8_PIN 16
+#define LCDBRIGHT_PIN 10
+#define LCDCONTRAST_PIN 11
+
+#define REQ_BRIGHT 0
+#define REQ_CONTRAST 1
+#define NUM_REQ 2
+
+LiquidCrystal lcd(LCDRS_PIN, LCDENABLE_PIN, LCDDATA1_PIN, LCDDATA2_PIN, LCDDATA3_PIN, LCDDATA4_PIN, LCDDATA5_PIN, LCDDATA6_PIN, LCDDATA7_PIN, LCDDATA8_PIN);
 
 byte i2cAddr = 0x01;
+byte brightness = 0;
+byte contrast = 255;
+byte i2cBuffer[32];
+byte reqField = REQ_BRIGHT;
 
 void setup() {
-  pinMode(10, OUTPUT);
-  analogWrite(10, 255);
+  loadEEPROM();
+  pinMode(LCDBRIGHT_PIN, OUTPUT);
+  pinMode(LCDCONTRAST_PIN, OUTPUT);
+
   lcd.begin(20, 4);
   lcd.setCursor(0, 0);
   lcd.print("I2CLCD");
@@ -45,10 +68,9 @@ void setup() {
   lcd.print(i2cAddr, HEX);
   
   Wire.onReceive(onReceive);
+  Wire.onRequest(onRequest);
   Wire.begin(i2cAddr);
 }
-
-byte i2cBuffer[32];
 
 void onReceive(int numBytes) {
   memset(i2cBuffer, 0, 32);
@@ -76,19 +98,63 @@ void onReceive(int numBytes) {
       lcd.setCursor(i2cBuffer[1], i2cBuffer[2]);
       lcd.write(i2cBuffer[3]);
       break;
+    case 0x07: // setBright(value)
+      setBright(i2cBuffer[2]);
+      EEPROM.write(2, i2cBuffer[2]); //Save to EEPROM
+      break;
+    case 0x08: // setContrast(value)
+      setContrast(i2cBuffer[2]);
+      EEPROM.write(2, i2cBuffer[3]); //Save to EEPROM
+      break;
+    case 0x09: // getBright(value)
+      reqField = REQ_BRIGHT;
+      break;
+    case 0x0A: // getContrast(value)
+      reqField = REQ_CONTRAST;
+      break;
   }
 }
 
+void onRequest() {
+  if (reqField == REQ_BRIGHT) Wire.send(brightness);
+  else if (reqField == REQ_CONTRAST) Wire.send(contrast);
+  else Wire.send(1);
+  reqField++;
+  if (reqField >= NUM_REQ) reqField = 0;
+}
 void loop() {
+
 }
 
+void panAnalog(byte pin, byte startValue, byte endValue, int delayValue) {
+  if (startValue < endValue) for (int i = startValue; i <= endValue; i++) { analogWrite(pin, i); delay(delayValue); }
+  else if (startValue > endValue) for (int i = startValue; i >= endValue; i--) { analogWrite(pin, i); delay(delayValue); }
+  else analogWrite(pin, startValue);
+}
 
+void setBright(byte value) {
+  panAnalog(LCDBRIGHT_PIN, brightness, value, 2);
+  brightness = value;
+}
 
+void setContrast(byte value) {
+  panAnalog(LCDCONTRAST_PIN, contrast, value, 2);
+  contrast = value;
+}
 
-
-
-
-
-
-
-
+void loadEEPROM() {
+  //Look for I2CLCD "fingerprint"
+  if (EEPROM.read(0) == 123 && EEPROM.read(1) == 45)  {
+    setBright(EEPROM.read(2));
+    setContrast(EEPROM.read(3));
+  }
+  else {
+    //Set initial EEPROM values
+    EEPROM.write(0, 123);
+    EEPROM.write(0, 45);
+    EEPROM.write(0, 255); //Max
+    setBright(255);
+    EEPROM.write(0, 0); //Max
+    setContrast(0);
+  }
+}
