@@ -1,3 +1,4 @@
+#define BUILD 626
 /*  
   Copyright (C) 2010 Jason von Nieda
 
@@ -27,6 +28,8 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #include <LiquidCrystal.h>
 #include <Wire.h>
 #include <EEPROM.h>
+#include "ByteBuffer.h"
+#include <util/atomic.h>
 
 #define LCDRS_PIN 3
 #define LCDENABLE_PIN 4
@@ -50,19 +53,24 @@ LiquidCrystal lcd(LCDRS_PIN, LCDENABLE_PIN, LCDDATA1_PIN, LCDDATA2_PIN, LCDDATA3
 byte i2cAddr = 0x01;
 byte brightness = 0;
 byte contrast = 255;
-byte i2cBuffer[32];
 byte reqField = REQ_BRIGHT;
+ByteBuffer i2cBuffer;
 
 void setup() {
   loadEEPROM();
   pinMode(LCDBRIGHT_PIN, OUTPUT);
   pinMode(LCDCONTRAST_PIN, OUTPUT);
+  
+  Serial.begin(115200);
+  
+  i2cBuffer.init(128);
 
   lcd.begin(20, 4);
   lcd.setCursor(0, 0);
   lcd.print("I2CLCD");
   lcd.setCursor(0, 1);
-  lcd.print("v1");
+  lcd.print("Build ");
+  lcd.print(BUILD, DEC);
   lcd.setCursor(0, 2);
   lcd.print("Address: 0x");
   lcd.print(i2cAddr, HEX);
@@ -72,46 +80,93 @@ void setup() {
   Wire.begin(i2cAddr);
 }
 
-void onReceive(int numBytes) {
-  memset(i2cBuffer, 0, 32);
-  for (byte i = 0; i < numBytes; i++) {
-    i2cBuffer[i] = Wire.receive();
+void loop() {
+  /**
+  * Each time through the loop we make an atomic copy of the I2C buffer
+  * and then process any commands that are in it. This allows I2C receive
+  * happen quickly to avoid overflows and allows us to process commands
+  * in the "background". 
+  */
+  
+  byte buffer[128];
+  byte length;
+  byte *p = buffer;
+  
+  memset(buffer, 0, 128);
+  
+  ATOMIC_BLOCK(ATOMIC_FORCEON) {
+    length = (byte) i2cBuffer.getSize();
   }
-  switch (i2cBuffer[0]) {
-    case 0x01: // begin(cols, rows)
-      //
-      break;
-    case 0x02: // clear
-      lcd.clear();
-      break;
-    case 0x03: // setCursor(col, row)
-      lcd.setCursor(i2cBuffer[1], i2cBuffer[2]);
-      break;
-    case 0x04: // print(col, row, char* s)
-      lcd.setCursor(i2cBuffer[1], i2cBuffer[2]);
-      lcd.print((char*) &i2cBuffer[3]);
-      break;
-    case 0x05: // setCustChar(slot, unsigned char data[8])
-      lcd.createChar(i2cBuffer[1], &i2cBuffer[2]);
-      break;
-    case 0x06: // writeCustChar(col, row, slot)
-      lcd.setCursor(i2cBuffer[1], i2cBuffer[2]);
-      lcd.write(i2cBuffer[3]);
-      break;
-    case 0x07: // setBright(value)
-      setBright(i2cBuffer[2]);
-      EEPROM.write(2, i2cBuffer[2]); //Save to EEPROM
-      break;
-    case 0x08: // setContrast(value)
-      setContrast(i2cBuffer[2]);
-      EEPROM.write(2, i2cBuffer[3]); //Save to EEPROM
-      break;
-    case 0x09: // getBright(value)
-      reqField = REQ_BRIGHT;
-      break;
-    case 0x0A: // getContrast(value)
-      reqField = REQ_CONTRAST;
-      break;
+  
+  for (byte i = 0; i < length; i++) {
+    buffer[i] = i2cBuffer.get();
+  }
+
+  while ((p - buffer) < length) {
+    switch (p[0]) {
+      case 0x01: // begin(cols, rows)
+        p += 2;
+        break;
+      case 0x02: // clear
+        lcd.clear();
+        break;
+      case 0x03: // setCursor(col, row)
+        lcd.setCursor(p[1], p[2]);
+        p += 2;
+        break;
+      case 0x04: // print(col, row, char* s)
+        lcd.setCursor(p[1], p[2]);
+        lcd.print((char *) &p[3]);
+        p += 2 + strlen((char *) &p[3]) + 1;
+        break;
+      case 0x14: // write(col, row, len, char* s)
+        lcd.setCursor(p[1], p[2]);
+        {
+          byte len = min(p[3], 20 - p[1]); //Do not overwrite row length (20)
+          for (byte i = 0; i < len; i++) lcd.write(p[4 + i]);
+        }
+        p += 2 + p[3];
+        break;
+      case 0x05: // setCustChar(slot, unsigned char data[8])
+        lcd.createChar(p[1], &p[2]);
+        p += 1 + 8;
+        break;
+      case 0x06: // writeCustChar(col, row, slot)
+        lcd.setCursor(p[1], p[2]);
+        lcd.write(p[3]);
+        p += 3;
+        break;
+      case 0x07: // setBright(value)
+        p++;
+        setBright(*p);
+        EEPROM.write(2, *p++); //Save to EEPROM
+        delay(10);
+        break;
+      case 0x08: // setContrast(value)
+        p++;
+        setContrast(*p++);
+        EEPROM.write(2, *p++); //Save to EEPROM
+        delay(10);
+        break;
+      case 0x09: // getBright(value)
+        reqField = REQ_BRIGHT;
+        delay(10);
+        break;
+      case 0x0A: // getContrast(value)
+        reqField = REQ_CONTRAST;
+        delay(10);
+        break;
+    }
+    
+    // increment for the command byte that was read
+    p++;
+    
+  }
+}
+
+void onReceive(int numBytes) {
+  for (byte i = 0; i < numBytes; i++) {
+    i2cBuffer.put(Wire.receive());
   }
 }
 
@@ -121,9 +176,6 @@ void onRequest() {
   else Wire.send(1);
   reqField++;
   if (reqField >= NUM_REQ) reqField = 0;
-}
-void loop() {
-
 }
 
 void panAnalog(byte pin, byte startValue, byte endValue, int delayValue) {
@@ -158,3 +210,5 @@ void loadEEPROM() {
     setContrast(0);
   }
 }
+
+
