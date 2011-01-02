@@ -1,4 +1,4 @@
-#define BUILD 637
+#define BUILD 638
 /*  
   Copyright (C) 2010 Jason von Nieda
 
@@ -103,59 +103,62 @@ void loop() {
   }
 
   while ((p - buffer) < length) {
-    switch (p[0]) {
-      case 0x01: // begin(cols, rows)
-        p += 2;
-        break;
-      case 0x02: // clear
-        lcd.clear();
-        break;
-      case 0x03: // setCursor(col, row)
-        lcd.setCursor(p[1], p[2]);
-        p += 2;
-        break;
-      case 0x04: // print(col, row, char* s)
-        lcd.setCursor(p[1], p[2]);
-        lcd.print((char *) &p[3]);
-        p += 2 + strlen((char *) &p[3]) + 1;
-        break;
-      case 0x14: // write(col, row, len, char* s)
-        lcd.setCursor(p[1], p[2]);
-        {
-          byte len = min(p[3], 20 - p[1]); //Do not overwrite row length (20)
-          for (byte i = 0; i < len; i++) lcd.write(p[4 + i]);
-        }
-        p += 2 + p[3];
-        break;
-      case 0x05: // setCustChar(slot, unsigned char data[8])
-        lcd.createChar(p[1], &p[2]);
-        p += 1 + 8;
-        break;
-      case 0x06: // writeCustChar(col, row, slot)
-        lcd.setCursor(p[1], p[2]);
-        lcd.write(p[3]);
-        p += 3;
-        break;
-      case 0x07: // setBright(value)
-        p++;
-        setBright(*p);
-        EEPROM.write(2, *p++); //Save to EEPROM
-        delay(10);
-        break;
-      case 0x08: // setContrast(value)
-        p++;
-        setContrast(*p++);
-        EEPROM.write(2, *p++); //Save to EEPROM
-        delay(10);
-        break;
-      case 0x09: // getBright(value)
-        reqField = REQ_BRIGHT;
-        delay(10);
-        break;
-      case 0x0A: // getContrast(value)
-        reqField = REQ_CONTRAST;
-        delay(10);
-        break;
+    if (p[0] == 0x01)  // begin(cols, rows)
+      p += 2;
+    else if (p[0] == 0x02) // clear
+      lcd.clear();
+    else if (p[0] == 0x03) // setCursor(col, row)
+    {
+      lcd.setCursor(p[1], p[2]);
+      p += 2;
+    }
+    else if (p[0] == 0x04) // print(col, row, char* s)
+    {
+      lcd.setCursor(p[1], p[2]);
+      lcd.print((char *) &p[3]);
+      p += 2 + strlen((char *) &p[3]) + 1;
+    }
+    else if (p[0] == 0x14) // write(col, row, len, char* s)
+    {
+      lcd.setCursor(p[1], p[2]);
+      byte len = min(p[3], 20 - p[1]); //Do not overwrite row length (20)
+      for (byte i = 0; i < len; i++) lcd.write(p[4 + i]);
+      p += p[3] + 3;
+    }
+    else if (p[0] == 0x05) // setCustChar(slot, unsigned char data[8])
+    {
+      lcd.createChar(p[1], &p[2]);
+      p += 1 + 8;
+    }
+    else if (p[0] == 0x06) // writeCustChar(col, row, slot)
+    {
+      lcd.setCursor(p[1], p[2]);
+      lcd.write(p[3]);
+      p += 3;
+    }
+    else if (p[0] == 0x07) // setBright(value)
+    {
+      p++;
+      setBright(*p);
+      EEPROM.write(2, *p++); //Save to EEPROM
+      delay(10);
+    }
+    else if (p[0] == 0x08) // setContrast(value)
+    {
+      p++;
+      setContrast(*p++);
+      EEPROM.write(2, *p++); //Save to EEPROM
+      delay(10);
+    }
+    else if (p[0] == 0x09) // getBright(value)
+    {
+      reqField = REQ_BRIGHT;
+      delay(10);
+    }
+    else if (p[0] == 0x0A) // getContrast(value)
+    {
+      reqField = REQ_CONTRAST;
+      delay(10);
     }
     
     // increment for the command byte that was read
