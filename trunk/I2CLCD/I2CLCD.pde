@@ -48,24 +48,40 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #define REQ_CONTRAST 1
 #define NUM_REQ 2
 
+#define EEPROM_FINGERPRINT0 0
+#define EEPROM_FINGERPRINT1 1
+#define EEPROM_BRIGHT 2
+#define EEPROM_CONTRAST 3
+#define EEPROM_ROWS 4
+#define EEPROM_COLS 5
+
+#define FINGER0 123
+#define FINGER1 46
+#define DEFAULT_BRIGHT 192
+#define DEFAULT_CONTRAST 64
+#define DEFAULT_ROWS 4
+#define DEFAULT_COLS 20
+
 LiquidCrystal lcd(LCDRS_PIN, LCDENABLE_PIN, LCDDATA1_PIN, LCDDATA2_PIN, LCDDATA3_PIN, LCDDATA4_PIN, LCDDATA5_PIN, LCDDATA6_PIN, LCDDATA7_PIN, LCDDATA8_PIN);
 
 byte i2cAddr = 0x01;
 byte brightness = 0;
 byte contrast = 255;
+byte rows = 4;
+byte cols = 20;
 byte reqField = REQ_BRIGHT;
 ByteBuffer i2cBuffer;
 
 void setup() {
-  loadEEPROM();
   pinMode(LCDBRIGHT_PIN, OUTPUT);
   pinMode(LCDCONTRAST_PIN, OUTPUT);
+  loadEEPROM();
   
-  Serial.begin(115200);
+  //Serial.begin(115200);
   
   i2cBuffer.init(128);
 
-  lcd.begin(20, 4);
+  lcd.begin(cols, rows);
   lcd.setCursor(0, 0);
   lcd.print("I2CLCD");
   lcd.setCursor(0, 1);
@@ -103,8 +119,18 @@ void loop() {
   }
 
   while ((p - buffer) < length) {
-    if (p[0] == 0x01)  // begin(cols, rows)
+    if (p[0] == 0x01) { // begin(cols, rows)
+      if (cols != p[1]) {
+        cols = p[1];
+        EEPROM.write(EEPROM_COLS, cols);
+      }
+      if (rows != p[2]) {
+        rows = p[2];
+        EEPROM.write(EEPROM_ROWS, rows);
+      }
+      lcd.begin(cols, rows);
       p += 2;
+    }
     else if (p[0] == 0x02) // clear
       lcd.clear();
     else if (p[0] == 0x03) // setCursor(col, row)
@@ -139,16 +165,20 @@ void loop() {
     else if (p[0] == 0x07) // setBright(value)
     {
       p++;
-      setBright(*p);
-      EEPROM.write(2, *p++); //Save to EEPROM
-      delay(10);
+      if (brightness != *p) {
+        setBright(*p);
+        EEPROM.write(EEPROM_BRIGHT, *p++); //Save to EEPROM
+        //delay(10);
+      }
     }
     else if (p[0] == 0x08) // setContrast(value)
     {
       p++;
-      setContrast(*p++);
-      EEPROM.write(2, *p++); //Save to EEPROM
-      delay(10);
+      if (contrast != *p) {
+        setContrast(*p++);
+        EEPROM.write(EEPROM_CONTRAST, *p++); //Save to EEPROM
+        //delay(10);
+      }
     }
     else if (p[0] == 0x09) // getBright(value)
     {
@@ -199,18 +229,24 @@ void setContrast(byte value) {
 
 void loadEEPROM() {
   //Look for I2CLCD "fingerprint"
-  if (EEPROM.read(0) == 123 && EEPROM.read(1) == 45)  {
-    setBright(EEPROM.read(2));
-    setContrast(EEPROM.read(3));
+  if (EEPROM.read(EEPROM_FINGERPRINT0) == FINGER0 && EEPROM.read(EEPROM_FINGERPRINT1) == FINGER1)  {
+    setBright(EEPROM.read(EEPROM_BRIGHT));
+    setContrast(EEPROM.read(EEPROM_CONTRAST));
+    rows = EEPROM.read(EEPROM_ROWS);
+    cols = EEPROM.read(EEPROM_COLS);
   }
   else {
     //Set initial EEPROM values
-    EEPROM.write(0, 123);
-    EEPROM.write(0, 45);
-    EEPROM.write(0, 255); //Max
-    setBright(255);
-    EEPROM.write(0, 0); //Max
-    setContrast(0);
+    EEPROM.write(EEPROM_FINGERPRINT0, FINGER0);
+    EEPROM.write(EEPROM_FINGERPRINT1, FINGER1);
+    EEPROM.write(EEPROM_BRIGHT, DEFAULT_BRIGHT); //Max
+    setBright(DEFAULT_BRIGHT);
+    EEPROM.write(EEPROM_CONTRAST, DEFAULT_CONTRAST); //Max
+    setContrast(DEFAULT_CONTRAST);
+    EEPROM.write(EEPROM_ROWS, DEFAULT_ROWS);
+    rows = DEFAULT_ROWS;
+    EEPROM.write(EEPROM_COLS, DEFAULT_COLS);
+    cols = DEFAULT_COLS;
   }
 }
 
