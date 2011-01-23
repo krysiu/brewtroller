@@ -1,13 +1,22 @@
+// 
+// If wrap is set the encoder value will roll over to 0 if greater than max and 
+// roll to max if less than 0. If wrap is cleared the encoder value will be limited
+// to operate with in the min max constraints with no roll over.
+//
+
 #ifndef _ENCODER_H
 #define _ENCODER_H
 
 #define ALPS		0
 #define CUI			1
 
+#define EXTERNAL_INT	0
+#define PINCHANCE_INT 1
+
 #define CUI_DEBOUNCE		50
 
 #define ENTER_SHORT_PUSH	50
-#define ENTER_LONG_PUSH		1000
+#define ENTER_LONG_PUSH	1000
 
 #include <WProgram.h>
 #include <pin.h>
@@ -19,64 +28,70 @@ void enterISR();
 
 class encoder
 {
+private:
+  pin   _aPin;
+  pin   _bPin;
+  pin   _ePin;
+
+  byte  _intA;
+  byte  _intE;
+
+  byte 	_type;      // encoder type (ALPS or CUI)
+  bool  _activeLow; // reverses sense of _ePin
+  byte  _intMode;   // true if using PinChange interrupts
+
+  int	  _lastCount;   // last value of count, used to determine delta
+
+  int   _min;
+  int 	_max;
+  bool 	_wrap;        // true if count should wrap
+
+  volatile int _count;
+  volatile byte _enterState;  // 0 - enter inactive
+                              // 1 - "ok" enter pressed longer than SHORT but shorter than LONG
+                              // 2 - "cancel" detected in ISR
+                              // 3 - "cancel" detected in cancel() method
+
+  volatile unsigned long	_lastUpdate;         // mSec of last update
+  volatile unsigned long	_enterStartTime;  // mSec when enter active
+
 public:
+
+  byte getPins();   // return the value of the three pins
+
 	encoder(void);
-	void begin(byte,byte,byte,byte,byte);
-	void begin(byte,byte,byte,byte);
-	void attach(void);
+	void begin(byte type, bool activeLow, byte encE, byte encA, byte encB ,byte intE, byte intA);
+  void begin(byte type, bool activeLow, byte encE, byte encA, byte encB);
 	void end(void);
 
-	void setMin(int);
-	void setMax(int);
+	void setMin(int min)      { _min = min; }
+	void setMax(int max)      { _max = max; }
+  void setWrap(bool wrap)   { _wrap = wrap; }
+	void setCount(int count)  { _count = _lastCount = count; }
+  void clearCount(void)     { _count = _min; }
+  int  getCount(void)       { return _count; }
 
-	void setCount(int);
-	int getCount(void);
-	void clearCount(void);
-	int change(void);
-	int getDelta(void);
-/*********************************************
-If wrap is set the encoder value will roll over
-to 0 if greater than max and roll to max if less
-than 0.
-If wrap is cleared the encoder value will be
-limited to operate with in the min max constraints
-with no roll over.
-*********************************************/
-	void setWrap(void);
-	void clearWrap(void);
+	int  change(void);
+	int  getDelta(void);
 
-	byte getEnter(void);
-	void clearEnter(void);
-	byte ok(void);
-	byte cancel(void);
-
-
-	//Interrupt Handlers.
-	void alpsHandler(void);
-	void cuiHandler(void);
-	void enterHandler(void);
+  byte getEnterState(void)    { return _enterState; }
+  void clearEnterState(void)  { _enterState = 0; }
+	bool ok(void);
+	bool cancel(void);
 
 private:
+  inline void incCount(void) { if (++_count > _max) _count = (_wrap) ? _min : _max; }
+  inline void decCount(void) { if (--_count < _min) _count = (_wrap) ? _max : _min; }
+  inline bool isEnterPinPressed(void) { return _activeLow ? !_ePin.get() : _ePin.get(); } 
+  inline bool isTimeElapsed(unsigned long curTime, unsigned long duration) { return (curTime - _enterStartTime) > duration; }  
 
-	pin _aPin,
-	    _bPin,
-		_enterPin;
+public:
+  //Interrupt Handlers
+  void enterHandler(void);
+	void alpsHandler(void);
+	void cuiHandler(void);
 
 
-	volatile unsigned long	_lastUpd,
-							_enterStart;
-
-	volatile byte _enter;
-
-	int _min,
-		_max,
-		_oldCount;
-
-	volatile int _count;
-
-	byte	_enterInterrupt,
-			_type,
-			_wrap;
 };
 
 extern encoder Encoder;

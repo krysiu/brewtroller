@@ -27,8 +27,15 @@ With Sanguino Software v1.4 (http://code.google.com/p/sanguino/downloads/list)
 using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrary)
 using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 */
-#include <encoder.h>
 
+#include <pin.h>
+#include <PinChangeInt.h>
+#include <PinChangeIntConfig.h>
+
+#include "encoder.h"
+
+// encoder object c'tor
+//
 encoder::encoder(void)
 {
 	_count = 0;
@@ -37,210 +44,213 @@ encoder::encoder(void)
 	_wrap = 0;
 }
 
-//Use this method to define the encoder type, ALPS or CUI
-void encoder::begin(byte encA, byte encB, byte enter, byte enterInt, byte type)
+// initialize encoder using External Interrupt method
+//  encType - ALPS or CUI
+//  activeLow - true if enter switched to ground
+//  encE, encA, encB - pin numbers for enter, phaseA, and phaseB
+//  intE, intA - external interrupt numbers of enter and phaseA
+//
+//  Note: encE & encA must be on INT pins
+//
+void encoder::begin(byte encType, bool activeLow,
+                    byte encE, byte encA, byte encB,
+                    byte intE, byte intA)
 {
 	_count = 0;
-	_enterInterrupt = enterInt;
-	_type = type;
 
-	_aPin.setup(encA,INPUT);
-	_bPin.setup(encB,INPUT);
-	_enterPin.setup(enter,INPUT);
+  _type = encType;
 
-	this->attach();
+	_ePin.setup(encE,INPUT);
+  _aPin.setup(encA,INPUT);
+  _bPin.setup(encB,INPUT);
+
+  _intE = intE;
+  _intA = intA;
+
+  _activeLow = activeLow;
+  // if activeLow, enable PullUp resistors
+  if (_activeLow)
+  {
+    _aPin.set();
+    _bPin.set();
+    _ePin.set();
+  }
+
+	// attach External Interrupts
+  noInterrupts();
+  _intMode = EXTERNAL_INT;
+  attachInterrupt(_intE, enterISR, CHANGE);
+  if(_type == ALPS)
+    attachInterrupt(_intA, alpsISR, CHANGE);
+  else if(_type == CUI)
+    attachInterrupt(_intA, cuiISR, RISING);
+  interrupts();
 }
 
-//Use the default encoder type, ALPS
-void encoder::begin(byte encA, byte encB, byte enter, byte enterInt)
+
+// initialize encoder using PinChange Interrupt method
+//  encType - ALPS or CUI
+//  activeLow - true if enter switched to ground
+//  encE, encA, encB - pin numbers for enter, phaseA, and phaseB
+//
+//  Note: encE & encA must be on the same Port
+//  Note: Uses PinChangeInt library 
+//
+void encoder::begin(byte encType, bool activeLow, 
+                    byte encE, byte encA, byte encB)
 {
-	_count = 0;
-	_enterInterrupt = enterInt;
-	_type = ALPS;
+  _count = 0;
 
-	_aPin.setup(encA,INPUT);
-	_bPin.setup(encB,INPUT);
-	_enterPin.setup(enter,INPUT);
+  _type = encType;
+ 
+  _ePin.setup(encE, INPUT);
+  _aPin.setup(encA, INPUT);
+  _bPin.setup(encB, INPUT);
 
-	this->attach();
+  _activeLow = activeLow;
+  if (_activeLow)
+  {
+    _aPin.set();
+    _bPin.set();
+    _ePin.set();
+  }
+
+  // attach PinChange Interrupts
+  noInterrupts();
+  _intMode = PINCHANCE_INT;
+  PCattachInterrupt(encE, enterISR, CHANGE);
+  if (encType == ALPS)
+    PCattachInterrupt(encA, alpsISR, CHANGE);
+  else
+    PCattachInterrupt(encA, cuiISR, CHANGE);
+  interrupts();
 }
 
-void encoder::setMin(int min)
+
+//Detaches the Encoder ISRs
+void encoder::end(void)
 {
-	_min = min;
+  noInterrupts();
+  if (_intMode = PINCHANCE_INT)
+  {
+    PCdetachInterrupt(_intA);
+    PCdetachInterrupt(_intE);
+  }
+  else
+  {
+    detachInterrupt(_intA);
+    detachInterrupt(_intE);
+  }
+  interrupts();
 }
 
-void encoder::setMax(int max)
+// return value of encoder pins
+//  bit-0 enter
+//  bit-1 phase A
+//  bit-2 phase B
+//
+byte  encoder::getPins()
 {
-	_max = max;
+  byte btVal = 0x80;
+  if (_ePin.get()) btVal |= 0x01;
+  if (_aPin.get()) btVal |= 0x02;
+  if (_bPin.get()) btVal |= 0x04;
+  return btVal;
 }
 
-void encoder::setWrap(void)
-{
-	_wrap = 0xFF;
-}
 
-void encoder::clearWrap(void)
-{
-	_wrap = 0x00;
-}
 
-void encoder::setCount(int count)
-{
-	_count = count;
-	_oldCount = _count;
-}
-
-int encoder::getCount(void)
-{
-	if(_wrap)
-	{
-		//Permit wrap around
-		if(_count < _min)
-			_count = _max;
-		else if(_count > _max)
-			_count = _min;
-	}
-	else
-	{
-		_count = min(_count,_max);
-		_count = max(_count,_min);
-	}
-	return(_count);
-}
-
-void encoder::clearCount(void)
-{
-	_count = _min;
-}
-
-/* encoder::getDelta()
-compares the current count to the old count
-updates old count to the current count
-and returns the difference
-*/
+// encoder::getDelta()
+//  - compares the current count to the last count
+//  - updates last count to the current count
+//  - returns the difference
+//
 int encoder::getDelta(void)
 {
 	int delta,
 		count;
 
-	count = this->getCount();
+	count = getCount();
 
-	delta = count - _oldCount;
-	_oldCount = count;
+	delta = count - _lastCount;
+	_lastCount = count;
 
-	return(delta);
+	return delta;
 }
 
-/* encoder::change()
-if the count has not changed since the last
-time change was called then return -1;
-else update the old count and return the new
-count value
-*/
+
+// encoder::change()
+//  If the count has not changed since the last time change was called
+//    return -1
+//  else 
+//    update the last count and return the new count
+//
 int encoder::change(void)
 {
-	if(this->getDelta())
-		return(_count);
+  return (getDelta()==0) ? -1 : _count;
+}
+
+
+// return ok state
+//  if enterState == 1, reset enterState and return true
+//
+bool encoder::ok(void)
+{
+  bool okActive = (_enterState == 1);
+  if (okActive)
+    _enterState = 0;
+  return okActive;
+}
+
+
+// return cancel state
+//  if enterState == 2, reset enterState and return true
+//
+bool encoder::cancel(void)
+{
+  // check if cancel has already been detected and reported
+  if (_enterState == 3)
+    return false;
+
+  noInterrupts();
+
+  bool cancelState = (_enterState == 2);
+  if (cancelState)
+  {
+    // enter ISR has detected cancel condition
+    _enterState = 0;
+  }
+  else if (isEnterPinPressed() && isTimeElapsed(millis(), ENTER_LONG_PUSH))
+  {
+    // cancel condition detected
+    cancelState = true;
+    _enterState = 3;  // 3=cancel detected prior to release (used by ISR)
+  }
+  interrupts();
+  return cancelState;
+}
+
+// ALPS phaseA change handler
+//
+void encoder::alpsHandler(void) 
+{
+  
+  if(_aPin.get() == _bPin.get())
+		decCount();
 	else
-		return(-1);
-}
-
-//Checks for an OK encoder enter value
-//returns true if enter is set to OK and clears
-//the enter value
-byte encoder::ok(void)
-{
-	byte ret;
-	
-	if(_enter == 1)
-	{
-
-		ret = 0xFF;
-		_enter = 0;
-	}
-	else
-		ret = 0x00;
-
-	return(ret);
-}
-
-//Checks for a CANCEL encoder enter value
-//returns true if enter is set to CANCEL and clears
-//the enter value
-byte encoder::cancel(void)
-{
-	byte ret;
-	
-	if(_enter == 2)
-	{
-		ret = 0xFF;
-		_enter = 0;
-	}
-	else
-		ret = 0x00;
-
-	return(ret);
-}
-
-byte encoder::getEnter(void)
-{
-	return(_enter);
-}
-
-
-void encoder::clearEnter(void)
-{
-	_enter = 0;
-}
-
-//Installs the encoder ISRs
-void encoder::attach(void)
-{
-	//disable interrupts
-	noInterrupts();
-
-	if(_type == ALPS)
-		attachInterrupt(_aPin.getPin(), alpsISR, CHANGE);
-	else if(_type == CUI)
-		attachInterrupt(_aPin.getPin(), cuiISR, RISING);
-
-	attachInterrupt(_enterInterrupt, enterISR, CHANGE);
-
-	//enable interrupts
-	interrupts();
-}
-
-//Detaches the Encoder ISRs
-void encoder::end(void)
-{
-	noInterrupts();
-	detachInterrupt(_aPin.getPin());
-	detachInterrupt(_enterInterrupt);
-	interrupts();
-}
-
-void encoder::alpsHandler() 
-{
-	noInterrupts();
-
-	if(_aPin.get() == _bPin.get())
-		_count--;
-	else
-		_count++;
-	interrupts();
+		incCount();
 } 
 
-void encoder::cuiHandler() 
+// CUI phaseA change handler
+//
+void encoder::cuiHandler(void) 
 {
 	volatile long time;
-
-	noInterrupts();
 
 	time = millis();
 
 	//if adequate time has not elapsed, bail
-	if (time - _lastUpd < CUI_DEBOUNCE) 
+	if (time - _lastUpdate < CUI_DEBOUNCE) 
 	{
 		interrupts();
 		return;
@@ -248,61 +258,64 @@ void encoder::cuiHandler()
 
 	//Read EncB
 	if(_bPin.get() == LOW)
-		_count++;
+		incCount();
 	else
-		_count--;
+		decCount();
 
 	//update the last Encoder interrupt time stamp;
-	_lastUpd = time;
-
-	interrupts();
+	_lastUpdate = time;
 } 
 
-void encoder::enterHandler() 
+void encoder::enterHandler(void) 
 {
-	volatile long time;
+	volatile long time = millis();
 
-	noInterrupts();
-
-	time = millis();
-
-	//if the enter pin transitions to high set the time stamp
-	if (_enterPin.get()) 
-		_enterStart = time;
-	else 
-	{
-		if(time - _enterStart > ENTER_LONG_PUSH)
-		{
-			_enter = 2;
-		}
-		else 
-		{
-			if (time - _enterStart > ENTER_SHORT_PUSH) 
-			{
-				_enter = 1;
-			}
-		}
+  // test state of _ePin conditioned by  _activeLow
+  if (isEnterPinPressed())
+  {  
+    // enter button pushed in, set the time stamp
+		_enterStartTime = time;
 	}
-	interrupts();
+  else
+	{
+    if (_enterState == 3)
+    {
+      _enterState = 0;
+    }
+    else if (isTimeElapsed(time, ENTER_LONG_PUSH))
+		{
+      // enter button released, check time since pressed
+			// > long push, Cancel
+      _enterState = 2;
+		}
+		else if (isTimeElapsed(time, ENTER_SHORT_PUSH)) 
+		{
+			// < long push, but > short Push
+      _enterState = 1;
+		}
+  }
 }
 
-//Global Encoder Object
+
+// The one and only Global Encoder Object
 encoder Encoder;
 
-//ALPS Encoder Function Interrupt Service Routine wrapper
-void alpsISR()
+
+// ALPS Encoder Function Interrupt Service Routine wrapper
+void alpsISR(void)
 {
 	Encoder.alpsHandler();
 }
 
-//CUI Encoder Function Interrupt Service Routine wrapper
-void cuiISR()
+// CUI Encoder Function Interrupt Service Routine wrapper
+void cuiISR(void)
 {
 	Encoder.cuiHandler();
 }
 
-//Enter Function Interrupt Service Routine wrapper
-void enterISR()
+// Enter Function Interrupt Service Routine wrapper
+void enterISR(void)
 {
 	Encoder.enterHandler();
 }
+
