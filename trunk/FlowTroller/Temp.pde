@@ -27,7 +27,12 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #include "Config.h"
  
 void tempInit() {
-  
+  pinMode(SPI_CLK_PIN, OUTPUT);
+  //pinMode(SPI_MOSI_PIN, OUTPUT);
+  pinMode(SPI_MISO_PIN, INPUT);
+  pinMode(TEMP_PIN, OUTPUT);
+  //Disable temp chip by setting SS HIGH
+  digitalWrite(TEMP_PIN, HIGH);
 }
 
 void updateTemps() {
@@ -49,11 +54,10 @@ void updateTemps() {
      error: error compensation in digital counts
      samples: number of measurement samples (max:10)
 */
-unsigned int read_temp(int pin, int type, int error, int samples) {
+float read_temp(int pin, int type, int error, int samples) {
   unsigned int value = 0;
   int error_tc;
   float temp;
-  unsigned int temp_out;
   
   for (int i=samples; i>0; i--){
     digitalWrite(pin,LOW); // Enable device
@@ -93,16 +97,13 @@ unsigned int read_temp(int pin, int type, int error, int samples) {
    */
   
   value = value + error;  // Insert the calibration error value
+  temp = (value*0.25);
   
   if(type == 0) {  // Request temp in ˚F
-    temp = ((value*0.25) * (9.0/5.0)) + 32.0;  // Convert value to ˚F (ensure proper floats!)
-  } else if(type == 1) {  // Request temp in ˚C
-    temp = (value*0.25);  // Multiply the value by 25 to get temp in ˚C
+    temp = (temp * (9.0/5.0)) + 32.0;  // Convert value to ˚F (ensure proper floats!)
   }
   
-  temp_out = temp*10;  // Send the float to an int (X10) for ease of printing.
-  
   /* Output 9999 if there is a TC error, otherwise return 'temp' */
-  if(error_tc != 0) { return 9999; } else { return temp_out; }
+  if(error_tc != 0) { return 9999; } else { return temp; }
 }
 
