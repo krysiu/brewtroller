@@ -25,6 +25,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 */
 
 #ifndef NOUI
+#include "Config.h"
 #include <encoder.h>
 
 //*****************************************************************************************************************************
@@ -96,7 +97,7 @@ byte timerLastPrint;
 //**********************************************************************************
 void uiInit() {
   initLCD();
-  Encoder.begin(ENCA_PIN, ENCB_PIN, ENTER_PIN, ENTER_INT, ENCODER_TYPE);
+  Encoder.begin(ENCODER_TYPE, false, ENTER_PIN, ENCA_PIN, ENCB_PIN, ENTER_INT, ENCA_INT);
 
   //Check to see if EEPROM Initialization is needed
   if (checkConfig()) {

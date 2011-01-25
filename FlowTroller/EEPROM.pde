@@ -27,6 +27,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 
 #include <avr/eeprom.h>
 #include <EEPROM.h>
+#include "Config.h"
 
 void loadSetup() {
   //**********************************************************************************

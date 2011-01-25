@@ -24,9 +24,11 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
 
+#include "Config.h"
+
 void logInit() {
   #if defined USESERIAL
-    Serial.begin(9600);
+    Serial.begin(115200);
     Serial.println();
   #endif
   logStart_P(LOGSYS);
