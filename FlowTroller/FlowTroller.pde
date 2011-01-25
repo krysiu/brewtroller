@@ -60,7 +60,7 @@ void(* softReset) (void) = 0;
 #define ENCA_PIN 2
 
 
-#define SPI_MOSI_PIN 5
+//#define SPI_MOSI_PIN 5
 #define SPI_MISO_PIN 6
 #define SPI_CLK_PIN 7
 //Temp Chip SS
@@ -80,7 +80,7 @@ void(* softReset) (void) = 0;
 #define EVENT_STEPEXIT 1
 
 //Heat Output, alarm Pins
-pin spiClk, spiMOSI, spiMISO, tempPin, heatPin, alarmPin;
+pin heatPin, alarmPin;
 
 float temp;
 
