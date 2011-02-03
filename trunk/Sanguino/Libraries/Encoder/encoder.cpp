@@ -16,21 +16,43 @@
     You should have received a copy of the GNU General Public License
     along with BrewTroller.  If not, see <http://www.gnu.org/licenses/>.
 
-FermTroller - Open Source Fermentation Computer
-Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
-Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
+  FermTroller - Open Source Fermentation Computer
+  Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
+  Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 
-Documentation, Forums and more information available at http://www.brewtroller.com
+  Documentation, Forums and more information available at http://www.brewtroller.com
 
-Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
-With Sanguino Software v1.4 (http://code.google.com/p/sanguino/downloads/list)
-using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrary)
-using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
-*/
+  Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
+  With Sanguino Software v1.4 (http://code.google.com/p/sanguino/downloads/list)
+  using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrary)
+  using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 
-#include <pin.h>
-#include <PinChangeInt.h>
-#include <PinChangeIntConfig.h>
+
+  Original Author:  Matt Reba & Jason Vreeland (CodeRage)
+  Modified By:      Tom Harkaway, Feb, 2011
+
+  Modifications:
+
+  1. Modified existing begin() method. 
+    - Change order of parameter
+    - Added an boolean "ActiveLow" parameter to specify if the encoder's switches
+      are wired active-low (i.e. switch to ground). If it is active-low, the sense
+      of the enter switch is reversed.
+    - Require that the external interrupt number for both EncE and EncA be specified.
+
+  2. Added a new begin() method that uses PinChange interrupts rather than External 
+     interrupts for the EncE and EncA switches. Uses new PCInt functions added
+     to FastPin library
+
+  3. Modified Cancel logic so it triggers as soon as the cancel timeout had been reached
+     rather than wait for enter to be released.
+
+  4. General reorganization and additional comments.
+
+***********************************************************/
+
+
+#include "pin.h"
 
 #include "encoder.h"
 
@@ -43,6 +65,7 @@ encoder::encoder(void)
 	_max = 0;
 	_wrap = 0;
 }
+
 
 // initialize encoder using External Interrupt method
 //  encType - ALPS or CUI
@@ -118,11 +141,11 @@ void encoder::begin(byte encType, bool activeLow,
   // attach PinChange Interrupts
   noInterrupts();
   _intMode = PINCHANCE_INT;
-  PCattachInterrupt(encE, enterISR, CHANGE);
+  _ePin.attachPCInt(CHANGE, enterISR);
   if (encType == ALPS)
-    PCattachInterrupt(encA, alpsISR, CHANGE);
+    _aPin.attachPCInt(CHANGE, alpsISR);
   else
-    PCattachInterrupt(encA, cuiISR, CHANGE);
+    _aPin.attachPCInt(CHANGE, cuiISR);
   interrupts();
 }
 
@@ -133,8 +156,8 @@ void encoder::end(void)
   noInterrupts();
   if (_intMode = PINCHANCE_INT)
   {
-    PCdetachInterrupt(_intA);
-    PCdetachInterrupt(_intE);
+    _ePin.detachPCInt();
+    _aPin.detachPCInt();
   }
   else
   {
@@ -149,12 +172,14 @@ void encoder::end(void)
 //  bit-1 phase A
 //  bit-2 phase B
 //
-byte  encoder::getPins()
+byte  encoder::getEncoderState()
 {
-  byte btVal = 0x80;
+  byte btVal = 0;
   if (_ePin.get()) btVal |= 0x01;
   if (_aPin.get()) btVal |= 0x02;
   if (_bPin.get()) btVal |= 0x04;
+  if (isEnterPinPressed()) btVal |= 0x08;
+  btVal |= _enterState << 4;
   return btVal;
 }
 

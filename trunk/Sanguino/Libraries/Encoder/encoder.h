@@ -57,7 +57,7 @@ private:
 
 public:
 
-  byte getPins();   // return the value of the three pins
+  byte getEncoderState();   // return the Encoder State
 
 	encoder(void);
 	void begin(byte type, bool activeLow, byte encE, byte encA, byte encB ,byte intE, byte intA);
