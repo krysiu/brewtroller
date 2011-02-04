@@ -67,15 +67,16 @@ encoder::encoder(void)
 }
 
 
+
+
 // initialize encoder using External Interrupt method
 //  encType - ALPS or CUI
-//  activeLow - true if enter switched to ground
 //  encE, encA, encB - pin numbers for enter, phaseA, and phaseB
 //  intE, intA - external interrupt numbers of enter and phaseA
 //
 //  Note: encE & encA must be on INT pins
 //
-void encoder::begin(byte encType, bool activeLow,
+void encoder::begin(byte encType, 
                     byte encE, byte encA, byte encB,
                     byte intE, byte intA)
 {
@@ -90,14 +91,7 @@ void encoder::begin(byte encType, bool activeLow,
   _intE = intE;
   _intA = intA;
 
-  _activeLow = activeLow;
-  // if activeLow, enable PullUp resistors
-  if (_activeLow)
-  {
-    _aPin.set();
-    _bPin.set();
-    _ePin.set();
-  }
+  _activeLow = false;
 
 	// attach External Interrupts
   noInterrupts();
@@ -113,14 +107,12 @@ void encoder::begin(byte encType, bool activeLow,
 
 // initialize encoder using PinChange Interrupt method
 //  encType - ALPS or CUI
-//  activeLow - true if enter switched to ground
 //  encE, encA, encB - pin numbers for enter, phaseA, and phaseB
 //
 //  Note: encE & encA must be on the same Port
 //  Note: Uses PinChangeInt library 
 //
-void encoder::begin(byte encType, bool activeLow, 
-                    byte encE, byte encA, byte encB)
+void encoder::begin(byte encType, byte encE, byte encA, byte encB)
 {
   _count = 0;
 
@@ -130,13 +122,7 @@ void encoder::begin(byte encType, bool activeLow,
   _aPin.setup(encA, INPUT);
   _bPin.setup(encB, INPUT);
 
-  _activeLow = activeLow;
-  if (_activeLow)
-  {
-    _aPin.set();
-    _bPin.set();
-    _ePin.set();
-  }
+  _activeLow = false;
 
   // attach PinChange Interrupts
   noInterrupts();
@@ -147,6 +133,20 @@ void encoder::begin(byte encType, bool activeLow,
   else
     _aPin.attachPCInt(CHANGE, cuiISR);
   interrupts();
+}
+
+
+// Deprecated initialize encoder using PinChange Interrupt method
+//
+//  Note the following definition is provided for backwards compatibility
+//    and  assumes the EncA pin and interrupt number match which is a rare
+//    scenario. 
+//
+// This method should not be used for new implementations.
+//
+void encoder::begin(byte encA, byte encB, byte encE, byte enterInt, byte encType)
+{
+  begin(encType, encE, encA, encB, enterInt, encA);
 }
 
 
@@ -166,6 +166,27 @@ void encoder::end(void)
   }
   interrupts();
 }
+
+// set activeLow state
+//
+void encoder::setActiveLow(bool state)
+{
+  _activeLow = state;
+  if (_activeLow)
+  {
+    // turn on output to enable pull-ups
+    _aPin.set();
+    _bPin.set();
+    _ePin.set();
+  }
+  else
+  {
+    _aPin.clear();
+    _bPin.clear();
+    _ePin.clear();
+  }
+}
+
 
 // return value of encoder pins
 //  bit-0 enter
