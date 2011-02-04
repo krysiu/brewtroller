@@ -60,8 +60,9 @@ public:
   byte getEncoderState();   // return the Encoder State
 
 	encoder(void);
-	void begin(byte type, bool activeLow, byte encE, byte encA, byte encB ,byte intE, byte intA);
-  void begin(byte type, bool activeLow, byte encE, byte encA, byte encB);
+	void begin(byte type, byte encE, byte encA, byte encB, byte intE, byte intA);
+  void begin(byte type, byte encE, byte encA, byte encB);
+  void begin(byte encA, byte encB, byte encE, byte enterInt, byte encType);
 	void end(void);
 
 	void setMin(int min)      { _min = min; }
@@ -70,6 +71,7 @@ public:
 	void setCount(int count)  { _count = _lastCount = count; }
   void clearCount(void)     { _count = _min; }
   int  getCount(void)       { return _count; }
+  void setActiveLow(bool state);
 
 	int  change(void);
 	int  getDelta(void);
