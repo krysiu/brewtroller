@@ -1,5 +1,6 @@
 #include <WProgram.h>
 #include <menu.h>
+#include <avr/pgmspace.h>
 
 menu::menu() {
 	_rows = 0;
@@ -33,19 +34,29 @@ void menu::addItem(char disp[], byte ref) {
 	_itemCount++;
 }
 
+void menu::addItem_P(const char *disp, byte ref) {
+	if (_itemCount >= _maxOpts) return;
+	strcpy_P(_menuItems[_itemCount].name, disp);
+	_menuItems[_itemCount].value = ref;
+	_itemCount++;
+}
+
+void menu::updateItem(char disp[], byte ref) {
+	byte index = this->getIndexByValue(ref);
+	strcpy(_menuItems[index].name, disp);
+}
+
+void menu::updateItem_P(const char *disp, byte ref) {
+	byte index = this->getIndexByValue(ref);
+	strcpy_P(_menuItems[index].name, disp);
+}
+
 void menu::setSelected(byte selected) {
 	_selected = selected;
 }
 
 void menu::setSelectedByValue(byte value) {
-	if (_itemCount) {
-		for (byte i = 0; i < _itemCount; i++) {
-			if (_menuItems[i].value == value) {
-				_selected = i;
-				return;
-			}
-		}
-	}
+	_selected = this->getIndexByValue(value);
 }
 
 byte menu::getSelected(void) {
@@ -64,9 +75,13 @@ boolean menu::refreshDisp(void) {
 	return 0;
 }
 
-void menu::getRow(byte row, char retString[]) {
+void menu::getVisibleRow(byte row, char retString[]) {
 	if (_topItem + row < _itemCount) strcpy(retString, _menuItems[_topItem + row].name);
 	else strcpy(retString, "");
+}
+
+void menu::getSelectedRow(char retString[]) {
+	strcpy(retString, _menuItems[_selected].name);
 }
 
 byte menu::getValue() {
@@ -79,4 +94,13 @@ byte menu::getCursor(void) {
 
 byte menu::getItemCount(void) {
 	return _itemCount;
+}
+
+byte menu::getIndexByValue(byte val) {
+	if (_itemCount) {
+		for (byte i = 0; i < _itemCount; i++) {
+			if (_menuItems[i].value == val) return i;
+		}
+	}
+	return 0;
 }
