@@ -64,11 +64,6 @@ boolean menu::refreshDisp(void) {
 	return 0;
 }
 
-//Bug Workaround: addItem is overwriting _rows
-void menu::setRows(byte val) {
-	_rows = val;
-}
-
 void menu::getRow(byte row, char retString[]) {
 	if (_topItem + row < _itemCount) strcpy(retString, _menuItems[_topItem + row].name);
 	else strcpy(retString, "");
