@@ -1,4 +1,4 @@
-#define BUILD 638
+#define BUILD 666
 /*  
   Copyright (C) 2010 Jason von Nieda
 
@@ -43,6 +43,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #define LCDDATA8_PIN 16
 #define LCDBRIGHT_PIN 10
 #define LCDCONTRAST_PIN 11
+#define DEBUG_PIN 13
 
 #define REQ_BRIGHT 0
 #define REQ_CONTRAST 1
@@ -75,6 +76,7 @@ ByteBuffer i2cBuffer;
 void setup() {
   pinMode(LCDBRIGHT_PIN, OUTPUT);
   pinMode(LCDCONTRAST_PIN, OUTPUT);
+  pinMode(DEBUG_PIN, OUTPUT);
   loadEEPROM();
   
   //Serial.begin(115200);
@@ -119,15 +121,10 @@ void loop() {
   }
 
   while ((p - buffer) < length) {
+    if ((p[0] >= 0x01 && p[0] <= 0x0C) || p[0] == 0x14) digitalWrite(DEBUG_PIN, HIGH);
     if (p[0] == 0x01) { // begin(cols, rows)
-      if (cols != p[1]) {
-        cols = p[1];
-        EEPROM.write(EEPROM_COLS, cols);
-      }
-      if (rows != p[2]) {
-        rows = p[2];
-        EEPROM.write(EEPROM_ROWS, rows);
-      }
+      cols = p[1];
+      rows = p[2];
       lcd.begin(cols, rows);
       p += 2;
     }
@@ -143,13 +140,6 @@ void loop() {
       lcd.setCursor(p[1], p[2]);
       lcd.print((char *) &p[3]);
       p += 2 + strlen((char *) &p[3]) + 1;
-    }
-    else if (p[0] == 0x14) // write(col, row, len, char* s)
-    {
-      lcd.setCursor(p[1], p[2]);
-      byte len = min(p[3], 20 - p[1]); //Do not overwrite row length (20)
-      for (byte i = 0; i < len; i++) lcd.write(p[4 + i]);
-      p += p[3] + 3;
     }
     else if (p[0] == 0x05) // setCustChar(slot, unsigned char data[8])
     {
@@ -167,7 +157,6 @@ void loop() {
       p++;
       if (brightness != *p) {
         setBright(*p);
-        EEPROM.write(EEPROM_BRIGHT, *p++); //Save to EEPROM
         //delay(10);
       }
     }
@@ -176,7 +165,6 @@ void loop() {
       p++;
       if (contrast != *p) {
         setContrast(*p++);
-        EEPROM.write(EEPROM_CONTRAST, *p++); //Save to EEPROM
         //delay(10);
       }
     }
@@ -190,10 +178,20 @@ void loop() {
       reqField = REQ_CONTRAST;
       delay(10);
     }
+    else if (p[0] == 0x0B) saveEEPROM();
+    else if (p[0] == 0x0C) loadEEPROM();
     
+    else if (p[0] == 0x14) // write(col, row, len, char* s)
+    {
+      lcd.setCursor(p[1], p[2]);
+      byte len = min(p[3], 20 - p[1]); //Do not overwrite row length (20)
+      for (byte i = 0; i < len; i++) lcd.write(p[4 + i]);
+      p += p[3] + 3;
+    }
+
     // increment for the command byte that was read
     p++;
-    
+    digitalWrite(DEBUG_PIN, LOW);
   }
 }
 
@@ -225,6 +223,13 @@ void setBright(byte value) {
 void setContrast(byte value) {
   panAnalog(LCDCONTRAST_PIN, contrast, value, 2);
   contrast = value;
+}
+
+void saveEEPROM() {
+  EEPROM.write(EEPROM_BRIGHT, brightness);
+  EEPROM.write(EEPROM_CONTRAST, contrast);
+  EEPROM.write(EEPROM_ROWS, rows);
+  EEPROM.write(EEPROM_COLS, cols);
 }
 
 void loadEEPROM() {
