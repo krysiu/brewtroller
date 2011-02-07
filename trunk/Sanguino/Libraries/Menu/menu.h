@@ -24,7 +24,6 @@ public:
 	byte getCursor(void);
 	byte getItemCount(void);
 	void setSelectedByValue(byte);
-	void setRows(byte);
 private:
 	byte 	_rows,
 			_cols,
