@@ -58,10 +58,15 @@ boolean menu::refreshDisp(void) {
 		return 1;
 	}
 	if (_selected >= _topItem + _rows) {
-        _topItem = _selected - _rows + 1;
-        return 1;
+		_topItem = _selected - _rows + 1;
+		return 1;
 	}
 	return 0;
+}
+
+//Bug Workaround: addItem is overwriting _rows
+void menu::setRows(byte val) {
+	_rows = val;
 }
 
 void menu::getRow(byte row, char retString[]) {
