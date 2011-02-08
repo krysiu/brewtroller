@@ -1,4 +1,4 @@
-#define BUILD 666
+#define BUILD 677
 /*  
   Copyright (C) 2010 Jason von Nieda
 
@@ -77,6 +77,11 @@ void setup() {
   pinMode(LCDBRIGHT_PIN, OUTPUT);
   pinMode(LCDCONTRAST_PIN, OUTPUT);
   pinMode(DEBUG_PIN, OUTPUT);
+  
+  //Change PWM Freq for smooth contrast/brightness
+  TCCR1B = 0x01;   // Timer 1: PWM 9 & 10 @ 32 kHz
+  TCCR2B = 0x01;   // Timer 2: PWM 3 & 11 @ 32 kHz
+
   loadEEPROM();
   
   //Serial.begin(115200);
