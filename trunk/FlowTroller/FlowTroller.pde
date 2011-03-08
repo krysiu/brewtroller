@@ -43,8 +43,6 @@ Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
 #include <avr/pgmspace.h>
 #include <PID_Beta6.h>
 #include <pin.h>
-#include <PinChangeInt.h>
-#include <PinChangeIntConfig.h>
 
 void(* softReset) (void) = 0;
 
@@ -60,11 +58,10 @@ void(* softReset) (void) = 0;
 #define ENCA_PIN 2
 
 
-//#define SPI_MOSI_PIN 5
-#define SPI_MISO_PIN 6
-#define SPI_CLK_PIN 7
-//Temp Chip SS
-#define TEMP_PIN 4
+#define SPI_MISO_PIN 6    // MISO
+#define SPI_CLK_PIN 7   // Serial Clock
+
+#define TC_0 4  // CS Pin of MAX6607
 
 #define ENTER_PIN 11
 #define ALARM_PIN 15
@@ -83,6 +80,7 @@ void(* softReset) (void) = 0;
 pin heatPin, alarmPin;
 
 float temp;
+unsigned long tcUpdate = 0;
 
 //Shared buffers
 char menuopts[21][20], buf[20];
@@ -146,7 +144,6 @@ void setup() {
 
   //PID Initialization (Outputs.pde)
   pidInit();
-
 }
 
 void loop() {

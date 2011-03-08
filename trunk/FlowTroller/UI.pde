@@ -97,7 +97,7 @@ byte timerLastPrint;
 //**********************************************************************************
 void uiInit() {
   initLCD();
-  Encoder.begin(ENCODER_TYPE, false, ENTER_PIN, ENCA_PIN, ENCB_PIN, ENTER_INT, ENCA_INT);
+  Encoder.begin(ENCODER_TYPE, ENTER_PIN, ENCA_PIN, ENCB_PIN, ENTER_INT, ENCA_INT);
 
   //Check to see if EEPROM Initialization is needed
   if (checkConfig()) {
@@ -187,7 +187,8 @@ void screenInit() {
 void screenRefresh(){
   printTimer(1, 14);
   printLCDLPad(2, 9, itoa(setpoint, buf, 10), 3, ' ');
-  printLCDLPad(3, 9, itoa(temp, buf, 10), 3, ' ');
+  if (temp < 1000) printLCDLPad(3, 9, itoa(temp, buf, 10), 3, ' ');
+  else printLCD(3, 9, "---");
 }
 
 

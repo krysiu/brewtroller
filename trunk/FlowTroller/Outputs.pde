@@ -47,7 +47,7 @@ void resetOutputs() {
 void processHeatOutputs() {
   //Process Heat Outputs
   if (PIDEnabled) {
-    if (temp <= 0) {
+    if (temp == 9999) {
       PIDOutput = 0;
     } else {
       if (pid.GetMode() == AUTO) {
@@ -61,14 +61,14 @@ void processHeatOutputs() {
     if (PIDOutput == 0)  heatStatus = 0; else heatStatus = 1;
   } else {
     if (heatStatus) {
-      if (temp <= 0 || temp >= setpoint) {
+      if (temp == 9999 || temp >= setpoint) {
         heatPin.set(LOW);
         heatStatus = 0;
       } else {
         heatPin.set(HIGH);
       }
     } else {
-      if (temp > 0 && ((float)(setpoint - temp) >= (float) (hysteresis / 10.0))) {
+      if (temp != 9999 && ((float)(setpoint - temp) >= (float) (hysteresis / 10.0))) {
         heatPin.set(HIGH);
         heatStatus = 1;
       } else {

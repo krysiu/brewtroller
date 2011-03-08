@@ -27,20 +27,11 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #include "Config.h"
  
 void tempInit() {
-  pinMode(SPI_CLK_PIN, OUTPUT);
-  //pinMode(SPI_MOSI_PIN, OUTPUT);
-  pinMode(SPI_MISO_PIN, INPUT);
-  pinMode(TEMP_PIN, OUTPUT);
-  //Disable temp chip by setting SS HIGH
-  digitalWrite(TEMP_PIN, HIGH);
-}
+ pinMode(SPI_MISO_PIN, INPUT);
+ pinMode(SPI_CLK_PIN, OUTPUT);
 
-void updateTemps() {
-  #ifdef USEMETRIC
-    temp = read_temp(TEMP_PIN, 1, TEMP_ERROR, TEMP_SAMPLES);
-  #else
-    temp = read_temp(TEMP_PIN, 1, TEMP_ERROR, TEMP_SAMPLES);
-  #endif
+ pinMode(TC_0, OUTPUT);
+ digitalWrite(TC_0,HIGH);  // Disable device
 }
 
 
@@ -105,5 +96,12 @@ float read_temp(int pin, int type, int error, int samples) {
   
   /* Output 9999 if there is a TC error, otherwise return 'temp' */
   if(error_tc != 0) { return 9999; } else { return temp; }
+}
+
+void updateTemps() {
+  if (millis() - tcUpdate > TEMP_INTERVAL) {
+    temp = read_temp(TC_0, TC0_ERROR, TC0_SAMPLES, 10);
+    tcUpdate = millis();
+  }
 }
 

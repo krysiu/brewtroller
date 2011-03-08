@@ -50,7 +50,7 @@
 //**********************************************************************************
 // Enables Serial Out with Additional Debug Data
 //
-#define DEBUG
+//#define DEBUG
 //**********************************************************************************
 
 //**********************************************************************************
@@ -65,9 +65,10 @@
 //**********************************************************************************
 // Temperature Reading Settings
 //**********************************************************************************
-// TEMP_ERROR: Calibration correction in 0.25C units
-// TEMP_SAMPLES: Number of samples to use in reading (Max: 10)
+// TC0_ERROR: Calibration correction in 0.25C units
+// TC0_SAMPLES: Number of samples to use in reading (Max: 10)
 
-#define TEMP_ERROR 0
-#define TEMP_SAMPLES 10
+#define TC0_ERROR 0 // Calibration compensation value in digital counts (.25˚C)
+#define TC0_SAMPLES 10
+#define TEMP_INTERVAL 250 //Delay between tc reads in ms
 //**********************************************************************************
