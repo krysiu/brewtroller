@@ -19,13 +19,13 @@ namespace Test.BrewTrollerCommuncator
 		[TestFixtureSetUp]
 		public void Setup()
 		{
-			_btCom.Connect("COM10,115200,N,8,1");
+			_btCom.Connect(BTTestConfig.BT_CONNECTION_STRING);
 			_btCom.ComRetries = 1;
 			Assert.IsTrue(_btCom.IsConnected);
-			Assert.AreEqual(_btCom.Version.ComType, BTComType.ASCII);
-			Assert.AreEqual(_btCom.Version.ComSchema, 1);
-			Assert.AreEqual(_btCom.Version.BuildNumber, 604, "Build number is not correct.");
-			Assert.AreEqual(_btCom.Version.Version, "2.1");
+			Assert.AreEqual(_btCom.Version.ComType, BTTestConfig.BT_COMM_TYPE);
+			Assert.AreEqual(_btCom.Version.ComSchema, BTTestConfig.BT_COMM_SCHEMA);
+			Assert.AreEqual(_btCom.Version.BuildNumber, BTTestConfig.BT_BUILD_NUMBER, "Build number is not correct.");
+			Assert.AreEqual(_btCom.Version.Version, BTTestConfig.BT_VERSION);
 		}
 
 		// run after all test have run
