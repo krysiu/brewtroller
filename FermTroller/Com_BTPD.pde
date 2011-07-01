@@ -1,5 +1,5 @@
 /*  
-   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
+   Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
     This file is part of BrewTroller.
 
@@ -33,46 +33,19 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #ifdef BTPD_SUPPORT
 #include "Config.h"
 #include "Enum.h"
-#include <Wire.h>
+
+// BTPD_START: Starting address for BTPD data
+// BTPD support will use one address per zone
+
+#define BTPD_START 0x20
 
 unsigned long lastBTPD;
 
-void btpdInit() {
-  Wire.begin();
-}
-
 void updateBTPD() {
   if (millis() - lastBTPD > BTPD_INTERVAL) {
-    #ifdef BTPD_ZONE1
-      sendVsTemp(BTPD_ZONE1, 0);
-    #endif
-    #ifdef BTPD_ZONE2
-      sendVsTemp(BTPD_ZONE2, 1);
-    #endif
-    #ifdef BTPD_ZONE3
-      sendVsTemp(BTPD_ZONE3, 2);
-    #endif
-    #ifdef BTPD_ZONE4
-      sendVsTemp(BTPD_ZONE4, 3);
-    #endif
-    #ifdef BTPD_ZONE5
-      sendVsTemp(BTPD_ZONE5, 4);
-    #endif
-    #ifdef BTPD_ZONE6
-      sendVsTemp(BTPD_ZONE6, 5);
-    #endif
-    #ifdef BTPD_ZONE7
-      sendVsTemp(BTPD_ZONE7, 6);
-    #endif
-    #ifdef BTPD_ZONE8
-      sendVsTemp(BTPD_ZONE8, 7);
-    #endif
+    for (byte i = 0; i < NUM_ZONES; i++) sendFloatsBTPD(BTPD_START + i, setpoint[i] / 100.0, temp[i] / 100.0);
     lastBTPD = millis();
   }
-}
-
-void sendVsTemp(byte chan, byte vessel) {
-  sendFloatsBTPD(chan, setpoint[vessel] / 100.0, temp[vessel] / 100.0);  
 }
 
 void sendFloatsBTPD(byte chan, float line1, float line2) {
@@ -83,6 +56,4 @@ void sendFloatsBTPD(byte chan, float line1, float line2) {
   Wire.send((uint8_t *) &line2, 4);
   Wire.endTransmission();
 }
-
-
 #endif

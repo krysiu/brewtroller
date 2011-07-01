@@ -1,65 +1,47 @@
 #ifndef BT_ENUM
 #define BT_ENUM
 
-#include "Config.h"
+//Valve Array Element Constants and Variables
+#define VLV_ALL 4294967295
+#define VLV_ALARM NUM_VLVCFGS - 1
 
-//Pin and Interrupt Definitions
-#define ENCA_PIN 2
-#define ENCB_PIN 4
-#define TEMP_PIN 5
-#define ENTER_PIN 11
-#define ALARM_PIN 15
-#define ENTER_INT 1
-#define ENCA_INT 2
+//Events
 
-//BTBOARD_3 Defaults: MUX, 16 Outputs, 8 Zones, 8 Heat Pins + 8 Cool Pins, 4 PID Heat Outputs
-#if defined BTBOARD_3 && !defined USE_MUX
-  #define USE_MUX
-#endif
+#define EVENT_ALARM_TSENSOR 0
+#define EVENT_ALARM_TEMPHOT 1
+#define EVENT_ALARM_TEMPCOLD 2
 
-#if defined BTBOARD_3 && !defined NUM_OUTS
-  #define NUM_OUTS 16
-#endif
+#define EVENT_NALARM_TSENSOR 4
+#define EVENT_NALARM_TEMPHOT 5
+#define EVENT_NALARM_TEMPCOLD 6
 
-#if defined BTBOARD_3 && !defined NUM_ZONES
-  #define NUM_ZONES 8
-#endif
+//Log Constants
+#define CMD_MSG_FIELDS 25
+#define CMD_FIELD_CHARS 21
 
-#if defined BTBOARD_3 && !defined COOLPIN_OFFSET
-  #define COOLPIN_OFFSET 8
-#endif
+#define BT_I2C_ADDR 0x10
+#define BTNIC_I2C_ADDR 0x11
 
-#if defined USE_MUX && !defined NUM_PID_OUTS
-  #define NUM_PID_OUTS 4
-#endif
+#define ASCII 0
+#define BTNIC 1
+#define BINARY 2
 
-//BTBOARD_2.x Defaults: 12 Outputs, 6 Zones, 6 Heat Pins + 6 Cool Pins, 6 PID Heat Outputs
-#if !defined BTBOARD_3 && !defined NUM_OUTS
-  #define NUM_OUTS 12
-#endif
+#define NO_PID 255
+#define BAD_TEMP -32768
+#define NO_SETPOINT -32768
 
-#if !defined BTBOARD_3 && !defined NUM_ZONES
-  #define NUM_ZONES 6
-#endif
+#define ALARM_COUNT 3
 
-#if !defined BTBOARD_3 && !defined COOLPIN_OFFSET
-  #define COOLPIN_OFFSET 6
-#endif
+#define ALARM_STATUS_TSENSOR 0
+#define ALARM_STATUS_TEMPHOT 1
+#define ALARM_STATUS_TEMPCOLD 2
 
-#if !defined BTBOARD_3 && !defined NUM_PID_OUTS
-  #define NUM_PID_OUTS 6
-#endif
+#define ALARM_ACK_TSENSOR 4
+#define ALARM_ACK_TEMPHOT 5
+#define ALARM_ACK_TEMPCOLD 6
 
-#ifdef USE_MUX
-  #define MUX_LATCH_PIN 12
-  #define MUX_CLOCK_PIN 13
-  #define MUX_DATA_PIN 14
-  #define MUX_OE_PIN 10
-#endif
+#define ALARM_ACKBITS B11110000
 
-//Safety catch if using fewer zones than defined PID outputs
-#if NUM_PID_OUTS > NUM_ZONES
-  #define NUM_PID_OUTS NUM_ZONES
-#endif
+#define GETVALUE_CANCEL -2147483648
 
 #endif

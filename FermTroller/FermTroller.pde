@@ -1,245 +1,271 @@
-#define BUILD 623
-/*
-   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
+#define BUILD 728
+/*  
+  Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
-    This file is part of BrewTroller.
+    This file is part of FermTroller.
 
-    BrewTroller is free software: you can redistribute it and/or modify
+    FermTroller is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    BrewTroller is distributed in the hope that it will be useful,
+    FermTroller is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with BrewTroller.  If not, see <http://www.gnu.org/licenses/>.
+    along with FermTroller.  If not, see <http://www.gnu.org/licenses/>.
 
-FermTroller - Open Source Fermentation Computer
+
+FermTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
 Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 
 Documentation, Forums and more information available at http://www.brewtroller.com
-
-Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
-With Sanguino Software v1.4 (http://code.google.com/p/sanguino/downloads/list)
-using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrary)
-using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 */
 
-#include "Config.h"
-#include "Enum.h"
+/*
+Compiled on Arduino-0022 (http://arduino.cc/en/Main/Software)
+  With Sanguino Software "Sanguino-0018r2_1_4.zip" (http://code.google.com/p/sanguino/downloads/list)
 
-void(* softReset) (void) = 0;
+  Using the following libraries:
+    PID  v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrary)
+    OneWire 2.0 (http://www.pjrc.com/teensy/arduino_libraries/OneWire.zip)
+    Encoder by CodeRage ()
+    FastPin and modified LiquidCrystal with FastPin by CodeRage (http://www.brewtroller.com/forum/showthread.php?t=626)
+*/
+
+
 
 //*****************************************************************************************************************************
 // BEGIN CODE
 //*****************************************************************************************************************************
 #include <avr/pgmspace.h>
 #include <PID_Beta6.h>
+#include <pin.h>
+#include <menu.h>
 
-//Output Pin Array
-//BTBOARD_3 uses only the first four pins and uses MUX for the remaining outputs
-byte outputPin[12] = { 0, 1, 3, 6, 7, 10, 12, 13, 14, 24, 18, 16 };
+#include "Config.h"
+#include "Enum.h"
+#include "HWProfile.h"
+#include "PVOut.h"
+#include "UI_LCD.h"
 
-#ifdef USE_MUX
-  boolean muxOuts[32] = {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-#else
-  boolean muxOuts[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+void(* softReset) (void) = 0;
+
+//**********************************************************************************
+// Compile Time Logic
+//**********************************************************************************
+
+#ifndef NUM_ZONES
+  #define NUM_ZONES PVOUT_COUNT
 #endif
 
-//Encoder Globals
-int encCount;
-byte encMin;
-byte encMax;
-byte enterStatus = 0;
+#define NUM_VLVCFGS NUM_ZONES * 2 + 1 //Per zone Heat and Cool + Global Alarm
 
-//8-byte Temperature Sensor Address x6 Sensors
-byte tSensor[NUM_ZONES + 1][8];
-float temp[NUM_ZONES + 1];
+#ifdef USEMETRIC
+  #define SETPOINT_MULT 50
+  #define SETPOINT_DIV 2
+#else
+  #define SETPOINT_MULT 100
+  #define SETPOINT_DIV 1
+#endif
 
-//Shared menuOptions Array
-char menuopts[45][20];
+#if COM_SERIAL0 == BTNIC || defined BTNIC_EMBEDDED
+  #define BTNIC_PROTOCOL
+#endif
 
-//Common Buffer
-char buf[11];
+#if defined BTPD_SUPPORT || defined UI_LCD_I2C || defined TS_ONEWIRE_I2C || defined BTNIC_EMBEDDED
+  #define USE_I2C
+#endif
+
+#ifdef USE_I2C
+  #include <Wire.h>
+#endif
+
+//**********************************************************************************
+// Globals
+//**********************************************************************************
+
+#ifdef DIGITAL_INPUTS
+  pin digInPin[6];
+#endif
+
+#ifdef HEARTBEAT
+  pin hbPin;
+#endif
+
+//8-byte Temperature Sensor Address for each zone
+byte tSensor[NUM_ZONES][8];
+int temp[NUM_ZONES];
+
+//Create the appropriate 'LCD' object for the hardware configuration (4-Bit GPIO, I2C)
+#if defined UI_LCD_4BIT
+  #include <LiquidCrystalFP.h>
+  
+  #ifndef UI_DISPLAY_SETUP
+    LCD4Bit LCD(LCD_RS_PIN, LCD_ENABLE_PIN, LCD_DATA4_PIN, LCD_DATA5_PIN, LCD_DATA6_PIN, LCD_DATA7_PIN);
+  #else
+    LCD4Bit LCD(LCD_RS_PIN, LCD_ENABLE_PIN, LCD_DATA4_PIN, LCD_DATA5_PIN, LCD_DATA6_PIN, LCD_DATA7_PIN, LCD_BRIGHT_PIN, LCD_CONTRAST_PIN);
+  #endif
+  
+#elif defined UI_LCD_I2C
+  LCDI2C LCD(UI_LCD_I2CADDR);
+#endif
+
+
+//Valve Variables
+unsigned long vlvConfig[NUM_VLVCFGS], actHeats, actCools;
+boolean buzzStatus;
+byte alarmStatus[NUM_ZONES];
+unsigned long coolTime[NUM_ZONES];
+byte coolMinOn[NUM_ZONES], coolMinOff[NUM_ZONES]; //Minimum On/Off time for coolOutput in minutes
+
+//Create the appropriate 'Valves' object for the hardware configuration (GPIO, MUX, MODBUS)
+#if defined PVOUT_TYPE_GPIO
+  #define PVOUT
+  PVOutGPIO Valves(PVOUT_COUNT);
+
+#elif defined PVOUT_TYPE_MUX
+  #define PVOUT
+  PVOutMUX Valves( 
+    MUX_LATCH_PIN,
+    MUX_DATA_PIN,
+    MUX_CLOCK_PIN,
+    MUX_ENABLE_PIN,
+    MUX_ENABLE_LOGIC
+  );
+  
+#elif defined PVOUT_TYPE_MODBUS
+  #define PVOUT
+  PVOutMODBUS Valves();
+
+#endif
+
+//Shared buffers
+char buf[20];
 
 //Output Globals
-double PIDInput[NUM_PID_OUTS], PIDOutput[NUM_PID_OUTS], setpoint[NUM_ZONES];
-byte PIDp[NUM_PID_OUTS], PIDi[NUM_PID_OUTS], PIDd[NUM_PID_OUTS], PIDCycle[NUM_PID_OUTS], hysteresis[NUM_ZONES];
-unsigned long cycleStart[NUM_PID_OUTS];
-boolean heatStatus[NUM_ZONES];
-boolean coolStatus[NUM_ZONES];
-boolean PIDEnabled[32];
-unsigned long coolOnTime[32];
+double setpoint[NUM_ZONES];
+byte hysteresis[NUM_ZONES];
+byte alarmThresh[NUM_ZONES];
 
-PID pid[NUM_PID_OUTS] = {
-  #if NUM_PID_OUTS > 0
-    PID(&PIDInput[0], &PIDOutput[0], &setpoint[0], 3, 4, 1),
-  #endif
-  #if NUM_PID_OUTS > 1
-    PID(&PIDInput[1], &PIDOutput[1], &setpoint[1], 3, 4, 1),
-  #endif
-  #if NUM_PID_OUTS > 2
-    PID(&PIDInput[2], &PIDOutput[2], &setpoint[2], 3, 4, 1),
-  #endif
-  #if NUM_PID_OUTS > 3
-    PID(&PIDInput[3], &PIDOutput[3], &setpoint[3], 3, 4, 1),
-  #endif
-  #if NUM_PID_OUTS > 4
-    PID(&PIDInput[4], &PIDOutput[4], &setpoint[4], 3, 4, 1),
-  #endif
-  #if NUM_PID_OUTS > 5
-    PID(&PIDInput[5], &PIDOutput[5], &setpoint[5], 3, 4, 1),
-  #endif
-  #if NUM_PID_OUTS > 6
-    PID(&PIDInput[6], &PIDOutput[6], &setpoint[6], 3, 4, 1),
-  #endif
-  #if NUM_PID_OUTS > 7
-    PID(&PIDInput[7], &PIDOutput[7], &setpoint[7], 3, 4, 1),
-  #endif
-  #if NUM_PID_OUTS > 8
-    PID(&PIDInput[8], &PIDOutput[8], &setpoint[8], 3, 4, 1),
-  #endif
-  #if NUM_PID_OUTS > 9
-    PID(&PIDInput[9], &PIDOutput[9], &setpoint[9], 3, 4, 1),
-  #endif
-  #if NUM_PID_OUTS > 10
-    PID(&PIDInput[10], &PIDOutput[10], &setpoint[10], 3, 4, 1),
-  #endif
-  #if NUM_PID_OUTS > 11
-    PID(&PIDInput[11], &PIDOutput[11], &setpoint[11], 3, 4, 1),
-  #endif 
-};
+//Full Cool -100, Idle 0, Full Heat 100
+int zonePwr[NUM_ZONES];
 
-//Timer Globals
-unsigned long timerValue = 0;
-unsigned long lastTime = 0;
-unsigned long timerLastWrite = 0;
-boolean timerStatus = 0;
-boolean alarmStatus = 0;
-
-char msg[25][21];
-byte msgField = 0;
-boolean msgQueued = 0;
-
-byte pwrRecovery;
-
-unsigned long lastLog;
-byte logCount;
+//Log Globals
+boolean logData = LOG_INITSTATUS;
 
 const char BT[] PROGMEM = "FermTroller";
-const char BTVER[] PROGMEM = "v1.0";
+const char BTVER[] PROGMEM = "2.0";
 
-//Log Message Classes
+//Log Strings
 const char LOGCMD[] PROGMEM = "CMD";
 const char LOGDEBUG[] PROGMEM = "DEBUG";
-const char LOGSYS[] PROGMEM = "SYSTEM";
-const char LOGGLB[] PROGMEM = "GLOBAL";
+const char LOGSYS[] PROGMEM = "SYS";
+const char LOGCFG[] PROGMEM = "CFG";
 const char LOGDATA[] PROGMEM = "DATA";
 
-//Other PROGMEM Repeated Strings
-const char PWRLOSSRECOVER[] PROGMEM = "PLR";
-const char INIT_EEPROM[] PROGMEM = "Initialize EEPROM";
-const char CANCEL[] PROGMEM = "Cancel";
-const char EXIT[] PROGMEM = "Exit";
-const char SPACE[] PROGMEM = " ";
-const char CONTINUE[] PROGMEM = "Continue";
-const char ABORT[] PROGMEM = "Abort";
-        
-#ifdef USEMETRIC
-const char VOLUNIT[] PROGMEM = "l";
-const char WTUNIT[] PROGMEM = "kg";
-const char TUNIT[] PROGMEM = "C";
-const char PUNIT[] PROGMEM = "kPa";
-#else
-const char VOLUNIT[] PROGMEM = "gal";
-const char WTUNIT[] PROGMEM = "lb";
-const char TUNIT[] PROGMEM = "F";
-const char PUNIT[] PROGMEM = "psi";
+//**********************************************************************************
+// Setup
+//**********************************************************************************
+
+void setup() {
+  #ifdef USE_I2C
+    Wire.begin(BT_I2C_ADDR);
+  #endif
+  
+  //Log initialization (Log.pde)
+  comInit();
+
+  pinInit();
+
+#ifdef PVOUT
+  #if defined PVOUT_TYPE_GPIO
+    #if PVOUT_COUNT >= 1
+      Valves.setup(0, VALVE1_PIN);
+    #endif
+    #if PVOUT_COUNT >= 2
+      Valves.setup(1, VALVE2_PIN);
+    #endif
+    #if PVOUT_COUNT >= 3
+      Valves.setup(2, VALVE3_PIN);
+    #endif
+    #if PVOUT_COUNT >= 4
+      Valves.setup(3, VALVE4_PIN);
+    #endif
+    #if PVOUT_COUNT >= 5
+      Valves.setup(4, VALVE5_PIN);
+    #endif
+    #if PVOUT_COUNT >= 6
+      Valves.setup(5, VALVE6_PIN);
+    #endif
+    #if PVOUT_COUNT >= 7
+      Valves.setup(6, VALVE7_PIN);
+    #endif
+    #if PVOUT_COUNT >= 8
+      Valves.setup(7, VALVE8_PIN);
+    #endif
+    #if PVOUT_COUNT >= 9
+      Valves.setup(8, VALVE9_PIN);
+    #endif
+    #if PVOUT_COUNT >= 10
+      Valves.setup(9, VALVEA_PIN);
+    #endif
+    #if PVOUT_COUNT >= 11
+      Valves.setup(10, VALVEB_PIN);
+    #endif
+    #if PVOUT_COUNT >= 12
+      Valves.setup(11, VALVEC_PIN);
+    #endif
+    #if PVOUT_COUNT >= 13
+      Valves.setup(12, VALVED_PIN);
+    #endif
+    #if PVOUT_COUNT >= 14
+      Valves.setup(13, VALVEE_PIN);
+    #endif
+    #if PVOUT_COUNT >= 15
+      Valves.setup(14, VALVEF_PIN);
+    #endif
+    #if PVOUT_COUNT >= 16
+      Valves.setup(15, VALVEG_PIN);
+    #endif
+  #endif
+  Valves.init();
 #endif
 
-//Custom LCD Chars
-const byte CHARFIELD[] PROGMEM = {B11111, B00000, B00000, B00000, B00000, B00000, B00000, B00000};
-const byte CHARCURSOR[] PROGMEM = {B11111, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
-const byte CHARSEL[] PROGMEM = {B10001, B11111, B00000, B00000, B00000, B00000, B00000, B00000};
-const byte BMP0[] PROGMEM = {B00000, B00000, B00000, B00000, B00011, B01111, B11111, B11111};
-const byte BMP1[] PROGMEM = {B00000, B00000, B00000, B00000, B11100, B11110, B11111, B11111};
-const byte BMP2[] PROGMEM = {B00001, B00011, B00111, B01111, B00001, B00011, B01111, B11111};
-const byte BMP3[] PROGMEM = {B11111, B11111, B10001, B00011, B01111, B11111, B11111, B11111};
-const byte BMP4[] PROGMEM = {B11111, B11111, B11111, B11111, B11111, B11111, B11111, B11111};
-const byte BMP5[] PROGMEM = {B01111, B01110, B01100, B00001, B01111, B00111, B00011, B11101};
-const byte BMP6[] PROGMEM = {B11111, B00111, B00111, B11111, B11111, B11111, B11110, B11001};
-const byte BMP7[] PROGMEM = {B11111, B11111, B11110, B11101, B11011, B00111, B11111, B11111};
-  
-void setup() {
-  logInit();
-  pinInit();
   tempInit();
-
+  
+  //Check for cfgVersion variable and update EEPROM if necessary (EEPROM.pde)
+  checkConfig();
+  
+  //Load global variable values stored in EEPROM (EEPROM.pde)
+  loadSetup();
+  
   //User Interface Initialization (UI.pde)
+  //Moving this to last of setup() to allow time for I2CLCD to initialize
   #ifndef NOUI
     uiInit();
   #endif
-
-  #ifdef BTPD_SUPPORT
-    btpdInit();
-  #endif
-
-  //Check for cfgVersion variable and format EEPROM if necessary
-  checkConfig();
   
-  //Load global variable values stored in EEPROM
-  loadSetup();
-
-  pidInit();
-  
-  if (pwrRecovery == 1) {
-    logPLR();
-    doMon();
-  } else {
-    splashScreen();
-  }
+  splashScreen();
+  screenInit(0);
+  unlockUI();
 }
+
+
+//**********************************************************************************
+// Loop
+//**********************************************************************************
 
 void loop() {
-  strcpy_P(menuopts[0], PSTR("Start"));
-  strcpy_P(menuopts[1], PSTR("System Setup"));
- 
-  byte lastoption = scrollMenu("FermTroller", 2, 0);
-  if (lastoption == 0) doMon();
-  else if (lastoption == 1) menuSetup();
-}
-
-void splashScreen() {
-  clearLCD();
-  lcdSetCustChar_P(0, BMP0);
-  lcdSetCustChar_P(1, BMP1);
-  lcdSetCustChar_P(2, BMP2);
-  lcdSetCustChar_P(3, BMP3);
-  lcdSetCustChar_P(4, BMP4);
-  lcdSetCustChar_P(5, BMP5);
-  lcdSetCustChar_P(6, BMP6);
-  lcdSetCustChar_P(7, BMP7);
-  lcdWriteCustChar(0, 1, 0);
-  lcdWriteCustChar(0, 2, 1);
-  lcdWriteCustChar(1, 0, 2); 
-  lcdWriteCustChar(1, 1, 3); 
-  lcdWriteCustChar(1, 2, 4); 
-  lcdWriteCustChar(2, 0, 5); 
-  lcdWriteCustChar(2, 1, 6); 
-  lcdWriteCustChar(2, 2, 7); 
-  printLCD_P(0, 4, BT);
-  printLCD_P(0, 16, BTVER);
-  printLCD_P(1, 10, PSTR("Build "));
-  printLCDLPad(1, 16, itoa(BUILD, buf, 10), 4, '0');
-  printLCD_P(3, 1, PSTR("www.brewtroller.com"));
-  while(!enterStatus) {
-    if (chkMsg()) rejectMsg(LOGGLB);
-    fermCore();
-  }
-  enterStatus = 0;
+  //User Interface Processing (UI.pde)
+  #ifndef NOUI
+    uiCore();
+  #endif
+  
+  //Core FermTroller process code (FermCore.pde)
+  fermCore();
 }
 

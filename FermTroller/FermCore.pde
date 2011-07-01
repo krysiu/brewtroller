@@ -1,5 +1,5 @@
-/*
-   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
+/*  
+   Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
     This file is part of BrewTroller.
 
@@ -16,28 +16,50 @@
     You should have received a copy of the GNU General Public License
     along with BrewTroller.  If not, see <http://www.gnu.org/licenses/>.
 
-FermTroller - Open Source Fermentation Computer
+
+BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
 Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 
 Documentation, Forums and more information available at http://www.brewtroller.com
-
-Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
-With Sanguino Software v1.4 (http://code.google.com/p/sanguino/downloads/list)
-using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrary)
-using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 */
 
 #include "Config.h"
 #include "Enum.h"
+#include "HWProfile.h"
 
 void fermCore() {
-  //Update Log (Log.pde)
-  updateLog();
-
-  //Check Temps (Temp.pde)
+  #ifdef HEARTBEAT
+    heartbeat();
+  #endif
+  
+  #ifndef NOUI
+    LCD.update();
+  #endif
+  
+  //Temps: Temp.pde
   updateTemps();
+ 
+  //Alarm logic: Outputs.pde
+  updateAlarm();
 
-  //Update Outputs (Outputs.pde)
-  updateOutputs();
+  //Outputs: Outputs.pde
+  processOutputs();
+  
+  //Set Valve Outputs based on active valve profiles (if changed): Outputs.pde
+  updateValves();
+  
+  updateCom();
 }
+
+#ifdef HEARTBEAT
+  unsigned long hbStart = 0;
+  void heartbeat() {
+    unsigned long now = millis();
+    if (now < hbStart) hbStart = 0; //Timer overflow occurred
+    if (now - hbStart > 750) {
+      hbPin.toggle();
+      hbStart = now;
+    }
+  }
+#endif
