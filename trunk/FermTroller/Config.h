@@ -6,158 +6,110 @@
 //*****************************************************************************************************************************
 
 //**********************************************************************************
+// Number of Zones (NUM_ZONES)
+//**********************************************************************************
+// The number of temperature zones to control. You may wish to add a zone for 
+// ambient temperature outside your fermentation/conditioning zones for monitoring
+// purposes. If this value is not specified NUM_ZONES defaults to the number of
+// outputs on the system as defined by PVOUT_COUNT in HWProfile.h
+//
+// Theoretical Maximum: 32 Zones
+//
+// #define NUM_ZONES 4
+//**********************************************************************************
+
+//**********************************************************************************
 // UNIT (Metric/US)
 //**********************************************************************************
 // By default BrewTroller will use US Units
 // Uncomment USEMETRIC below to use metric instead
-// 
-//#define USEMETRIC
-//**********************************************************************************
-
-//**********************************************************************************
-// BrewTroller Board Version
-//**********************************************************************************
-// The Brewtroller 3.0 board uses MUX instead of direct on-board outputs.
-// 
-//#define BTBOARD_22
-#define BTBOARD_3
-//**********************************************************************************
-
-//**********************************************************************************
-// ENCODER TYPE
-//**********************************************************************************
-// You must uncomment one and only one of the following ENCODER_ definitions
-// Use ENCODER_ALPS for ALPS and Panasonic Encoders
-// Use ENCODER_CUI for older CUI encoders
-// 
-#define ENCODER_ALPS
-//#define ENCODER_CUI
-//**********************************************************************************
-
-//**********************************************************************************
-// Number of Zones
-//**********************************************************************************
-// Theoretical maximum value is 32 zones
 //
-// Default for BTBOARD_2.x is 6 zones
-// Default for BTBOARD_3 is 8 zones
-// 
-//#define NUM_ZONES 6
+#define USEMETRIC
 //**********************************************************************************
 
 //**********************************************************************************
-// Number of Outputs
+// Setpoint Limits
 //**********************************************************************************
-// The total number of outputs used
-// 12 is the theoretical maximum for non-MUX
-// MUX enabled systems could support up to 32 outputs
-// 
-// Default for BTBOARD_2.x is 12 outputs
-// Default for BTBOARD_3 is 16 outputs
+// SETPOINT_MIN: Minimum allowed setpoint in hundreths of a degree
+// SETPOINT_MAX: Maximum allowed setpoint in hundreths of a degree
+
+#ifdef USEMETRIC
+  //Metric Limits
+  #define SETPOINT_MIN -500 //-5C
+  #define SETPOINT_MAX 4000 //40C
+#else
+  //Imperial Limits
+  #define SETPOINT_MIN 2000 //20F
+  #define SETPOINT_MAX 10000 //100F
+#endif  
+//**********************************************************************************
+
+//**********************************************************************************
+// Alarm Boot Up Delay
+//**********************************************************************************
+// ALARM_BOOTUP_DELAY: Ignore alarms for a period of time to allow initial
+// temperature conversion to complete
 //
-//#define NUM_OUTS 12
+#define ALARM_BOOTUP_DELAY 2000
 //**********************************************************************************
 
 //**********************************************************************************
-// Number of Cool/Heat Outputs
+// Buzzer modulation parameters
 //**********************************************************************************
-// The number of output pins dedicated to heat
-// Increase to trade cool outputs for heat.
-// Decrease to trade heat outputs for cool.
-// If there are fewer heat or cool outputs than zones, the outputs will be applied
-// starting with Zone 1. Higher zones will lack those outputs.
-// 
-// Default for BTBOARD_2.x is 6 (6+6)
-// Default for BTBOARD_3 is 8 (8+8)
+// These parameters allow the alarm sound to be modulated. 
+// The modulation occurs when the BUZZER_CYCLE_TIME value is larger than the BUZZER_ON_TIME
+// When the BUZZER_CYCLE_TIME is zero there is no modulation so the buzzer will buzz  
+// a steady sound
 //
-// Examples:
-//   NUM_ZONES 6, NUM_OUTS 12, COOLPIN_OFFSET 6 gives 6 zones with heat on 1-6 and cool on 1-6 (Default)
-//   NUM_ZONES 8, NUM_OUTS 12, COOLPIN_OFFSET 8 gives 8 zones with heat on 1-8 and cool on 1-4
-//   NUM_ZONES 8, NUM_OUTS 12, COOLPIN_OFFSET 4 gives 8 zones with heat on 1-4 and cool on 1-8
-//   NUM_ZONES 12, NUM_OUTS 12, COOLPIN_OFFSET 0 gives 12 zones with cool on 1-12
-//   NUM_ZONES 12, NUM_OUTS 12, COOLPIN_OFFSET 12 gives 12 zones with heat on 1-12
+//#define BUZZER_CYCLE_TIME 1200 //the value is in milliseconds for the ON and OFF buzzer cycle
+//#define BUZZER_ON_TIME 500     //the duration in milliseconds where the alarm will stay on
+//**********************************************************************************
+
+
+//**********************************************************************************
+// Serial0 Communication Options
+//**********************************************************************************
+// COM_SERIAL0: Specifies the communication type being used (Pick One):
+//  ASCII  = Original BrewTroller serial command protocol used with BTRemote and BTLog
+//  BTNIC  = BTnic (Lighterweight implementation of ASCII protocol using single-byte
+//           commands. This protocol is used with BTnic Modules and software for
+//           network connectivity.
+//  BINARY = Binary Messages
+//**********************************************************************************
+
+#define COM_SERIAL0  ASCII
+//#define COM_SERIAL0  BTNIC
+//#define COM_SERIAL0 BINARY
+
+// BAUD_RATE: The baud rate for the Serial0 connection. Previous to BrewTroller 2.0
+// Build 419 this was hard coded to 9600. Starting with Build 419 the default rate
+// was increased to 115200 but can be manually set using this compile option.
+#define SERIAL0_BAUDRATE 115200
+
+
+// ** ASCII Protocol Options:
 //
-//#define COOLPIN_OFFSET 6
-//**********************************************************************************
-
-//**********************************************************************************
-// Number of PID Outputs
-//**********************************************************************************
-//WARNING: A value greater than 5 on 3.x boards will conflict with MUX outputs.
-//Output pin 5 is not connected on the 3.x board. A value of 0-4 is recommended for 3.x boards.
-//Theoretical limit for is 12 on 2.x boards, matching NUM_OUTS. 
-//PID is only used on heat so a value > 6 would only be useful if you were using > 6 zones.
-// 
-// Default for BTBOARD_2.x is 6
-// Default for BTBOARD_3 is 4
+// COMSCHEMA: Specifies the schema for a particular type
+//  ASCII Messages
+//      0 - Original BT 2.0 Messages
+//      1 - BT 2.1 Enhanced ASCII
+//       Steam, Calc. Vol & Temp, BoilPower, Grain Temp, Delay Start, MLT Heat Source
+#define COMSCHEMA 0
 //
-//#define NUM_PID_OUTS 6
-//**********************************************************************************
-
-//**********************************************************************************
-// Enable MUX
-//**********************************************************************************
-// 3.x boards use MUX by default. Use this setting to enable MUX on 2.x boards
-//
-//#define USE_MUX
-//**********************************************************************************
-
-//**********************************************************************************
-// OneWire Temperature Sensor Options
-//**********************************************************************************
-// TS_ONEWIRE: Enables use of OneWire Temperature Sensors (Future logic may
-// support alternatives temperature sensor options.)
-#define TS_ONEWIRE
-
-// TS_ONEWIRE_PPWR: Specifies whether parasite power is used for OneWire temperature
-// sensors. Parasite power allows sensors to obtain their power from the data line
-// but significantly increases the time required to read the temperature (94-750ms
-// based on resolution versus 10ms with dedicated power).
-#define TS_ONEWIRE_PPWR 1
-
-// TS_ONEWIRE_RES: OneWire Temperature Sensor Resolution (9-bit - 12-bit). Valid
-// options are: 9, 10, 11, 12). Unless parasite power is being used the recommended
-// setting is 12-bit (for DS18B20 sensors). DS18S20 sensors can only operate at a max
-// of 9 bit. When using parasite power decreasing the resolution reduces the 
-// temperature conversion time: 
-//   12-bit (0.0625C / 0.1125F) = 750ms 
-//   11-bit (0.125C  / 0.225F ) = 375ms 
-//   10-bit (0.25C   / 0.45F  ) = 188ms 
-//    9-bit (0.5C    / 0.9F   ) =  94ms   
-#define TS_ONEWIRE_RES 9
-//**********************************************************************************
-
-//**********************************************************************************
-// LOG INTERVAL
-//**********************************************************************************
-// Specifies how often data is logged via serial in milliseconds. If real time
-// display of data is being used a smaller interval is best (1000 ms). A larger
-// interval can be used for logging applications to reduce log file size (5000 ms).
-
+// LOG_INTERVAL: Specifies how often data is logged via serial in milliseconds. If
+// real time display of data is being used a smaller interval is best (1000 ms). A
+// larger interval can be used for logging applications to reduce log file size 
+// (5000 ms).
 #define LOG_INTERVAL 2000
-//**********************************************************************************
+//
+// LOG_INITSTATUS: Sets whether logging is enabled on bootup. Log status can be
+// toggled using the SET_LOGSTATUS command.
+#define LOG_INITSTATUS 0
 
 //**********************************************************************************
-// LCD Timing Fix
+// BTnic Embedded Module
 //**********************************************************************************
-// Some LCDs seem to have issues with displaying garbled characters but introducing
-// a delay seems to help or resolve completely. You may comment out the following
-// lines to remove this delay between a print of each character.
-//
-//#define LCD_DELAY_CURSOR 60
-//#define LCD_DELAY_CHAR 60
-//**********************************************************************************
-
-//**********************************************************************************
-// Cool Cycle Limit
-//**********************************************************************************
-// When using cool outputs for devices with compressors like refrigerators you may
-// need to specify a minimum delay before enabling the output. This is intended to
-// eliminate quick cycling of the output On/Off. Specify a limit in seconds for each
-// zone in the array below. Maximum value is 65535 seconds or approximately 18 hrs.
-//
-unsigned int coolDelay[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-//**********************************************************************************
+//#define BTNIC_EMBEDDED
 
 
 //**********************************************************************************
@@ -173,25 +125,32 @@ unsigned int coolDelay[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 // BTPD_SUPPORT: Enables use of BrewTroller PID Display devices on I2C bus
 //#define BTPD_SUPPORT
 
-// BTPD_INTERVAL: Specifies how often BTPD devices are updated in milliseconds.
+// BTPD_INTERVAL: Specifies how often BTPD devices are updated in milliseconds
 #define BTPD_INTERVAL 1000
-
-// BTPD_ZONEx: Displays zone temp and setpoint on specified channel
-//#define BTPD_ZONE1 0x20
-//#define BTPD_ZONE2 0x21
-//#define BTPD_ZONE3 0x22
-//#define BTPD_ZONE4 0x23
-//#define BTPD_ZONE5 0x24
-//#define BTPD_ZONE6 0x25
-//#define BTPD_ZONE7 0x26
-//#define BTPD_ZONE8 0x27
+//**********************************************************************************
 
 //**********************************************************************************
-// DEBUG
+
 //**********************************************************************************
-// Enables Serial Out with Additional Debug Data
+// UI Support
+//**********************************************************************************
+// NOUI: Disable built-in user interface 
+// UI_LCD_I2C: Enables the I2C LCD interface instead of the 4 bit interface
 //
-//#define DEBUG
+//#define NOUI
+//#define UI_LCD_I2C
+//**********************************************************************************
+
+//**********************************************************************************
+// UI: ENCODER TYPE
+//**********************************************************************************
+// You must uncomment one and only one of the following ENCODER_ definitions
+// Use ENCODER_ALPS for ALPS and Panasonic Encoders
+// Use ENCODER_CUI for older CUI encoders
+//
+#define ENCODER_TYPE ALPS
+//#define ENCODER_TYPE CUI
 //**********************************************************************************
 
 #endif
+

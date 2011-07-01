@@ -1,5 +1,5 @@
 /*  
-   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
+   Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
     This file is part of BrewTroller.
 
@@ -23,9 +23,12 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
+#include "wiring_private.h"
 
 #include "Config.h"
 #include "Enum.h"
+#include "HWProfile.h"
+#include "PVOut.h"
 
 // set what the PID cycle time should be based on how fast the temp sensors will respond
 #if TS_ONEWIRE_RES == 12
@@ -42,164 +45,162 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #endif
 
 void pinInit() {
-  pinMode(ENCA_PIN, INPUT);
-  pinMode(ENCB_PIN, INPUT);
-  pinMode(ENTER_PIN, INPUT);
-  pinMode(ALARM_PIN, OUTPUT);
-  for (byte i = 0; i < 12; i++) if (!muxOuts[i]) pinMode(outputPin[i], OUTPUT);
- 
-  #ifdef USE_MUX
-    pinMode(MUX_LATCH_PIN, OUTPUT);
-    pinMode(MUX_CLOCK_PIN, OUTPUT);
-    pinMode(MUX_DATA_PIN, OUTPUT);
-    pinMode(MUX_OE_PIN, OUTPUT);
+  #ifdef HEARTBEAT
+    hbPin.setup(HEARTBEAT_PIN, OUTPUT);
   #endif
-  resetOutputs();
-}
-
-void pidInit() {
-  for (byte i = 0; i < NUM_PID_OUTS; i++) {
-      pid[i].SetInputLimits(0, 255);
-      pid[i].SetOutputLimits(0, PIDCycle[i] * 1000);
-      pid[i].SetTunings(PIDp[i], PIDi[i], PIDd[i]);
-  }
+  
+  #ifdef DIGITAL_INPUTS
+    digInPin[0].setup(DIGIN1_PIN, INPUT);
+    digInPin[1].setup(DIGIN2_PIN, INPUT);
+    digInPin[2].setup(DIGIN3_PIN, INPUT);
+    digInPin[3].setup(DIGIN4_PIN, INPUT);
+    digInPin[4].setup(DIGIN5_PIN, INPUT);
+  #endif
 }
 
 void resetOutputs() {
-  for (byte i = 0; i < NUM_ZONES; i++) {
-    setpoint[i] = 0;
-    heatStatus[i] = 0;
-    coolStatus[i] = 0;
-    if (COOLPIN_OFFSET > i) {
-      if (!muxOuts[i]) digitalWrite(outputPin[i], LOW);
-    }
-    if (NUM_OUTS - COOLPIN_OFFSET > i) {
-      if (!muxOuts[i + COOLPIN_OFFSET]) digitalWrite(outputPin[i + COOLPIN_OFFSET], LOW);
-    }
-    #ifdef USE_MUX
-      digitalWrite(MUX_OE_PIN, HIGH);
-      //ground latchPin and hold low for as long as you are transmitting
-      digitalWrite(MUX_LATCH_PIN, 0);
-      //clear everything out just in case to prepare shift register for bit shifting
-      digitalWrite(MUX_DATA_PIN, 0);
-      digitalWrite(MUX_CLOCK_PIN, 0);
-
-      //for each bit in the long myDataOut
-      for (byte i = 32; i > 0; i--)  {
-        digitalWrite(MUX_CLOCK_PIN, 0);
-        //create bitmask to grab the bit associated with our counter i and set data pin accordingly (NOTE: 32 - i causes bits to be sent most significant to least significant)
-        digitalWrite(MUX_DATA_PIN, 0);
-        //register shifts bits on upstroke of clock pin  
-        digitalWrite(MUX_CLOCK_PIN, 1);
-        //zero the data pin after shift to prevent bleed through
-        digitalWrite(MUX_DATA_PIN, 0);
-      }
-
-      //stop shifting
-      digitalWrite(MUX_CLOCK_PIN, 0);
-      digitalWrite(MUX_LATCH_PIN, 1);
-      //Enable outputs
-      digitalWrite(MUX_OE_PIN, LOW);
-    #endif
-  }
+  for (byte zone = 0; zone < NUM_ZONES; zone++) setpoint[zone] = NO_SETPOINT;
+  actHeats = actCools = 0;
+  updateValves();
 }
 
-void updateOutputs() {
-  //Set doMUXUpdate to 1 to force MUX update on each cycle.
-  boolean doMUXUpdate = 0;
-
-  //Process Outputs
-  for (byte i = 0; i < NUM_ZONES; i++) {
-    if (COOLPIN_OFFSET > i) {
-      //Process PID Heat Outputs
-      if (PIDEnabled[i]) {
-        if (temp[i] == -32768 || coolStatus[i]) {
-          pid[i].SetMode(MANUAL);
-          PIDOutput[i] = 0;
-        } else {
-          pid[i].SetMode(AUTO);
-          PIDInput[i] = temp[i];
-          pid[i].Compute();
-        }
-        if (cycleStart[i] == 0) cycleStart[i] = millis();
-        if (millis() - cycleStart[i] > PIDCycle[i] * 1000) cycleStart[i] += PIDCycle[i] * 1000;
-        if (PIDOutput[i] > millis() - cycleStart[i]) digitalWrite(outputPin[i], HIGH); else digitalWrite(outputPin[i], LOW);
-      } 
-
-      //Process On/Off Heat
-      if (heatStatus[i]) {
-        if (temp[i] == -32768 || temp[i] >= setpoint[i]) {
-          if (!PIDEnabled[i]) {
-            if (!muxOuts[i]) digitalWrite(outputPin[i], LOW);
-              else doMUXUpdate = 1;
-          }
-          heatStatus[i] = 0;
-        }
-      } else { 
-        if (temp[i] != -32768 && ((float)(setpoint[i] - temp[i]) >= (float) hysteresis[i] / 10.0)) {
-          if (!PIDEnabled[i]) {
-            if (!muxOuts[i]) digitalWrite(outputPin[i], HIGH);
-              else doMUXUpdate = 1;
-          }
-          heatStatus[i] = 1;
+void processOutputs() {
+  for (byte zone = 0; zone < NUM_ZONES; zone++) {
+    if (setpoint[zone] == NO_SETPOINT) {
+      zonePwr[zone] = 0;
+      eventHandler(EVENT_NALARM_TEMPHOT, zone); //Clear TEMPHOT Alarm
+      eventHandler(EVENT_NALARM_TEMPCOLD, zone); //Clear TEMPCOLD Alarm
+      eventHandler(EVENT_NALARM_TSENSOR, zone); //Clear TSENSOR Alarm
+    }
+    else if (temp[zone] == BAD_TEMP && !bitSet(alarmStatus[zone], ALARM_STATUS_TSENSOR)) {
+      eventHandler(EVENT_ALARM_TSENSOR, zone);
+      zonePwr[zone] = 0;
+    }
+    else {
+      if (bitRead(alarmStatus[zone], ALARM_STATUS_TSENSOR)) eventHandler(EVENT_NALARM_TSENSOR, zone); //Clear TSENSOR Alarm
+      
+      if (temp[zone] - setpoint[zone] >= alarmThresh[zone] * 10) {
+       if (!bitRead(alarmStatus[zone], ALARM_STATUS_TEMPHOT)) eventHandler(EVENT_ALARM_TEMPHOT, zone);
+      }
+      else if (bitRead(alarmStatus[zone], ALARM_STATUS_TEMPHOT)) eventHandler(EVENT_NALARM_TEMPHOT, zone); //Clear TEMPHOT Alarm
+  
+      if (setpoint[zone] - temp[zone] >= alarmThresh[zone] * 10) {
+       if (!bitRead(alarmStatus[zone], ALARM_STATUS_TEMPCOLD)) eventHandler(EVENT_ALARM_TEMPCOLD, zone);
+      }
+      else if (bitRead(alarmStatus[zone], ALARM_STATUS_TEMPCOLD)) eventHandler(EVENT_NALARM_TEMPCOLD, zone); //Clear TEMPCOLD Alarm
+      
+      if (zonePwr[zone] > 0 && temp[zone] >= setpoint[zone]) zonePwr[zone] = 0; //Turn off heat
+      else if(zonePwr[zone] < 0 && temp[zone] <= setpoint[zone]) {
+        //Check for minimum cool on period
+        unsigned long now = millis();
+        if (now < coolTime[zone]) coolTime[zone] = 0; //Timer overflow occurred
+        if (now - coolTime[zone] >= (unsigned long) coolMinOn[zone] * 60000) {
+          zonePwr[zone] = 0; //Turn off cool
+          coolTime[zone] = now; //Set timer for minimum off period
         }
       }
+      
+      if (temp[zone] >= setpoint[zone] + (int)hysteresis[zone] * 10) {
+        //Check for minimum cool off period
+        unsigned long now = millis();
+        if (now < coolTime[zone]) coolTime[zone] = 0; //Timer overflow occurred
+        if (now - coolTime[zone] >= (unsigned long) coolMinOff[zone] * 60000) {
+          zonePwr[zone] = -100; //Cool On
+          coolTime[zone] = now; //Set timer for minimum on period
+        }
+      }
+      
+      if (temp[zone] <= setpoint[zone] - (int)hysteresis[zone] * 10) zonePwr[zone] = 100;  //Heat On
     }
     
-    if (NUM_OUTS - COOLPIN_OFFSET > i) {
-      //Process On/Off Cool
-      if (coolStatus[i]) {
-        if (temp[i] == -32768 || temp[i] <= setpoint[i] || setpoint[i] == 0) {
-          if (!muxOuts[i + COOLPIN_OFFSET]) digitalWrite(outputPin[i + COOLPIN_OFFSET], LOW);
-            else doMUXUpdate = 1;
-          coolStatus[i] = 0;
-        }
-        coolOnTime[i] = millis() + coolDelay[i] * 1000;
-      } else {
-        if (temp[i] != -32768 && setpoint[i] != 0 && (float)(temp[i] - setpoint[i]) >= (float) hysteresis[i] / 10.0) {
-          //Check Cool Off Time Limit
-          if (coolOnTime[i] <= millis()) {
-            if (!muxOuts[i + COOLPIN_OFFSET]) digitalWrite(outputPin[i + COOLPIN_OFFSET], HIGH);
-              else doMUXUpdate = 1;
-            coolStatus[i] = 1;
-            coolOnTime[i] = millis() + coolDelay[i] * 1000;
-          }
-        }
+    if (zonePwr[zone] < 1) bitClear(actHeats, zone); else bitSet(actHeats, zone);
+    if (zonePwr[zone] > -1) bitClear(actCools, zone); else bitSet(actCools, zone);
+  }
+}
+
+unsigned long prevHeats, prevCools;
+boolean prevBuzz;
+
+void updateValves() {
+  
+Serial.print(actHeats, BIN);
+Serial.print('\t');
+Serial.print(actCools, BIN);
+Serial.print('\t');
+Serial.println(buzzStatus, DEC);
+
+  if (actHeats != prevHeats || actCools != prevCools || buzzStatus != prevBuzz) {
+    Valves.set(computeValveBits());
+    prevHeats = actHeats;
+    prevCools = actCools;
+    prevBuzz = buzzStatus;
+  }
+}
+
+unsigned long computeValveBits() {
+  unsigned long vlvBits = 0;
+  for (byte i = 0; i < NUM_ZONES; i++) {
+    if (bitRead(actHeats, i)) vlvBits |= vlvConfig[i];
+    if (bitRead(actCools, i)) vlvBits |= vlvConfig[NUM_ZONES + i];
+  }
+  if (buzzStatus) vlvBits |= vlvConfig[VLV_ALARM];
+  return vlvBits;
+}
+
+boolean vlvConfigIsActive(byte profile) {
+  //An empty valve profile cannot be active
+  if (!vlvConfig[profile]) return 0;
+  if (profile < NUM_ZONES) return bitRead(actHeats, profile);
+  else return bitRead(actCools, profile);
+}
+
+boolean isAlarmAllZones() {
+  for (byte zone = 0; zone < NUM_ZONES; zone++) if (alarmStatus[zone]) return 1;
+  return 0;
+}
+
+void updateAlarm() {
+  for (byte zone = 0; zone < NUM_ZONES; zone++) {
+     {
+      if (alarmStatus[zone] & ALARM_ACKBITS) {
+        setBuzzer(1); //ACK Required bit(s) set; sound alarm
+        return;
       }
     }
   }
-  
-#ifdef USE_MUX
-  if (doMUXUpdate) {
-    //Disable outputs
-    digitalWrite(MUX_OE_PIN, HIGH);
-    //ground latchPin and hold low for as long as you are transmitting
-    digitalWrite(MUX_LATCH_PIN, LOW);
-    //clear everything out just in case to prepare shift register for bit shifting
-    digitalWrite(MUX_DATA_PIN, LOW);
-    digitalWrite(MUX_CLOCK_PIN, LOW);
-
-    //for each bit in the long myDataOut
-    for (byte i = 32; i > 0; i--)  {
-      digitalWrite(MUX_CLOCK_PIN, LOW);
-      //create bitmask to grab the bit associated with our counter i and set data pin accordingly (NOTE: 32 - i causes bits to be sent most significant to least significant)
-      if (muxOuts[i - 1]) {
-        if (i - 1 < COOLPIN_OFFSET) digitalWrite(MUX_DATA_PIN, heatStatus[i - 1]);
-        else if (i - 1 < NUM_OUTS) digitalWrite(MUX_DATA_PIN, coolStatus[i - 1 - COOLPIN_OFFSET]);
-        else digitalWrite(MUX_DATA_PIN, LOW);
-      } else digitalWrite(MUX_DATA_PIN, LOW);
-      //register shifts bits on upstroke of clock pin  
-      digitalWrite(MUX_CLOCK_PIN, HIGH);
-      //zero the data pin after shift to prevent bleed through
-      digitalWrite(MUX_DATA_PIN, LOW);
-    }
-
-    //stop shifting
-    digitalWrite(MUX_CLOCK_PIN, LOW);
-    digitalWrite(MUX_LATCH_PIN, HIGH);
-    //Enable outputs
-    digitalWrite(MUX_OE_PIN, LOW);
-  }
-#endif
+  setBuzzer(0); //Made it this far; clear alarm
 }
 
+//This function allow to modulate the sound of the buzzer when the alarm is ON. 
+//The modulation varies according the custom parameters.
+//The modulation occurs when the buzzerCycleTime value is larger than the buzzerOnDuration
+void setBuzzer(boolean alarmON) {
+  if (alarmON) {
+    #ifdef BUZZER_CYCLE_TIME
+      //Alarm status is ON, Buzzer will go ON or OFF based on modulation.
+      //The buzzer go OFF for every moment passed in the OFF window (low duty cycle). 
+      unsigned long now = millis(); //What time is it? :-))      
+      
+      if (now() < buzzerCycleStart) buzzerCycleStart = 0; //Timer overflow occurred
+      
+      //Now, by elimation, identify scenarios where the buzzer will go off. 
+      if (now < buzzerCycleStart + BUZZER_CYCLE_TIME) {
+        //At this moment ("now"), the buzzer is in the OFF window (low duty cycle). 
+        if (now > buzzerCycleStart + BUZZER_ON_TIME) {
+          //At this moment ("now"), the buzzer is NOT within the ON window (duty cycle) allowed inside the buzzer cycle window.
+          //Set or keep the buzzer off
+          buzzStatus = 0;
+        }
+      } else {
+        //The buzzer go ON for every moment where buzzerCycleStart < "now" < buzzerCycleStart + buzzerOnDuration
+        buzzStatus = 1; //Set the buzzer On 
+        buzzerCycleStart = now; //Set a new reference time for the begining of the buzzer cycle.
+      }
+    #else
+      buzzStatus = 1; //Set the buzzer On 
+    #endif
+  } else {
+    //Alarm status is OFF, Buzzer goes Off
+    buzzStatus = 0;
+  }
+}

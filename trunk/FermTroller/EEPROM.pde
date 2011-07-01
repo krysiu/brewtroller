@@ -1,5 +1,5 @@
-/*
-   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
+/*  
+   Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
     This file is part of BrewTroller.
 
@@ -16,176 +16,242 @@
     You should have received a copy of the GNU General Public License
     along with BrewTroller.  If not, see <http://www.gnu.org/licenses/>.
 
-FermTroller - Open Source Fermentation Computer
+
+BrewTroller - Open Source Brewing Computer
 Software Lead: Matt Reba (matt_AT_brewtroller_DOT_com)
 Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 
 Documentation, Forums and more information available at http://www.brewtroller.com
-
-Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
-With Sanguino Software v1.4 (http://code.google.com/p/sanguino/downloads/list)
-using PID Library v0.6 (Beta 6) (http://www.arduino.cc/playground/Code/PIDLibrary)
-using OneWire Library (http://www.arduino.cc/playground/Learning/OneWire)
 */
 
 #include "Config.h"
 #include "Enum.h"
-
 #include <avr/eeprom.h>
 #include <EEPROM.h>
 
-void saveSetup() {
-  //Option Array
-  //EEPROM bytes 0-3 (was 57)
-  //Bits 1, 2, 4, 8, 16, 32, 64, 128 = Pid Enabled for Zones 1-6
-  for (byte b = 0; b < 4; b++) {
-    byte options = B00000000;
-    for (byte i = 0; i < 8; i++) if (PIDEnabled[b * 8 + i]) options |= 1<<i;
-    EEPROM.write(b, options);
-  }
-
-  //88-96 Reserved for Power Recovery
-
-  //Walk through the tSensor elements and store 8-byte address of each
-  //Theoretical maximum of 32 zones + ambient
-  //EEPROM bytes 100-363 (Was 0-55)
-  for (byte i = 0; i < NUM_ZONES + 1; i++) PROMwriteBytes(100 + i * 8, tSensor[i], 8);
-
-  
-  
-  //Output Settings for Zones 
-  //EEPROM bytes 400-559 (Was 58-87)
-  for (byte i = 0; i < NUM_ZONES; i++) {
-    if (i < NUM_PID_OUTS) {
-      EEPROM.write(i * 5 + 400, PIDp[i]);
-      EEPROM.write(i * 5 + 401, PIDi[i]);
-      EEPROM.write(i * 5 + 402, PIDd[i]);
-      EEPROM.write(i * 5 + 403, PIDCycle[i]);
-    }
-    EEPROM.write(i * 5 + 404, hysteresis[i]);
-  }
-  
-  //600-631 CoolOffTime counters
-  
-  //2046 FermTroller FingerPrint
-  //2047 EEPROM Version
-}
-
 void loadSetup() {
-  //Option Array
-  // EEPROM bytes 0-3 (was 57)
-  //Bits 1, 2, 4, 8, 16, 32, 64, 128 = Pid Enabled for Zones 1-6
-  for (byte b = 0; b < 4; b++) {
-    byte options = EEPROM.read(b);
-    for (byte i = 0; i < 8; i++) { 
-      if (b * 8 + i < NUM_PID_OUTS) {
-        if (options & 1<<i) PIDEnabled[b * 8 + i] = 1; else PIDEnabled[b * 8 + i] = 0;
-      } else PIDEnabled[b * 8 + i] = 0;
-    }
+  //**********************************************************************************
+  // TSensors: 8 bytes per zone (Reserve for 32 zones: 0-255)
+  //**********************************************************************************
+  PROMreadBytes(0, *tSensor, NUM_ZONES * 8);
+ 
+ 
+  //**********************************************************************************
+  // Per Zone Settings
+  //**********************************************************************************
+  for (byte zone = 0; zone < NUM_ZONES; zone++) {
+
+    //********************************************************************************
+    // Hysteresis (256 - 287)
+    //********************************************************************************
+    hysteresis[zone] = EEPROM.read(256 + zone);
+
+    //********************************************************************************
+    // Alarm Threshhold (288 - 319)
+    //********************************************************************************
+    alarmThresh[zone] = EEPROM.read(288 + zone);
+
+    //********************************************************************************
+    // Alarm Status (320 - 351)
+    //********************************************************************************
+    alarmStatus[zone] = EEPROM.read(320 + zone);
+
+    //********************************************************************************
+    // Minimum Cool Output Active Period (352 - 383)
+    //********************************************************************************
+    coolMinOn[zone] = EEPROM.read(352 + zone);
+    
+    //********************************************************************************
+    // Minimum Cool Output Inactive Period (384 - 415)
+    //********************************************************************************
+    coolMinOff[zone] = EEPROM.read(384 + zone);
+
+    //********************************************************************************
+    // Setpoints: 2 Bytes per zone (640-703)
+    //********************************************************************************
+    setpoint[zone] = PROMreadInt(640 + zone * 2);
   }
-
-  //Power Recovery(88)
-  pwrRecovery = EEPROM.read(88);
   
-  //Setpoints
-  //EEPROM bytes 4-35 (Was 89-94)
-  for (byte i = 0; i < NUM_ZONES; i++) setpoint[i] = EEPROM.read(4 + i) * 100;
-  
-  //95 - 96 Timer Recovery
-
-
-  //Walk through the tSensor elements and store 8-byte address of each
-  //Theoretical maximum of 32 zones + ambient
-  //EEPROM bytes 100-363 (Was 0-55)
-  for (byte i = 0; i < NUM_ZONES + 1; i++) {
-    PROMreadBytes(100 + i * 8, tSensor[i], 8);
-    logTSensor(i);
-  }
-  
-  //Output Settings for Zones 
-  //EEPROM bytes 400-559 (Was 58-87)
-  for (byte i = 0; i < NUM_ZONES; i++) {
-    if (i < NUM_PID_OUTS) {
-      PIDp[i] = EEPROM.read(i * 5 + 400);
-      PIDi[i] = EEPROM.read(i * 5 + 401);
-      PIDd[i] = EEPROM.read(i * 5 + 402);
-      PIDCycle[i] = EEPROM.read(i * 5 + 403);
-    }
-    hysteresis[i] = EEPROM.read(i * 5 + 404);
-    logOSet(i);
-  }
-
-  //2046 FermTroller FingerPrint
-  //2047 EEPROM Version
+  //**********************************************************************************
+  // Valve Profiles (705-964): 4 Bytes per profile, 2 profiles per zone plus alarm profile
+  //**********************************************************************************
+  loadVlvConfigs();
 }
 
-void PROMwriteBytes(int addr, byte bytes[], byte numBytes) {
-  for (byte i = 0; i < numBytes; i++) {
-    EEPROM.write(addr + i, bytes[i]);
-  }
+void loadVlvConfigs() {
+  eeprom_read_block(&vlvConfig, (unsigned char *) 705, 4 * (NUM_ZONES * 2 + 1));
 }
 
-void PROMreadBytes(int addr, byte bytes[], byte numBytes) {
-  for (byte i = 0; i < numBytes; i++) {
-    bytes[i] = EEPROM.read(addr + i);
-  }
+//*****************************************************************************************************************************
+// Individual EEPROM Get/Set Variable Functions
+//*****************************************************************************************************************************
+
+//**********************************************************************************
+// TSensors: 8 bytes per zone (Reserve for 32 zones: 0-255)
+//**********************************************************************************
+void setTSAddr(byte zone, byte addr[8]) {
+  memcpy(tSensor[zone], addr, 8);
+  PROMwriteBytes(zone * 8, addr, 8);
 }
 
-void checkConfig() {
+
+//**********************************************************************************
+// Hysteresis (256 - 287)
+//**********************************************************************************
+void setHysteresis(byte output, byte value) {
+  hysteresis[output] = value;
+  EEPROM.write(256 + output, value);
+}
+
+//**********************************************************************************
+// Alarm Threshhold (288 - 319)
+//**********************************************************************************
+void setAlarmThresh(byte output, byte value) {
+  alarmThresh[output] = value;
+  EEPROM.write(288 + output, value);
+}
+
+//**********************************************************************************
+// Alarm Status (320 - 351)
+//**********************************************************************************
+void setAlarmStatus(byte zone, byte value) {
+  alarmStatus[zone] = value;
+  saveAlarmStatus(zone);
+}
+
+void saveAlarmStatus(byte zone) {
+  EEPROM.write(320 + zone, alarmStatus[zone]);
+}
+
+//********************************************************************************
+// Minimum Cool Output Active Period (352 - 383)
+//********************************************************************************
+void setCoolMinOn(byte zone, byte value) {
+  coolMinOn[zone] = value;
+  EEPROM.write(352 + zone, value);
+}
+
+//********************************************************************************
+// Minimum Cool Output Inactive Period (384 - 415)
+//********************************************************************************
+void setCoolMinOff(byte zone, byte value) {
+  coolMinOff[zone] = value;
+  EEPROM.write(384 + zone, value);
+}
+
+//*****************************************************************************************************************************
+// Power Loss Recovery Functions
+//*****************************************************************************************************************************
+
+//**********************************************************************************
+// Setpoints: 2 Bytes per zone (640-703)
+//**********************************************************************************
+void setSetpoint(byte zone, int value) {
+  setpoint[zone] = value;
+  PROMwriteInt(640 + zone * 2, value);
+}
+
+//*****************************************************************************************************************************
+// Valve Profiles (705-964) 4 Bytes per profile, 2 profiles per zone plus alarm profile
+//*****************************************************************************************************************************
+void setValveCfg(byte profile, unsigned long value) {
+  vlvConfig[profile] = value;
+  PROMwriteLong(705 + profile * 4, value);
+}
+
+//*****************************************************************************************************************************
+// Zone names (965 - 1540) 18 bytes per zone (17 chars + NULL)
+//*****************************************************************************************************************************
+char* getZoneName(byte zone, char name[]) {
+  memset(name, ' ', 17);
+  name[17] = '\0';
+  for (byte chr = 0; chr < 18; chr++) name[chr] = EEPROM.read(965 + zone * 18 + chr);
+  return name;
+}
+
+void setZoneName(byte zone, char name[]) {
+  for (byte chr = 0; chr < 18; chr++) EEPROM.write(965 + zone * 18 + chr, name[chr]);
+}
+
+
+
+
+//**********************************************************************************
+//FermTroller Fingerprint (2046)
+//**********************************************************************************
+
+//**********************************************************************************
+//EEPROM Version (2047)
+//**********************************************************************************
+
+//**********************************************************************************
+//LCD Bright/Contrast (2048-2049) ATMEGA1284P Only
+//**********************************************************************************
+
+
+//*****************************************************************************************************************************
+// Check/Update/Format EEPROM
+//*****************************************************************************************************************************
+boolean checkConfig() {
   byte cfgVersion = EEPROM.read(2047);
-  byte FTfingerprint = EEPROM.read(2046); //253 = FermTroller
+  byte BTFinger = EEPROM.read(2046);
 
-#ifdef DEBUG
-  logStart_P(LOGDEBUG);
-  logField_P(PSTR("CFGVER"));
-  logFieldI(cfgVersion);
-  logEnd();
-#endif
+  //If the fingerprint is missing force a init of EEPROM
+  if (BTFinger != 253 || cfgVersion == 255 || cfgVersion < 7) return 1;
 
-  if (cfgVersion == 255 || FTfingerprint != 253) cfgVersion = 0;
+  //In the future, incremental EEPROM settings will be included here
   switch(cfgVersion) {
-    case 0:
-      clearLCD();
-      printLCD_P(0, 0, PSTR("Missing Config"));
-      {
-        strcpy_P(menuopts[0], INIT_EEPROM);
-        strcpy_P(menuopts[1], CANCEL);
-        if (!getChoice(2, 3)) {
-          clearLCD();
-          logString_P(LOGSYS, INIT_EEPROM);
-          printLCD_P(1, 0, INIT_EEPROM);
-          printLCD_P(2, 3, PSTR("Please Wait..."));
-          //Format EEPROM to 0's
-          for (int i=0; i<2048; i++) EEPROM.write(i, 0);
-          {
-            //Default Output Settings: p: 3, i: 4, d: 2, cycle: 4s, Hysteresis 0.3C(0.5F)
-            #ifdef USEMETRIC
-              byte defOutputSettings[5] = {3, 4, 2, 4, 3};
-            #else
-              byte defOutputSettings[5] = {3, 4, 2, 4, 5};
-            #endif
-            PROMwriteBytes(58, defOutputSettings, 5);
-            PROMwriteBytes(63, defOutputSettings, 5);
-            PROMwriteBytes(68, defOutputSettings, 5);
-            PROMwriteBytes(73, defOutputSettings, 5);
-          }
-        }
-      }
-      //Set FermTroller Fingerprint
-      EEPROM.write(2046, 253);
-      //Set cfgVersion = 1
-      EEPROM.write(2047, 1);
-    case 1:
-      //Bump cfgVersion up to 7 to resolve EEPROM mismatch with BT
-      EEPROM.write(2047, 7);
-    case 7:
-      //Next Update
-    default:
-      //No EEPROM Upgrade Required
-      return;
+
   }
+  return 0;
 }
 
+void initEEPROM() {
+  //Format EEPROM to 0's
+  for (int i=0; i<2048; i++) EEPROM.write(i, 0);
+
+  //Set FT Fingerprint (253)
+  EEPROM.write(2046, 253);
+
+  //Default Output Settings: p: 3, i: 4, d: 2, cycle: 4s, Hysteresis 0.3C(0.5F)
+  for (byte zone = 0; zone <= NUM_ZONES; zone++) {
+    #ifdef USEMETRIC
+      setHysteresis(zone, 3);
+      setAlarmThresh(zone, 6);
+    #else
+      setHysteresis(zone, 5);
+      setAlarmThresh(zone, 10);
+    #endif
+    
+    setSetpoint(zone, NO_SETPOINT);
+
+    char name[19];
+    strcpy_P(name, PSTR("Zone "));
+    itoa(zone + 1, buf, 10);
+    strcat(name, buf);
+    byte len = strlen(name);
+    for (byte i = len; i < 17; i++) name[i] = ' ';
+    name[17] = '\0';
+    setZoneName(zone, name);
+  }
+  
+  //Set default LCD Bright/Contrast
+  #if defined(__AVR_ATmega1284P__) || defined(__AVR_ATmega1284__)
+    EEPROM.write(2048, 240);
+    EEPROM.write(2049, 10);
+  #endif
+  
+  //Set cfgVersion = 7
+  EEPROM.write(2047, 7);
+
+  // re-load Setup 
+  loadSetup();
+  LCD.init();
+}
+
+//*****************************************************************************************************************************
+// EEPROM Type Read/Write Functions
+//*****************************************************************************************************************************
 long PROMreadLong(int address) {
   long out;
   eeprom_read_block((void *) &out, (unsigned char *) address, 4);
@@ -206,15 +272,15 @@ void PROMwriteInt(int address, int value) {
   eeprom_write_block((void *) &value, (unsigned char *) address, 2);
 }
 
-void setPwrRecovery(byte funcValue) {
-  pwrRecovery = funcValue;
-  EEPROM.write(88, funcValue);
+void PROMwriteBytes(int addr, byte bytes[], byte numBytes) {
+  for (byte i = 0; i < numBytes; i++) {
+    EEPROM.write(addr + i, bytes[i]);
+  }
 }
 
-  //Setpoints
-  //EEPROM bytes 4-35 (Was 89-94)
-void saveSetpoints() { for (byte i = 0; i < NUM_ZONES; i++) { EEPROM.write(4 + i, setpoint[i] / 100); } }
-
-unsigned int getTimerRecovery() { return PROMreadInt(95); }
-void setTimerRecovery(unsigned int newMins) { PROMwriteInt(95, newMins); }
+void PROMreadBytes(int addr, byte bytes[], byte numBytes) {
+  for (byte i = 0; i < numBytes; i++) {
+    bytes[i] = EEPROM.read(addr + i);
+  }
+}
 
