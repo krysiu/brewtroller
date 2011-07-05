@@ -122,13 +122,6 @@ unsigned long prevHeats, prevCools;
 boolean prevBuzz;
 
 void updateValves() {
-  
-Serial.print(actHeats, BIN);
-Serial.print('\t');
-Serial.print(actCools, BIN);
-Serial.print('\t');
-Serial.println(buzzStatus, DEC);
-
   if (actHeats != prevHeats || actCools != prevCools || buzzStatus != prevBuzz) {
     Valves.set(computeValveBits());
     prevHeats = actHeats;

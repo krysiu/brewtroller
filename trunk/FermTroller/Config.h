@@ -24,7 +24,7 @@
 // By default BrewTroller will use US Units
 // Uncomment USEMETRIC below to use metric instead
 //
-#define USEMETRIC
+//#define USEMETRIC
 //**********************************************************************************
 
 //**********************************************************************************
