@@ -57,7 +57,7 @@ BrewTroller 3.x PVOUT Hardware Configuration
 //**********************************************************************************
   
   #define UI_LCD_4BIT
-  #define LCD_RS_PIN 17
+  #define LCD_RS_PIN 18
   #define LCD_ENABLE_PIN 19
   #define LCD_DATA4_PIN 20
   #define LCD_DATA5_PIN 21
