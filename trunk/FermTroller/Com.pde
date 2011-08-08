@@ -105,8 +105,6 @@ void updateCom() {
         Wire.send(ultoa(millis(), timestamp, 10));
         Wire.send(0x09);
         while(btnicI2C.getState() == BTNIC_STATE_TX) Wire.send(btnicI2C.tx());        
-        Wire.send(0x0D); //Carriage Return
-        Wire.send(0x0A); //New Line
         Wire.endTransmission();
       }
     }

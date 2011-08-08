@@ -11,6 +11,7 @@ Note: This configuration used the HLT, Mash, Kettle and Steam heat outputs to pr
   #define ENCB_PIN 4
   #define ENTER_PIN 5
   
+  
   #define PVOUT_TYPE_GPIO
   #define PVOUT_COUNT 5 //5 Outputs
 

@@ -180,7 +180,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     0, 			  //Not Used
     0, 	                  //Not Used
     0, 		          //Not Used
-    VS_KETTLE, 		//CMD_TEMP
+    NUM_ZONES - 1, 		//CMD_TEMP
     0, 			//Not Used
     NUM_ZONES - 1, 	//CMD_ZONEPWR
     NUM_ZONES - 1, 	//CMD_SETPOINT
@@ -325,14 +325,14 @@ void BTnic::execCmd(void) {
       logFieldI(vlvConfig[cmdIndex]);  
       break; 
 
-
+/*
     case CMD_SET_ALARM:  //V
       setAlarm(getCmdParamNum(1));
     case CMD_GET_ALARM:  //e
       logFieldCmd(CMD_GET_ALARM, NO_CMDINDEX);
       logFieldI(alarmStatus);
       break;
-      
+*/
       
     case CMD_SET_SETPOINT:  //X
       setSetpoint(cmdIndex, getCmdParamNum(1));
@@ -355,8 +355,6 @@ void BTnic::execCmd(void) {
       else {
         logFieldCmd(CMD_RESET, cmdIndex);
         resetOutputs();
-        clearTimer(TIMER_MASH);
-        clearTimer(TIMER_BOIL);
       }
       break;
       
@@ -368,14 +366,8 @@ void BTnic::execCmd(void) {
       
       
     case CMD_ZONEPWR:  //s
-      logFieldCmd(CMD_HEATPWR, cmdIndex);
-      {
-        byte pct;
-        if (PIDEnabled[cmdIndex]) pct = PIDOutput[cmdIndex] / PIDCycle[cmdIndex];
-        else if (heatStatus[cmdIndex]) pct = 100;
-        else pct = 0;
-        logFieldI(pct);
-      }
+      logFieldCmd(CMD_ZONEPWR, cmdIndex);
+      logFieldI(zonePwr[cmdIndex]);
       break;
       
 
@@ -449,8 +441,8 @@ int BTnic::getCmdIndex() {
   while (_bufCur < _bufLen && _bufData[_bufCur] != 0x09) tmpbuf[_bufCur - 1] = _bufData[_bufCur++];
 
   if (_bufCur == 1) return NO_CMDINDEX;   //Missing Index
-  tmpbuf[_bufCur] = '\0';
-  byte cmdIndex = strtoul(tmpbuf, NULL, 10);
+  tmpbuf[_bufCur - 1] = '\0';
+  int cmdIndex = atoi(tmpbuf);
   if (cmdIndex > maxValue) return NO_CMDINDEX;
   else return cmdIndex;
 }
