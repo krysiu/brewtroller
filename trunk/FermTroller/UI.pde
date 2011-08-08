@@ -217,11 +217,11 @@ void screenRefresh(byte screen) {
     //Refresh Screen: Home
 
   } else {
-    if (temp[screen - 1] == BAD_TEMP) LCD.print_P(1, 15, PSTR("-----")); else {
+    if (temp[screen - 1] == BAD_TEMP) LCD.print_P(1, 14, PSTR("-----")); else {
       vftoa(temp[screen - 1] / 10, buf, 1, 1);
       LCD.lPad(1, 14, buf, 5, ' ');
     }
-    if (setpoint[screen - 1] == NO_SETPOINT) LCD.print_P(2, 15, PSTR("-----")); else {
+    if (setpoint[screen - 1] == NO_SETPOINT) LCD.print_P(2, 14, PSTR("-----")); else {
       vftoa(setpoint[screen - 1] / 10, buf, 1, 1);
       LCD.lPad(2, 14, buf, 5, ' '); 
     }
