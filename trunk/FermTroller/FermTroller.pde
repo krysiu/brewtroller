@@ -1,4 +1,4 @@
-#define BUILD 750
+#define BUILD 756
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
@@ -158,7 +158,7 @@ int zonePwr[NUM_ZONES];
 boolean logData = LOG_INITSTATUS;
 
 const char BT[] PROGMEM = "FermTroller";
-const char BTVER[] PROGMEM = "2.0";
+const char BTVER[] PROGMEM = "2.1";
 
 //Log Strings
 const char LOGCMD[] PROGMEM = "CMD";
