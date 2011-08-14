@@ -1,0 +1,47 @@
+#ifndef BT_ENUM
+#define BT_ENUM
+
+//Valve Array Element Constants and Variables
+#define VLV_ALL 4294967295
+#define VLV_ALARM NUM_VLVCFGS - 1
+
+//Events
+
+#define EVENT_ALARM_TSENSOR 0
+#define EVENT_ALARM_TEMPHOT 1
+#define EVENT_ALARM_TEMPCOLD 2
+
+#define EVENT_NALARM_TSENSOR 4
+#define EVENT_NALARM_TEMPHOT 5
+#define EVENT_NALARM_TEMPCOLD 6
+
+//Log Constants
+#define CMD_MSG_FIELDS 25
+#define CMD_FIELD_CHARS 21
+
+#define BT_I2C_ADDR 0x10
+#define BTNIC_I2C_ADDR 0x11
+
+#define ASCII 0
+#define BTNIC 1
+#define BINARY 2
+
+#define NO_PID 255
+#define BAD_TEMP -32768
+#define NO_SETPOINT -32768
+
+#define ALARM_COUNT 3
+
+#define ALARM_STATUS_TSENSOR 0
+#define ALARM_STATUS_TEMPHOT 1
+#define ALARM_STATUS_TEMPCOLD 2
+
+#define ALARM_ACK_TSENSOR 4
+#define ALARM_ACK_TEMPHOT 5
+#define ALARM_ACK_TEMPCOLD 6
+
+#define ALARM_ACKBITS B11110000
+
+#define GETVALUE_CANCEL -2147483648
+
+#endif
