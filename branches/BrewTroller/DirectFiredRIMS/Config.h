@@ -40,6 +40,26 @@
 
 //MASH_PREHEAT_NOVALVES: Disables MASH HEAT/MASH IDLE Valve Profiles during preheat
 //#define MASH_PREHEAT_NOVALVES
+
+// DIRECT_FIRED_RIMS/RIMS_TEMP_OFFSET/RIMS_DURING_SPARGE: specifies that the mash 
+// kettle is direct-fired, either with gas, or a heating element, and that the RIMS
+// has it's own element. With this option, the VS_MASH is used for the mash, and the
+// VS_STEAM is used for the RIMS. Only the VS_MASH is used to change the temp; when 
+// the temp is within RIMS_TEMP_OFFSET of the set temp, the VS_MASH is turned off, 
+// and VS_STEAM is turned on, to reach and maintain the set temp. When the strike temp
+// is beaing reached, or any other step change grater than RIMS_TEMP_OFFSET, this 
+// allows VS_MASH to be used for the quicker temeperature change, then for VS_STEAM to
+// take over for finer temperaature control.
+#define DIRECT_FIRED_RIMS
+// If you are not recirculating your mash, the offset should probably be greater.
+#define RIMS_TEMP_OFFSET 3
+// If your HLT output passes through your RIMS tube to your mash kettle, you may want
+// to define RIMS_DURING_SPARGE so that it can also control the temp of your sparge
+// water.  The logic here is somehwat different than for mashing, in that if your
+// sparge water is not correct, both the HTL and RIMS will be active to try and insure
+// correct sprge water temperature.
+#define RIMS_DURING_SPARGE 
+
 //**********************************************************************************
 
 
