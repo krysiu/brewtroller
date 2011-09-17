@@ -694,7 +694,7 @@ byte calcStrikeTemp(byte pgm) {
   #ifdef USEMETRIC
     return (strikeTemp + round(.4 * (strikeTemp - (float) getGrainTemp() / SETPOINT_DIV) / (getProgRatio(pgm) / 100.0)) + 1.7 + STRIKE_TEMP_OFFSET) * SETPOINT_DIV;
   #else
-    return (strikeTemp + round(.192 * (strikeTemp - getGrainTemp() / SETPOINT_DIV) / (getProgRatio(pgm) / 100.0)) + 3 + STRIKE_TEMP_OFFSET) * SETPOINT_DIV;
+    return (strikeTemp + round(.192 * (strikeTemp - (float) getGrainTemp() / SETPOINT_DIV) / (getProgRatio(pgm) / 100.0)) + 3 + STRIKE_TEMP_OFFSET) * SETPOINT_DIV;
   #endif
 }
 
