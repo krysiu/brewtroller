@@ -35,6 +35,8 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #else
   #ifdef USESTEAM
     #define LAST_HEAT_OUTPUT VS_STEAM
+  #elif DIRECT_FIRED_RIMS
+    #define LAST_HEAT_OUTPUT VS_STEAM
   #else
     #define LAST_HEAT_OUTPUT VS_KETTLE
   #endif
@@ -115,7 +117,7 @@ ISR(TIMER1_OVF_vect, ISR_NOBLOCK )
     }
 }
 
-#endif
+#endif //PWM_BY_TIMER
 
 
 void pinInit() {
@@ -134,6 +136,11 @@ void pinInit() {
     #ifdef KETTLEHEAT_PIN
       heatPin[VS_KETTLE].setup(KETTLEHEAT_PIN, OUTPUT);
     #endif
+  #endif
+
+  #ifdef DIRECT_FIRED_RIMS
+    //MASHHEAT_PIN should be defined, so setup above.
+    heatPin[VS_STEAM].setup(STEAMHEAT_PIN, OUTPUT);
   #endif
 
   #ifdef USESTEAM
@@ -266,7 +273,9 @@ void processHeatOutputs() {
       #ifdef PID_FLOW_CONTROL
         if(i == VS_PUMP) PIDInput[i] = flowRate[VS_KETTLE];
       #else
-        if (i == VS_STEAM) PIDInput[i] = steamPressure; 
+        #ifndef DIRECT_FIRE_RIMS
+          if (i == VS_STEAM) PIDInput[i] = steamPressure; 
+        #endif
       #endif
           else { 
             PIDInput[i] = temp[i];
@@ -339,7 +348,7 @@ void processHeatOutputs() {
             }
           }
         }
-      #endif
+      #endif // defined PID_FLOW_CONTROL && defined PID_CONTROL_MANUAL
       }
       #ifndef PWM_BY_TIMER
         //only 1 call to millis needed here, and if we get hit with an interrupt we still want to calculate based on the first read value of it
@@ -361,25 +370,87 @@ void processHeatOutputs() {
     } else {
       if (heatStatus[i]) {
         if (
-          (i != VS_STEAM && (temp[i] == BAD_TEMP || temp[i] >= setpoint[i]))  
-            || (i == VS_STEAM && steamPressure >= setpoint[i])
+            #ifdef DIRECT_FIRE_RIMS
+              (temp[i] == BAD_TEMP || temp[i] >= setpoint[i])
+            #else
+              (i != VS_STEAM && (temp[i] == BAD_TEMP || temp[i] >= setpoint[i]))
+            #endif
+            #ifndef DIRECT_FIRE_RIMS
+              || (i == VS_STEAM && steamPressure >= setpoint[i])
+            #endif
         ) {
+          // For DIRECT_FIRED_RIMS, the setpoint for both VS_MASH & VS_STEAM should be the same, so nothing to do here.
           heatPin[i].set(LOW);
           heatStatus[i] = 0;
         } else {
-          heatPin[i].set(HIGH);
+          #ifdef DIRECT_FIRED_RIMS
+            // When temp[VS_MASH] is less than setpoint[VS_MASH] - RIMS_TEMP_OFFSET, then
+            // the VS_MASH pint should be set high, and VS_STEAM set low.  If the different
+            // is within RIMS_TEMP_OFFSET, then the opposite.
+            if (i == VS_MASH) {
+              if (temp[i] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+                heatPin[i].set(LOW);
+                heatStatus[i] = 0;
+              } else if ((temp[i] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+                heatPin[i].set(HIGH);
+                heatStatus[i] = 1;
+              }
+            } else if (i == VS_STEAM ) {
+              if (temp[i] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+                heatPin[i].set(LOW);
+                heatStatus[i] = 0;
+              } else if ((temp[i] < RIMS_MAX_TEMP) {
+                heatPin[i].set(HIGH);
+                heatStatus[i] = 1;
+              }
+            }
+          #else
+            heatPin[i].set(HIGH);
+          #endif
         }
       } else {
-        if ((i != VS_STEAM && temp[i] != BAD_TEMP && (setpoint[i] - temp[i]) >= hysteresis[i] * 10) 
-        || (i == VS_STEAM && (setpoint[i] - steamPressure) >= hysteresis[i] * 100)) {
-          heatPin[i].set(HIGH);
-          heatStatus[i] = 1;
+        if (
+          #ifdef DIRECT_FIRE_RIMS
+            (temp[i] != BAD_TEMP && (setpoint[i] - temp[i]) >= hysteresis[i] * 10) 
+          #else
+            (i != VS_STEAM && temp[i] != BAD_TEMP && (setpoint[i] - temp[i]) >= hysteresis[i] * 10) 
+          #endif
+          #ifndef DIRECT_FIRE_RIMS
+            || (i == VS_STEAM && (setpoint[i] - steamPressure) >= hysteresis[i] * 100)
+          #endif
+          ) {
+          #ifdef DIRECT_FIRED_RIMS
+            // When temp[VS_MASH] is less than setpoint[VS_MASH] - RIMS_TEMP_OFFSET, then
+            // the VS_MASH pint should be set high, and VS_STEAM set low.  If the different
+            // is within RIMS_TEMP_OFFSET, then the opposite.
+            if (i == VS_MASH) {
+              if (temp[i] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+                heatPin[i].set(LOW);
+                heatStatus[i] = 0;
+              } else if ((temp[i] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+                heatPin[i].set(HIGH);
+                heatStatus[i] = 1;
+              }
+            } else if (i == VS_STEAM ) {
+              if (temp[i] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+                heatPin[i].set(LOW);
+                heatStatus[i] = 0;
+              } else if ((temp[i] < RIMS_MAX_TEMP) {
+                heatPin[i].set(HIGH);
+                heatStatus[i] = 1;
+              }
+            }
+          #else
+            heatPin[i].set(HIGH);
+            heatStatus[i] = 1;
+          #endif
         } else {
+          // For DIRECT_FIRED_RIMS, the setpoint for both VS_MASH & VS_STEAM should be the same, so nothing to do here.
           heatPin[i].set(LOW);
         }
       }
-    }    
-  }
+    } // if/else PIDEnabled[i]   
+  } // for loop
 }
 
 #ifdef PVOUT
