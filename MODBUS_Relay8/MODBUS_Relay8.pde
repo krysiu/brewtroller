@@ -56,7 +56,7 @@
 
 #define RESTART_DELAY  100 //100ms delay to allow restart command response
 
-#define MODBUS_BAUDRATE 38400
+#define MODBUS_BAUDRATE 76800 //16MHz XTAL doesn't like 115200
 
 #define EEPROM_SLAVEADDR 0
 #define EEPROM_FINGERPRINT 511
