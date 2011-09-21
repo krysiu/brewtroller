@@ -48,11 +48,11 @@
 #define REG_COILS_START     1000
 #define REG_COILS_SIZE      8
 
-#define REG_HOLD_START      60001
+#define REG_HOLD_START      9001
 #define REG_HOLD_SIZE       3
-#define REG_HOLD_IDMODE      60001
-#define REG_HOLD_SLAVEADDR   60002
-#define REG_HOLD_RESTART     60003
+#define REG_HOLD_IDMODE      9001
+#define REG_HOLD_SLAVEADDR   9002
+#define REG_HOLD_RESTART     9003
 
 #define RESTART_DELAY  100 //100ms delay to allow restart command response
 
