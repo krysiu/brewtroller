@@ -282,12 +282,19 @@
 // the room. The display connects to the BrewTroller via the I2C header and can be
 // daisy chained to use as many as you like, theoretically up to 127 but in practice
 // probably 10 or so.
+// You need to set the addresses of each display in the Com_BTPD.h file.
 
 // BTPD_SUPPORT: Enables use of BrewTroller PID Display devices on I2C bus
 #define BTPD_SUPPORT
 
 // BTPD_INTERVAL: Specifies how often BTPD devices are updated in milliseconds
 #define BTPD_INTERVAL 1000
+
+// Show temperature and volume per kettle on the same display.  Every other update
+// interval the display will switch from temperature to volume.  Make sure that the
+// values in Com_BTPD.h use the same address per kettle for both volume and temperature.
+#define BTPD_ALTERNATE_TEMP_VOLUME
+
 //**********************************************************************************
 
 //**********************************************************************************

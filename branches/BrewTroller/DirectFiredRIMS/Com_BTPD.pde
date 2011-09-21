@@ -44,44 +44,99 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #define BTPD_MASH_VOL 0x27 // BTPD_MASH_VOL: Displays current and target Mash volume
 #define BTPD_KETTLE_VOL 0x28 // BTPD_KETTLE_VOL: Displays current and target Kettle volume
 #define BTPD_STEAM_PRESS 0x29 // BTPD_STEAM_PRESS: Displays current and target Steam pressure
+#define BTPD_RIMS_TEMP 0x30; // THe RIMS tube temp probe temperature
 
 unsigned long lastBTPD;
 
+#ifdef BTPD_ALTERNATE_TEMP_VOLUME
+
 void updateBTPD() {
-  if (millis() - lastBTPD > BTPD_INTERVAL) {
-    #ifdef BTPD_HLT_TEMP
-      sendVsTemp(BTPD_HLT_TEMP, VS_HLT);
-    #endif
-    #ifdef BTPD_MASH_TEMP
-      sendVsTemp(BTPD_MASH_TEMP, VS_MASH);
-    #endif
-    #ifdef BTPD_KETTLE_TEMP
-      sendVsTemp(BTPD_KETTLE_TEMP, VS_KETTLE);
-    #endif
-    #ifdef BTPD_H2O_TEMPS
-      sendFloatsBTPD(BTPD_H2O_TEMPS, temp[TS_H2OIN] / 100.0, temp[TS_H2OOUT] / 100.0);
-    #endif
-    #ifdef BTPD_FERM_TEMP
-      sendFloatsBTPD(BTPD_FERM_TEMP, pitchTemp, temp[TS_BEEROUT] / 100.0);
-    #endif
-    #ifdef BTPD_TIMERS
-      sendFloatsBTPD(BTPD_TIMERS, timer2Float(timerValue[TIMER_MASH]), timer2Float(timerValue[TIMER_BOIL]));
-    #endif
-    #ifdef BTPD_HLT_VOL
-      sendVsVol(BTPD_HLT_VOL, VS_HLT);
-    #endif
-    #ifdef BTPD_MASH_VOL
-      sendVsVol(BTPD_MASH_VOL, VS_MASH);
-    #endif
-    #ifdef BTPD_KETTLE_VOL
-      sendVsVol(BTPD_KETTLE_VOL, VS_KETTLE);
-    #endif
-    #ifdef BTPD_STEAM_PRESS
-      sendFloatsBTPD(BTPD_STEAM_PRESS, steamTgt, steamPressure / 1000.0 );
-    #endif
-    lastBTPD = millis();
-  }
+	if (millis() - lastBTPD > BTPD_INTERVAL) {
+		#ifdef BTPD_HLT_TEMP
+			sendVsTemp(BTPD_HLT_TEMP, VS_HLT);
+		#endif
+		#ifdef BTPD_MASH_TEMP
+			sendVsTemp(BTPD_MASH_TEMP, VS_MASH);
+		#endif
+		#ifdef BTPD_KETTLE_TEMP
+			sendVsTemp(BTPD_KETTLE_TEMP, VS_KETTLE);
+		#endif
+		#ifdef BTPD_H2O_TEMPS
+			sendFloatsBTPD(BTPD_H2O_TEMPS, temp[TS_H2OIN] / 100.0, temp[TS_H2OOUT] / 100.0);
+		#endif
+		#ifdef BTPD_FERM_TEMP
+			sendFloatsBTPD(BTPD_FERM_TEMP, pitchTemp, temp[TS_BEEROUT] / 100.0);
+		#endif
+		#ifdef BTPD_TIMERS
+			sendFloatsBTPD(BTPD_TIMERS, timer2Float(timerValue[TIMER_MASH]), timer2Float(timerValue[TIMER_BOIL]));
+		#endif
+		#ifdef BTPD_HLT_VOL
+			sendVsVol(BTPD_HLT_VOL, VS_HLT);
+		#endif
+		#ifdef BTPD_MASH_VOL
+			sendVsVol(BTPD_MASH_VOL, VS_MASH);
+		#endif
+		#ifdef BTPD_KETTLE_VOL
+			sendVsVol(BTPD_KETTLE_VOL, VS_KETTLE);
+		#endif
+		#ifdef BTPD_STEAM_PRESS
+			sendFloatsBTPD(BTPD_STEAM_PRESS, steamTgt, steamPressure / 1000.0 );
+		#endif
+		#ifdef BTPD_RIMS_TEMP
+			sendVsTemp(BTPD_RIMS_TEMP, VS_STEAM);
+		#endif
+		lastBTPD = millis();
+	}
 }
+
+#else
+boolean odd = 1;
+void updateBTPD() {
+	if (millis() - lastBTPD > BTPD_INTERVAL) {
+		if(odd) {
+			#ifdef BTPD_HLT_TEMP
+				sendVsTemp(BTPD_HLT_TEMP, VS_HLT);
+			#endif
+			#ifdef BTPD_MASH_TEMP
+				sendVsTemp(BTPD_MASH_TEMP, VS_MASH);
+			#endif
+			#ifdef BTPD_KETTLE_TEMP
+				sendVsTemp(BTPD_KETTLE_TEMP, VS_KETTLE);
+			#endif
+		} else {
+			#ifdef BTPD_HLT_VOL
+				sendVsVol(BTPD_HLT_VOL, VS_HLT);
+			#endif
+			#ifdef BTPD_MASH_VOL
+				sendVsVol(BTPD_MASH_VOL, VS_MASH);
+			#endif
+			#ifdef BTPD_KETTLE_VOL
+				sendVsVol(BTPD_KETTLE_VOL, VS_KETTLE);
+			#endif
+		}
+		// the temps with no volume always display
+		#ifdef BTPD_RIMS_TEMP
+			sendVsTemp(BTPD_RIMS_TEMP, VS_STEAM);
+		#endif
+		#ifdef BTPD_H2O_TEMPS
+			sendFloatsBTPD(BTPD_H2O_TEMPS, temp[TS_H2OIN] / 100.0, temp[TS_H2OOUT] / 100.0);
+		#endif
+		#ifdef BTPD_FERM_TEMP
+			sendFloatsBTPD(BTPD_FERM_TEMP, pitchTemp, temp[TS_BEEROUT] / 100.0);
+		#endif
+		#ifdef BTPD_TIMERS
+			sendFloatsBTPD(BTPD_TIMERS, timer2Float(timerValue[TIMER_MASH]), timer2Float(timerValue[TIMER_BOIL]));
+		#endif
+		#ifdef BTPD_STEAM_PRESS
+			sendFloatsBTPD(BTPD_STEAM_PRESS, steamTgt, steamPressure / 1000.0 );
+		#endif
+		lastBTPD = millis();
+		odd = !odd;
+	}
+}
+
+#endif BTPD_ALTERNATE_TEMP_VOLUME
+
 
 void sendVsTemp(byte chan, byte vessel) {
   sendFloatsBTPD(chan, setpoint[vessel] / 100.0, temp[vessel] / 100.0);  
