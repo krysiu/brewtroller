@@ -197,8 +197,14 @@ boolean checkConfig() {
   byte BTFinger = EEPROM.read(2046);
 
   //If the fingerprint is missing force a init of EEPROM
-  if (BTFinger != 253 || cfgVersion == 255 || cfgVersion < 7) return 1;
-
+  if (BTFinger != 253 || cfgVersion == 255 || cfgVersion < 7) {
+    #if (defined __AVR_ATmega1284P__ || defined __AVR_ATmega1284__) && defined UI_DISPLAY_SETUP && defined UI_LCD_4BIT
+      EEPROM.write(2048, 240);
+      EEPROM.write(2049, 10);
+    #endif
+    return 1;
+  }
+  
   //In the future, incremental EEPROM settings will be included here
   switch(cfgVersion) {
 
