@@ -174,21 +174,24 @@ void screenInit() {
         printLCD(1, 8, itoa(actStep + 1, buf, 10));
       }
   } else printLCD_P(0, 0, PSTR("Manual Control"));
-  printLCD_P(2, 0, PSTR("Setpoint:"));
-  printLCD_P(3, 1, PSTR("Current:"));
+  printLCD_P(1, 11, PSTR("Set:"));
+  printLCD_P(2, 8, PSTR("Actual:"));
+  printLCD_P(3, 9, PSTR("Power:"));
   
-  printLCD_P(2, 12, TUNIT);
-  printLCD_P(3, 12, TUNIT);
+  printLCD_P(1, 19, TUNIT);
+  printLCD_P(2, 19, TUNIT);
+  printLCD(3, 19, "%");
 }
 
 //**********************************************************************************
 // screenRefresh:  Refresh active screen
 //**********************************************************************************
 void screenRefresh(){
-  printTimer(1, 14);
-  printLCDLPad(2, 9, itoa(setpoint, buf, 10), 3, ' ');
-  if (temp < 1000) printLCDLPad(3, 9, itoa(temp, buf, 10), 3, ' ');
-  else printLCD(3, 9, "---");
+  printTimer(2, 0);
+  printLCDLPad(1, 16, itoa(setpoint, buf, 10), 3, ' ');
+  if (temp < 1000) printLCDLPad(2, 16, itoa(temp, buf, 10), 3, ' ');
+  else printLCD(2, 16, "---");
+  printLCDLPad(3, 16, itoa(PIDCycle/PIDOutput, buf, 10), 3, ' ');
 }
 
 
