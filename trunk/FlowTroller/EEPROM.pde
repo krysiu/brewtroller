@@ -82,31 +82,31 @@ void setPIDEnabled(boolean setting) {
 
 
 //**********************************************************************************
-//PIDp (73)
+//PIDp (78-79)
 //**********************************************************************************
-void setPIDp(byte value) {
-  pid.SetTunings(value, pid.GetI_Param(), pid.GetD_Param());
-  EEPROM.write(73, value);
+void setPIDp(int value) {
+  pid.SetTunings(value / 100.0, pid.GetKi(), pid.GetKd());
+  PROMwriteInt(78, value);
 }
-byte getPIDp() { return EEPROM.read(73); }
+int getPIDp() { return PROMreadInt(78); }
 
 //**********************************************************************************
-//PIDi (74)
+//PIDi (80-81)
 //**********************************************************************************
-void setPIDi(byte value) {
-  pid.SetTunings(pid.GetP_Param(), value, pid.GetD_Param());
-  EEPROM.write(74, value);
+void setPIDi(int value) {
+  pid.SetTunings(pid.GetKp(), value / 100.0, pid.GetKd());
+  PROMwriteInt(80, value);
 }
-byte getPIDi() { return EEPROM.read(74); }
+int getPIDi() { return PROMreadInt(80); }
 
 //**********************************************************************************
-//PIDd (75)
+//PIDd (82-83)
 //**********************************************************************************
-void setPIDd(byte value) {
-  pid.SetTunings(pid.GetP_Param(), pid.GetI_Param(), value);
-  EEPROM.write(75, value);
+void setPIDd(int value) {
+  pid.SetTunings(pid.GetKp(), pid.GetKi(), value / 100.0);
+  PROMwriteInt(82, value);
 }
-byte getPIDd() { return EEPROM.read(75); }
+int getPIDd() { return PROMreadInt(82); }
 
 //**********************************************************************************
 //PIDCycle (76)

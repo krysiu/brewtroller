@@ -191,7 +191,7 @@ void screenRefresh(){
   printLCDLPad(1, 16, itoa(setpoint, buf, 10), 3, ' ');
   if (temp < 1000) printLCDLPad(2, 16, itoa(temp, buf, 10), 3, ' ');
   else printLCD(2, 16, "---");
-  printLCDLPad(3, 16, itoa(PIDOutput / (PIDCycle / 10), buf, 10), 3, ' ');
+  printLCDLPad(3, 16, itoa(PIDOutput / (PIDCycle * 100), buf, 10), 3, ' ');
 }
 
 
@@ -222,7 +222,10 @@ void screenEnter() {
 
       if (lastOption == 1) editProgramMenu();
       else if (lastOption == 2) startProgramMenu();
-      else if (lastOption == 3) setSetpoint(getValue(PSTR("Setpoint"), setpoint, 3, 0, 999, TUNIT));
+      else if (lastOption == 3) {
+        setSetpoint(getValue(PSTR("Setpoint"), setpoint, 3, 0, 999, TUNIT));
+        if (setpoint) pid.SetMode(AUTOMATIC); else pid.SetMode(MANUAL);
+      }
       else if (lastOption == 4) {
         setTimer(getTimerValue(PSTR("Set Timer"), timerValue / 60000));
         //Force Preheated
@@ -750,107 +753,29 @@ void cfgOutputs() {
   while(1) {
     if (PIDEnabled) strcpy_P(menuopts[0], PSTR("Mode: PID")); else strcpy_P(menuopts[0], PSTR("Mode: On/Off"));
     strcpy_P(menuopts[1], PIDCYCLE);
-    strcpy_P(menuopts[2], PIDGAIN);
-    strcpy_P(menuopts[3], HYSTERESIS);
-    strcpy_P(menuopts[4], EXIT);
+    strcpy_P(menuopts[2], PSTR("PID P Gain"));
+    strcpy_P(menuopts[3], PSTR("PID I Gain"));
+    strcpy_P(menuopts[4], PSTR("PID D Gain"));
+    strcpy_P(menuopts[5], HYSTERESIS);
+    strcpy_P(menuopts[6], EXIT);
 
-    lastOption = scrollMenu("Configure Outputs", 5, lastOption);
+    lastOption = scrollMenu("Configure Outputs", 7, lastOption);
     if (lastOption == 0) {
       if (PIDEnabled) setPIDEnabled(0);
       else setPIDEnabled(1);
     }
     else if (lastOption == 1) {
-      setPIDCycle(getValue(PIDCYCLE, PIDCycle, 3, 0, 255, SEC));
+      setPIDCycle(getValue(PIDCYCLE, PIDCycle, 3, 1, 255, SEC));
       pid.SetOutputLimits(0, PIDCycle * 10 * PIDLIMIT);
     } 
-    else if (lastOption == 2) {
-      setPIDGain("PID Gain");
-    } 
-    else if (lastOption == 3) setHysteresis(getValue(HYSTERESIS, hysteresis, 3, 1, 255, TUNIT));
+    else if (lastOption == 2) setPIDp(getValue(PSTR("PID P Gain"), getPIDp(), 5, 2, 32000, PSTR("")));
+    else if (lastOption == 3) setPIDi(getValue(PSTR("PID I Gain"), getPIDi(), 5, 2, 32000, PSTR("")));
+    else if (lastOption == 4) setPIDd(getValue(PSTR("PID D Gain"), getPIDd(), 5, 2, 32000, PSTR("")));
+    else if (lastOption == 5) setHysteresis(getValue(HYSTERESIS, hysteresis, 3, 1, 255, TUNIT));
     else return;
   } 
 }
 
-void setPIDGain(char sTitle[]) {
-  byte retP = pid.GetP_Param();
-  byte retI = pid.GetI_Param();
-  byte retD = pid.GetD_Param();
-  byte cursorPos = 0; //0 = p, 1 = i, 2 = d, 3 = OK
-  boolean cursorState = 0; //0 = Unselected, 1 = Selected
-  Encoder.setMin(0);
-  Encoder.setMax(3);
-  Encoder.setCount(0);
-  
-  clearLCD();
-  printLCD(0,0,sTitle);
-  printLCD_P(1, 0, PSTR("P:     I:     D:    "));
-  printLCD_P(3, 8, PSTR("OK"));
-  boolean redraw = 1;
-  while(1) {
-    int encValue;
-    if (redraw) {
-      redraw = 0;
-      encValue = Encoder.getCount();
-    }
-    else encValue = Encoder.change();
-    if (encValue >= 0) {
-      if (cursorState) {
-        if (cursorPos == 0) retP = encValue;
-        else if (cursorPos == 1) retI = encValue;
-        else if (cursorPos == 2) retD = encValue;
-      } else {
-        cursorPos = encValue;
-        if (cursorPos == 0) {
-          printLCD_P(1, 2, PSTR(">"));
-          printLCD_P(1, 9, PSTR(" "));
-          printLCD_P(1, 16, PSTR(" "));
-          printLCD_P(3, 7, PSTR(" "));
-          printLCD_P(3, 10, PSTR(" "));
-        } else if (cursorPos == 1) {
-          printLCD_P(1, 2, PSTR(" "));
-          printLCD_P(1, 9, PSTR(">"));
-          printLCD_P(1, 16, PSTR(" "));
-          printLCD_P(3, 7, PSTR(" "));
-          printLCD_P(3, 10, PSTR(" "));
-        } else if (cursorPos == 2) {
-          printLCD_P(1, 2, PSTR(" "));
-          printLCD_P(1, 9, PSTR(" "));
-          printLCD_P(1, 16, PSTR(">"));
-          printLCD_P(3, 7, PSTR(" "));
-          printLCD_P(3, 10, PSTR(" "));
-        } else if (cursorPos == 3) {
-          printLCD_P(1, 2, PSTR(" "));
-          printLCD_P(1, 9, PSTR(" "));
-          printLCD_P(1, 16, PSTR(" "));
-          printLCD_P(3, 7, PSTR(">"));
-          printLCD_P(3, 10, PSTR("<"));
-        }
-      }
-      printLCDLPad(1, 3, itoa(retP, buf, 10), 3, ' ');
-      printLCDLPad(1, 10, itoa(retI, buf, 10), 3, ' ');
-      printLCDLPad(1, 17, itoa(retD, buf, 10), 3, ' ');
-    }
-    if (Encoder.ok()) {
-      if (cursorPos == 3) {
-        setPIDp(retP);
-        setPIDi(retI);
-        setPIDd(retD);
-        return;
-      }
-      cursorState = cursorState ^ 1;
-      if (cursorState) {
-        Encoder.setMin(0);
-        Encoder.setMax(255);
-        if (cursorPos == 0) Encoder.setCount(retP);
-        else if (cursorPos == 1) Encoder.setCount(retI);
-        else if (cursorPos == 2) Encoder.setCount(retD);
-      } else {
-        Encoder.setMin(0);
-        Encoder.setMax(3);
-        Encoder.setCount(cursorPos);
-      }
-    } else if (Encoder.cancel()) return;
-  }
-}
+
 #endif
 #endif

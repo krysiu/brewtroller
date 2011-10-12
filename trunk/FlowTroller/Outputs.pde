@@ -32,9 +32,8 @@ void pinInit() {
 }
 
 void pidInit() {
-  pid.SetInputLimits(0, 999);
-  pid.SetOutputLimits(0, PIDCycle * 10 * PIDLIMIT);
-  pid.SetTunings(getPIDp(), getPIDi(), getPIDd());
+  pid.SetOutputLimits(0, PIDCycle * PIDLIMIT);
+  pid.SetTunings(getPIDp() / 100.0, getPIDi() / 100.0, getPIDd() / 100.0);
 }
 
 void resetOutputs() {
@@ -50,13 +49,13 @@ void processHeatOutputs() {
     if (temp == 9999) {
       PIDOutput = 0;
     } else {
-      if (pid.GetMode() == AUTO) {
+      if (pid.GetMode() == AUTOMATIC) {
         PIDInput = temp;
         pid.Compute();
       }
     }
     if (cycleStart == 0) cycleStart = millis();
-    if (millis() - cycleStart > PIDCycle * 1000) cycleStart += PIDCycle * 1000;
+    if (millis() - cycleStart > PIDCycle * 100) cycleStart += PIDCycle * 100;
     if (PIDOutput > millis() - cycleStart) heatPin.set(HIGH); else heatPin.set(LOW);
     if (PIDOutput == 0)  heatStatus = 0; else heatStatus = 1;
   } else {
