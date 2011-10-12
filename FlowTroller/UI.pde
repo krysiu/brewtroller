@@ -191,7 +191,7 @@ void screenRefresh(){
   printLCDLPad(1, 16, itoa(setpoint, buf, 10), 3, ' ');
   if (temp < 1000) printLCDLPad(2, 16, itoa(temp, buf, 10), 3, ' ');
   else printLCD(2, 16, "---");
-  printLCDLPad(3, 16, itoa(PIDCycle/PIDOutput, buf, 10), 3, ' ');
+  printLCDLPad(3, 16, itoa(PIDCycle * 1000 / PIDOutput, buf, 10), 3, ' ');
 }
 
 
