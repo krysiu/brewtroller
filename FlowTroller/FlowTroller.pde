@@ -1,4 +1,4 @@
-#define BUILD 791 
+#define BUILD 793
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -41,7 +41,7 @@ Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
 //*****************************************************************************************************************************
 #include "Config.h"
 #include <avr/pgmspace.h>
-#include <PID_Beta6.h>
+#include <PID_v1.h>
 #include <pin.h>
 
 void(* softReset) (void) = 0;
@@ -91,7 +91,7 @@ byte PIDCycle, hysteresis;
 unsigned long cycleStart;
 boolean heatStatus, PIDEnabled;
 
-PID pid(&PIDInput, &PIDOutput, &setpoint, 3, 4, 1);
+PID pid(&PIDInput, &PIDOutput, &setpoint, 3, 4, 1, DIRECT);
 
 //Timer Globals
 unsigned long timerValue, lastTime;

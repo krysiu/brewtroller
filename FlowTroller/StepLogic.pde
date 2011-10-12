@@ -48,7 +48,7 @@ boolean stepInit(byte pgm, byte flowStep) {
   setProgramStep(flowStep, pgm);
 
   setSetpoint(getProgTemp(pgm, flowStep));
-  pid.SetMode(AUTO);
+  pid.SetMode(AUTOMATIC);
   preheated = 0;
   //Set timer only if empty (for purposed of power loss recovery)
   if (!timerValue) setTimer(getProgMins(pgm, flowStep)); 
