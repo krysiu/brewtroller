@@ -32,15 +32,17 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 void loadSetup() {
   //**********************************************************************************
   //PID Enabled (72)
-  //PIDp (73)
-  //PIDi (74)
-  //PIDd (75)
   //PIDCycle (76)
   //Hysteresis (77)
+  //PIDp (78-79)
+  //PIDi (80-81)
+  //PIDd (82-83)
   //**********************************************************************************
   PIDEnabled = EEPROM.read(72);
   PIDCycle = EEPROM.read(76);
   hysteresis = EEPROM.read(77);
+  pwmFanPwr = EEPROM.read(74);
+  coolThresh = EEPROM.read(75);
   
   //**********************************************************************************
   //setpoint (299)
@@ -125,6 +127,21 @@ void setHysteresis(byte value) {
   EEPROM.write(77, value);
 }
 
+//**********************************************************************************
+//PWM Fan Power (74)
+//**********************************************************************************
+void setPWMFanPower(byte value) {
+  pwmFanPwr = value;
+  EEPROM.write(74, value);
+}
+
+//**********************************************************************************
+//Cool Threshhold (75)
+//**********************************************************************************
+void setCoolThresh(byte value) {
+  coolThresh = value;
+  EEPROM.write(75, value);
+}
 
 //*****************************************************************************************************************************
 // Power Loss Recovery Functions

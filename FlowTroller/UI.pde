@@ -203,38 +203,36 @@ void screenEnter() {
     if (alarmStatus) setAlarm(0);
     else {
       strcpy_P(menuopts[0], CANCEL);
-      strcpy_P(menuopts[1], PSTR("Clear Alarm"));
-      strcpy_P(menuopts[2], PSTR("Edit Program"));
-      strcpy_P(menuopts[3], PSTR("Start Program"));
-      strcpy_P(menuopts[4], PSTR("Setpoint: "));
-      strcat(menuopts[4], itoa(setpoint, buf, 10));
-      strcat_P(menuopts[5], TUNIT);
+      strcpy_P(menuopts[1], PSTR("Edit Program"));
+      strcpy_P(menuopts[2], PSTR("Start Program"));
+      strcpy_P(menuopts[3], PSTR("Setpoint: "));
+      strcat(menuopts[3], itoa(setpoint, buf, 10));
+      strcat_P(menuopts[4], TUNIT);
       strcpy_P(menuopts[5], PSTR("Set Timer"));
-      if (timerStatus) strcpy_P(menuopts[6], PSTR("Pause Timer"));
-      else strcpy_P(menuopts[6], PSTR("Start Timer"));
-      strcpy_P(menuopts[7], SKIPSTEP);
-      strcpy_P(menuopts[8], PSTR("Reset All"));
-      strcpy_P(menuopts[9], PSTR("System Setup"));
-      byte lastOption = scrollMenu("Main Menu", 10, 0);
+      if (timerStatus) strcpy_P(menuopts[5], PSTR("Pause Timer"));
+      else strcpy_P(menuopts[5], PSTR("Start Timer"));
+      strcpy_P(menuopts[6], SKIPSTEP);
+      strcpy_P(menuopts[7], PSTR("Reset All"));
+      strcpy_P(menuopts[8], PSTR("System Setup"));
+      byte lastOption = scrollMenu("Main Menu", 9, 0);
 
-      if (lastOption == 1) setAlarm(0);
-      else if (lastOption == 2) editProgramMenu();
-      else if (lastOption == 3) startProgramMenu();
-      else if (lastOption == 4) {
+      if (lastOption == 1) editProgramMenu();
+      else if (lastOption == 2) startProgramMenu();
+      else if (lastOption == 3) {
         setSetpoint(getValue(PSTR("Setpoint"), setpoint, 3, 0, 999, TUNIT));
         if (setpoint) pid.SetMode(AUTOMATIC); else pid.SetMode(MANUAL);
       }
-      else if (lastOption == 5) {
+      else if (lastOption == 4) {
         setTimer(getTimerValue(PSTR("Set Timer"), timerValue / 60000));
         //Force Preheated
         preheated = 1;
       }
-      else if (lastOption == 6) {
+      else if (lastOption == 5) {
         pauseTimer();
         //Force Preheated
         preheated = 1;
       }
-      else if (lastOption == 7) {
+      else if (lastOption == 6) {
         if(actProgram != PROGRAM_IDLE) {
           if (stepAdvance(actStep)) {
             //Failed to advance step
@@ -242,7 +240,7 @@ void screenEnter() {
           }
         }
       }
-      else if (lastOption == 8) {
+      else if (lastOption == 7) {
         //Reset All
         if (confirmAbort()) {
           setProgramStep(PROGRAM_IDLE, PROGRAM_IDLE);
@@ -250,7 +248,7 @@ void screenEnter() {
           clearTimer();
         }
       }
-      else if (lastOption == 9) menuSetup();
+      else if (lastOption == 8) menuSetup();
       screenInit();
     }
   }
@@ -753,9 +751,11 @@ void cfgOutputs() {
     strcpy_P(menuopts[3], PSTR("PID I Gain"));
     strcpy_P(menuopts[4], PSTR("PID D Gain"));
     strcpy_P(menuopts[5], HYSTERESIS);
-    strcpy_P(menuopts[6], EXIT);
+    strcpy_P(menuopts[6], PSTR("Cooling Fan Power"));
+    strcpy_P(menuopts[7], PSTR("Cooling Threshhold"));
+    strcpy_P(menuopts[8], EXIT);
 
-    lastOption = scrollMenu("Configure Outputs", 7, lastOption);
+    lastOption = scrollMenu("Configure Outputs", 9, lastOption);
     if (lastOption == 0) {
       if (PIDEnabled) setPIDEnabled(0);
       else setPIDEnabled(1);
@@ -768,6 +768,8 @@ void cfgOutputs() {
     else if (lastOption == 3) setPIDi(getValue(PSTR("PID I Gain"), getPIDi(), 5, 2, 32000, PSTR("")));
     else if (lastOption == 4) setPIDd(getValue(PSTR("PID D Gain"), getPIDd(), 5, 2, 32000, PSTR("")));
     else if (lastOption == 5) setHysteresis(getValue(HYSTERESIS, hysteresis, 3, 1, 255, TUNIT));
+    else if (lastOption == 6) setPWMFanPower(getValue(PSTR("Cooling Fan Power"), pwmFanPwr, 3, 0, 100, PSTR("%")));
+    else if (lastOption == 7) setCoolThresh(getValue(PSTR("Cooling Threshhold"), coolThresh, 3, 0, 250, TUNIT));    
     else return;
   } 
 }

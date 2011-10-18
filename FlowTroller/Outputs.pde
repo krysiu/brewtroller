@@ -28,6 +28,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 
 void pinInit() {
   heatPin.setup(HEAT_PIN, OUTPUT);
+  pinMode(PWMFAN_PIN, OUTPUT);
 }
 
 void pidInit() {
@@ -74,6 +75,8 @@ void processHeatOutputs() {
       }
     }
   }    
+  if (temp != 9999 && ((float)(temp - setpoint) >= coolThresh)) analogWrite(PWMFAN_PIN, pwmFanPwr);
+  else analogWrite(PWMFAN_PIN, 0);
 }
 
 

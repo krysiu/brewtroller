@@ -53,6 +53,7 @@ void(* softReset) (void) = 0;
 
 //Pin and Interrupt Definitions
 #define HEAT_PIN 0
+#define PWMFAN_PIN 14
 
 #define ENCB_PIN 1
 
@@ -90,7 +91,7 @@ char menuopts[21][20], buf[20];
 
 //Output Globals
 double PIDInput, PIDOutput, setpoint;
-byte PIDCycle, hysteresis;
+byte PIDCycle, hysteresis, pwmFanPwr, coolThresh;
 unsigned long cycleStart;
 boolean heatStatus, PIDEnabled;
 
