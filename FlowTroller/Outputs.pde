@@ -74,9 +74,18 @@ void processHeatOutputs() {
         heatPin.set(LOW);
       }
     }
-  }    
-  if (temp != 9999 && ((float)(temp - setpoint) >= coolThresh)) analogWrite(PWMFAN_PIN, pwmFanPwr);
-  else analogWrite(PWMFAN_PIN, 0);
+  }
+  if (coolStatus) {
+    if (temp != 9999 && ((float)(temp <= setpoint))) {
+      analogWrite(PWMFAN_PIN, 0);
+      coolStatus = 0;
+    }
+  } else {
+    if (temp != 9999 && ((float)(temp - setpoint) >= coolThresh)) {
+      analogWrite(PWMFAN_PIN, pwmFanPwr);
+      coolStatus = 1;
+    }
+  }
 }
 
 
