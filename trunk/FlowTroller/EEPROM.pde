@@ -56,6 +56,7 @@ void loadSetup() {
   //Timer/Alarm Status (306)
   //**********************************************************************************
   alarmStatus = EEPROM.read(304);
+  if (alarmStatus) startAlarm();
   timerStatus = EEPROM.read(306);
   lastTime = millis();
 

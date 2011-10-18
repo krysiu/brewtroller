@@ -29,6 +29,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 void flowCore() {
   //Timers: Timer.pde
   updateTimers();
+  updateAlarm();
   
   //Log: Log.pde
   updateLog();

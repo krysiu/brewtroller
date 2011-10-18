@@ -75,7 +75,3 @@ void updateTimers() {
   }
 }
 
-void setAlarm(boolean value) {
-  setAlarmStatus(value);
-  alarmPin.set(value);
-}

@@ -43,6 +43,7 @@ Compiled on Arduino-0017 (http://arduino.cc/en/Main/Software)
 #include <avr/pgmspace.h>
 #include <PID_v1.h>
 #include <pin.h>
+#include <Tone.h>
 
 void(* softReset) (void) = 0;
 
@@ -77,7 +78,9 @@ void(* softReset) (void) = 0;
 #define EVENT_STEPEXIT 1
 
 //Heat Output, alarm Pins
-pin heatPin, alarmPin;
+pin heatPin;
+
+Tone alarmTone;
 
 float temp;
 unsigned long tcUpdate = 0;
@@ -127,6 +130,8 @@ void setup() {
 
   //Pin initialization (Outputs.pde)
   pinInit();
+  alarmTone.begin(ALARM_PIN);
+  randomSeed(analogRead(0));
 
   //Pin initialization for temp chip (Temp.pde)
   tempInit();
