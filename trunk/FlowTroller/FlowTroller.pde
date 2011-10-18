@@ -1,4 +1,4 @@
-#define BUILD 793
+#define BUILD 799
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -93,7 +93,7 @@ char menuopts[21][20], buf[20];
 double PIDInput, PIDOutput, setpoint;
 byte PIDCycle, hysteresis, pwmFanPwr, coolThresh;
 unsigned long cycleStart;
-boolean heatStatus, PIDEnabled;
+boolean heatStatus, coolStatus, PIDEnabled;
 
 PID pid(&PIDInput, &PIDOutput, &setpoint, 3, 4, 1, DIRECT);
 

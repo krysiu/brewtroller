@@ -752,7 +752,7 @@ void cfgOutputs() {
     strcpy_P(menuopts[4], PSTR("PID D Gain"));
     strcpy_P(menuopts[5], HYSTERESIS);
     strcpy_P(menuopts[6], PSTR("Cooling Fan Power"));
-    strcpy_P(menuopts[7], PSTR("Cooling Threshhold"));
+    strcpy_P(menuopts[7], PSTR("Cooling Threshold"));
     strcpy_P(menuopts[8], EXIT);
 
     lastOption = scrollMenu("Configure Outputs", 9, lastOption);
@@ -769,7 +769,7 @@ void cfgOutputs() {
     else if (lastOption == 4) setPIDd(getValue(PSTR("PID D Gain"), getPIDd(), 5, 2, 32000, PSTR("")));
     else if (lastOption == 5) setHysteresis(getValue(HYSTERESIS, hysteresis, 3, 1, 255, TUNIT));
     else if (lastOption == 6) setPWMFanPower(getValue(PSTR("Cooling Fan Power"), pwmFanPwr, 3, 0, 100, PSTR("%")));
-    else if (lastOption == 7) setCoolThresh(getValue(PSTR("Cooling Threshhold"), coolThresh, 3, 0, 250, TUNIT));    
+    else if (lastOption == 7) setCoolThresh(getValue(PSTR("Cooling Threshold"), coolThresh, 3, 0, 250, TUNIT));    
     else return;
   } 
 }
