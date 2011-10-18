@@ -191,7 +191,7 @@ void screenRefresh(){
   printLCDLPad(1, 16, itoa(setpoint, buf, 10), 3, ' ');
   if (temp < 1000) printLCDLPad(2, 16, itoa(temp, buf, 10), 3, ' ');
   else printLCD(2, 16, "---");
-  printLCDLPad(3, 16, itoa(PIDOutput / (PIDCycle * 100), buf, 10), 3, ' ');
+  printLCDLPad(3, 16, itoa(PIDOutput / (PIDCycle * 100) * 100, buf, 10), 3, ' ');
 }
 
 
@@ -203,40 +203,38 @@ void screenEnter() {
     if (alarmStatus) setAlarm(0);
     else {
       strcpy_P(menuopts[0], CANCEL);
-      strcpy_P(menuopts[1], PSTR("Edit Program"));
-      strcpy_P(menuopts[2], PSTR("Start Program"));
-      strcpy_P(menuopts[3], PSTR("Setpoint: "));
-      strcat(menuopts[3], itoa(setpoint, buf, 10));
-      strcat_P(menuopts[3], TUNIT);
-      strcpy_P(menuopts[4], PSTR("Set Timer"));
-      if (timerStatus) strcpy_P(menuopts[5], PSTR("Pause Timer"));
-      else strcpy_P(menuopts[5], PSTR("Start Timer"));
-      strcpy_P(menuopts[6], SKIPSTEP);
-      strcpy_P(menuopts[7], PSTR("Reset All"));
-      strcpy_P(menuopts[8], PSTR("System Setup"));
-      #ifdef UI_NO_SETUP
-        byte lastOption = scrollMenu("Main Menu", 8, 0);
-      #else
-        byte lastOption = scrollMenu("Main Menu", 9, 0);
-      #endif
+      strcpy_P(menuopts[1], PSTR("Clear Alarm"));
+      strcpy_P(menuopts[2], PSTR("Edit Program"));
+      strcpy_P(menuopts[3], PSTR("Start Program"));
+      strcpy_P(menuopts[4], PSTR("Setpoint: "));
+      strcat(menuopts[4], itoa(setpoint, buf, 10));
+      strcat_P(menuopts[5], TUNIT);
+      strcpy_P(menuopts[5], PSTR("Set Timer"));
+      if (timerStatus) strcpy_P(menuopts[6], PSTR("Pause Timer"));
+      else strcpy_P(menuopts[6], PSTR("Start Timer"));
+      strcpy_P(menuopts[7], SKIPSTEP);
+      strcpy_P(menuopts[8], PSTR("Reset All"));
+      strcpy_P(menuopts[9], PSTR("System Setup"));
+      byte lastOption = scrollMenu("Main Menu", 10, 0);
 
-      if (lastOption == 1) editProgramMenu();
-      else if (lastOption == 2) startProgramMenu();
-      else if (lastOption == 3) {
+      if (lastOption == 1) setAlarm(0);
+      else if (lastOption == 2) editProgramMenu();
+      else if (lastOption == 3) startProgramMenu();
+      else if (lastOption == 4) {
         setSetpoint(getValue(PSTR("Setpoint"), setpoint, 3, 0, 999, TUNIT));
         if (setpoint) pid.SetMode(AUTOMATIC); else pid.SetMode(MANUAL);
       }
-      else if (lastOption == 4) {
+      else if (lastOption == 5) {
         setTimer(getTimerValue(PSTR("Set Timer"), timerValue / 60000));
         //Force Preheated
         preheated = 1;
       }
-      else if (lastOption == 5) {
+      else if (lastOption == 6) {
         pauseTimer();
         //Force Preheated
         preheated = 1;
       }
-      else if (lastOption == 6) {
+      else if (lastOption == 7) {
         if(actProgram != PROGRAM_IDLE) {
           if (stepAdvance(actStep)) {
             //Failed to advance step
@@ -244,7 +242,7 @@ void screenEnter() {
           }
         }
       }
-      else if (lastOption == 7) {
+      else if (lastOption == 8) {
         //Reset All
         if (confirmAbort()) {
           setProgramStep(PROGRAM_IDLE, PROGRAM_IDLE);
@@ -252,9 +250,7 @@ void screenEnter() {
           clearTimer();
         }
       }
-#ifndef UI_NO_SETUP        
-      else if (lastOption == 8) menuSetup();
-#endif
+      else if (lastOption == 9) menuSetup();
       screenInit();
     }
   }

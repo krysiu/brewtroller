@@ -89,7 +89,7 @@ boolean stepAdvance(byte flowStep) {
     }
     //Init Successful
     return 0;
-  }
+  } else setAlarm(1);
 }
 
 //Performs exit logic specific to each step

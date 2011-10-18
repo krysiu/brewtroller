@@ -27,7 +27,6 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #include "Config.h"
 
 void pinInit() {
-  alarmPin.setup(ALARM_PIN, OUTPUT);
   heatPin.setup(HEAT_PIN, OUTPUT);
 }
 
