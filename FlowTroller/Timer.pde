@@ -28,11 +28,11 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 
 byte lastEEPROMWrite;
 
-void setTimer(unsigned int minutes) {
-  timerValue = minutes * 60000;
+void setTimer(unsigned int tenthMins) {
+  timerValue = tenthMins * 6000;
   lastTime = millis();
   timerStatus = 1;
-  setTimerRecovery(minutes);
+  setTimerRecovery(tenthMins);
 }
 
 void pauseTimer() {
@@ -58,8 +58,8 @@ void updateTimers() {
     if (timerValue > now - lastTime) {
       timerValue -= now - lastTime;
     } else {
-      timerValue = 0;
-      timerStatus = 0;
+      setTimerStatus(0);
+      setTimerRecovery(0);  // KM - Moved this from below to be event driven
       setAlarm(1);
     }
     lastTime = now;

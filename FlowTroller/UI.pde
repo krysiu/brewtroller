@@ -170,17 +170,17 @@ void screenInit() {
     getProgName(actProgram, buf);
     printLCD(0, 0, buf);
       if (actStep != PROGRAM_IDLE) {
-        printLCD_P(1, 2, PSTR("Step: "));
-        printLCD(1, 8, itoa(actStep + 1, buf, 10));
+        printLCD_P(1, 0, PSTR("Step: "));
+        printLCD(1, 6, itoa(actStep + 1, buf, 10));
       }
   } else printLCD_P(0, 0, PSTR("Manual Control"));
   printLCD_P(1, 11, PSTR("Set:"));
   printLCD_P(2, 8, PSTR("Actual:"));
-  printLCD_P(3, 9, PSTR("Power:"));
+  printLCD_P(3, 0, PSTR("Cool:"));
+  printLCD_P(3, 10, PSTR("Heat:"));
   
   printLCD_P(1, 19, TUNIT);
   printLCD_P(2, 19, TUNIT);
-  printLCD(3, 19, "%");
 }
 
 //**********************************************************************************
@@ -191,7 +191,29 @@ void screenRefresh(){
   printLCDLPad(1, 16, itoa(setpoint, buf, 10), 3, ' ');
   if (temp < 1000) printLCDLPad(2, 16, itoa(temp, buf, 10), 3, ' ');
   else printLCD(2, 16, "---");
-  printLCDLPad(3, 16, itoa(PIDOutput / (PIDCycle * 100) * 100, buf, 10), 3, ' ');
+  
+  if (PIDEnabled) {
+    byte pct = PIDOutput / (PIDCycle * 100) * 100;
+    if (pct == 100) printLCD_P(3, 17, PSTR(" On"));
+    else if (pct == 0) printLCD_P(3, 17, PSTR("Off"));
+    else {
+      printLCDLPad(3, 17, itoa(pct, buf, 10), 2, ' ');
+      printLCD_P(3, 19, PSTR("%"));
+    }
+  }
+  else {
+    if (heatStatus) printLCD_P(3, 17, PSTR(" On"));
+    else printLCD_P(3, 17, PSTR("Off"));
+  }
+  
+  if (coolStatus) {
+    if (pwmFanPwr == 100) printLCD_P(3, 6, PSTR(" On"));
+    else if (pwmFanPwr == 0) printLCD_P(3, 6, PSTR("Off"));
+    else {
+      printLCDLPad(3, 6, itoa(pwmFanPwr, buf, 10), 2, ' ');
+      printLCD_P(3, 8, PSTR("%"));
+    }
+  } else printLCD_P(3, 6, PSTR("Off"));
 }
 
 
@@ -207,8 +229,8 @@ void screenEnter() {
       strcpy_P(menuopts[2], PSTR("Start Program"));
       strcpy_P(menuopts[3], PSTR("Setpoint: "));
       strcat(menuopts[3], itoa(setpoint, buf, 10));
-      strcat_P(menuopts[4], TUNIT);
-      strcpy_P(menuopts[5], PSTR("Set Timer"));
+      strcat_P(menuopts[3], TUNIT);
+      strcpy_P(menuopts[4], PSTR("Set Timer"));
       if (timerStatus) strcpy_P(menuopts[5], PSTR("Pause Timer"));
       else strcpy_P(menuopts[5], PSTR("Start Timer"));
       strcpy_P(menuopts[6], SKIPSTEP);
@@ -223,7 +245,7 @@ void screenEnter() {
         if (setpoint) pid.SetMode(AUTOMATIC); else pid.SetMode(MANUAL);
       }
       else if (lastOption == 4) {
-        setTimer(getTimerValue(PSTR("Set Timer"), timerValue / 60000));
+        setTimer(getValue(PSTR("Set Timer"), timerValue / 6000, 3, 1, 250, PSTR("mins")));
         //Force Preheated
         preheated = 1;
       }
@@ -331,7 +353,11 @@ void editProgram(byte pgm) {
       strcpy_P(menuopts[flowStep * 2], PSTR("Step "));
       strcat(menuopts[flowStep * 2], itoa(flowStep + 1, buf, 10));
       strcat(menuopts[flowStep * 2], ": ");
-      strcat(menuopts[flowStep * 2], itoa(getProgMins(pgm, flowStep), buf, 10));
+      byte whole = getProgMins(pgm, flowStep) / 10;
+      byte decimal = getProgMins(pgm, flowStep) - whole * 10;
+      strcat(menuopts[flowStep * 2], itoa(whole, buf, 10));
+      strcat(menuopts[flowStep * 2], ".");
+      strcat(menuopts[flowStep * 2], itoa(decimal, buf, 10));
       strcat(menuopts[flowStep * 2], " min");
       
       strcpy_P(menuopts[flowStep * 2 + 1], PSTR("Step "));
@@ -344,7 +370,7 @@ void editProgram(byte pgm) {
     lastOption = scrollMenu("Edit Program", NUM_FLOW_STEPS * 2 + 1, lastOption);
     
     if (lastOption >= NUM_FLOW_STEPS * 2) return;
-    else if (lastOption / 2.0 == lastOption / 2) setProgMins(pgm, lastOption / 2, getTimerValue(PSTR("Step Mins"), getProgMins(pgm, lastOption / 2)));
+    else if (lastOption / 2.0 == lastOption / 2) setProgMins(pgm, lastOption / 2, getValue(PSTR("Step Mins"), getProgMins(pgm, lastOption / 2), 3, 1, 250, PSTR("mins")));
     else setProgTemp(pgm, lastOption / 2, getValue(PSTR("Step Temp"), getProgTemp(pgm, lastOption / 2), 3, 0, 999, TUNIT));
   }
 }
@@ -723,12 +749,14 @@ void menuSetup() {
   byte lastOption = 0;
   while(1) {
     strcpy_P(menuopts[0], PSTR("Configure Outputs"));
-    strcpy_P(menuopts[1], INIT_EEPROM);
-    strcpy_P(menuopts[2], EXIT);
+    strcpy_P(menuopts[1], PSTR("Alarm Tone"));
+    strcpy_P(menuopts[2], INIT_EEPROM);
+    strcpy_P(menuopts[3], EXIT);
     
-    lastOption = scrollMenu("System Setup", 3, lastOption);
+    lastOption = scrollMenu("System Setup", 4, lastOption);
     if (lastOption == 0) cfgOutputs();
-    else if (lastOption == 1) {
+    else if (lastOption == 1) cfgAlarm();
+    else if (lastOption == 2) {
       clearLCD();
       printLCD_P(0, 0, PSTR("Reset Configuration?"));
       strcpy_P(menuopts[0], INIT_EEPROM);
@@ -774,6 +802,40 @@ void cfgOutputs() {
   } 
 }
 
+void cfgAlarm() {
+  byte lastOption;
+  while (1) {
+    for (byte i = 0; i < NUM_SONGS; i++) {
+      unsigned int pos = 0;
+      prog_char *p = (char*)pgm_read_word(&(songLib[i]));
+      while(pgm_read_byte(p) != ':') menuopts[i][pos++] = pgm_read_byte(p++);
+      menuopts[i][pos] = '\0';
+    }
+    strcpy_P(menuopts[NUM_SONGS], EXIT);
+    lastOption = scrollMenu("Select Alarm Tone", NUM_SONGS + 1, lastOption);
+    if (lastOption == NUM_SONGS) return;
+    else previewAlarm(lastOption);
+  }
+}
+
+void previewAlarm(byte index) {
+  byte origAlarm = alarmSound;
+  alarmSound = index;
+  setAlarm(1);
+  clearLCD();
+  printLCD_P(0, 0, PSTR("Select Alarm:"));
+  prog_char *p = (char*)pgm_read_word(&(songLib[index]));
+  unsigned int pos = 0;
+  while(pgm_read_byte(p) != ':') buf[pos++] = pgm_read_byte(p++);
+  buf[pos] = '\0';
+  printLCD(1, 0, buf);
+      
+  strcpy_P(menuopts[0], CANCEL);
+  strcpy_P(menuopts[1], PSTR("Save"));
+  if (getChoice(2, 3) == 1) setAlarmSound(index);
+  else alarmSound = origAlarm;
+  setAlarm(0);
+}
 
 #endif
 #endif

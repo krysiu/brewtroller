@@ -31,7 +31,7 @@
 // toggled using the SET_LOGSTATUS command.
 
 #define LOG_INTERVAL 2000
-#define LOG_INITSTATUS 1
+#define LOG_INITSTATUS 0
 //**********************************************************************************
 
 
