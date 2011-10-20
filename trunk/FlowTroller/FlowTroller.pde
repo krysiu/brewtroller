@@ -1,4 +1,4 @@
-#define BUILD 799
+#define BUILD 802
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jermeiah Dillingham
 
@@ -100,6 +100,7 @@ PID pid(&PIDInput, &PIDOutput, &setpoint, 3, 4, 1, DIRECT);
 //Timer Globals
 unsigned long timerValue, lastTime;
 boolean timerStatus, alarmStatus;
+byte alarmSound;
 
 //Log Globals
 boolean logData = LOG_INITSTATUS;
@@ -131,8 +132,7 @@ void setup() {
 
   //Pin initialization (Outputs.pde)
   pinInit();
-  alarmTone.begin(ALARM_PIN);
-  randomSeed(analogRead(0));
+  alarmTone.begin(ALARM_PIN, 1);  //Force Timer1
 
   //Pin initialization for temp chip (Temp.pde)
   tempInit();

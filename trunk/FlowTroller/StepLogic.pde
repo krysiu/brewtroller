@@ -46,7 +46,8 @@ boolean stepInit(byte pgm, byte flowStep) {
 
   //If we made it without an abort, save the program number for stepCore
   setProgramStep(flowStep, pgm);
-
+  setAlarm(0);
+  
   setSetpoint(getProgTemp(pgm, flowStep));
   pid.SetMode(AUTOMATIC);
   preheated = 0;
