@@ -165,8 +165,7 @@ void setSetpoint(int value) {
 //**********************************************************************************
 //timer (302)
 //**********************************************************************************
-void setTimerRecovery(unsigned int tenthMins) { 
-  timerValue = tenthMins * 6000;
+void setTimerRecovery(byte tenthMins) { 
   EEPROM.write(302, tenthMins); 
 }
 
