@@ -47,9 +47,9 @@ void pauseTimer() {
 }
 
 void clearTimer() {
-  timerValue = 0;
-  timerStatus = 0;
+  setTimerStatus(0);
   setTimerRecovery(0);
+  timerValue = 0;
 }
 
 void updateTimers() {
@@ -59,7 +59,8 @@ void updateTimers() {
       timerValue -= now - lastTime;
     } else {
       setTimerStatus(0);
-      setTimerRecovery(0);  // KM - Moved this from below to be event driven
+      setTimerRecovery(0);
+      timerValue = 0;
       setAlarm(1);
     }
     lastTime = now;
@@ -71,7 +72,7 @@ void updateTimers() {
   //Update EEPROM once per minute
   if (timerMins != lastEEPROMWrite) {
     lastEEPROMWrite = timerMins;
-    setTimerRecovery(timerValue/60000 + 1);
+    setTimerRecovery(min(timerValue/6000 + 10, 255));
   }
 }
 
