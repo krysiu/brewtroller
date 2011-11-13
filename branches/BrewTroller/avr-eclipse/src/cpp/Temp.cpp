@@ -1,4 +1,4 @@
-/*  
+/*
    Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
     This file is part of BrewTroller.
@@ -24,6 +24,8 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
 
+#include "Temp.h"
+
 #include "Config.h"
 #include "Enum.h"
 #include "HWProfile.h"
@@ -37,8 +39,8 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     #include <DS2482.h>
     DS2482 ds(DS2482_ADDR);
   #endif
-  //One Wire Bus on 
-  
+  //One Wire Bus on
+
   void tempInit() {
     for (byte i = TS_HLT; i <= TS_AUX3; i++) temp[i] = BAD_TEMP;
     #ifdef TS_ONEWIRE_I2C
@@ -49,7 +51,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     ds.write(0x4E, TS_ONEWIRE_PPWR); //Write to scratchpad
     ds.write(0x4B, TS_ONEWIRE_PPWR); //Default value of TH reg (user byte 1)
     ds.write(0x46, TS_ONEWIRE_PPWR); //Default value of TL reg (user byte 2)
-  
+
     #if TS_ONEWIRE_RES == 12
       ds.write(0x7F, TS_ONEWIRE_PPWR); //Config Reg (12-bit)
     #elif TS_ONEWIRE_RES == 11
@@ -59,7 +61,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     #else //Default to 9-bit
       ds.write(0x1F, TS_ONEWIRE_PPWR); //Config Reg (9-bit)
     #endif
-  
+
     ds.reset();
     ds.skip();
     ds.write(0x48, TS_ONEWIRE_PPWR); //Copy scratchpad to EEPROM
@@ -67,7 +69,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 
 
   unsigned long convStart;
-  
+
   #if TS_ONEWIRE_RES == 12
     #define CONV_DELAY 750
   #elif TS_ONEWIRE_RES == 11
@@ -83,7 +85,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
       ds.reset();
       ds.skip();
       ds.write(0x44, TS_ONEWIRE_PPWR); //Start conversion
-      convStart = millis();   
+      convStart = millis();
     } else if (tsReady() || millis() - convStart >= CONV_DELAY) {
       #ifdef DEBUG_TEMP_CONV_T
         convStart = millis() - convStart;
@@ -94,7 +96,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
       #endif
       for (byte i = TS_HLT; i <= TS_AUX3; i++) if (validAddr(tSensor[i])) temp[i] = read_temp(tSensor[i]); else temp[i] = BAD_TEMP;
       convStart = 0;
-      
+
       #if defined MASH_AVG
         mashAvg();
       #endif
@@ -107,12 +109,12 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     #endif
     return 0;
   }
-  
+
   boolean validAddr(byte* addr) {
     for (byte i = 0; i < 8; i++) if (addr[i]) return 1;
     return 0;
   }
-  
+
   //This function search for an address that is not currently assigned!
   void getDSAddr(byte addrRet[8]){
   //Leaving stub for external functions (serial and setup) that use this function
@@ -136,7 +138,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
             break;
           }
         }
-        if (match) { 
+        if (match) {
           found = 1;
           break;
         }
@@ -146,15 +148,15 @@ Documentation, Forums and more information available at http://www.brewtroller.c
         return;
       }
       limit++;
-    }      
+    }
   }
-  
+
 //Returns Int representing hundreths of degree
   int read_temp(byte* addr) {
     long tempOut;
     byte data[9];
     ds.reset();
-    ds.select(addr);   
+    ds.select(addr);
     ds.write(0xBE, TS_ONEWIRE_PPWR); //Read Scratchpad
     #ifdef TS_ONEWIRE_FASTREAD
       for (byte i = 0; i < 2; i++) data[i] = ds.read();
@@ -164,12 +166,12 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     #endif
 
     tempOut = (data[1] << 8) + data[0];
-    
+
     if ( addr[0] == 0x10) tempOut = tempOut * 50; //9-bit DS18S20
     else tempOut = tempOut * 25 / 4; //12-bit DS18B20, etc.
-      
+
     #ifdef USEMETRIC
-      return int(tempOut);  
+      return int(tempOut);
     #else
       return int((tempOut * 9 / 5) + 3200);
     #endif

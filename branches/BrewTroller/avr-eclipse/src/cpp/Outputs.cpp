@@ -1,4 +1,4 @@
-/*  
+/*
    Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
     This file is part of BrewTroller.
@@ -29,8 +29,12 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #include "Enum.h"
 #include "HWProfile.h"
 #include "PVOut.h"
+#include "StepLogic.h"
 
-#ifdef PID_FLOW_CONTROL 
+#include "PID_Beta6.h"
+#include "wiring.h"
+
+#ifdef PID_FLOW_CONTROL
   #define LAST_HEAT_OUTPUT VS_PUMP // not this is mostly done for code readability as VS_PUMP = VS_STEAM
 #else
   #ifdef USESTEAM
@@ -56,7 +60,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #endif
 
 #ifdef PWM_BY_TIMER
-// note there are some assumptions here, we assume that the COM1A1, COM1B1, COM1A0, and COM1B0 
+// note there are some assumptions here, we assume that the COM1A1, COM1B1, COM1A0, and COM1B0
 // bits are all 0 (as they should be on power up)
 void pwmInit( void )
 {
@@ -69,32 +73,32 @@ void pwmInit( void )
     cbi(TCCR1A, WGM10);
     //set timer 1 into 16 bit phase and frequency correct PWM mode with ICR1 as TOP
     sbi(TCCR1B, WGM13);
-    //set TOP as 1000, which makes the overflow on return to bottom for this mode happen ever 
-    // 125uS given a 16mhz input clock, aka 8khz PWM frequency, the overflow ISR will handle 
+    //set TOP as 1000, which makes the overflow on return to bottom for this mode happen ever
+    // 125uS given a 16mhz input clock, aka 8khz PWM frequency, the overflow ISR will handle
     // the PWM outputs that are slower than 8khz, and the OCR1A/B ISR will handle the 8khz PWM outputs
-    ICR1 = 1000; 
+    ICR1 = 1000;
 
     //enable timer 1 overflow interrupt (in this mode overflow happens when the timer counds down to BOTTOM
-    // after counting UP from BOTTOM to TOP. 
+    // after counting UP from BOTTOM to TOP.
     sbi(TIMSK1, TOIE1);
 
 }
 
 //note that the code in any SIGNAL function is an ISR, and the code needs to kept short and fast
 // it is important to avoid divides by non power of 2 numbers, remainder (mod) calculations, wait loops,
-// or calls to functions that have wait loops. It's also not a good idea to write into any global that may be 
-// used else where in the code inside here without interrupt protecting all accesses to that variable in 
+// or calls to functions that have wait loops. It's also not a good idea to write into any global that may be
+// used else where in the code inside here without interrupt protecting all accesses to that variable in
 // non ISR code, or making sure that if we do write to it in the ISR, we dont write/read to it in non ISR code
 // (for example, below the heatPin objects are not written to if PIDEnable[i] = 1;
 //
 // Also the below ISR is set to nonblock so that interrupts are enabled as we enter the function
-// this is done to make sure that we can run low counts in the compare registers, for example, 
-// a count of 1 could cause an interrupts 1 processor clock cycle after this interrupt is called 
-// sense it's called at bottom, and sense this has a fair amount of code in it, it's good to let the 
+// this is done to make sure that we can run low counts in the compare registers, for example,
+// a count of 1 could cause an interrupts 1 processor clock cycle after this interrupt is called
+// sense it's called at bottom, and sense this has a fair amount of code in it, it's good to let the
 // compare interrupts interrupt this interrupt (same with the UART and timer0 interrupts)
 ISR(TIMER1_OVF_vect, ISR_NOBLOCK )
 {
-    //count the number of times this has been called 
+    //count the number of times this has been called
     timer1_overflow_count++;
     for(byte i = 0; i <= LAST_HEAT_OUTPUT; i++)
     {
@@ -102,14 +106,14 @@ ISR(TIMER1_OVF_vect, ISR_NOBLOCK )
         if(PIDEnabled[i])
         {
             //init the cyclestart counter if needed
-            if(cycleStart[i] == 0 ) cycleStart[i] = timer1_overflow_count; 
+            if(cycleStart[i] == 0 ) cycleStart[i] = timer1_overflow_count;
             //if our period just ended, update to when the next period ends
-            if((timer1_overflow_count - cycleStart[i]) > PIDOutputCountEquivalent[i][0]) 
+            if((timer1_overflow_count - cycleStart[i]) > PIDOutputCountEquivalent[i][0])
                 cycleStart[i] += PIDOutputCountEquivalent[i][0];
-            //check to see if the pin should be high or low (note when our 16 bit integer wraps we will have 1 period where 
-            // the PWM % if cut short, because from the time of wrap until the next period 
-            if (PIDOutputCountEquivalent[i][1] >= timer1_overflow_count - cycleStart[i] 
-                  && timer1_overflow_count != cycleStart[i]) 
+            //check to see if the pin should be high or low (note when our 16 bit integer wraps we will have 1 period where
+            // the PWM % if cut short, because from the time of wrap until the next period
+            if (PIDOutputCountEquivalent[i][1] >= timer1_overflow_count - cycleStart[i]
+                  && timer1_overflow_count != cycleStart[i])
                 heatPin[i].set(HIGH); else heatPin[i].set(LOW);
         }
     }
@@ -129,7 +133,7 @@ void pinInit() {
   #ifdef HLT_AS_KETTLE
     #ifdef HLTHEAT_PIN
       heatPin[VS_KETTLE].setup(HLTHEAT_PIN, OUTPUT);
-    #endif      
+    #endif
   #else
     #ifdef KETTLEHEAT_PIN
       heatPin[VS_KETTLE].setup(KETTLEHEAT_PIN, OUTPUT);
@@ -150,7 +154,7 @@ void pinInit() {
   #ifdef HEARTBEAT
     hbPin.setup(HEARTBEAT_PIN, OUTPUT);
   #endif
-  
+
   #ifdef DIGITAL_INPUTS
     digInPin[0].setup(DIGIN1_PIN, INPUT);
     digInPin[1].setup(DIGIN2_PIN, INPUT);
@@ -163,11 +167,11 @@ void pinInit() {
 void pidInit() {
   //note that the PIDCycle for the 8khz outputs is set to 10 because the TOP of the counter/timer is set to 1000
   // this means that after it is multiplied by the PIDLIMIT it will be the proper value to give you the desired % output
-  // it also makes the % calculations work properly in the log, UI, and other area's. 
+  // it also makes the % calculations work properly in the log, UI, and other area's.
   #ifdef PID_FLOW_CONTROL
-    PIDCycle[VS_PUMP] = 1; // for PID pump flow the STEAM heat output is set to a fixed 10hz signal with 100 step outputs. 
+    PIDCycle[VS_PUMP] = 1; // for PID pump flow the STEAM heat output is set to a fixed 10hz signal with 100 step outputs.
   #endif
-  
+
   for (byte vessel = VS_HLT; vessel <= VS_KETTLE; vessel++) {
     pid[vessel].SetInputLimits(0, 25500);
     pid[vessel].SetOutputLimits(0, PIDCycle[vessel] * pidLimits[vessel]);
@@ -237,7 +241,7 @@ void resetHeatOutput(byte vessel) {
   #ifdef PWM_BY_TIMER
     SREG = oldSREG; // restore interrupts
   #endif
-}  
+}
 
 void processHeatOutputs() {
   //Process Heat Outputs
@@ -253,7 +257,7 @@ void processHeatOutputs() {
       setSetpoint(TS_MASH, getProgMashTemp(stepProgram[steptoset], steptoset - 5));
     }
   #endif
-  
+
   for (byte i = VS_HLT; i <= LAST_HEAT_OUTPUT; i++) {
     #ifdef HLT_AS_KETTLE
       if (i == VS_KETTLE && setpoint[VS_HLT]) continue;
@@ -266,9 +270,9 @@ void processHeatOutputs() {
       #ifdef PID_FLOW_CONTROL
         if(i == VS_PUMP) PIDInput[i] = flowRate[VS_KETTLE];
       #else
-        if (i == VS_STEAM) PIDInput[i] = steamPressure; 
+        if (i == VS_STEAM) PIDInput[i] = steamPressure;
       #endif
-          else { 
+          else {
             PIDInput[i] = temp[i];
       #ifdef PID_FEED_FORWARD
             if(i == VS_MASH ) FFBias = temp[FEED_FORWARD_SENSOR];
@@ -276,12 +280,12 @@ void processHeatOutputs() {
           }
           pid[i].Compute();
         #ifdef PID_FLOW_CONTROL
-          if(i == VS_PUMP && setpoint[i] == 0) PIDOutput[i] = 0; // if the setpoint is 0 then make sure we output 0, as dont want the min output always on. 
+          if(i == VS_PUMP && setpoint[i] == 0) PIDOutput[i] = 0; // if the setpoint is 0 then make sure we output 0, as dont want the min output always on.
         #endif
         #ifdef PID_FEED_FORWARD
-          if(i == VS_MASH && setpoint[i] == 0) PIDOutput[i] = 0; // found a bug where the mash output could be turned on if setpoint was 0 but FFBias was not 0. 
-                                                                 // this fixes the bug but still lets the integral gain learn to compensate for the FFBias while 
-                                                                 // the setpoint is 0. 
+          if(i == VS_MASH && setpoint[i] == 0) PIDOutput[i] = 0; // found a bug where the mash output could be turned on if setpoint was 0 but FFBias was not 0.
+                                                                 // this fixes the bug but still lets the integral gain learn to compensate for the FFBias while
+                                                                 // the setpoint is 0.
         #endif
         #ifdef HLT_KET_ELEMENT_SAVE
           if(i == VS_HLT && volAvg[i] < HLT_MIN_HEAT_VOL) PIDOutput[i] = 0;
@@ -298,7 +302,7 @@ void processHeatOutputs() {
               if((long)setpoint[i] - flowRate[VS_KETTLE] > 100){
                 additioncount[0]++;
                 additioncount[1] = 0;
-                if(additioncount[0] > 5){    // this is here to break a case where adding 10 causes a change of 100 but lowering 10 causes a change of 100 off the setpoint and we just oscilate. 
+                if(additioncount[0] > 5){    // this is here to break a case where adding 10 causes a change of 100 but lowering 10 causes a change of 100 off the setpoint and we just oscilate.
                   additioncount[0] = 0;
                   PIDOutput[i] += 5;
                 }
@@ -307,25 +311,25 @@ void processHeatOutputs() {
               else if((long)setpoint[i] - flowRate[VS_KETTLE] < -100){
                 additioncount[0]++;
                 additioncount[1] = 0;
-                if(additioncount[0] > 5){    // this is here to break a case where adding 10 causes a change of 100 but lowering 10 causes a change of 100 off the setpoint and we just oscilate. 
+                if(additioncount[0] > 5){    // this is here to break a case where adding 10 causes a change of 100 but lowering 10 causes a change of 100 off the setpoint and we just oscilate.
                  additioncount[0] = 0;
                  PIDOutput[i] -= 5;
                }
                else PIDOutput[i] -= 10;
               }
-              else if((long)setpoint[i] - flowRate[VS_KETTLE] > 50){ 
+              else if((long)setpoint[i] - flowRate[VS_KETTLE] > 50){
                 additioncount[0] = 0;
                 additioncount[1]++;
-                if(additioncount[0] > 5){    // this is here to break a case where adding 5 causes a change of 50 but lowering 5 causes a change of 50 off the setpoint and we just oscilate. 
+                if(additioncount[0] > 5){    // this is here to break a case where adding 5 causes a change of 50 but lowering 5 causes a change of 50 off the setpoint and we just oscilate.
                   additioncount[1] = 0;
                   PIDOutput[i] += 1;
                 }
                 else PIDOutput[i] += 5;
               }
-              else if((long)setpoint[i] - flowRate[VS_KETTLE] < -50){ 
+              else if((long)setpoint[i] - flowRate[VS_KETTLE] < -50){
                 additioncount[0] = 0;
                 additioncount[1]++;
-                if(additioncount[0] > 5){    // this is here to break a case where adding 5 causes a change of 50 but lowering 5 causes a change of 50 off the setpoint and we just oscilate. 
+                if(additioncount[0] > 5){    // this is here to break a case where adding 5 causes a change of 50 but lowering 5 causes a change of 50 off the setpoint and we just oscilate.
                   additioncount[1] = 0;
                   PIDOutput[i] -= 1;
                 }
@@ -333,7 +337,7 @@ void processHeatOutputs() {
               }
               else if((long)setpoint[i] - flowRate[VS_KETTLE] > 10) PIDOutput[i] += 1;
               else if((long)setpoint[i] - flowRate[VS_KETTLE] < -10) PIDOutput[i] -= 1;
-              
+
               if(PIDOutput[i] > pid[i].GetOUTMax()) PIDOutput[i] = pid[i].GetOUTMax();
               else if(PIDOutput[i] < pid[i].GetOUTMin()) PIDOutput[i] = pid[i].GetOUTMin();
             }
@@ -361,7 +365,7 @@ void processHeatOutputs() {
     } else {
       if (heatStatus[i]) {
         if (
-          (i != VS_STEAM && (temp[i] == BAD_TEMP || temp[i] >= setpoint[i]))  
+          (i != VS_STEAM && (temp[i] == BAD_TEMP || temp[i] >= setpoint[i]))
             || (i == VS_STEAM && steamPressure >= setpoint[i])
         ) {
           heatPin[i].set(LOW);
@@ -370,7 +374,7 @@ void processHeatOutputs() {
           heatPin[i].set(HIGH);
         }
       } else {
-        if ((i != VS_STEAM && temp[i] != BAD_TEMP && (setpoint[i] - temp[i]) >= hysteresis[i] * 10) 
+        if ((i != VS_STEAM && temp[i] != BAD_TEMP && (setpoint[i] - temp[i]) >= hysteresis[i] * 10)
         || (i == VS_STEAM && (setpoint[i] - steamPressure) >= hysteresis[i] * 100)) {
           heatPin[i].set(HIGH);
           heatStatus[i] = 1;
@@ -378,13 +382,13 @@ void processHeatOutputs() {
           heatPin[i].set(LOW);
         }
       }
-    }    
+    }
   }
 }
 
 #ifdef PVOUT
   unsigned long prevProfiles;
-  
+
   void updateValves() {
     if (actProfiles != prevProfiles) {
       Valves.set(computeValveBits());
@@ -400,11 +404,11 @@ void processHeatOutputs() {
     if (autoValve[AV_FILL]) {
       if (volAvg[VS_HLT] < tgtVol[VS_HLT]) bitSet(actProfiles, VLV_FILLHLT);
         else bitClear(actProfiles, VLV_FILLHLT);
-        
+
       if (volAvg[VS_MASH] < tgtVol[VS_MASH]) bitSet(actProfiles, VLV_FILLMASH);
         else bitClear(actProfiles, VLV_FILLMASH);
     }
-    
+
     //HLT/MASH/KETTLE AV Logic
     for (byte i = VS_HLT; i <= VS_KETTLE; i++) {
       byte vlvHeat = vesselVLVHeat(i);
@@ -415,11 +419,11 @@ void processHeatOutputs() {
           if (!vlvConfigIsActive(vlvHeat)) bitSet(actProfiles, vlvHeat);
         } else {
           if (vlvConfigIsActive(vlvHeat)) bitClear(actProfiles, vlvHeat);
-          if (!vlvConfigIsActive(vlvIdle)) bitSet(actProfiles, vlvIdle); 
+          if (!vlvConfigIsActive(vlvIdle)) bitSet(actProfiles, vlvIdle);
         }
       }
     }
-    
+
     if (autoValve[AV_SPARGEIN]) {
       if (volAvg[VS_HLT] > tgtVol[VS_HLT]) bitSet(actProfiles, VLV_SPARGEIN);
         else bitClear(actProfiles, VLV_SPARGEIN);
@@ -472,7 +476,7 @@ void processHeatOutputs() {
         //ADD MIN DELAY!
         if (temp[TS_H2OOUT] < pitchTemp - 1.0) bitSet(actProfiles, VLV_CHILLBEER);
       }
-      
+
       //If chiller water is running
       if (vlvConfigIsActive(VLV_CHILLH2O)) {
         //Cut H2O if beer below pitch - 1
@@ -486,7 +490,7 @@ void processHeatOutputs() {
     }
   }
 #endif //#ifdef PVOUT
-  
+
 unsigned long computeValveBits() {
   unsigned long vlvBits = 0;
   for (byte i = 0; i < NUM_VLVCFGS; i++) {

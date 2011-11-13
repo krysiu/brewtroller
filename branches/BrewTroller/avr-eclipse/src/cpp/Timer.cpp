@@ -1,4 +1,4 @@
-/*  
+/*
    Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
     This file is part of BrewTroller.
@@ -24,6 +24,7 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
 
+#include "Timer.h"
 #include "Config.h"
 #include "Enum.h"
 
@@ -97,40 +98,40 @@ void updateTimers() {
 void updateBuzzer() {
   //Retreive the status of the alarm. (Removed by Matt. This value is always in memory)
   //byte alarmStatus = bitRead(EEPROM.read(306), 2);
-  //Set the buzzer according the user custom buzzer modulation 
-  setBuzzer(alarmStatus); 
+  //Set the buzzer according the user custom buzzer modulation
+  setBuzzer(alarmStatus);
 }
 
 void setAlarm(boolean alarmON) {
   setAlarmStatus(alarmON);
-  setBuzzer(alarmON);  
+  setBuzzer(alarmON);
 }
 
-//This function allow to modulate the sound of the buzzer when the alarm is ON. 
+//This function allow to modulate the sound of the buzzer when the alarm is ON.
 //The modulation varies according the custom parameters.
 //The modulation occurs when the buzzerCycleTime value is larger than the buzzerOnDuration
 void setBuzzer(boolean alarmON) {
   if (alarmON) {
     #ifdef BUZZER_CYCLE_TIME
       //Alarm status is ON, Buzzer will go ON or OFF based on modulation.
-      //The buzzer go OFF for every moment passed in the OFF window (low duty cycle). 
-      unsigned long now = millis(); //What time is it? :-))      
-      
-      //Now, by elimation, identify scenarios where the buzzer will go off. 
+      //The buzzer go OFF for every moment passed in the OFF window (low duty cycle).
+      unsigned long now = millis(); //What time is it? :-))
+
+      //Now, by elimation, identify scenarios where the buzzer will go off.
       if (now < buzzerCycleStart + BUZZER_CYCLE_TIME) {
-        //At this moment ("now"), the buzzer is in the OFF window (low duty cycle). 
+        //At this moment ("now"), the buzzer is in the OFF window (low duty cycle).
         if (now > buzzerCycleStart + BUZZER_ON_TIME) {
           //At this moment ("now"), the buzzer is NOT within the ON window (duty cycle) allowed inside the buzzer cycle window.
           //Set or keep the buzzer off
-          alarmPin.set(0); 
+          alarmPin.set(0);
         }
       } else {
         //The buzzer go ON for every moment where buzzerCycleStart < "now" < buzzerCycleStart + buzzerOnDuration
-        alarmPin.set(1); //Set the buzzer On 
+        alarmPin.set(1); //Set the buzzer On
         buzzerCycleStart = now; //Set a new reference time for the begining of the buzzer cycle.
       }
     #else
-      alarmPin.set(1); //Set the buzzer On 
+      alarmPin.set(1); //Set the buzzer On
     #endif
   } else {
     //Alarm status is OFF, Buzzer goes Off

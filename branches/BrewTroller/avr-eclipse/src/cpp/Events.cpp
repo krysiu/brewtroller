@@ -1,4 +1,4 @@
-/*  
+/*
    Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
     This file is part of BrewTroller.
@@ -24,8 +24,14 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
 
+#include "Events.h"
+#include "wiring.h";
+
 #include "Config.h"
 #include "Enum.h"
+#include "Outputs.h"
+#include "UI.h"
+
 
 void eventHandler(byte eventID, int eventParam) {
   //Global Event handler
@@ -36,15 +42,15 @@ void eventHandler(byte eventID, int eventParam) {
     byte avProfile = vesselAV(eventParam);
     byte vlvHeat = vesselVLVHeat(eventParam);
     byte vlvIdle = vesselVLVIdle(eventParam);
-    
+
     if (setpoint[eventParam]) autoValve[avProfile] = 1;
-    else { 
-      autoValve[avProfile] = 0; 
+    else {
+      autoValve[avProfile] = 0;
       if (vlvConfigIsActive(vlvIdle)) bitClear(actProfiles, vlvIdle);
       if (vlvConfigIsActive(vlvHeat)) bitClear(actProfiles, vlvHeat);
-    } 
+    }
   }
-  
+
   #ifndef NOUI
   //Pass Event Info to UI Event Handler
   uiEvent(eventID, eventParam);

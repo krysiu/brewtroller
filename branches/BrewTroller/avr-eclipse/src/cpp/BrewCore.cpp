@@ -1,4 +1,4 @@
-/*  
+/*
    Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
     This file is part of BrewTroller.
@@ -24,59 +24,59 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
 
-#include "Config.h"
-#include "Enum.h"
+#include "BrewCore.h"
+
+#include "BrewTroller.h"
+#include "Com.h"
 #include "HWProfile.h"
+#include "Outputs.h"
+#include "StepLogic.h"
+#include "Temp.h"
+#include "Timer.h"
+#include "UI_LCD.h"
+#include "Volume.h"
 
 void brewCore() {
   #ifdef HEARTBEAT
     heartbeat();
   #endif
-  
+
   #ifndef NOUI
     LCD.update();
   #endif
-  
-  //Timers: Timer.pde
+
   updateTimers();
-  
-  //temps: Temp.pde
+
   updateTemps();
- 
-  //Alarm update allows to have a beeping alarm
+
   updateBuzzer();
 
-  //Volumes: Volume.pde
   updateVols();
 
   #ifdef FLOWRATE_CALCS
     updateFlowRates();
   #endif
- 
-  //Heat Outputs: Outputs.pde
+
   processHeatOutputs();
-  
-  //Communications: Com.pde
-  updateCom();  
+
+  updateCom();
 
   #ifndef PID_FLOW_CONTROL
     steamPressure = readPressure(STEAMPRESS_APIN, steamPSens, steamZero);
   #endif
-  
-  //Step Logic: StepLogic.pde
+
   stepCore();
 
   #ifdef PVOUT
     //Auto Valve Logic: Outputs.pde
     processAutoValve();
-    
+
     //Set Valve Outputs based on active valve profiles (if changed): Outputs.pde
     updateValves();
   #endif
 }
 
 #ifdef HEARTBEAT
-  unsigned long hbStart = 0;
   void heartbeat() {
     if (millis() - hbStart > 750) {
       hbPin.toggle();

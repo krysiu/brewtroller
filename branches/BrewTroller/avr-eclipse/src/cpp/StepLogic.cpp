@@ -1,4 +1,4 @@
-/*  
+/*
    Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
     This file is part of BrewTroller.
@@ -24,8 +24,12 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
 
+#include "StepLogic.h"
+
+#include "BrewTroller.h"
 #include "Config.h"
 #include "Enum.h"
+#include "Timer.h"
 
 unsigned long lastHop, grainInStart;
 unsigned int boilAdds, triggered;
@@ -36,23 +40,23 @@ boolean stepIsActive(byte brewStep) {
 
 boolean zoneIsActive(byte brewZone) {
   if (brewZone == ZONE_MASH) {
-    if (stepIsActive(STEP_FILL) 
-      || stepIsActive(STEP_DELAY) 
+    if (stepIsActive(STEP_FILL)
+      || stepIsActive(STEP_DELAY)
       || stepIsActive(STEP_PREHEAT)
-      || stepIsActive(STEP_ADDGRAIN) 
+      || stepIsActive(STEP_ADDGRAIN)
       || stepIsActive(STEP_REFILL)
-      || stepIsActive(STEP_DOUGHIN) 
+      || stepIsActive(STEP_DOUGHIN)
       || stepIsActive(STEP_ACID)
-      || stepIsActive(STEP_PROTEIN) 
+      || stepIsActive(STEP_PROTEIN)
       || stepIsActive(STEP_SACCH)
-      || stepIsActive(STEP_SACCH2) 
+      || stepIsActive(STEP_SACCH2)
       || stepIsActive(STEP_MASHOUT)
-      || stepIsActive(STEP_MASHHOLD) 
+      || stepIsActive(STEP_MASHHOLD)
       || stepIsActive(STEP_SPARGE)
     ) return 1; else return 0;
   } else if (brewZone == ZONE_BOIL) {
-    if (stepIsActive(STEP_BOIL) 
-      || stepIsActive(STEP_CHILL) 
+    if (stepIsActive(STEP_BOIL)
+      || stepIsActive(STEP_CHILL)
     ) return 1; else return 0;
   }
 }
@@ -64,11 +68,11 @@ boolean stepInit(byte pgm, byte brewStep) {
 
   //Nothing more to do if starting 'Idle' program
   if(pgm == PROGRAM_IDLE) return 1;
-  
+
   //Abort Fill/Mash step init if mash Zone is not free
-  if (brewStep >= STEP_FILL && brewStep <= STEP_MASHHOLD && zoneIsActive(ZONE_MASH)) return 1;  
+  if (brewStep >= STEP_FILL && brewStep <= STEP_MASHHOLD && zoneIsActive(ZONE_MASH)) return 1;
   //Abort sparge init if either zone is currently active
-  else if (brewStep == STEP_SPARGE && (zoneIsActive(ZONE_MASH) || zoneIsActive(ZONE_BOIL))) return 1;  
+  else if (brewStep == STEP_SPARGE && (zoneIsActive(ZONE_MASH) || zoneIsActive(ZONE_BOIL))) return 1;
   //Allow Boil step init while sparge is still going
 
   //If we made it without an abort, save the program number for stepCore
@@ -101,19 +105,19 @@ boolean stepInit(byte pgm, byte brewStep) {
 
     if (getProgMLHeatSrc(pgm) == VS_HLT) {
       setSetpoint(TS_HLT, calcStrikeTemp(pgm));
-      
+
       #ifdef MASH_PREHEAT_STRIKE
         setSetpoint(TS_MASH, calcStrikeTemp(pgm));
       #elif defined MASH_PREHEAT_STEP1
         setSetpoint(TS_MASH, getFirstStepTemp(pgm));
       #else
         setSetpoint(TS_MASH, 0);
-      #endif        
+      #endif
     } else {
       setSetpoint(TS_HLT, getProgHLT(pgm));
       setSetpoint(TS_MASH, calcStrikeTemp(pgm));
     }
-    
+
     #ifndef PID_FLOW_CONTROL
     setSetpoint(VS_STEAM, getSteamTgt());
     #endif
@@ -166,23 +170,23 @@ boolean stepInit(byte pgm, byte brewStep) {
     setSetpoint(TS_HLT, getProgHLT(pgm));
     #ifdef RIMS_MLT_SETPOINT_DELAY
     starttime = millis(); // get current time
-    timetoset = starttime + RIMS_DELAY; //note that overflow of the milisecond timer is not covered here 
-    steptoset = brewStep; //step that we need to set the setpoint to after the timer is done. 
+    timetoset = starttime + RIMS_DELAY; //note that overflow of the milisecond timer is not covered here
+    steptoset = brewStep; //step that we need to set the setpoint to after the timer is done.
     RIMStimeExpired = 0; //reset the boolean so that we know if the timer has expired for this program or not
     autoValve[vesselAV(TS_MASH)] = 1; // turn on the mash recirc valve profile as if the setpoint had been set
     #else
     setSetpoint(TS_MASH, getProgMashTemp(pgm, MASH_DOUGHIN));
     #endif
-    
+
     #ifndef PID_FLOW_CONTROL
     setSetpoint(VS_STEAM, getSteamTgt());
     #endif
     preheated[VS_MASH] = 0;
     //Set timer only if empty (for purposed of power loss recovery)
-    if (!timerValue[TIMER_MASH]) setTimer(TIMER_MASH, getProgMashMins(pgm, MASH_DOUGHIN)); 
+    if (!timerValue[TIMER_MASH]) setTimer(TIMER_MASH, getProgMashMins(pgm, MASH_DOUGHIN));
     //Leave timer paused until preheated
     timerStatus[TIMER_MASH] = 0;
-    
+
   } else if (brewStep == STEP_ACID) {
   //Step Init: Acid Rest
     setSetpoint(TS_HLT, getProgHLT(pgm));
@@ -196,10 +200,10 @@ boolean stepInit(byte pgm, byte brewStep) {
     #endif
     preheated[VS_MASH] = 0;
     //Set timer only if empty (for purposed of power loss recovery)
-    if (!timerValue[TIMER_MASH]) setTimer(TIMER_MASH, getProgMashMins(pgm, MASH_ACID)); 
+    if (!timerValue[TIMER_MASH]) setTimer(TIMER_MASH, getProgMashMins(pgm, MASH_ACID));
     //Leave timer paused until preheated
     timerStatus[TIMER_MASH] = 0;
-    
+
   } else if (brewStep == STEP_PROTEIN) {
   //Step Init: Protein
     setSetpoint(TS_HLT, getProgHLT(pgm));
@@ -213,10 +217,10 @@ boolean stepInit(byte pgm, byte brewStep) {
     #endif
     preheated[VS_MASH] = 0;
     //Set timer only if empty (for purposed of power loss recovery)
-    if (!timerValue[TIMER_MASH]) setTimer(TIMER_MASH, getProgMashMins(pgm, MASH_PROTEIN)); 
+    if (!timerValue[TIMER_MASH]) setTimer(TIMER_MASH, getProgMashMins(pgm, MASH_PROTEIN));
     //Leave timer paused until preheated
     timerStatus[TIMER_MASH] = 0;
-    
+
   } else if (brewStep == STEP_SACCH) {
   //Step Init: Sacch
     setSetpoint(TS_HLT, getProgHLT(pgm));
@@ -230,10 +234,10 @@ boolean stepInit(byte pgm, byte brewStep) {
     #endif
     preheated[VS_MASH] = 0;
     //Set timer only if empty (for purposed of power loss recovery)
-    if (!timerValue[TIMER_MASH]) setTimer(TIMER_MASH, getProgMashMins(pgm, MASH_SACCH)); 
+    if (!timerValue[TIMER_MASH]) setTimer(TIMER_MASH, getProgMashMins(pgm, MASH_SACCH));
     //Leave timer paused until preheated
     timerStatus[TIMER_MASH] = 0;
-    
+
   } else if (brewStep == STEP_SACCH2) {
   //Step Init: Sacch2
     setSetpoint(TS_HLT, getProgHLT(pgm));
@@ -247,10 +251,10 @@ boolean stepInit(byte pgm, byte brewStep) {
     #endif
     preheated[VS_MASH] = 0;
     //Set timer only if empty (for purposed of power loss recovery)
-    if (!timerValue[TIMER_MASH]) setTimer(TIMER_MASH, getProgMashMins(pgm, MASH_SACCH2)); 
+    if (!timerValue[TIMER_MASH]) setTimer(TIMER_MASH, getProgMashMins(pgm, MASH_SACCH2));
     //Leave timer paused until preheated
     timerStatus[TIMER_MASH] = 0;
-    
+
   } else if (brewStep == STEP_MASHOUT) {
   //Step Init: Mash Out
     setSetpoint(TS_HLT, getProgHLT(pgm));
@@ -264,10 +268,10 @@ boolean stepInit(byte pgm, byte brewStep) {
     #endif
     preheated[VS_MASH] = 0;
     //Set timer only if empty (for purposed of power loss recovery)
-    if (!timerValue[TIMER_MASH]) setTimer(TIMER_MASH, getProgMashMins(pgm, MASH_MASHOUT)); 
+    if (!timerValue[TIMER_MASH]) setTimer(TIMER_MASH, getProgMashMins(pgm, MASH_MASHOUT));
     //Leave timer paused until preheated
     timerStatus[TIMER_MASH] = 0;
-    
+
   } else if (brewStep == STEP_MASHHOLD) {
     //Set HLT to Sparge Temp
     setSetpoint(TS_HLT, getProgSparge(pgm));
@@ -288,9 +292,9 @@ boolean stepInit(byte pgm, byte brewStep) {
       #endif
           setSetpoint(TS_HLT, getProgSparge(pgm));
     #endif
-    
+
     #ifdef BATCH_SPARGE
-      
+
     #else
         #ifdef SPARGE_IN_PUMP_CONTROL
         prevSpargeVol[1] = volAvg[VS_HLT]; // init the value at the start of sparge
@@ -314,12 +318,12 @@ boolean stepInit(byte pgm, byte brewStep) {
   } else if (brewStep == STEP_BOIL) {
   //Step Init: Boil
     #ifdef PID_FLOW_CONTROL
-    resetHeatOutput(VS_PUMP); // turn off the pump if we are moving to boil. 
+    resetHeatOutput(VS_PUMP); // turn off the pump if we are moving to boil.
     #endif
     setSetpoint(VS_KETTLE, getBoilTemp());
     preheated[VS_KETTLE] = 0;
     boilAdds = getProgAdds(pgm);
-    
+
     //Set timer only if empty (for purposes of power loss recovery)
     if (!timerValue[TIMER_BOIL]) {
       //Clean start of Boil
@@ -334,14 +338,14 @@ boolean stepInit(byte pgm, byte brewStep) {
     timerStatus[TIMER_BOIL] = 0;
     lastHop = 0;
     doAutoBoil = 1;
-    
+
   } else if (brewStep == STEP_CHILL) {
   //Step Init: Chill
     pitchTemp = getProgPitch(pgm);
   }
 
   //Call event handler
-  eventHandler(EVENT_STEPINIT, brewStep);  
+  eventHandler(EVENT_STEPINIT, brewStep);
   return 0;
 }
 
@@ -361,7 +365,7 @@ void stepCore() {
       if(!autoValve[AV_SPARGEIN]) {
         if (!grainInStart) grainInStart = millis();
         else if ((millis() - grainInStart) / 1000 > AUTO_GRAININ_EXIT) stepAdvance(STEP_ADDGRAIN);
-      } 
+      }
     #endif
     //Turn off Sparge In AutoValve if tgtVol has been reached
     if (autoValve[AV_SPARGEIN] && volAvg[VS_HLT] <= tgtVol[VS_HLT]) autoValve[AV_SPARGEIN] = 0;
@@ -370,9 +374,9 @@ void stepCore() {
   if (stepIsActive(STEP_REFILL)) stepFill(STEP_REFILL);
 
   for (byte brewStep = STEP_DOUGHIN; brewStep <= STEP_MASHOUT; brewStep++) if (stepIsActive(brewStep)) stepMash(brewStep);
-  
+
   if (stepIsActive(STEP_MASHHOLD)) {
-    #ifdef AUTO_MASH_HOLD_EXIT 
+    #ifdef AUTO_MASH_HOLD_EXIT
       #ifdef AUTO_MASH_HOLD_EXIT_AT_SPARGE_TEMP
       if (!zoneIsActive(ZONE_BOIL) && temp[VS_HLT] >= setpoint[VS_HLT]) stepAdvance(STEP_MASHHOLD);
       #else
@@ -380,23 +384,23 @@ void stepCore() {
       #endif
     #endif
   }
-  
-  if (stepIsActive(STEP_SPARGE)) { 
+
+  if (stepIsActive(STEP_SPARGE)) {
     #ifdef HLT_HEAT_SPARGE
       #ifdef HLT_MIN_SPARGE
         if (volAvg[VS_HLT] < HLT_MIN_SPARGE) setSetpoint(TS_HLT, 0);
       #endif
     #endif
-    
+
     #ifdef BATCH_SPARGE
-    
+
     #else
       #ifdef AUTO_SPARGE_EXIT
          if (volAvg[VS_KETTLE] >= tgtVol[VS_KETTLE]) stepAdvance(STEP_SPARGE);
       #endif
     #endif
   }
-  
+
   if (stepIsActive(STEP_BOIL)) {
     if (doAutoBoil) {
       if(temp[TS_KETTLE] < setpoint[TS_KETTLE]) PIDOutput[VS_KETTLE] = PIDCycle[VS_KETTLE] * PIDLIMIT_KETTLE;
@@ -405,7 +409,7 @@ void stepCore() {
     #ifdef PREBOIL_ALARM
       if (!(triggered & 32768) && temp[TS_KETTLE] >= PREBOIL_ALARM) {
         setAlarm(1);
-        triggered |= 32768; 
+        triggered |= 32768;
         setBoilAddsTrig(triggered);
       }
     #endif
@@ -424,17 +428,17 @@ void stepCore() {
       if ((boilAdds ^ triggered) & 1) {
         bitSet(actProfiles, VLV_HOPADD);
         lastHop = millis();
-        setAlarm(1); 
-        triggered |= 1; 
-        setBoilAddsTrig(triggered); 
+        setAlarm(1);
+        triggered |= 1;
+        setBoilAddsTrig(triggered);
       }
       //Timed additions (See hoptimes[] array at top of AutoBrew.pde)
       for (byte i = 0; i < 10; i++) {
-        if (((boilAdds ^ triggered) & (1<<(i + 1))) && timerValue[TIMER_BOIL] <= hoptimes[i] * 60000) { 
+        if (((boilAdds ^ triggered) & (1<<(i + 1))) && timerValue[TIMER_BOIL] <= hoptimes[i] * 60000) {
           bitSet(actProfiles, VLV_HOPADD);
           lastHop = millis();
-          setAlarm(1); 
-          triggered |= (1<<(i + 1)); 
+          setAlarm(1);
+          triggered |= (1<<(i + 1));
           setBoilAddsTrig(triggered);
         }
       }
@@ -442,10 +446,10 @@ void stepCore() {
       if (timerValue[TIMER_BOIL] <= AUTO_BOIL_RECIRC * 60000) bitSet(actProfiles, VLV_BOILRECIRC);
       #endif
     }
-    //Exit Condition  
+    //Exit Condition
     if(preheated[VS_KETTLE] && timerValue[TIMER_BOIL] == 0) stepAdvance(STEP_BOIL);
   }
-  
+
   if (stepIsActive(STEP_CHILL)) {
     if (temp[TS_KETTLE] != -1 && temp[TS_KETTLE] <= KETTLELID_THRESH) {
       if (!vlvConfigIsActive(VLV_KETTLELID)) bitSet(actProfiles, VLV_KETTLELID);
@@ -504,7 +508,7 @@ boolean stepAdvance(byte brewStep) {
 void stepExit(byte brewStep) {
   //Mark step idle
   setProgramStep(brewStep, PROGRAM_IDLE);
-  
+
   //Perform step closeout functions
   if (brewStep == STEP_FILL || brewStep == STEP_REFILL) {
   //Step Exit: Fill/Refill
@@ -517,7 +521,7 @@ void stepExit(byte brewStep) {
   } else if (brewStep == STEP_DELAY) {
   //Step Exit: Delay
     clearTimer(TIMER_MASH);
-  
+
   } else if (brewStep == STEP_ADDGRAIN) {
   //Step Exit: Add Grain
     tgtVol[VS_HLT] = 0;
@@ -534,7 +538,7 @@ void stepExit(byte brewStep) {
   } else if (brewStep == STEP_PREHEAT || (brewStep >= STEP_DOUGHIN && brewStep <= STEP_MASHHOLD)) {
   //Step Exit: Preheat/Mash
     clearTimer(TIMER_MASH);
-    bitClear(actProfiles, VLV_MASHHEAT);    
+    bitClear(actProfiles, VLV_MASHHEAT);
     bitClear(actProfiles, VLV_MASHIDLE);
     resetHeatOutput(VS_HLT);
     resetHeatOutput(VS_MASH);
@@ -560,7 +564,7 @@ void stepExit(byte brewStep) {
   } else if (brewStep == STEP_BOIL) {
   //Step Exit: Boil
     //0 Min Addition
-    if ((boilAdds ^ triggered) & 2048) { 
+    if ((boilAdds ^ triggered) & 2048) {
       bitSet(actProfiles, VLV_HOPADD);
       setAlarm(1);
       triggered |= 2048;
@@ -579,7 +583,7 @@ void stepExit(byte brewStep) {
     bitClear(actProfiles, VLV_CHILLBEER);
     bitClear(actProfiles, VLV_CHILLH2O);
   }
-  eventHandler(EVENT_STEPEXIT, brewStep);  
+  eventHandler(EVENT_STEPEXIT, brewStep);
 }
 
 void resetSpargeValves() {
@@ -597,7 +601,7 @@ void smartHERMSHLT() {
   if (setpoint[VS_MASH] != 0) setpoint[VS_HLT] = constrain(setpoint[VS_MASH] * 2 - temp[TS_MASH], setpoint[VS_MASH] + MASH_HEAT_LOSS * SETPOINT_DIV * 100, HLT_MAX_TEMP *  SETPOINT_DIV * 100);
 }
 #endif
-  
+
 unsigned long calcStrikeVol(byte pgm) {
   unsigned long retValue = round(getProgGrain(pgm) * getProgRatio(pgm) / 100.0);
   //Convert qts to gal for US
@@ -605,14 +609,14 @@ unsigned long calcStrikeVol(byte pgm) {
     retValue = round(retValue / 4.0);
   #endif
   retValue += getVolLoss(TS_MASH);
-  
+
   #ifdef DEBUG_PROG_CALC_VOLS
   logStart_P(LOGDEBUG);
   logField_P(PSTR("StrikeVol:"));
   logFieldI( retValue);
   logEnd();
   #endif
-  
+
   return retValue;
 }
 
@@ -622,40 +626,40 @@ unsigned long calcSpargeVol(byte pgm) {
 
   //Add Water Lost in Spent Grain
   retValue += calcGrainLoss(pgm);
-  
+
   //Add Loss from other Vessels
   retValue += (getVolLoss(TS_HLT) + getVolLoss(TS_MASH));
 
   //Subtract Strike Water Volume
   retValue -= calcStrikeVol(pgm);
-  
+
   #ifdef DEBUG_PROG_CALC_VOLS
   logStart_P(LOGDEBUG);
   logField_P(PSTR("SpargeVol:"));
   logFieldI( retValue);
   logEnd();
   #endif
-  
+
   return retValue;
 }
 
 unsigned long calcPreboilVol(byte pgm) {
   // Pre-Boil Volume is the total volume needed in the kettle to ensure you can collect your anticipated batch volume
   // It is (((batch volume + kettle loss) / thermo shrinkage factor ) / evap loss factor )
-  //unsigned long retValue = (getProgBatchVol(pgm) / (1.0 - getEvapRate() / 100.0 * getProgBoil(pgm) / 60.0)) + getVolLoss(TS_KETTLE); // old logic 
+  //unsigned long retValue = (getProgBatchVol(pgm) / (1.0 - getEvapRate() / 100.0 * getProgBoil(pgm) / 60.0)) + getVolLoss(TS_KETTLE); // old logic
   #ifdef BOIL_OFF_GALLONS
   unsigned long retValue = (((getProgBatchVol(pgm) + getVolLoss(TS_KETTLE)) / .96) + (((unsigned long)getEvapRate() * EvapRateConversion) * getProgBoil(pgm) / 60.0));
   #else
   unsigned long retValue = (((getProgBatchVol(pgm) + getVolLoss(TS_KETTLE)) / .96) / (1.0 - getEvapRate() / 100.0 * getProgBoil(pgm) / 60.0));
   #endif
-  
+
   #ifdef DEBUG_PROG_CALC_VOLS
   logStart_P(LOGDEBUG);
   logField_P(PSTR("PreBoilVol:"));
   logFieldI( round(retValue));
   logEnd();
   #endif
-  
+
   return round(retValue);
 }
 
@@ -666,20 +670,20 @@ unsigned long calcGrainLoss(byte pgm) {
   #else
     retValue = round(getProgGrain(pgm) * .2143); // This is pretty conservative (err on more absorbtion) - Ray Daniels suggests .20 - Denny Conn suggest .10
   #endif
-  
+
   #ifdef DEBUG_PROG_CALC_VOLS
   logStart_P(LOGDEBUG);
   logField_P(PSTR("GrainLoss"));
   logFieldI(retValue);
   logEnd();
   #endif
-  
+
   return retValue;
 }
 
 unsigned long calcGrainVolume(byte pgm) {
   //Grain-to-volume factor for mash tun capacity
-  //Conservatively 1 lb = 0.15 gal 
+  //Conservatively 1 lb = 0.15 gal
   //Aggressively 1 lb = 0.093 gal
   #ifdef USEMETRIC
     #define GRAIN2VOL 1.25

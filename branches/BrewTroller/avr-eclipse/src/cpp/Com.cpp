@@ -1,4 +1,4 @@
-/*  
+/*
    Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
     This file is part of BrewTroller.
@@ -28,8 +28,19 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 //**********************************************************************************
 //Code Shared by all Schemas
 //**********************************************************************************
+#include "Com.h"
 #include "Config.h"
 #include "Enum.h"
+
+#include <avr/pgmspace.h>
+#include <HardwareSerial.h>
+#include <Wire.h>
+
+
+// These three are declarations; implementations are dependent, below.
+void updateS0BTnic();
+void updateI2CBTnic();
+void btnicRX(int numBytes);
 
 void comInit() {
   #ifdef COM_SERIAL0
@@ -41,7 +52,7 @@ void comInit() {
   #ifdef BTNIC_EMBEDDED
     Wire.onReceive(btnicRX);
   #endif
-  
+
 }
 
 void logASCIIVersion() {
@@ -94,16 +105,16 @@ void updateCom() {
  ********************************************************************************************************************/
 #ifdef BTNIC_PROTOCOL
   #include "Com_BTnic.h"
-  
+
   #ifdef BTNIC_EMBEDDED
     BTnic btnicI2C;
-    
+
     #ifdef DEBUG_BTNIC
       byte lastState = 255;
     #endif
-    
+
     void updateI2CBTnic() {
-      
+
       #ifdef DEBUG_BTNIC
         if (btnicI2C.getState() != lastState) {
           Serial.print("btnicEmb State Change: ");
@@ -128,7 +139,7 @@ void updateCom() {
           #ifdef DEBUG_BTNIC
             Serial.print(data);
           #endif
-          Wire.send(data);        
+          Wire.send(data);
         }
         Wire.endTransmission();
       }
@@ -159,9 +170,9 @@ void updateCom() {
         Serial.println(")");
       }
       #endif
-    }    
+    }
   #endif
-  
+
   #ifdef COM_SERIAL0
     #if COM_SERIAL0 == BTNIC /* BTnic over Serial0 */
       BTnic btnicS0;
