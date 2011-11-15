@@ -1,4 +1,4 @@
-/*  
+/*
    Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
     This file is part of BrewTroller.
@@ -24,17 +24,23 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 
   Update 9/22/2010 to support enhanced functions and mutiple schemas.
-  
+
 */
 
 #ifdef BTNIC_PROTOCOL
   #include "Config.h"
   #include "Enum.h"
-  
+  #include "BT_EEPROM.h"
+  #include "Outputs.h"
+  #include "StepLogic.h"
+  #include "Temp.h"
+  #include "Timer.h"
+
+
 /********************************************************************************************************************
  * BTnic Class
  ********************************************************************************************************************/
-  // Using Values 65-90 & 97-122 for command codes to make terminal input easier 
+  // Using Values 65-90 & 97-122 for command codes to make terminal input easier
   // but any value between 0-255 can be used with the following exceptions
   // Command Field Char		9	(Tab)
   // Command Term Char		10	(Line Feed)
@@ -95,18 +101,18 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   #define CMD_AUTOVLV		117 	//u
   #define CMD_VLVBITS		118 	//v
   #define CMD_VLVPRF		119 	//w
-  
+
   #define BTNIC_STATE_RX 0
   #define BTNIC_STATE_EXE 1
   #define BTNIC_STATE_TX 2
-  
+
   #define BTNIC_BUF_LEN 256
 
   #define CMDCODE_MIN 65
   #define CMDCODE_MAX 119
   #define NO_CMDINDEX -1
-  
-  static byte CMD_PARAM_COUNTS[] PROGMEM = 
+
+  static byte CMD_PARAM_COUNTS[] PROGMEM =
   {
     0,	//CMD_GET_BOIL
     0,	//CMD_GET_CAL
@@ -165,7 +171,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     0 	//CMD_VLVPRF
   };
 
-  static byte CMD_INDEX_MAXVALUE[] PROGMEM = 
+  static byte CMD_INDEX_MAXVALUE[] PROGMEM =
   {
     0, 			//CMD_GET_BOIL
     VS_KETTLE, 		//CMD_GET_CAL
@@ -223,7 +229,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     0, 			//CMD_VLVBITS
     0  			//CMD_VLVPRF
   };
-  
+
 class BTnic
 {
 public:
@@ -233,7 +239,7 @@ public:
   void reset(void); /* Sets buf len to 0 */
   byte getState(void); /* Return current state RX / EXE / TX */
   void eventHandler(byte, int);
-  
+
 private:
   void execCmd(void);
   void rejectCmd(byte);
@@ -247,7 +253,7 @@ private:
   byte getCmdParamCount(void);
   char* getCmdParam(byte, char*, byte);
   unsigned long getCmdParamNum(byte);
-  
+
   byte _state; /* Current state: RX/EXE_R/EXE_W/TX */
   unsigned int _bufLen; /* Length of data in buffer */
   char _bufData[BTNIC_BUF_LEN]; /* Buffer */
@@ -256,6 +262,12 @@ private:
 
 BTnic::BTnic(void) {
   reset();
+}
+
+unsigned long BTnic::getCmdParamNum(byte paramNum) {
+  char tmpbuf[20];
+  getCmdParam(paramNum, tmpbuf, 10);
+  return strtoul(tmpbuf, NULL, 10);
 }
 
 void BTnic::rx(char byteIn) {
@@ -277,13 +289,19 @@ void BTnic::reset(void) {
   _state = BTNIC_STATE_RX;
 }
 
-byte BTnic::getState(void) { 
+byte BTnic::getState(void) {
   if (_state == BTNIC_STATE_TX && _bufCur == _bufLen) reset();
   return _state;
 }
 
 void BTnic::eventHandler(byte eventID, int eventParam) {
   //Not Implemented
+}
+
+void BTnic::logFieldI(unsigned long param) {
+  char tmpbuf[11];
+  ultoa(param, tmpbuf, 10);
+  logField(tmpbuf);
 }
 
 
@@ -320,16 +338,16 @@ void BTnic::execCmd(void) {
           logFieldI(calibVals[cmdIndex][i]);
       }
       break;
-      
-      
+
+
     case CMD_SET_EVAP:  //M
       setEvapRate(min(getCmdParamNum(1), 100));
     case CMD_GET_EVAP:  //C
       logFieldCmd(CMD_GET_EVAP, NO_CMDINDEX);
       logFieldI(getEvapRate());
       break;
-      
-      
+
+
     case CMD_SET_OSET:  //N
       setPIDEnabled(cmdIndex, getCmdParamNum(1));
       setPIDCycle(cmdIndex, getCmdParamNum(2));
@@ -340,7 +358,7 @@ void BTnic::execCmd(void) {
         setSteamZero(getCmdParamNum(6));
         setSteamTgt(getCmdParamNum(7));
         setSteamPSens(getCmdParamNum(8));
-      } 
+      }
       else setHysteresis(cmdIndex, getCmdParamNum(6));
     case CMD_GET_OSET:  //D
       logFieldCmd(CMD_GET_OSET, cmdIndex);
@@ -355,15 +373,15 @@ void BTnic::execCmd(void) {
           logFieldI(steamZero);
           logFieldI(steamPSens);
         #endif
-      } 
+      }
       else {
         logFieldI(hysteresis[cmdIndex]);
         logFieldI(0);
         logFieldI(0);
       }
       break;
-      
-      
+
+
     case CMD_SET_PROG:  //O
       {
         char pName[20];
@@ -404,8 +422,8 @@ void BTnic::execCmd(void) {
       logFieldI(getProgAdds(cmdIndex));
       logFieldI(getProgMLHeatSrc(cmdIndex));
       break;
-      
-      
+
+
     case CMD_SET_TS:  //P
       {
         byte addr[8];
@@ -416,8 +434,8 @@ void BTnic::execCmd(void) {
       logFieldCmd(CMD_GET_TS, cmdIndex);
       for (byte i=0; i<8; i++) logFieldI(tSensor[cmdIndex][i]);
       break;
-      
-      
+
+
     case CMD_GET_VER:  //G
       logFieldCmd(CMD_GET_VER, NO_CMDINDEX);
       logField_P(BTVER);
@@ -438,7 +456,7 @@ void BTnic::execCmd(void) {
     case CMD_GET_VSET:  //H
       logFieldCmd(CMD_GET_VSET, cmdIndex);
       logFieldI(getCapacity(cmdIndex));
-      logFieldI(getVolLoss(cmdIndex));  
+      logFieldI(getVolLoss(cmdIndex));
       break;
 
 
@@ -447,7 +465,7 @@ void BTnic::execCmd(void) {
       logFieldCmd(CMD_INIT_EEPROM, NO_CMDINDEX);
       initEEPROM();
       break;
-      
+
 
     case CMD_SCAN_TS:  //J
       {
@@ -457,14 +475,14 @@ void BTnic::execCmd(void) {
         for (byte i=0; i<8; i++) logFieldI(tsAddr[i]);
       }
       break;
-      
-      
+
+
     case CMD_SET_VLVCFG:  //Q
       setValveCfg(cmdIndex, getCmdParamNum(1));
     case CMD_GET_VLVCFG:  //d
       logFieldCmd(CMD_GET_VLVCFG, cmdIndex);
-      logFieldI(vlvConfig[cmdIndex]);  
-      break; 
+      logFieldI(vlvConfig[cmdIndex]);
+      break;
 
 
     case CMD_INIT_STEP:  //U
@@ -489,12 +507,12 @@ void BTnic::execCmd(void) {
       logFieldCmd(CMD_GET_ALARM, NO_CMDINDEX);
       logFieldI(alarmStatus);
       break;
-      
-      
+
+
     case CMD_SET_AUTOVLV:  //W
       {
         byte actModes = getCmdParamNum(1);
-        for (byte i = AV_FILL; i <= AV_HLT; i++) 
+        for (byte i = AV_FILL; i <= AV_HLT; i++)
           autoValve[i] = (actModes & (1<<i));
       }
     case CMD_AUTOVLV:  //u
@@ -506,19 +524,19 @@ void BTnic::execCmd(void) {
         logFieldI(modeMask);
       }
       break;
-      
-      
+
+
     case CMD_SET_SETPOINT:  //X
       setSetpoint(cmdIndex, getCmdParamNum(1));
     case CMD_SETPOINT:  //t
       logFieldCmd(CMD_SETPOINT, cmdIndex);
       logFieldI(setpoint[cmdIndex] / SETPOINT_MULT);
       break;
-      
+
 
     case CMD_SET_TIMERSTATUS:  //Y
     case CMD_SET_TIMERVALUE:  //Z
-      if (_bufData[0] == CMD_SET_TIMERSTATUS) setTimerStatus(cmdIndex, getCmdParamNum(1)); 
+      if (_bufData[0] == CMD_SET_TIMERSTATUS) setTimerStatus(cmdIndex, getCmdParamNum(1));
       else {
         timerValue[cmdIndex] = getCmdParamNum(1);
         lastTime[cmdIndex] = millis();
@@ -527,9 +545,9 @@ void BTnic::execCmd(void) {
       logFieldCmd(CMD_TIMER, cmdIndex);
       logFieldI(timerValue[cmdIndex]);
       logFieldI(timerStatus[cmdIndex]);
-      break; 
+      break;
 
-      
+
     case CMD_SET_VLVPRF:  //b
       //Check param 2 (value) and set/unset specified active profiles
       if (getCmdParamNum(2)) actProfiles |= getCmdParamNum(1);
@@ -538,8 +556,8 @@ void BTnic::execCmd(void) {
       logFieldCmd(CMD_VLVPRF, NO_CMDINDEX);
       logFieldI(actProfiles);
       break;
-      
-      
+
+
     case CMD_RESET:  //c
       //Reboot (1) or just Reset Outputs?
       if (cmdIndex == 1) softReset();
@@ -550,7 +568,7 @@ void BTnic::execCmd(void) {
         clearTimer(TIMER_BOIL);
       }
       break;
-      
+
 
     case CMD_SET_BOILPWR:  //i
       setBoilPwr(getCmdParamNum(1));
@@ -558,30 +576,30 @@ void BTnic::execCmd(void) {
       logFieldCmd(CMD_GET_BOILPWR, NO_CMDINDEX);
       logFieldI(boilPwr);
       break;
-      
-      
+
+
     case CMD_SET_DELAYTIME:  //j
       setDelayMins(getCmdParamNum(1));
     case CMD_GET_DELAYTIME:  //g
       logFieldCmd(CMD_GET_DELAYTIME, NO_CMDINDEX);
       logFieldI(getDelayMins());
       break;
-      
-      
+
+
     case CMD_SET_GRAINTEMP:  //k
       setGrainTemp(getCmdParamNum(1));
     case CMD_GET_GRAINTEMP:  //h
       logFieldCmd(CMD_GET_GRAINTEMP, NO_CMDINDEX);
       logFieldI(getGrainTemp());
       break;
-      
-      
+
+
     case CMD_GET_CALCTEMPS:  //l
       logFieldCmd(CMD_GET_CALCTEMPS, cmdIndex);
       logFieldI(calcStrikeTemp(cmdIndex));
       logFieldI(getFirstStepTemp(cmdIndex));
       break;
-      
+
 
     case CMD_GET_CALCVOLS:  //m
       logFieldCmd(CMD_GET_CALCVOLS, cmdIndex);
@@ -591,7 +609,7 @@ void BTnic::execCmd(void) {
       logFieldI(calcStrikeVol(cmdIndex));
       logFieldI(calcSpargeVol(cmdIndex));
       break;
-      
+
 
     case CMD_VOL:  //p
       logFieldCmd(CMD_VOL, cmdIndex);
@@ -602,20 +620,20 @@ void BTnic::execCmd(void) {
         logFieldI(0);
       #endif
       break;
-      
-      
+
+
     case CMD_TEMP:  //q
       logFieldCmd(CMD_TEMP, cmdIndex);
       logFieldI(temp[cmdIndex]);
       break;
-      
-      
+
+
     case CMD_STEAM:  //r
       logFieldCmd(CMD_STEAM, NO_CMDINDEX);
       #ifdef PID_FLOW_CONTROL
         logFieldI(flowRate[VS_MASH]);
       #else
-        logFieldI(steamPressure);  
+        logFieldI(steamPressure);
       #endif
       break;
 
@@ -630,20 +648,20 @@ void BTnic::execCmd(void) {
         logFieldI(pct);
       }
       break;
-      
+
 
     case CMD_VLVBITS:  //v
       logFieldCmd(CMD_VLVBITS, NO_CMDINDEX);
       logFieldI(computeValveBits());
       break;
-      
-      
-    default: 
+
+
+    default:
       return rejectCmd(CMD_REJECT); //Reject Command Code (CMD_REJECT);
   }
   logEnd();
 }
-  
+
 void BTnic::rejectCmd(byte rejectCode) {
   //Unknown Command: Shift buffer two chars and insert rejectCode and field delimeter
   if (_bufLen) {
@@ -653,7 +671,7 @@ void BTnic::rejectCmd(byte rejectCode) {
     _bufData[1] = 0x09;
   } else _bufLen = 1;
   _bufData[0] = rejectCode;
-  logEnd();  
+  logEnd();
 }
 
 void BTnic::logFieldCmd(byte cmdCode, int cmdIndex) {
@@ -673,18 +691,13 @@ void BTnic::logField(char *string) {
   if (_bufLen) _bufData[_bufLen++] = 0x09;  //Tab Char if not being used for cmd field
   while (*string != '\0') _bufData[_bufLen++] = *(string++);
 }
-  
+
 void BTnic::logField_P(const char *string) {
   _bufData[_bufLen++] = 0x09;  //Tab Char
   while (pgm_read_byte(string) != 0) _bufData[_bufLen++] = pgm_read_byte(string++);
 }
 
-void BTnic::logFieldI(unsigned long param) {
-  char tmpbuf[11];
-  ultoa(param, tmpbuf, 10);
-  logField(tmpbuf);
-}
-  
+
 void BTnic::logEnd(void) {
   _bufLen = min(_bufLen, BTNIC_BUF_LEN - 2);
   _bufData[_bufLen++] = 0x0D; //Carriage Return
@@ -696,7 +709,7 @@ void BTnic::logEnd(void) {
 int BTnic::getCmdIndex() {
   byte maxValue = pgm_read_byte(CMD_INDEX_MAXVALUE +(_bufData[0] - CMDCODE_MIN));
   if (!maxValue) return 0;
-  
+
   _bufCur = 1;
   char tmpbuf[11];
   while (_bufCur < _bufLen && _bufData[_bufCur] != 0x09) tmpbuf[_bufCur - 1] = _bufData[_bufCur++];
@@ -707,13 +720,13 @@ int BTnic::getCmdIndex() {
   if (cmdIndex > maxValue) return NO_CMDINDEX;
   else return cmdIndex;
 }
-  
+
 byte BTnic::getCmdParamCount() {
   byte paramCount = 0;
   for (byte pos = 0; pos < _bufLen; pos++) if (_bufData[pos] == 0x09) paramCount++;
   return paramCount;
 }
-  
+
 char* BTnic::getCmdParam(byte paramNum, char *retStr, byte limit) {
   byte pos = 0;
   byte param = 0;
@@ -723,12 +736,7 @@ char* BTnic::getCmdParam(byte paramNum, char *retStr, byte limit) {
   retStr[retPos] = '\0';
   return retStr;
 }
-  
-unsigned long BTnic::getCmdParamNum(byte paramNum) {
-  char tmpbuf[20];
-  getCmdParam(paramNum, tmpbuf, 10);
-  return strtoul(tmpbuf, NULL, 10);
-}
+
 
 
 /********************************************************************************************************************

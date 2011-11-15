@@ -36,23 +36,22 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #include <HardwareSerial.h>
 #include <Wire.h>
 
+#include "BrewTroller.h"
+
 
 // These three are declarations; implementations are dependent, below.
 void updateS0BTnic();
 void updateI2CBTnic();
 void btnicRX(int numBytes);
 
-void comInit() {
-  #ifdef COM_SERIAL0
-    Serial.begin(SERIAL0_BAUDRATE);
-    //Always identify
-    if (logData)
-      logASCIIVersion();
-  #endif
-  #ifdef BTNIC_EMBEDDED
-    Wire.onReceive(btnicRX);
-  #endif
+void printFieldUL (unsigned long uLong) {
+  Serial.print(uLong, DEC);
+  Serial.print("\t");
+}
 
+void printFieldPS (const char *sText) {
+  while (pgm_read_byte(sText) != 0) Serial.print(pgm_read_byte(sText++));
+  Serial.print("\t");
 }
 
 void logASCIIVersion() {
@@ -73,15 +72,19 @@ void logASCIIVersion() {
   Serial.println();
 }
 
-void printFieldUL (unsigned long uLong) {
-  Serial.print(uLong, DEC);
-  Serial.print("\t");
+void comInit() {
+  #ifdef COM_SERIAL0
+    Serial.begin(SERIAL0_BAUDRATE);
+    //Always identify
+    if (logData)
+      logASCIIVersion();
+  #endif
+  #ifdef BTNIC_EMBEDDED
+    Wire.onReceive(btnicRX);
+  #endif
+
 }
 
-void printFieldPS (const char *sText) {
-  while (pgm_read_byte(sText) != 0) Serial.print(pgm_read_byte(sText++));
-  Serial.print("\t");
-}
 
 void updateCom() {
   #ifdef COM_SERIAL0

@@ -10,5 +10,6 @@
 
 void tempInit();
 void updateTemps();
+void getDSAddr(byte addrRet[8]);
 
 #endif /* TEMP_H_ */

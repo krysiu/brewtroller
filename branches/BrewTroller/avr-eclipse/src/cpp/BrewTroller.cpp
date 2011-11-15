@@ -44,10 +44,12 @@ Compiled on Arduino-0022 (http://arduino.cc/en/Main/Software)
 
 #include "BrewTroller.h"
 
+#include "BrewCore.h"
 #include "BT_EEPROM.h"
 #include "Com.h"
 #include "Outputs.h"
 #include "Temp.h"
+#include "UI.h"
 
 //**********************************************************************************
 // Setup

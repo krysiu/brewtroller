@@ -8,7 +8,8 @@
 #ifndef UI_H_
 #define UI_H_
 
+void uiCore();
 void uiEvent(byte eventID, byte eventParam);
-
+void uiInit();
 
 #endif /* UI_H_ */
