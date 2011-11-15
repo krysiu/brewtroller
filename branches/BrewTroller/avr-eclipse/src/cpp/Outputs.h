@@ -17,6 +17,7 @@ byte vesselVLVIdle(byte vessel);
 boolean vlvConfigIsActive(byte profile);
 unsigned long computeValveBits() ;
 void resetOutputs();
+void resetHeatOutput(byte vessel);
 
 #ifdef PVOUT
 void processAutoValve();

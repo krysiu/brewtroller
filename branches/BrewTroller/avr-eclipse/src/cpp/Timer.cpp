@@ -25,6 +25,9 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 */
 
 #include "Timer.h"
+
+#include "BrewTroller.h"
+#include "BT_EEPROM.h"
 #include "Config.h"
 #include "Enum.h"
 

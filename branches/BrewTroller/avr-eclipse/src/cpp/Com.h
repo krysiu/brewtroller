@@ -8,6 +8,9 @@
 #ifndef COM_H_
 #define COM_H_
 
+#include "wiring.h"
+
+void comEvent(byte eventID, int eventParam);
 void comInit();
 void updateCom();
 

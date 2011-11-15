@@ -8,6 +8,8 @@
 #ifndef TIMER_H_
 #define TIMER_H_
 
+#include "wiring.h"
+
 void clearTimer(byte timer);
 void pauseTimer(byte timer);
 void setAlarm(boolean alarmON);

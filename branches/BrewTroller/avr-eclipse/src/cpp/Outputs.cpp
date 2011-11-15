@@ -25,6 +25,8 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 */
 #include "wiring_private.h"
 
+#include "BrewTroller.h"
+#include "BT_EEPROM.h"
 #include "Config.h"
 #include "Enum.h"
 #include "HWProfile.h"
@@ -386,6 +388,43 @@ void processHeatOutputs() {
   }
 }
 
+unsigned long computeValveBits() {
+  unsigned long vlvBits = 0;
+  for (byte i = 0; i < NUM_VLVCFGS; i++) {
+    if (bitRead(actProfiles, i)) {
+      vlvBits |= vlvConfig[i];
+    }
+  }
+  return vlvBits;
+}
+
+boolean vlvConfigIsActive(byte profile) {
+  //An empty valve profile cannot be active
+  if (!vlvConfig[profile]) return 0;
+  return bitRead(actProfiles, profile);
+}
+
+
+//Map AutoValve Profiles to Vessels
+byte vesselAV(byte vessel) {
+  if (vessel == VS_HLT) return AV_HLT;
+  else if (vessel == VS_MASH) return AV_MASH;
+  else if (vessel == VS_KETTLE) return AV_KETTLE;
+}
+
+byte vesselVLVHeat(byte vessel) {
+  if (vessel == VS_HLT) return VLV_HLTHEAT;
+  else if (vessel == VS_MASH) return VLV_MASHHEAT;
+  else if (vessel == VS_KETTLE) return VLV_KETTLEHEAT;
+}
+
+byte vesselVLVIdle(byte vessel) {
+  if (vessel == VS_HLT) return VLV_HLTIDLE;
+  else if (vessel == VS_MASH) return VLV_MASHIDLE;
+  else if (vessel == VS_KETTLE) return VLV_KETTLEIDLE;
+}
+
+
 #ifdef PVOUT
   unsigned long prevProfiles;
 
@@ -491,39 +530,4 @@ void processHeatOutputs() {
   }
 #endif //#ifdef PVOUT
 
-unsigned long computeValveBits() {
-  unsigned long vlvBits = 0;
-  for (byte i = 0; i < NUM_VLVCFGS; i++) {
-    if (bitRead(actProfiles, i)) {
-      vlvBits |= vlvConfig[i];
-    }
-  }
-  return vlvBits;
-}
-
-boolean vlvConfigIsActive(byte profile) {
-  //An empty valve profile cannot be active
-  if (!vlvConfig[profile]) return 0;
-  return bitRead(actProfiles, profile);
-}
-
-
-//Map AutoValve Profiles to Vessels
-byte vesselAV(byte vessel) {
-  if (vessel == VS_HLT) return AV_HLT;
-  else if (vessel == VS_MASH) return AV_MASH;
-  else if (vessel == VS_KETTLE) return AV_KETTLE;
-}
-
-byte vesselVLVHeat(byte vessel) {
-  if (vessel == VS_HLT) return VLV_HLTHEAT;
-  else if (vessel == VS_MASH) return VLV_MASHHEAT;
-  else if (vessel == VS_KETTLE) return VLV_KETTLEHEAT;
-}
-
-byte vesselVLVIdle(byte vessel) {
-  if (vessel == VS_HLT) return VLV_HLTIDLE;
-  else if (vessel == VS_MASH) return VLV_MASHIDLE;
-  else if (vessel == VS_KETTLE) return VLV_KETTLEIDLE;
-}
 

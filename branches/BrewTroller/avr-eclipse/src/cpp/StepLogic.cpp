@@ -27,9 +27,12 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #include "StepLogic.h"
 
 #include "BrewTroller.h"
+#include "BT_EEPROM.h"
 #include "Config.h"
 #include "Enum.h"
+#include "Events.h"
 #include "Timer.h"
+#include "Outputs.h"
 
 unsigned long lastHop, grainInStart;
 unsigned int boilAdds, triggered;
@@ -348,6 +351,31 @@ boolean stepInit(byte pgm, byte brewStep) {
   eventHandler(EVENT_STEPINIT, brewStep);
   return 0;
 }
+//stepCore logic for Fill and Refill
+void stepFill(byte brewStep) {
+  #ifdef AUTO_FILL_EXIT
+    if (volAvg[VS_HLT] >= tgtVol[VS_HLT] && volAvg[VS_MASH] >= tgtVol[VS_MASH]) stepAdvance(brewStep);
+  #endif
+}
+
+//stepCore Logic for all mash steps
+void stepMash(byte brewStep) {
+  #ifdef SMART_HERMS_HLT
+    smartHERMSHLT();
+  #endif
+  if (!preheated[VS_MASH] && temp[TS_MASH] >= setpoint[VS_MASH]) {
+    preheated[VS_MASH] = 1;
+    //Unpause Timer
+    if (!timerStatus[TIMER_MASH]) pauseTimer(TIMER_MASH);
+  }
+  //Exit Condition (and skip unused mash steps)
+  #ifdef RIMS_MLT_SETPOINT_DELAY
+  if (getProgMashTemp(stepProgram[brewStep], (brewStep - 5)) == 0 || (preheated[VS_MASH] && timerValue[TIMER_MASH] == 0)) stepAdvance(brewStep);
+  #else
+  if (setpoint[VS_MASH] == 0 || (preheated[VS_MASH] && timerValue[TIMER_MASH] == 0)) stepAdvance(brewStep);
+  #endif
+}
+
 
 void stepCore() {
   if (stepIsActive(STEP_FILL)) stepFill(STEP_FILL);
@@ -459,30 +487,6 @@ void stepCore() {
   }
 }
 
-//stepCore logic for Fill and Refill
-void stepFill(byte brewStep) {
-  #ifdef AUTO_FILL_EXIT
-    if (volAvg[VS_HLT] >= tgtVol[VS_HLT] && volAvg[VS_MASH] >= tgtVol[VS_MASH]) stepAdvance(brewStep);
-  #endif
-}
-
-//stepCore Logic for all mash steps
-void stepMash(byte brewStep) {
-  #ifdef SMART_HERMS_HLT
-    smartHERMSHLT();
-  #endif
-  if (!preheated[VS_MASH] && temp[TS_MASH] >= setpoint[VS_MASH]) {
-    preheated[VS_MASH] = 1;
-    //Unpause Timer
-    if (!timerStatus[TIMER_MASH]) pauseTimer(TIMER_MASH);
-  }
-  //Exit Condition (and skip unused mash steps)
-  #ifdef RIMS_MLT_SETPOINT_DELAY
-  if (getProgMashTemp(stepProgram[brewStep], (brewStep - 5)) == 0 || (preheated[VS_MASH] && timerValue[TIMER_MASH] == 0)) stepAdvance(brewStep);
-  #else
-  if (setpoint[VS_MASH] == 0 || (preheated[VS_MASH] && timerValue[TIMER_MASH] == 0)) stepAdvance(brewStep);
-  #endif
-}
 
 //Advances program to next brew step
 //Returns 0 if successful or 1 if unable to advance due to conflict with another step
@@ -502,6 +506,17 @@ boolean stepAdvance(byte brewStep) {
   //Init Successful
   return 0;
 }
+
+void resetSpargeValves() {
+  autoValve[AV_SPARGEIN] = 0;
+  autoValve[AV_SPARGEOUT] = 0;
+  autoValve[AV_FLYSPARGE] = 0;
+  bitClear(actProfiles, VLV_SPARGEIN);
+  bitClear(actProfiles, VLV_SPARGEOUT);
+  bitClear(actProfiles, VLV_MASHHEAT);
+  bitClear(actProfiles, VLV_MASHIDLE);
+}
+
 
 //Performs exit logic specific to each step
 //Note: If called directly (as opposed through stepAdvance) acts as a program abort
@@ -586,15 +601,6 @@ void stepExit(byte brewStep) {
   eventHandler(EVENT_STEPEXIT, brewStep);
 }
 
-void resetSpargeValves() {
-  autoValve[AV_SPARGEIN] = 0;
-  autoValve[AV_SPARGEOUT] = 0;
-  autoValve[AV_FLYSPARGE] = 0;
-  bitClear(actProfiles, VLV_SPARGEIN);
-  bitClear(actProfiles, VLV_SPARGEOUT);
-  bitClear(actProfiles, VLV_MASHHEAT);
-  bitClear(actProfiles, VLV_MASHIDLE);
-}
 
 #ifdef SMART_HERMS_HLT
 void smartHERMSHLT() {

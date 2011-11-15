@@ -29,6 +29,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #include "Config.h"
 #include "Enum.h"
 #include "HWProfile.h"
+#include "BrewTroller.h"
 
 #ifdef TS_ONEWIRE
   #ifdef TS_ONEWIRE_GPIO
@@ -80,6 +81,45 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     #define CONV_DELAY 94
   #endif
 
+
+  boolean tsReady() {
+    #if TS_ONEWIRE_PPWR == 0 //Poll if parasite power is disabled
+      if (ds.read() == 0xFF) return 1;
+    #endif
+    return 0;
+  }
+
+  boolean validAddr(byte* addr) {
+    for (byte i = 0; i < 8; i++) if (addr[i]) return 1;
+    return 0;
+  }
+
+
+//Returns Int representing hundreths of degree
+  int read_temp(byte* addr) {
+    long tempOut;
+    byte data[9];
+    ds.reset();
+    ds.select(addr);
+    ds.write(0xBE, TS_ONEWIRE_PPWR); //Read Scratchpad
+    #ifdef TS_ONEWIRE_FASTREAD
+      for (byte i = 0; i < 2; i++) data[i] = ds.read();
+    #else
+      for (byte i = 0; i < 9; i++) data[i] = ds.read();
+      if (ds.crc8( data, 8) != data[8]) return BAD_TEMP;
+    #endif
+
+    tempOut = (data[1] << 8) + data[0];
+
+    if ( addr[0] == 0x10) tempOut = tempOut * 50; //9-bit DS18S20
+    else tempOut = tempOut * 25 / 4; //12-bit DS18B20, etc.
+
+    #ifdef USEMETRIC
+      return int(tempOut);
+    #else
+      return int((tempOut * 9 / 5) + 3200);
+    #endif
+  }
   void updateTemps() {
     if (convStart == 0) {
       ds.reset();
@@ -101,18 +141,6 @@ Documentation, Forums and more information available at http://www.brewtroller.c
         mashAvg();
       #endif
     }
-  }
-
-  boolean tsReady() {
-    #if TS_ONEWIRE_PPWR == 0 //Poll if parasite power is disabled
-      if (ds.read() == 0xFF) return 1;
-    #endif
-    return 0;
-  }
-
-  boolean validAddr(byte* addr) {
-    for (byte i = 0; i < 8; i++) if (addr[i]) return 1;
-    return 0;
   }
 
   //This function search for an address that is not currently assigned!
@@ -151,31 +179,6 @@ Documentation, Forums and more information available at http://www.brewtroller.c
     }
   }
 
-//Returns Int representing hundreths of degree
-  int read_temp(byte* addr) {
-    long tempOut;
-    byte data[9];
-    ds.reset();
-    ds.select(addr);
-    ds.write(0xBE, TS_ONEWIRE_PPWR); //Read Scratchpad
-    #ifdef TS_ONEWIRE_FASTREAD
-      for (byte i = 0; i < 2; i++) data[i] = ds.read();
-    #else
-      for (byte i = 0; i < 9; i++) data[i] = ds.read();
-      if (ds.crc8( data, 8) != data[8]) return BAD_TEMP;
-    #endif
-
-    tempOut = (data[1] << 8) + data[0];
-
-    if ( addr[0] == 0x10) tempOut = tempOut * 50; //9-bit DS18S20
-    else tempOut = tempOut * 25 / 4; //12-bit DS18B20, etc.
-
-    #ifdef USEMETRIC
-      return int(tempOut);
-    #else
-      return int((tempOut * 9 / 5) + 3200);
-    #endif
-  }
 #else
   void tempInit() {}
   void updateTemps() {}

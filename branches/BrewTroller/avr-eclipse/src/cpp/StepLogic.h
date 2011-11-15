@@ -8,6 +8,8 @@
 #ifndef STEPLOGIC_H_
 #define STEPLOGIC_H_
 
+#include "wiring.h"
+
 boolean stepInit(byte pgm, byte brewStep);
 void stepCore();
 void stepExit(byte brewStep);

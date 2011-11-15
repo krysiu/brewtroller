@@ -8,6 +8,8 @@
 #ifndef TEMP_H_
 #define TEMP_H_
 
+#include "wiring.h"
+
 void tempInit();
 void updateTemps();
 void getDSAddr(byte addrRet[8]);

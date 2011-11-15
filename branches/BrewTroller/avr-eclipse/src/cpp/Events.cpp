@@ -25,10 +25,10 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 */
 
 #include "Events.h"
-#include "wiring.h";
 
+#include "BrewTroller.h"
 #include "Config.h"
-#include "Enum.h"
+#include "Com.h"
 #include "Outputs.h"
 #include "UI.h"
 

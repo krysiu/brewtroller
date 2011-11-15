@@ -37,6 +37,7 @@ unsigned long getCapacity(byte vessel);
 unsigned int getVolLoss(byte vessel);
 byte getGrainTemp();
 unsigned int getDelayMins() ;
+unsigned int getBoilAddsTrig() ;
 
 
 void setBoilTemp(byte boilTemp) ;
@@ -75,5 +76,8 @@ void setTimerStatus(byte timer, boolean value);
 void setBoilPwr(byte value) ;
 void setDelayMins(unsigned int mins);
 void setGrainTemp(byte grainTemp);
+void setProgramStep(byte brewStep, byte actPgm);
+void setBoilAddsTrig(unsigned int adds);
+void setTimerRecovery(byte timer, unsigned int newMins)
 
 #endif /* EEPROM_H_ */
