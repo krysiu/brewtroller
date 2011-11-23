@@ -1,5 +1,5 @@
-#ifndef OT_HWPROFILE_H
-	#define OT_HWPROFILE_H
+#ifndef OT_STACK_H
+	#define OT_STACK_H
 	#include "OT_Encoder.h"
 	#include "OT_HWProfile.h"
 	#include "OT_OutputBank.h"

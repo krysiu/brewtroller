@@ -17,7 +17,7 @@ void OutputBankGPIO::setup(uint8_t pinIndex, uint8_t digitalPin) {
 }
 
 void OutputBankGPIO::set(uint8_t outputIndex, uint8_t outputValue) { pins[outputIndex].set(outputValue); }
-
+uint8_t OutputBankGPIO::get(uint8_t outputIndex) { return pins[outputIndex].get(); }
 uint8_t OutputBankGPIO::getCount() { return _count; }
 
 void OutputBankGPIO::getName(char * retStr) { 
@@ -73,7 +73,7 @@ void OutputBankMUX::set(uint8_t outputIndex, uint8_t outputValue) {
 	delayMicroseconds(10);
 	muxLatchPin.clear();
 }
-
+uint8_t OutputBankMUX::get(uint8_t outputIndex); { return bitRead(bitValues, outputIndex); }
 uint8_t OutputBankMUX::getCount() { return OUTPUTBANK_MUX_COUNT };
 void OutputBankMUX::getName(char * retStr) { strcpy(retStr, OUTPUTBANK_MUX_BANKNAME); }
 }
@@ -81,7 +81,8 @@ void OutputBankMUX::getName(char * retStr) { strcpy(retStr, OUTPUTBANK_MUX_BANKN
 
 #ifdef OUTPUTBANK_MODBUS
 OutputBankMODBUS::OutputBankMODBUS(uint8_t slaveAddr, unsigned int coilReg, uint8_t coilCount) {
-	_slave = ModbusMaster (RS485_SERIAL_PORT, slaveAddr);
+	_slaveAddr = slaveAddr;
+	_slave = ModbusMaster (RS485_SERIAL_PORT, _slaveAddr);
 	#ifdef RS485_RTS_PIN
 		_slave.setupRTS(RS485_RTS_PIN);
 	#endif
@@ -91,14 +92,23 @@ OutputBankMODBUS::OutputBankMODBUS(uint8_t slaveAddr, unsigned int coilReg, uint
 }
 
 void OutputBankMODBUS::set(uint8_t outputIndex, uint8_t outputValue) { 
-	_slave.setTransmitBuffer(0, outputValue);
-	_slave.setTransmitBuffer(1, 0);
-	_slave.writeMultipleCoils(_coilReg + outputIndex - 1, 1); 
+	//_slave.setTransmitBuffer(0, outputValue);
+	//_slave.setTransmitBuffer(1, 0);
+	//_slave.writeMultipleCoils(_coilReg + outputIndex - 1, 1); 
+	_slave.writeSingleCoil(_coilReg + outputIndex - 1, outputValue); 
+}
+
+uint8_t OutputBankMODBUS::get(uint8_t outputIndex) { 
+	_slave.readCoils(_coilReg + outputIndex - 1, 1);  
+	return _slave.getResponseBuffer(0);
 }
 uint8_t OutputBankMODBUS::getCount() { return _coilCount; }
 
 void OutputBankMODBUS::getName(char * retStr) { 
-	strcpy(retStr, "Modbus Relay"); 
+	char sID[4];
+	strcpy(retStr, "Modbus Relay #");
+	itoa(_slaveAddr, sID, 10);
+	strcat(retStr, sID);
 }
 #endif
 
@@ -112,6 +122,7 @@ OutputBankGroup::OutputBankGroup(uint8_t * ptrData, uint8_t bankBits, uint8_t ba
 }
 
 void OutputBankGroup::set(uint8_t outputIndex, uint8_t outputValue) {
+	bitWrite(bitValues, outputIndex, outputValue);
 	uint8_t * data = _ptrData + outputIndex * _groupSize;
 	if (outputIndex >= _bankSize) return;
 	while (&data < &_ptrData + (outputIndex + 1) * _groupSize) {
@@ -119,7 +130,7 @@ void OutputBankGroup::set(uint8_t outputIndex, uint8_t outputValue) {
 		data++;
 	}
 }
-
+uint8_t OutputBankGroup::get(uint8_t outputIndex) { return bitRead(bitValues, outputIndex); }
 uint8_t OutputBankGroup::getCount() { return _bankSize; }
 void OutputBankGroup::getName(char * retStr) { strcpy(retStr, "Output Groups"); }
 
@@ -155,6 +166,7 @@ void OpenTroller::outputBanks::addModbusBank(uint8_t slaveAddr, unsigned int coi
 
 uint8_t OpenTroller::outputBanks::getBankCount(){ return _count; }
 void OpenTroller::outputBanks::set(uint8_t bankID, uint8_t outputID, uint8_t value) { _banks[bankID]->set(outputID, value); }
+uint8_t OpenTroller::outputBanks::get(uint8_t bankID, uint8_t outputID) { return _banks[bankID]->get(outputID); }
 void OpenTroller::outputBanks::getBankName(uint8_t bankID, char * retStr) { _banks[bankID]->getName(retStr); }
 uint8_t OpenTroller::outputBanks::getOutputCount(uint8_t bankID) { return _banks[bankID]->getCount(); }
 uint8_t OpenTroller::outputBanks::getType(uint8_t bankID) { return _banks[bankID]->getType(); }
