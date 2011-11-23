@@ -35,7 +35,7 @@ void LCD_Generic::begin(uint8_t cols, uint8_t rows) {
 	_screen = (uint8_t *) malloc(_rows * _cols * sizeof(uint8_t));
 	init();
 	clear();
-	memset(_custChars, 0, 56);
+	memset(_custChars, 0, 64);
 }
 
 void LCD_Generic::print(const char *sText) {
@@ -234,6 +234,7 @@ uint8_t LCDI2C::getContrast(void) {
 	if (Wire.available()) return Wire.receive();
 }
 //Create the appropriate 'LCD' object for the hardware configuration (4-Bit GPIO, I2C)
+
 #if defined OPENTROLLER_LCD4BIT
   #ifndef UI_DISPLAY_SETUP
     OpenTroller::LCD4Bit OpenTroller::LCD(LCD_RS_PIN, LCD_ENABLE_PIN, LCD_DATA4_PIN, LCD_DATA5_PIN, LCD_DATA6_PIN, LCD_DATA7_PIN);
@@ -244,3 +245,4 @@ uint8_t LCDI2C::getContrast(void) {
 #elif defined OPENTROLLER_LCDI2C
   OpenTroller::LCDI2C OpenTroller::LCD(UI_LCD_I2CADDR);
 #endif
+

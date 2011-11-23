@@ -1,10 +1,9 @@
 /*
-BrewTroller 4.0 Lite Hardware Configuration
-  HERMS: Two Heat Outputs (HLT, Kettle) + 3 Pump/Valve Outputs + Alarm
+Opentroller BX1 Hardware Configuration
 */
 
-#ifndef BT_HWPROFILE
-#define BT_HWPROFILE
+#ifndef OT_HWPROFILE_H
+#define OT_HWPROFILE_H
   #include "OT_Encoder.h"
 
   #define OPENTROLLER_ENCODER_GPIO
@@ -54,8 +53,8 @@ BrewTroller 4.0 Lite Hardware Configuration
   #define UI_DISPLAY_SETUP
   #define LCD_BRIGHT_PIN 13
   #define LCD_CONTRAST_PIN 14
-  #define LCD_DEFAULTBRIGHT 250
-  #define LCD_DEFAULTCONTRAST 20
+  #define LCD_DEFAULTBRIGHT 200
+  #define LCD_DEFAULTCONTRAST 100
 
   #define RS485_SERIAL_PORT  1
   #define RS485_RTS_PIN	     12

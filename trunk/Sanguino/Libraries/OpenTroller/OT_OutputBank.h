@@ -18,6 +18,7 @@ typedef enum
 		{
 			public:
 			  virtual void set(uint8_t, uint8_t) = 0;
+			  virtual uint8_t get(uint8_t) = 0;
 			  virtual uint8_t getCount(void) = 0;
 			  virtual void getName(char *) = 0;
 			  virtual uint8_t getType() = 0;
@@ -34,6 +35,7 @@ typedef enum
 			~OutputBankGPIO();
 			void setup(uint8_t pinIndex, uint8_t digitalPin);
 			void set(uint8_t, uint8_t);
+			uint8_t get(uint8_t);
 			uint8_t getCount();
 			void getName(char * retStr);
 			uint8_t getType() { return OUTPUTBANK_TYPE_GPIO; }
@@ -44,11 +46,12 @@ typedef enum
 		private:
 		pin muxLatchPin, muxDataPin, muxClockPin, muxEnablePin;
 		boolean muxEnableLogic;
-		unsigned long bitValues;
+		uint32_t bitValues;
 		
 		public:
 		OutputBankMUX(uint8_t latchPin, uint8_t dataPin, uint8_t clockPin, uint8_t enablePin, boolean enableLogic);
 		void set(uint8_t, uint8_t);
+		uint8_t get(uint8_t);
 		uint8_t getCount();
 		void getName(char * retStr);
 		uint8_t getType() { return OUTPUTBANK_TYPE_MUX; }
@@ -59,12 +62,14 @@ typedef enum
 	  {
 		private:
 		ModbusMaster _slave;
+		uint8_t _slaveAddr;
 		unsigned int _coilReg;
 		uint8_t _coilCount;
 
 		public:
 		OutputBankMODBUS(uint8_t slaveAddr, unsigned int coilReg, uint8_t coilCount);
 		void set(uint8_t, uint8_t);
+		uint8_t get(uint8_t);
 		uint8_t getCount();
 		void getName(char * retStr);
 		uint8_t getType() { return OUTPUTBANK_TYPE_MODBUS; }
@@ -78,10 +83,12 @@ typedef enum
 		uint8_t _bankSize;  //Number of groups in bank
 		uint8_t _groupSize;   //Number of outputs per group
 		uint8_t * _ptrData; //Pointer to the group definitions; 1 byte values specifying the bank and output of each member of the group
-
+		uint32_t bitValues;
+		
 		public:
 		OutputBankGroup(uint8_t *, uint8_t, uint8_t, uint8_t);
 		void set(uint8_t, uint8_t);
+		uint8_t get(uint8_t);
 		uint8_t getCount();
 		void getName(char * retStr);
 		uint8_t getType() { return OUTPUTBANK_TYPE_GROUP; }
@@ -99,6 +106,7 @@ typedef enum
 		void init();
 		void addModbusBank(uint8_t, uint16_t, uint8_t);
 		void set(uint8_t, uint8_t, uint8_t);
+		uint8_t get(uint8_t, uint8_t);
 		uint8_t getBankCount();
 		void getBankName(uint8_t, char *);
 		uint8_t getOutputCount(uint8_t);

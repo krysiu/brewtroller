@@ -31,10 +31,9 @@ Documentation, Forums and more information available at http://www.oscsys.com
 
 	#include <Wire.h>
 	#include "OT_LiquidCrystal.h"
-	#include <stdlib.h> // for malloc and free
 	#include <avr/pgmspace.h>
 	#include "OT_Util.h"
-	#include <stdint.h>
+	#include <wiring.h>
 	#include "OT_Stack.h"
 
 	#define PAD_RIGHT 0
@@ -98,7 +97,7 @@ Documentation, Forums and more information available at http://www.oscsys.com
 
 			uint8_t _brightPin, _contrastPin;
 			uint8_t _bright, _contrast;
-			boolean _bcControl;
+			uint8_t _bcControl;
 
 			void saveLCDBright(uint8_t val);
 			void saveLCDContrast(uint8_t val);
@@ -108,6 +107,7 @@ Documentation, Forums and more information available at http://www.oscsys.com
 			public:
 			LCD4Bit(uint8_t rs, uint8_t enable, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7);
 			LCD4Bit(uint8_t rs, uint8_t enable, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7, uint8_t b, uint8_t c);
+
 			void init();
 			void update();
 			void setBright(uint8_t);
