@@ -94,8 +94,8 @@ class ModbusMaster
     ModbusMaster(uint8_t, uint8_t);
     
     void begin();
-    void begin(uint16_t);
-    void begin(uint16_t, uint8_t);
+    void begin(uint32_t);
+    void begin(uint32_t, uint8_t);
 	void setupRTS(uint8_t);
 	
     // Modbus exception codes

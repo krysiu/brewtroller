@@ -100,9 +100,9 @@ void ModbusMaster::begin(void)
 }
 
 //Default No Parity
-void ModbusMaster::begin(uint16_t u16BaudRate)
+void ModbusMaster::begin(uint32_t BaudRate)
 {
-  begin(u16BaudRate, 'n');
+  begin(BaudRate, 'n');
 }
 
 /**
@@ -116,15 +116,19 @@ Call once class has been instantiated, typically within setup().
 @param parity 'n', 'e', 'o'
 @ingroup setup
 */
-void ModbusMaster::begin(uint16_t u16BaudRate, uint8_t parity)
+void ModbusMaster::begin(uint32_t BaudRate, uint8_t parity)
 {
 	uint8_t parityBits = 0;
 	switch(parity)
 	{
 		case 'o':
-			parityBits = (1<<4);
+			parityBits = B00110000;
+			break;
 		case 'e':
-			parityBits |= (1<<5);
+			parityBits = B00100000;
+			break;
+		case 'n':
+			parityBits = B00001000; //2-Stop Bits for Parity: None
 			break;
 	}
 
@@ -155,7 +159,7 @@ void ModbusMaster::begin(uint16_t u16BaudRate, uint8_t parity)
       break;
   }
   
-  MBSerial.begin(u16BaudRate);
+  MBSerial.begin(BaudRate);
 }
 
 void ModbusMaster::setupRTS(uint8_t pinID)
@@ -534,7 +538,7 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
   uint8_t u8ModbusADUSize = 0;
   uint8_t i, u8Qty;
   uint16_t u16CRC;
-  uint8_t u8TimeLeft = ku8MBResponseTimeout;
+  uint32_t u32RXStartTime;
   uint8_t u8BytesLeft = 8;
   uint8_t u8MBStatus = ku8MBSuccess;
   
@@ -633,12 +637,15 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
   u8ModbusADU[u8ModbusADUSize++] = highByte(u16CRC);
   u8ModbusADU[u8ModbusADUSize] = 0;
   
+  //Matt Reba CRC Missing Hack:
+  u8ModbusADUSize += 2;
+  
   // transmit request
   if (_u8RTSMask) *_u8RTSPort |= _u8RTSMask; //Enable RTS Line if defined
   
   for (i = 0; i < u8ModbusADUSize; i++)
   {
-    MBSerial.print(u8ModbusADU[i], BYTE);
+    MBSerial.write(u8ModbusADU[i]);
   }
   
   u8ModbusADUSize = 0;
@@ -646,19 +653,15 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
   if (_u8RTSMask) *_u8RTSPort &= ~_u8RTSMask; //Disable RTS Line if defined
 	
   // loop until we run out of time or bytes, or an error occurs
-  while (u8TimeLeft && u8BytesLeft && !u8MBStatus)
+  u32RXStartTime = millis();
+  while (millis() - u32RXStartTime < ku8MBResponseTimeout && u8BytesLeft && !u8MBStatus)
   {
     if (MBSerial.available())
     {
       u8ModbusADU[u8ModbusADUSize++] = MBSerial.read();
       u8BytesLeft--;
     }
-    else
-    {
-      delayMicroseconds(1000);
-      u8TimeLeft--;
-    }
-    
+	
     // evaluate slave ID, function code once enough bytes have been read
     if (u8ModbusADUSize == 5)
     {
@@ -718,7 +721,7 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
   }
   
   // verify response is large enough to inspect further
-  if (!u8MBStatus && (u8TimeLeft == 0 || u8ModbusADUSize < 5))
+  if (!u8MBStatus && (millis() - u32RXStartTime >= ku8MBResponseTimeout || u8ModbusADUSize < 5))
   {
     u8MBStatus = ku8MBResponseTimedOut;
   }
@@ -778,6 +781,5 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
         break;
     }
   }
-  
   return u8MBStatus;
 }
