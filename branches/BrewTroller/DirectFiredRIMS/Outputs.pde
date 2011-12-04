@@ -246,13 +246,234 @@ void resetHeatOutput(byte vessel) {
   #endif
 }  
 
-void processHeatOutputs() {
-  //Process Heat Outputs
+#if defined PID_FLOW_CONTROL && defined PID_CONTROL_MANUAL
+void processPID_FLOW_CONTROL(byte currentVessel) {
+  if(currentVessel == VS_PUMP){ //manual control if PID isnt working due to long sample times or other reasons
+    millistemp = millis();
+    if(millistemp >= nextcompute){
+      nextcompute += FLOWRATE_READ_INTERVAL;
+      if(setpoint[currentVessel] == 0) PIDOutput[currentVessel] = 0;
+      else{
+        if((long)setpoint[currentVessel] - flowRate[VS_KETTLE] > 100){
+          additioncount[0]++;
+          additioncount[1] = 0;
+          if(additioncount[0] > 5){    // this is here to break a case where adding 10 causes a change of 100 but lowering 10 causes a change of 100 off the setpoint and we just oscilate. 
+            additioncount[0] = 0;
+            PIDOutput[currentVessel] += 5;
+          }
+          else PIDOutput[currentVessel] += 10;
+        }
+        else if((long)setpoint[currentVessel] - flowRate[VS_KETTLE] < -100){
+          additioncount[0]++;
+          additioncount[1] = 0;
+          if(additioncount[0] > 5){    // this is here to break a case where adding 10 causes a change of 100 but lowering 10 causes a change of 100 off the setpoint and we just oscilate. 
+           additioncount[0] = 0;
+           PIDOutput[currentVessel] -= 5;
+         }
+         else PIDOutput[currentVessel] -= 10;
+        }
+        else if((long)setpoint[currentVessel] - flowRate[VS_KETTLE] > 50){ 
+          additioncount[0] = 0;
+          additioncount[1]++;
+          if(additioncount[0] > 5){    // this is here to break a case where adding 5 causes a change of 50 but lowering 5 causes a change of 50 off the setpoint and we just oscilate. 
+            additioncount[1] = 0;
+            PIDOutput[currentVessel] += 1;
+          }
+          else PIDOutput[currentVessel] += 5;
+        }
+        else if((long)setpoint[currentVessel] - flowRate[VS_KETTLE] < -50){ 
+          additioncount[0] = 0;
+          additioncount[1]++;
+          if(additioncount[0] > 5){    // this is here to break a case where adding 5 causes a change of 50 but lowering 5 causes a change of 50 off the setpoint and we just oscilate. 
+            additioncount[1] = 0;
+            PIDOutput[currentVessel] -= 1;
+          }
+          else PIDOutput[currentVessel] -= 5;
+        }
+        else if((long)setpoint[currentVessel] - flowRate[VS_KETTLE] > 10) PIDOutput[currentVessel] += 1;
+        else if((long)setpoint[currentVessel] - flowRate[VS_KETTLE] < -10) PIDOutput[currentVessel] -= 1;
+        
+        if(PIDOutput[currentVessel] > pid[currentVessel].GetOUTMax()) PIDOutput[currentVessel] = pid[currentVessel].GetOUTMax();
+        else if(PIDOutput[currentVessel] < pid[currentVessel].GetOUTMin()) PIDOutput[currentVessel] = pid[currentVessel].GetOUTMin();
+      }
+    }
+  }
+}
+#endif // defined PID_FLOW_CONTROL && defined PID_CONTROL_MANUAL
+
+/**
+ * Called by processHeatOutputs to process a PID-enabled heat output.
+ */
+void processHeatOutoutsPIDEnabled(byte currentVessel) {
   unsigned long millistemp;
   #ifdef PWM_BY_TIMER
     uint8_t oldSREG;
   #endif
 
+  if (currentVessel != VS_STEAM && currentVessel != VS_KETTLE && temp[currentVessel] == BAD_TEMP) {
+    PIDOutput[currentVessel] = 0;
+  } else {
+    if (pid[currentVessel].GetMode() == AUTO) {
+  #ifdef PID_FLOW_CONTROL
+      if(currentVessel == VS_PUMP) PIDInput[currentVessel] = flowRate[VS_KETTLE];
+  #else
+      if (currentVessel == VS_STEAM) PIDInput[currentVessel] = steamPressure; 
+  #endif
+      else { 
+        PIDInput[currentVessel] = temp[currentVessel];
+  #ifdef PID_FEED_FORWARD
+        if(currentVessel == VS_MASH ) FFBias = temp[FEED_FORWARD_SENSOR];
+  #endif
+      }
+      pid[currentVessel].Compute();
+    #ifdef PID_FLOW_CONTROL
+      if(currentVessel == VS_PUMP && setpoint[currentVessel] == 0) PIDOutput[currentVessel] = 0; // if the setpoint is 0 then make sure we output 0, as dont want the min output always on. 
+    #endif
+    #ifdef PID_FEED_FORWARD
+      if(currentVessel == VS_MASH && setpoint[currentVessel] == 0) PIDOutput[currentVessel] = 0; // found a bug where the mash output could be turned on if setpoint was 0 but FFBias was not 0. 
+                                                             // this fixes the bug but still lets the integral gain learn to compensate for the FFBias while 
+                                                             // the setpoint is 0. 
+    #endif
+    #ifdef HLT_KET_ELEMENT_SAVE
+      if(currentVessel == VS_HLT && volAvg[currentVessel] < HLT_MIN_HEAT_VOL) PIDOutput[currentVessel] = 0;
+      if(currentVessel == VS_KETTLE && volAvg[currentVessel] < KET_MIN_HEAT_VOL) PIDOutput[currentVessel] = 0;
+    #endif
+    }
+  #if defined PID_FLOW_CONTROL && defined PID_CONTROL_MANUAL
+    processPID_FLOW_CONTROL(currentVessel);
+  #endif // defined PID_FLOW_CONTROL && defined PID_CONTROL_MANUAL
+  }
+  #ifndef PWM_BY_TIMER
+    //only 1 call to millis needed here, and if we get hit with an interrupt we still want to calculate based on the first read value of it
+    millistemp = millis();
+    if (cycleStart[currentVessel] == 0) cycleStart[currentVessel] = millistemp;
+    if (millistemp - cycleStart[currentVessel] > PIDCycle[currentVessel] * 100) cycleStart[currentVessel] += PIDCycle[currentVessel] * 100;
+    if (PIDOutput[currentVessel] >= millistemp - cycleStart[currentVessel] && millistemp != cycleStart[currentVessel]) heatPin[currentVessel].set(HIGH); else heatPin[currentVessel].set(LOW);
+  #else
+    //here we do as much math as we can OUT SIDE the ISR, we calculate the PWM cycle time in counter/timer counts
+    // and place it in the [currentVessel][0] value, then calculate the timer counts to get the desired PWM % and place it in [currentVessel][1]
+    // need to disable interrupts so a write into here can finish before an interrupt can come in and read it
+    oldSREG = SREG;
+    cli();
+    PIDOutputCountEquivalent[currentVessel][0] = PIDCycle[currentVessel] * 800;
+    PIDOutputCountEquivalent[currentVessel][1] = PIDOutput[currentVessel] * 8;
+    SREG = oldSREG; // restore interrupts
+  #endif
+  if (PIDOutput[currentVessel] == 0)  heatStatus[currentVessel] = 0; else heatStatus[currentVessel] = 1;
+}
+
+
+/**
+ * Called by processHeatOutputsNonPIDEnabled to process a heat output when heatStatus[currentVessel] == true.
+ */
+void processHeatOutputsNonPIDEnabledWithHeatOn(byte currentVessel) {
+  if (
+      // determine if setpoint has ben reached, or there is a bad temp reading.
+      // If it either condition, set the pin low (turn it off).
+      #ifndef DIRECT_FIRE_RIMS
+        (currentVessel != VS_STEAM && 
+      #endif
+        (temp[currentVessel] == BAD_TEMP || temp[currentVessel] >= setpoint[currentVessel])
+      #ifndef DIRECT_FIRE_RIMS
+        )|| (currentVessel == VS_STEAM && steamPressure >= setpoint[currentVessel])
+      #endif
+  ) { 
+    // For DIRECT_FIRED_RIMS, the setpoint for both VS_MASH & VS_STEAM should be the same, 
+    // so nothing to do here.
+    heatPin[currentVessel].set(LOW);
+    heatStatus[currentVessel] = 0;
+  } else { 
+    // setpoint has not been reached, and temp reading is valid.
+    // Insure that the correct heat pin is enabled, and heatStatus updated.
+    #ifdef DIRECT_FIRED_RIMS
+      // When temp[VS_MASH] is less than setpoint[VS_MASH] - RIMS_TEMP_OFFSET, then
+      // the VS_MASH pint should be set high, and VS_STEAM set low.  If the different
+      // is within RIMS_TEMP_OFFSET, then the opposite.
+      if (currentVessel == VS_MASH) {
+        if (temp[currentVessel] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+          heatPin[currentVessel].set(LOW);
+          heatStatus[currentVessel] = 0;
+        } else if (temp[currentVessel] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET)) {
+          heatPin[currentVessel].set(HIGH);
+          heatStatus[currentVessel] = 1;
+        }
+      } else if (currentVessel == VS_STEAM ) {
+        if (temp[currentVessel] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+          heatPin[currentVessel].set(LOW);
+          heatStatus[currentVessel] = 0;
+        } else if (temp[currentVessel] < RIMS_MAX_TEMP) {
+          heatPin[currentVessel].set(HIGH);
+          heatStatus[currentVessel] = 1;
+        }
+      }
+    #else
+      heatPin[currentVessel].set(HIGH);
+    #endif
+  }
+}
+
+/**
+ * Called by processHeatOutputsNonPIDEnabled to process a heat output when heatStatus[currentVessel] == false.
+ */
+void processHeatOutputsNonPIDEnabledWithHeatOff(byte currentVessel) {
+  if (
+    // Determine is the vessel temperature is below the setpoint, accounting for hysteresis.
+    #ifndef DIRECT_FIRE_RIMS
+      (currentVessel != VS_STEAM && 
+    #endif
+      (temp[currentVessel] != BAD_TEMP && (setpoint[currentVessel] - temp[currentVessel]) >= hysteresis[currentVessel] * 10) 
+    #ifndef DIRECT_FIRE_RIMS
+      )|| (currentVessel == VS_STEAM && (setpoint[currentVessel] - steamPressure) >= hysteresis[currentVessel] * 100)
+    #endif
+    ) {
+      // The temperature of the vessel is below what we want, so insure the correct pin is tunred on,
+      // and the heatStatus is updated.
+    #ifdef DIRECT_FIRED_RIMS
+      // When temp[VS_MASH] is less than setpoint[VS_MASH] - RIMS_TEMP_OFFSET, then
+      // the VS_MASH pint should be set high, and VS_STEAM set low.  If the different
+      // is within RIMS_TEMP_OFFSET, then the opposite.
+      if (currentVessel == VS_MASH) {
+        if (temp[currentVessel] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+          heatPin[currentVessel].set(LOW);
+          heatStatus[currentVessel] = 0;
+        } else if (temp[currentVessel] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET)) {
+          heatPin[currentVessel].set(HIGH);
+          heatStatus[currentVessel] = 1;
+        }
+      } else if (currentVessel == VS_STEAM ) {
+        if (temp[currentVessel] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+          heatPin[currentVessel].set(LOW);
+          heatStatus[currentVessel] = 0;
+        } else if (temp[currentVessel] < RIMS_MAX_TEMP) {
+          heatPin[currentVessel].set(HIGH);
+          heatStatus[currentVessel] = 1;
+        }
+      }
+    #else
+      heatPin[currentVessel].set(HIGH);
+      heatStatus[currentVessel] = 1;
+    #endif
+  } else {
+    // The heat is maintaining currently desired value, so insure heat source is (still) off.
+    // For DIRECT_FIRED_RIMS, the setpoint for both VS_MASH & VS_STEAM should be the same, 
+    // so nothing to do here.
+    heatPin[currentVessel].set(LOW);
+  }
+}
+
+/**
+ * Called by processHeatOutputs to process a nonPID-enabled heat output.
+ */
+void processHeatOutputsNonPIDEnabled(byte currentVessel) {
+  if (heatStatus[currentVessel]) {
+    processHeatOutputsNonPIDEnabledWithHeatOn(currentVessel);
+  } else {
+    processHeatOutputsNonPIDEnabledWithHeatOff(currentVessel);
+  }
+}
+
+void processHeatOutputs() {
+  //Process Heat Outputs
   #ifdef RIMS_MLT_SETPOINT_DELAY
     if(timetoset <= millis() && timetoset != 0){
       RIMStimeExpired = 1;
@@ -266,191 +487,11 @@ void processHeatOutputs() {
       if (currentVessel == VS_KETTLE && setpoint[VS_HLT]) continue;
     #endif
     if (PIDEnabled[currentVessel]) {
-      if (currentVessel != VS_STEAM && currentVessel != VS_KETTLE && temp[currentVessel] == BAD_TEMP) {
-        PIDOutput[currentVessel] = 0;
-      } else {
-        if (pid[currentVessel].GetMode() == AUTO) {
-      #ifdef PID_FLOW_CONTROL
-        if(currentVessel == VS_PUMP) PIDInput[currentVessel] = flowRate[VS_KETTLE];
-      #else
-        #ifndef DIRECT_FIRE_RIMS
-          if (currentVessel == VS_STEAM) PIDInput[currentVessel] = steamPressure; 
-        #endif
-      #endif
-          else { 
-            PIDInput[currentVessel] = temp[currentVessel];
-      #ifdef PID_FEED_FORWARD
-            if(currentVessel == VS_MASH ) FFBias = temp[FEED_FORWARD_SENSOR];
-      #endif
-          }
-          pid[currentVessel].Compute();
-        #ifdef PID_FLOW_CONTROL
-          if(currentVessel == VS_PUMP && setpoint[currentVessel] == 0) PIDOutput[currentVessel] = 0; // if the setpoint is 0 then make sure we output 0, as dont want the min output always on. 
-        #endif
-        #ifdef PID_FEED_FORWARD
-          if(currentVessel == VS_MASH && setpoint[currentVessel] == 0) PIDOutput[currentVessel] = 0; // found a bug where the mash output could be turned on if setpoint was 0 but FFBias was not 0. 
-                                                                 // this fixes the bug but still lets the integral gain learn to compensate for the FFBias while 
-                                                                 // the setpoint is 0. 
-        #endif
-        #ifdef HLT_KET_ELEMENT_SAVE
-          if(currentVessel == VS_HLT && volAvg[currentVessel] < HLT_MIN_HEAT_VOL) PIDOutput[currentVessel] = 0;
-          if(currentVessel == VS_KETTLE && volAvg[currentVessel] < KET_MIN_HEAT_VOL) PIDOutput[currentVessel] = 0;
-        #endif
-        }
-      #if defined PID_FLOW_CONTROL && defined PID_CONTROL_MANUAL
-        else if(currentVessel == VS_PUMP){ //manual control if PID isnt working due to long sample times or other reasons
-          millistemp = millis();
-          if(millistemp >= nextcompute){
-            nextcompute += FLOWRATE_READ_INTERVAL;
-            if(setpoint[currentVessel] == 0) PIDOutput[currentVessel] = 0;
-            else{
-              if((long)setpoint[currentVessel] - flowRate[VS_KETTLE] > 100){
-                additioncount[0]++;
-                additioncount[1] = 0;
-                if(additioncount[0] > 5){    // this is here to break a case where adding 10 causes a change of 100 but lowering 10 causes a change of 100 off the setpoint and we just oscilate. 
-                  additioncount[0] = 0;
-                  PIDOutput[currentVessel] += 5;
-                }
-                else PIDOutput[currentVessel] += 10;
-              }
-              else if((long)setpoint[currentVessel] - flowRate[VS_KETTLE] < -100){
-                additioncount[0]++;
-                additioncount[1] = 0;
-                if(additioncount[0] > 5){    // this is here to break a case where adding 10 causes a change of 100 but lowering 10 causes a change of 100 off the setpoint and we just oscilate. 
-                 additioncount[0] = 0;
-                 PIDOutput[currentVessel] -= 5;
-               }
-               else PIDOutput[currentVessel] -= 10;
-              }
-              else if((long)setpoint[currentVessel] - flowRate[VS_KETTLE] > 50){ 
-                additioncount[0] = 0;
-                additioncount[1]++;
-                if(additioncount[0] > 5){    // this is here to break a case where adding 5 causes a change of 50 but lowering 5 causes a change of 50 off the setpoint and we just oscilate. 
-                  additioncount[1] = 0;
-                  PIDOutput[currentVessel] += 1;
-                }
-                else PIDOutput[currentVessel] += 5;
-              }
-              else if((long)setpoint[currentVessel] - flowRate[VS_KETTLE] < -50){ 
-                additioncount[0] = 0;
-                additioncount[1]++;
-                if(additioncount[0] > 5){    // this is here to break a case where adding 5 causes a change of 50 but lowering 5 causes a change of 50 off the setpoint and we just oscilate. 
-                  additioncount[1] = 0;
-                  PIDOutput[currentVessel] -= 1;
-                }
-                else PIDOutput[currentVessel] -= 5;
-              }
-              else if((long)setpoint[currentVessel] - flowRate[VS_KETTLE] > 10) PIDOutput[currentVessel] += 1;
-              else if((long)setpoint[currentVessel] - flowRate[VS_KETTLE] < -10) PIDOutput[currentVessel] -= 1;
-              
-              if(PIDOutput[currentVessel] > pid[currentVessel].GetOUTMax()) PIDOutput[currentVessel] = pid[currentVessel].GetOUTMax();
-              else if(PIDOutput[currentVessel] < pid[currentVessel].GetOUTMin()) PIDOutput[currentVessel] = pid[currentVessel].GetOUTMin();
-            }
-          }
-        }
-      #endif // defined PID_FLOW_CONTROL && defined PID_CONTROL_MANUAL
-      }
-      #ifndef PWM_BY_TIMER
-        //only 1 call to millis needed here, and if we get hit with an interrupt we still want to calculate based on the first read value of it
-        millistemp = millis();
-        if (cycleStart[currentVessel] == 0) cycleStart[currentVessel] = millistemp;
-        if (millistemp - cycleStart[currentVessel] > PIDCycle[currentVessel] * 100) cycleStart[currentVessel] += PIDCycle[currentVessel] * 100;
-        if (PIDOutput[currentVessel] >= millistemp - cycleStart[currentVessel] && millistemp != cycleStart[currentVessel]) heatPin[currentVessel].set(HIGH); else heatPin[currentVessel].set(LOW);
-      #else
-        //here we do as much math as we can OUT SIDE the ISR, we calculate the PWM cycle time in counter/timer counts
-        // and place it in the [currentVessel][0] value, then calculate the timer counts to get the desired PWM % and place it in [currentVessel][1]
-        // need to disable interrupts so a write into here can finish before an interrupt can come in and read it
-        oldSREG = SREG;
-        cli();
-        PIDOutputCountEquivalent[currentVessel][0] = PIDCycle[currentVessel] * 800;
-        PIDOutputCountEquivalent[currentVessel][1] = PIDOutput[currentVessel] * 8;
-        SREG = oldSREG; // restore interrupts
-      #endif
-      if (PIDOutput[currentVessel] == 0)  heatStatus[currentVessel] = 0; else heatStatus[currentVessel] = 1;
+      processHeatOutoutsPIDEnabled(currentVessel);
     } else {
-      if (heatStatus[currentVessel]) {
-        if (
-            #ifdef DIRECT_FIRE_RIMS
-              (temp[currentVessel] == BAD_TEMP || temp[currentVessel] >= setpoint[currentVessel])
-            #else
-              (currentVessel != VS_STEAM && (temp[currentVessel] == BAD_TEMP || temp[currentVessel] >= setpoint[currentVessel]))
-            #endif
-            #ifndef DIRECT_FIRE_RIMS
-              || (currentVessel == VS_STEAM && steamPressure >= setpoint[currentVessel])
-            #endif
-        ) {
-          // For DIRECT_FIRED_RIMS, the setpoint for both VS_MASH & VS_STEAM should be the same, so nothing to do here.
-          heatPin[currentVessel].set(LOW);
-          heatStatus[currentVessel] = 0;
-        } else {
-          #ifdef DIRECT_FIRED_RIMS
-            // When temp[VS_MASH] is less than setpoint[VS_MASH] - RIMS_TEMP_OFFSET, then
-            // the VS_MASH pint should be set high, and VS_STEAM set low.  If the different
-            // is within RIMS_TEMP_OFFSET, then the opposite.
-            if (currentVessel == VS_MASH) {
-              if (temp[currentVessel] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
-                heatPin[currentVessel].set(LOW);
-                heatStatus[currentVessel] = 0;
-              } else if (temp[currentVessel] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET)) {
-                heatPin[currentVessel].set(HIGH);
-                heatStatus[currentVessel] = 1;
-              }
-            } else if (currentVessel == VS_STEAM ) {
-              if (temp[currentVessel] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
-                heatPin[currentVessel].set(LOW);
-                heatStatus[currentVessel] = 0;
-              } else if (temp[currentVessel] < RIMS_MAX_TEMP) {
-                heatPin[currentVessel].set(HIGH);
-                heatStatus[currentVessel] = 1;
-              }
-            }
-          #else
-            heatPin[currentVessel].set(HIGH);
-          #endif
-        }
-      } else {
-        if (
-          #ifdef DIRECT_FIRE_RIMS
-            (temp[currentVessel] != BAD_TEMP && (setpoint[currentVessel] - temp[currentVessel]) >= hysteresis[currentVessel] * 10) 
-          #else
-            (currentVessel != VS_STEAM && temp[currentVessel] != BAD_TEMP && (setpoint[currentVessel] - temp[currentVessel]) >= hysteresis[currentVessel] * 10) 
-          #endif
-          #ifndef DIRECT_FIRE_RIMS
-            || (currentVessel == VS_STEAM && (setpoint[currentVessel] - steamPressure) >= hysteresis[currentVessel] * 100)
-          #endif
-          ) {
-          #ifdef DIRECT_FIRED_RIMS
-            // When temp[VS_MASH] is less than setpoint[VS_MASH] - RIMS_TEMP_OFFSET, then
-            // the VS_MASH pint should be set high, and VS_STEAM set low.  If the different
-            // is within RIMS_TEMP_OFFSET, then the opposite.
-            if (currentVessel == VS_MASH) {
-              if (temp[currentVessel] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
-                heatPin[currentVessel].set(LOW);
-                heatStatus[currentVessel] = 0;
-              } else if (temp[currentVessel] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET)) {
-                heatPin[currentVessel].set(HIGH);
-                heatStatus[currentVessel] = 1;
-              }
-            } else if (currentVessel == VS_STEAM ) {
-              if (temp[currentVessel] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
-                heatPin[currentVessel].set(LOW);
-                heatStatus[currentVessel] = 0;
-              } else if (temp[currentVessel] < RIMS_MAX_TEMP) {
-                heatPin[currentVessel].set(HIGH);
-                heatStatus[currentVessel] = 1;
-              }
-            }
-          #else
-            heatPin[currentVessel].set(HIGH);
-            heatStatus[currentVessel] = 1;
-          #endif
-        } else {
-          // For DIRECT_FIRED_RIMS, the setpoint for both VS_MASH & VS_STEAM should be the same, so nothing to do here.
-          heatPin[currentVessel].set(LOW);
-        }
-      }
-    } // if/else PIDEnabled[currentVessel]   
-  } // for loop
+      processHeatOutputsNonPIDEnabled(currentVessel);
+    }
+  }
 }
 
 #ifdef PVOUT
