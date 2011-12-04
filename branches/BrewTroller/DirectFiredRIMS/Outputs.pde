@@ -421,16 +421,18 @@ void processHeatOutputsNonPIDEnabledWithHeatOff(byte currentVessel) {
     #ifndef DIRECT_FIRE_RIMS
       (currentVessel != VS_STEAM && 
     #endif
-      (temp[currentVessel] != BAD_TEMP && (setpoint[currentVessel] - temp[currentVessel]) >= hysteresis[currentVessel] * 10) 
+      (temp[currentVessel] != BAD_TEMP 
+        && (setpoint[currentVessel] - temp[currentVessel]) >= hysteresis[currentVessel] * 10) 
     #ifndef DIRECT_FIRE_RIMS
-      )|| (currentVessel == VS_STEAM && (setpoint[currentVessel] - steamPressure) >= hysteresis[currentVessel] * 100)
+      )|| (currentVessel == VS_STEAM 
+            && (setpoint[currentVessel] - steamPressure) >= hysteresis[currentVessel] * 100)
     #endif
     ) {
       // The temperature of the vessel is below what we want, so insure the correct pin is tunred on,
       // and the heatStatus is updated.
     #ifdef DIRECT_FIRED_RIMS
       // When temp[VS_MASH] is less than setpoint[VS_MASH] - RIMS_TEMP_OFFSET, then
-      // the VS_MASH pint should be set high, and VS_STEAM set low.  If the different
+      // the VS_MASH pint should be set high, and VS_STEAM set low.  If the difference
       // is within RIMS_TEMP_OFFSET, then the opposite.
       if (currentVessel == VS_MASH) {
         if (temp[currentVessel] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
