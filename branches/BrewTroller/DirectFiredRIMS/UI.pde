@@ -621,7 +621,7 @@ void screenRefresh(byte screen) {
       }
     }
 
-    for (byte i = TS_HLT; i <= TS_KETTLE; i++) {
+    for (byte i = TS_HLT; i <= TS_RIMS; i++) {
       vftoa(temp[i], buf, 100, 1);
       truncFloat(buf, 4);
       if (temp[i] == BAD_TEMP) LCD.print_P(i + 1, 8, PSTR("----")); else LCD.lPad(i + 1, 8, buf, 4, ' ');
@@ -686,7 +686,7 @@ void screenRefresh(byte screen) {
 
   } else if (screen == SCREEN_AUX) {
     //Screen Refresh: AUX
-    for (byte i = TS_AUX1; i <= TS_AUX3; i++) {
+    for (byte i = TS_AUX1; i <= TS_AUX2; i++) {
       if (temp[i] == BAD_TEMP) LCD.print_P(i - 5, 6, PSTR("-----")); else {
         vftoa(temp[i], buf, 100, 1);
         truncFloat(buf, 5);
@@ -1759,12 +1759,12 @@ void assignSensor() {
   tsMenu.setItem_P(HLTDESC, TS_HLT);
   tsMenu.setItem_P(MASHDESC, TS_MASH);
   tsMenu.setItem_P(PSTR("Brew Kettle"), TS_KETTLE);
+  tsMenu.setItem_P(PSTR("RIMS"), TS_RIMS);
   tsMenu.setItem_P(PSTR("H2O In"), TS_H2OIN);
   tsMenu.setItem_P(PSTR("H2O Out"), TS_H2OOUT);
   tsMenu.setItem_P(PSTR("Beer Out"), TS_BEEROUT);
   tsMenu.setItem_P(PSTR("AUX 1"), TS_AUX1);
   tsMenu.setItem_P(PSTR("AUX 2"), TS_AUX2);
-  tsMenu.setItem_P(PSTR("AUX 3"), TS_AUX3);
 
 
   Encoder.setMin(0);

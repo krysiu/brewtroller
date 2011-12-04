@@ -517,12 +517,10 @@
 #define DIRECT_FIRED_RIMS
 // If you are not recirculating your mash, the offset should probably be greater.
 #define RIMS_TEMP_OFFSET 3
-// You really should have a sensor in your RIMS tube: these two #defines allow you to
-// specify which temp sensor is in the RIMS tube (seeEnum.h), and to set the maximum
-// temp that the RIMS tuube is allowed to reach.  It is important to note that both the
-// sensor and the heating element should be submersed in liqued, with the input and 
-// output ports facing up, so that the tube can not run dry.
-#define RIMS_TEMP_SENSOR TS_AUX1
+// You really should have a sensor in your RIMS tube: this #defines allow you to set 
+// the maximum temp that the RIMS tuube is allowed to reach.  It is important to note 
+// that both the sensor and the heating element should be submersed in liqued, with 
+// the input and output ports facing up, so that the tube can not run dry.
 #define RIMS_MAX_TEMP 180
 // If your HLT output passes through your RIMS tube to your mash kettle, you may want
 // to define RIMS_DURING_SPARGE so that it can also control the temp of your sparge
