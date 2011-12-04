@@ -35,7 +35,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #else
   #ifdef USESTEAM
     #define LAST_HEAT_OUTPUT VS_STEAM
-  #elif DIRECT_FIRED_RIMS
+  #elif defined DIRECT_FIRED_RIMS
     #define LAST_HEAT_OUTPUT VS_STEAM
   #else
     #define LAST_HEAT_OUTPUT VS_KETTLE
@@ -391,7 +391,7 @@ void processHeatOutputs() {
               if (temp[i] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
                 heatPin[i].set(LOW);
                 heatStatus[i] = 0;
-              } else if ((temp[i] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+              } else if (temp[i] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET)) {
                 heatPin[i].set(HIGH);
                 heatStatus[i] = 1;
               }
@@ -399,7 +399,7 @@ void processHeatOutputs() {
               if (temp[i] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
                 heatPin[i].set(LOW);
                 heatStatus[i] = 0;
-              } else if ((temp[i] < RIMS_MAX_TEMP) {
+              } else if (temp[i] < RIMS_MAX_TEMP) {
                 heatPin[i].set(HIGH);
                 heatStatus[i] = 1;
               }
@@ -427,7 +427,7 @@ void processHeatOutputs() {
               if (temp[i] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
                 heatPin[i].set(LOW);
                 heatStatus[i] = 0;
-              } else if ((temp[i] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+              } else if (temp[i] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET)) {
                 heatPin[i].set(HIGH);
                 heatStatus[i] = 1;
               }
@@ -435,7 +435,7 @@ void processHeatOutputs() {
               if (temp[i] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
                 heatPin[i].set(LOW);
                 heatStatus[i] = 0;
-              } else if ((temp[i] < RIMS_MAX_TEMP) {
+              } else if (temp[i] < RIMS_MAX_TEMP) {
                 heatPin[i].set(HIGH);
                 heatStatus[i] = 1;
               }
