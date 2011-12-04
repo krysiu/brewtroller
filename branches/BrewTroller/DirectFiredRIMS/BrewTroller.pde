@@ -1,4 +1,4 @@
-#define BUILD 789
+#define BUILD 823
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
@@ -55,7 +55,7 @@ Compiled on Arduino-0022 (http://arduino.cc/en/Main/Software)
 void(* softReset) (void) = 0;
 
 const char BT[] PROGMEM = "BrewTroller";
-const char BTVER[] PROGMEM = "2.5";
+const char BTVER[] PROGMEM = "2.6";
 
 //**********************************************************************************
 // Compile Time Logic
