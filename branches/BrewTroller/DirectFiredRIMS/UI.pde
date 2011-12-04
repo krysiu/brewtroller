@@ -1069,9 +1069,9 @@ void startProgramMenu() {
       unsigned long mashVol = calcStrikeVol(profile);
       unsigned long grainVol = calcGrainVolume(profile);
       unsigned long preboilVol = calcPreboilVol(profile);
-      if (spargeVol > getCapacity(TS_HLT)) warnHLT(spargeVol);
-      if (mashVol + grainVol > getCapacity(TS_MASH)) warnMash(mashVol, grainVol);
-      if (preboilVol > getCapacity(TS_KETTLE)) warnBoil(preboilVol);
+      if (spargeVol > getCapacity(VS_HLT)) warnHLT(spargeVol);
+      if (mashVol + grainVol > getCapacity(VS_MASH)) warnMash(mashVol, grainVol);
+      if (preboilVol > getCapacity(VS_KETTLE)) warnBoil(preboilVol);
       startMenu.setItem_P(PSTR("Edit Program"), 0);
       
       startMenu.setItem_P(PSTR("Grain Temp:"), 1);
@@ -1198,9 +1198,9 @@ void editProgram(byte pgm) {
     unsigned long mashVol = calcStrikeVol(pgm);
     unsigned long grainVol = calcGrainVolume(pgm);
     unsigned long preboilVol = calcPreboilVol(pgm);
-    if (spargeVol > getCapacity(TS_HLT)) warnHLT(spargeVol);
-    if (mashVol + grainVol > getCapacity(TS_MASH)) warnMash(mashVol, grainVol);
-    if (preboilVol > getCapacity(TS_KETTLE)) warnBoil(preboilVol);
+    if (spargeVol > getCapacity(VS_HLT)) warnHLT(spargeVol);
+    if (mashVol + grainVol > getCapacity(VS_MASH)) warnMash(mashVol, grainVol);
+    if (preboilVol > getCapacity(VS_KETTLE)) warnBoil(preboilVol);
   }
 }
 
