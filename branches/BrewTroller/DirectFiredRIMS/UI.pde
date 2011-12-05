@@ -426,6 +426,24 @@ void screenInit(byte screen) {
     else if (stepIsActive(STEP_MASHOUT)) LCD.print_P(0, 1, PSTR("Mash Out"));
     else if (stepIsActive(STEP_MASHHOLD)) LCD.print_P(0, 1, PSTR("End Mash"));
     else LCD.print_P(0, 0, PSTR("Mash"));
+    // For DIRECT_FIRED_RIMS (and possibly just RIMS), we need a different layout here.
+#ifdef DIRECT_FIRED_RIMS
+    // This is the RIMS screen
+    LCD.print_P(0, 12, PSTR("At"));
+    LCD.print_P(0, 17, PSTR("Set"));
+    LCD.print_P(1, 1, PSTR("HLT"));
+    LCD.print_P(2, 1, PSTR("Mash"));
+    LCD.print_P(2, 1, PSTR("RIMS"));
+    
+    LCD.print_P(1, 13, TUNIT);
+    LCD.print_P(1, 19, TUNIT);
+    LCD.print_P(2, 13, TUNIT);
+    LCD.print_P(2, 19, TUNIT);
+    LCD.print_P(3, 13, TUNIT);
+    LCD.print_P(3, 19, TUNIT);
+    
+    #else
+    // This is the standard screen
     LCD.print_P(0, 11, PSTR("HLT"));
     LCD.print_P(0, 16, PSTR("Mash"));
     LCD.print_P(1, 1, PSTR("Target"));
@@ -435,6 +453,7 @@ void screenInit(byte screen) {
     LCD.print_P(1, 19, TUNIT);
     LCD.print_P(2, 13, TUNIT);
     LCD.print_P(2, 19, TUNIT);
+    #endif
 
   } else if (screen == SCREEN_SPARGE) {
     //Screen Init: Sparge
@@ -470,11 +489,11 @@ void screenInit(byte screen) {
     else LCD.print_P(0,0,PSTR("Boil"));
     LCD.print_P(1, 19, TUNIT);
 
-  if (screenLock) {
-      Encoder.setMin(0);
-      Encoder.setMax(PIDLIMIT_KETTLE);
-      Encoder.setCount(PIDOutput[VS_KETTLE]/PIDCycle[VS_KETTLE]);
-  }
+    if (screenLock) {
+        Encoder.setMin(0);
+        Encoder.setMax(PIDLIMIT_KETTLE);
+        Encoder.setCount(PIDOutput[VS_KETTLE]/PIDCycle[VS_KETTLE]);
+    }
 
   } else if (screen == SCREEN_CHILL) {
     //Screen Init: Chill
@@ -504,10 +523,13 @@ void screenInit(byte screen) {
     LCD.print_P(0,0,PSTR("AUX Temps"));
     LCD.print_P(1,1,PSTR("AUX1"));
     LCD.print_P(2,1,PSTR("AUX2"));
-    LCD.print_P(3,1,PSTR("AUX3"));
     LCD.print_P(1, 11, TUNIT);
     LCD.print_P(2, 11, TUNIT);
+  #ifndef DIRECT_FIRED_RIMS
+    LCD.print_P(3, 1, PSTR("AUX3"));
     LCD.print_P(3, 11, TUNIT);
+  #endif
+    
   }
   
   //Write Unlock symbol to upper right corner
@@ -551,7 +573,12 @@ void screenRefresh(byte screen) {
     
   } else if (screen == SCREEN_MASH) {
     //Refresh Screen: Preheat/Mash
+#ifdef DIRECT_FIRED_RIMS
+    for (byte i = VS_HLT; i <= VS_RIMS; i++) {
+        if (i == VS_KETTLE) {continue;)
+#else
     for (byte i = VS_HLT; i <= VS_MASH; i++) {
+#endif
       vftoa(setpoint[i], buf, 100, 1);
       truncFloat(buf, 4);
       LCD.lPad(1, i * 6 + 9, buf, 4, ' ');
@@ -621,7 +648,11 @@ void screenRefresh(byte screen) {
       }
     }
 
+#ifdef DIRECT_FIRED_RIMS
     for (byte i = TS_HLT; i <= TS_RIMS; i++) {
+#else
+    for (byte i = TS_HLT; i <= TS_KETTLE; i++) {
+#endif
       vftoa(temp[i], buf, 100, 1);
       truncFloat(buf, 4);
       if (temp[i] == BAD_TEMP) LCD.print_P(i + 1, 8, PSTR("----")); else LCD.lPad(i + 1, 8, buf, 4, ' ');
@@ -686,7 +717,11 @@ void screenRefresh(byte screen) {
 
   } else if (screen == SCREEN_AUX) {
     //Screen Refresh: AUX
+#ifdef DIRECT_FIRED_RIMS
     for (byte i = TS_AUX1; i <= TS_AUX2; i++) {
+#else
+    for (byte i = TS_AUX1; i <= TS_AUX3; i++) {
+#endif
       if (temp[i] == BAD_TEMP) LCD.print_P(i - 5, 6, PSTR("-----")); else {
         vftoa(temp[i], buf, 100, 1);
         truncFloat(buf, 5);
