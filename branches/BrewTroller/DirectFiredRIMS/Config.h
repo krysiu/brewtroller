@@ -293,7 +293,7 @@
 // Show temperature and volume per kettle on the same display.  Every other update
 // interval the display will switch from temperature to volume.  Make sure that the
 // values in Com_BTPD.h use the same address per kettle for both volume and temperature.
-#define BTPD_ALTERNATE_TEMP_VOLUME
+//#define BTPD_ALTERNATE_TEMP_VOLUME
 
 //**********************************************************************************
 

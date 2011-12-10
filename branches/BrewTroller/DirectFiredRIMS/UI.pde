@@ -601,6 +601,8 @@ void screenRefresh(byte screen) {
       } else {
         LCD.print_P(i + 1, 6, PSTR("-"));
       }
+      // This over-writes the RIMS row, so commented out.
+//    printTimer(TIMER_MASH, 3, 0);
     }
 #else
     for (byte i = VS_HLT; i <= VS_MASH; i++) {
@@ -628,11 +630,11 @@ void screenRefresh(byte screen) {
         pct = 0;
       }
       LCD.lPad(3, i * 6 + 11, buf, 3, ' ');
+    printTimer(TIMER_MASH, 3, 0);
     }
 #endif
 
 
-    printTimer(TIMER_MASH, 3, 0);
 
   } else if (screen == SCREEN_SPARGE) {
     //Refresh Screen: Sparge
@@ -1819,10 +1821,10 @@ void assignSensor() {
   tsMenu.setItem_P(HLTDESC, TS_HLT);
   tsMenu.setItem_P(MASHDESC, TS_MASH);
   tsMenu.setItem_P(PSTR("Brew Kettle"), TS_KETTLE);
-  tsMenu.setItem_P(PSTR("RIMS"), TS_RIMS);
   tsMenu.setItem_P(PSTR("H2O In"), TS_H2OIN);
   tsMenu.setItem_P(PSTR("H2O Out"), TS_H2OOUT);
   tsMenu.setItem_P(PSTR("Beer Out"), TS_BEEROUT);
+  tsMenu.setItem_P(PSTR("RIMS"), TS_RIMS);
   tsMenu.setItem_P(PSTR("AUX 1"), TS_AUX1);
   tsMenu.setItem_P(PSTR("AUX 2"), TS_AUX2);
 
