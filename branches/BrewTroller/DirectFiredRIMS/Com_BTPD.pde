@@ -53,13 +53,13 @@ unsigned long lastBTPD;
 void updateBTPD() {
 	if (millis() - lastBTPD > BTPD_INTERVAL) {
 		#ifdef BTPD_HLT_TEMP
-			sendVsTemp(BTPD_HLT_TEMP, TS_HLT);
+			sendVsTemp(BTPD_HLT_TEMP, TS_HLT, VS_HLT);
 		#endif
 		#ifdef BTPD_MASH_TEMP
-			sendVsTemp(BTPD_MASH_TEMP, TS_MASH);
+			sendVsTemp(BTPD_MASH_TEMP, TS_MASH, VS_MASH);
 		#endif
 		#ifdef BTPD_KETTLE_TEMP
-			sendVsTemp(BTPD_KETTLE_TEMP, TS_KETTLE);
+			sendVsTemp(BTPD_KETTLE_TEMP, TS_KETTLE, VS_KETTLE);
 		#endif
 		#ifdef BTPD_H2O_TEMPS
 			sendFloatsBTPD(BTPD_H2O_TEMPS, temp[TS_H2OIN] / 100.0, temp[TS_H2OOUT] / 100.0);
@@ -80,7 +80,7 @@ void updateBTPD() {
 			sendVsVol(BTPD_KETTLE_VOL, VS_KETTLE);
 		#endif
 		#ifdef BTPD_RIMS_TEMP
-			sendVsTemp(BTPD_RIMS_TEMP, TS_RIMS);
+			sendVsTemp(BTPD_RIMS_TEMP, TS_RIMS, VS_MASH);
 		#endif
 		lastBTPD = millis();
 	}
@@ -92,13 +92,13 @@ void updateBTPD() {
 	if (millis() - lastBTPD > BTPD_INTERVAL) {
 		if(odd) {
 			#ifdef BTPD_HLT_TEMP
-				sendVsTemp(BTPD_HLT_TEMP, TS_HLT);
+				sendVsTemp(BTPD_HLT_TEMP, TS_HLT, VS_HLT);
 			#endif
 			#ifdef BTPD_MASH_TEMP
-				sendVsTemp(BTPD_MASH_TEMP, TS_MASH);
+				sendVsTemp(BTPD_MASH_TEMP, TS_MASH, VS_MASH);
 			#endif
 			#ifdef BTPD_KETTLE_TEMP
-				sendVsTemp(BTPD_KETTLE_TEMP, TS_KETTLE);
+				sendVsTemp(BTPD_KETTLE_TEMP, TS_KETTLE, VS_KETTLE);
 			#endif
 		} else {
 			#ifdef BTPD_HLT_VOL
@@ -113,7 +113,7 @@ void updateBTPD() {
 		}
 		// the temps with no volume always display
 		#ifdef BTPD_RIMS_TEMP
-			sendVsTemp(BTPD_RIMS_TEMP, TS_RIMS);
+			sendVsTemp(BTPD_RIMS_TEMP, TS_RIMS, VS_MASH);
 		#endif
 		#ifdef BTPD_H2O_TEMPS
 			sendFloatsBTPD(BTPD_H2O_TEMPS, temp[TS_H2OIN] / 100.0, temp[TS_H2OOUT] / 100.0);
@@ -135,8 +135,8 @@ void updateBTPD() {
 #endif BTPD_ALTERNATE_TEMP_VOLUME
 
 
-void sendVsTemp(byte chan, byte sensor) {
-  sendFloatsBTPD(chan, setpoint[sensor] / 100.0, temp[sensor] / 100.0);  
+void sendVsTemp(byte chan, byte sensor, byte vessel) {
+  sendFloatsBTPD(chan, setpoint[vessel] / 100.0, temp[sensor] / 100.0);  
 }
 
 void sendVsVol(byte chan, byte vessel) {
