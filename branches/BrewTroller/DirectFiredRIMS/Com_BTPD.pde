@@ -53,13 +53,13 @@ unsigned long lastBTPD;
 void updateBTPD() {
 	if (millis() - lastBTPD > BTPD_INTERVAL) {
 		#ifdef BTPD_HLT_TEMP
-			sendVsTemp(BTPD_HLT_TEMP, VS_HLT);
+			sendVsTemp(BTPD_HLT_TEMP, TS_HLT);
 		#endif
 		#ifdef BTPD_MASH_TEMP
-			sendVsTemp(BTPD_MASH_TEMP, VS_MASH);
+			sendVsTemp(BTPD_MASH_TEMP, TS_MASH);
 		#endif
 		#ifdef BTPD_KETTLE_TEMP
-			sendVsTemp(BTPD_KETTLE_TEMP, VS_KETTLE);
+			sendVsTemp(BTPD_KETTLE_TEMP, TS_KETTLE);
 		#endif
 		#ifdef BTPD_H2O_TEMPS
 			sendFloatsBTPD(BTPD_H2O_TEMPS, temp[TS_H2OIN] / 100.0, temp[TS_H2OOUT] / 100.0);
@@ -92,28 +92,28 @@ void updateBTPD() {
 	if (millis() - lastBTPD > BTPD_INTERVAL) {
 		if(odd) {
 			#ifdef BTPD_HLT_TEMP
-				sendVsTemp(BTPD_HLT_TEMP, VS_HLT);
+				sendVsTemp(BTPD_HLT_TEMP, TS_HLT);
 			#endif
 			#ifdef BTPD_MASH_TEMP
-				sendVsTemp(BTPD_MASH_TEMP, VS_MASH);
+				sendVsTemp(BTPD_MASH_TEMP, TS_MASH);
 			#endif
 			#ifdef BTPD_KETTLE_TEMP
-				sendVsTemp(BTPD_KETTLE_TEMP, VS_KETTLE);
+				sendVsTemp(BTPD_KETTLE_TEMP, TS_KETTLE);
 			#endif
 		} else {
 			#ifdef BTPD_HLT_VOL
-				sendVsVol(BTPD_HLT_VOL, VS_HLT);
+				sendVsVol(BTPD_HLT_VOL, TS_HLT);
 			#endif
 			#ifdef BTPD_MASH_VOL
-				sendVsVol(BTPD_MASH_VOL, VS_MASH);
+				sendVsVol(BTPD_MASH_VOL, TS_MASH);
 			#endif
 			#ifdef BTPD_KETTLE_VOL
-				sendVsVol(BTPD_KETTLE_VOL, VS_KETTLE);
+				sendVsVol(BTPD_KETTLE_VOL, TS_KETTLE);
 			#endif
 		}
 		// the temps with no volume always display
 		#ifdef BTPD_RIMS_TEMP
-			sendVsTemp(BTPD_RIMS_TEMP, VS_STEAM);
+			sendVsTemp(BTPD_RIMS_TEMP, TS_RIMS);
 		#endif
 		#ifdef BTPD_H2O_TEMPS
 			sendFloatsBTPD(BTPD_H2O_TEMPS, temp[TS_H2OIN] / 100.0, temp[TS_H2OOUT] / 100.0);
@@ -135,8 +135,8 @@ void updateBTPD() {
 #endif BTPD_ALTERNATE_TEMP_VOLUME
 
 
-void sendVsTemp(byte chan, byte vessel) {
-  sendFloatsBTPD(chan, setpoint[vessel] / 100.0, temp[vessel] / 100.0);  
+void sendVsTemp(byte chan, byte sensor) {
+  sendFloatsBTPD(chan, setpoint[sensor] / 100.0, temp[sensor] / 100.0);  
 }
 
 void sendVsVol(byte chan, byte vessel) {
