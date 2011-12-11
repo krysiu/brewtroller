@@ -390,20 +390,21 @@ void processHeatOutputsNonPIDEnabledWithHeatOn(byte currentVessel) {
       // the VS_MASH pint should be set high, and VS_STEAM set low.  If the different
       // is within RIMS_TEMP_OFFSET, then the opposite.
       if (currentVessel == VS_MASH) {
-        if (temp[currentVessel] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
-          heatPin[currentVessel].set(LOW);
-          heatStatus[currentVessel] = 0;
-        } else if (temp[currentVessel] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET)) {
-          heatPin[currentVessel].set(HIGH);
-          heatStatus[currentVessel] = 1;
+        if (temp[TS_MASH] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+          heatPin[VS_MASH].set(LOW);
+          heatStatus[VS_MASH] = 0;
+        } else if (temp[TS_MASH] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET)) {
+          heatPin[VS_MASH].set(HIGH);
+          heatStatus[VS_MASH] = 1;
         }
       } else if (currentVessel == VS_STEAM ) {
-        if (temp[currentVessel] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
-          heatPin[currentVessel].set(LOW);
-          heatStatus[currentVessel] = 0;
-        } else if (temp[currentVessel] < RIMS_MAX_TEMP) {
-          heatPin[currentVessel].set(HIGH);
-          heatStatus[currentVessel] = 1;
+        // Insure that RIMS temperature is in range
+        if ((temp[TS_MASH] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) || (temp[TS_RIMS] >= RIMS_MAX_TEMP)) {
+          heatPin[VS_STEAM].set(LOW);
+          heatStatus[VS_STEAM] = 0;
+        } else if (temp[TS_RIMS] < RIMS_MAX_TEMP) {
+          heatPin[VS_STEAM].set(HIGH);
+          heatStatus[VS_STEAM] = 1;
         }
         // Check to insure RIMS is below safe level
         if (temp[TS_RIMS] >= RIMS_ALARM_TEMP) {
@@ -439,20 +440,25 @@ void processHeatOutputsNonPIDEnabledWithHeatOff(byte currentVessel) {
       // the VS_MASH pint should be set high, and VS_STEAM set low.  If the difference
       // is within RIMS_TEMP_OFFSET, then the opposite.
       if (currentVessel == VS_MASH) {
-        if (temp[currentVessel] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+        if (temp[TS_MASH] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
           heatPin[currentVessel].set(LOW);
           heatStatus[currentVessel] = 0;
-        } else if (temp[currentVessel] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET)) {
+        } else if (temp[TS_MASH] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET)) {
           heatPin[currentVessel].set(HIGH);
           heatStatus[currentVessel] = 1;
         }
       } else if (currentVessel == VS_STEAM ) {
-        if (temp[currentVessel] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
-          heatPin[currentVessel].set(LOW);
-          heatStatus[currentVessel] = 0;
-        } else if (temp[currentVessel] < RIMS_MAX_TEMP) {
-          heatPin[currentVessel].set(HIGH);
-          heatStatus[currentVessel] = 1;
+        // Insure that RIMS temperature is in range
+        if ((temp[TS_MASH] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) || (temp[TS_RIMS] >= RIMS_MAX_TEMP)) {
+          heatPin[VS_STEAM].set(LOW);
+          heatStatus[VS_STEAM] = 0;
+        } else if (temp[TS_RIMS] < RIMS_MAX_TEMP) {
+          heatPin[VS_STEAM].set(HIGH);
+          heatStatus[VS_STEAM] = 1;
+        }
+        // Check to insure RIMS is below safe level
+        if (temp[TS_RIMS] >= RIMS_ALARM_TEMP) {
+          alarmPin.set(1); //Sount the alarm.
         }
       }
     #else
