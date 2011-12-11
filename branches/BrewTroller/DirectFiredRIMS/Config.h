@@ -522,6 +522,9 @@
 // that both the sensor and the heating element should be submersed in liqued, with 
 // the input and output ports facing up, so that the tube can not run dry.
 #define RIMS_MAX_TEMP 180
+// As the SSD can get stuck in the ON state, if the RIMS_ALARM_TEMP temperature is
+// reached, turn on the alarm.
+#define RIMS_ALARM_TEMP 190
 // If your HLT output passes through your RIMS tube to your mash kettle, you may want
 // to define RIMS_DURING_SPARGE so that it can also control the temp of your sparge
 // water.  The logic here is somehwat different than for mashing, in that it will only

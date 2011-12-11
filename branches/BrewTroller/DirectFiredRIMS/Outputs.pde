@@ -405,6 +405,10 @@ void processHeatOutputsNonPIDEnabledWithHeatOn(byte currentVessel) {
           heatPin[currentVessel].set(HIGH);
           heatStatus[currentVessel] = 1;
         }
+        // Check to insure RIMS is below safe level
+        if (temp[TS_RIMS] >= RIMS_ALARM_TEMP) {
+          alarmPin.set(1); //Sount the alarm.
+        }
       }
     #else
       heatPin[currentVessel].set(HIGH);
