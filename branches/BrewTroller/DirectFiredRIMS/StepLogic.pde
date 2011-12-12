@@ -371,7 +371,10 @@ void stepCore() {
       } 
     #endif
     //Turn off Sparge In AutoValve if tgtVol has been reached
-    if (autoValve[AV_SPARGEIN] && volAvg[VS_HLT] <= tgtVol[VS_HLT]) autoValve[AV_SPARGEIN] = 0;
+    //Because this function is called before processautovalves() if we clear the auto valve here the bit in the active profile will still be set until the
+    // user exits the grain in step, causing it to not shut off when target volume is reached. 
+    if (autoValve[AV_SPARGEIN] && volAvg[VS_HLT] <= tgtVol[VS_HLT]) { autoValve[AV_SPARGEIN] = 0; bitClear(actProfiles, VLV_SPARGEIN);}
+    else if (volAvg[VS_HLT] <= tgtVol[VS_HLT]) bitClear(actProfiles, VLV_SPARGEIN);
   }
 
   if (stepIsActive(STEP_REFILL)) stepFill(STEP_REFILL);
@@ -466,6 +469,10 @@ void stepCore() {
 void stepFill(byte brewStep) {
   #ifdef AUTO_FILL_EXIT
     if (volAvg[VS_HLT] >= tgtVol[VS_HLT] && volAvg[VS_MASH] >= tgtVol[VS_MASH]) stepAdvance(brewStep);
+  #else
+  #ifndef VOLUME_MANUAL
+    if (volAvg[VS_HLT] >= tgtVol[VS_HLT] && volAvg[VS_MASH] >= tgtVol[VS_MASH]) bitClear(actProfiles, VLV_FILLHLT);
+  #endif
   #endif
 }
 
