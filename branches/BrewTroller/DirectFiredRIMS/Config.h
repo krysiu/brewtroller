@@ -1,5 +1,6 @@
 #ifndef BT_CONFIGURATION
 #define BT_CONFIGURATION
+#include "Enum.h"
 
 //*****************************************************************************************************************************
 // USER COMPILE OPTIONS
@@ -41,6 +42,37 @@
 //MASH_PREHEAT_NOVALVES: Disables MASH HEAT/MASH IDLE Valve Profiles during preheat
 //#define MASH_PREHEAT_NOVALVES
 //**********************************************************************************
+
+//**********************************************************************************
+// Vessel to temperature sensor mapping
+//**********************************************************************************
+// The purpose of this array is to provide a safe way to map a vessel to the 
+// temperaure sensor to read for that vessels setpoint.
+// The secondary purpose is to provide a safe way to enumerate the heat outputs, 
+// safely decoupling the #defines values from loop-control.
+#ifdef DIRECT_FIRED_RIMS
+static const int HEAT_OUTPUTS_COUNT = 4;
+static const byte HEAT_OUTPUTS[HEAT_OUTPUTS_COUNT][2] = {{VS_HLT, TS_HLT}, {VS_MASH, TS_MASH}, {VS_KETTLE, TS_KETTLE}, {VS_STEAM, TS_MASH}};
+#elif defined PID_FLOW_CONTROL
+static const int HEAT_OUTPUTS_COUNT = 4;
+static const byte HEAT_OUTPUTS[HEAT_OUTPUTS_COUNT][2] = {{VS_HLT, TS_HLT}, {VS_MASH, TS_MASH}, {VS_KETTLE, TS_KETTLE}, {VS_PUMP, TS_MASH}};
+#else
+static const int HEAT_OUTPUTS_COUNT = 3;
+static const byte HEAT_OUTPUTS[HEAT_OUTPUTS_COUNT][2] = {{VS_HLT, TS_HLT}, {VS_MASH, TS_MASH}, {VS_KETTLE, TS_KETTLE}};
+#endif
+// These two should be used as the array index when operating on a HEAT_OUTPUT array.
+// They need to be variables instead of #defines because of use as index subscripts.
+static const byte VS = 0;
+static const byte TS = 1;
+
+// #ifdef DIRECT_FIRED_RIMS
+// static const int HEAT_OUTPUTS_COUNT = 4;
+// static const int HEAT_OUTPUTS[HEAT_OUTPUTS_COUNT] = {VS_HLT, VS_MASH, VS_KETTLE, VS_STEAM};
+// #else
+// static const int HEAT_OUTPUTS_COUNT = 3;
+// static const int HEAT_OUTPUTS[HEAT_OUTPUTS_COUNT] = {VS_HLT, VS_MASH, VS_KETTLE};
+// #endif
+
 
 
 //**********************************************************************************
@@ -532,6 +564,8 @@
 // to fire the HLT too.
 #define RIMS_DURING_SPARGE
 //**********************************************************************************
+
+
 
 //**********************************************************************************
 // Sparge Options
