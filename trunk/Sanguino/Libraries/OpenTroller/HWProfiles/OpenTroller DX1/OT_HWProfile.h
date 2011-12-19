@@ -1,67 +1,51 @@
 /*
-BrewTroller 4.0 Lite Hardware Configuration
-  HERMS: Two Heat Outputs (HLT, Kettle) + 3 Pump/Valve Outputs + Alarm
+OpenTroller x.1 BrewTroller 2.4 Hardware Profile
 */
 
 #ifndef BT_HWPROFILE
 #define BT_HWPROFILE
+
+  #define ENCA_PIN 2
+  #define ENCB_PIN 1
+  #define ENTER_PIN 5
+  #define ALARM_PIN 28      //OUT1
   
-  #define ENCA_PIN 3
-  #define ENCB_PIN 2
-  #define ENTER_PIN 1
-  
-  #define ALARM_PIN 15 //OUT6
+  #define HLTHEAT_PIN 29    //OUT2
+  #define MASHHEAT_PIN 30   //OUT3
+  #define KETTLEHEAT_PIN 31 //OUT4
+
+  //Steam is no longer supported
+  //PWM Pump should be rewritten to use hardware PWM on OUT 9/10/11/12  
   
   #define PVOUT_TYPE_GPIO
-  #define PVOUT_GPIO_COUNT 3 //3 Outputs
-
-  const char GPIO_BANK_NAME[] PROGMEM = "BrewTroller Outputs";
-  prog_char GPIO_PIN1_NAME[] PROGMEM = "OUT3";
-  prog_char GPIO_PIN2_NAME[] PROGMEM = "OUT4";
-  prog_char GPIO_PIN3_NAME[] PROGMEM = "OUT5";
-
-  PROGMEM const char *GPIO_PIN_NAMES[] = {
-    GPIO_PIN1_NAME,
-    GPIO_PIN2_NAME,
-    GPIO_PIN3_NAME
-  };
-    
-  #define VALVE1_PIN 20 //OUT3
-  #define VALVE2_PIN 19 //OUT4
-  #define VALVE3_PIN 18 //OUT5
-
-  #define PVOUT_TYPE_MODBUS
-  #define PVOUT_MODBUS_START (PVOUT_GPIO_COUNT + 1)
+  #define PVOUT_GPIO_COUNT 8 //8 Outputs
+  #define VALVE1_PIN 7 //OUT5
+  #define VALVE2_PIN 6  //OUT6
+  #define VALVE3_PIN 3  //OUT7
+  #define VALVE4_PIN 4  //OUT8
+  #define VALVE5_PIN  12 //OUT9
+  #define VALVE6_PIN  15 //OUT10
+  #define VALVE7_PIN  14 //OUT11
+  #define VALVE8_PIN  13 //OUT12
   
-  #define HLTHEAT_PIN 22 //OUT1
-  //#define MASHHEAT_PIN //Not used in BT Lite HERMS Config
-  #define KETTLEHEAT_PIN 21 //OUT2
+  #define DIGITAL_INPUTS
+  #define DIGIN1_PIN 18
+  #define DIGIN2_PIN 19
+  #define DIGIN3_PIN 20
+  #define DIGIN4_PIN 21
+  #define DIGIN5_PIN 22
   
-  #define HLTVOL_APIN 3
-  #define MASHVOL_APIN 2
-  #define KETTLEVOL_APIN 1
-  #define STEAMPRESS_APIN 0
-
+  #define HLTVOL_APIN 7     //Analog1
+  #define MASHVOL_APIN 6    //Analog2
+  #define KETTLEVOL_APIN 5  //Analog3
+  #define SPARE_APIN 4      //Analog4
+  
+  #define UI_LCD_I2C
+  #define UI_LCD_I2CADDR 0x01
+  #define UI_DISPLAY_SETUP
+  
   #define HEARTBEAT
   #define HEARTBEAT_PIN 0
-  
-  #define UI_LCD_4BIT
-  #define LCD_RS_PIN 4
-  #define LCD_ENABLE_PIN 23
-  #define LCD_DATA4_PIN 28
-  #define LCD_DATA5_PIN 29
-  #define LCD_DATA6_PIN 30
-  #define LCD_DATA7_PIN 31
-  
-  #define UI_DISPLAY_SETUP
-  #define LCD_BRIGHT_PIN 13
-  #define LCD_CONTRAST_PIN 14
-
-  #define RS485_SERIAL_PORT  1
-  #define RS485_RTS_PIN	     12
-  #define RS485_BAUDRATE    76800
-  #define RS485_PARITY  'e' //'e'ven, 'o'dd, 'n'one
-  
 //**********************************************************************************
 // OneWire Temperature Sensor Options
 //**********************************************************************************
