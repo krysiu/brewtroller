@@ -2,12 +2,14 @@
 
 void* operator new(size_t size) { return malloc(size); }
 void operator delete(void* ptr) { free(ptr); }
+void * operator new[](size_t size) { return malloc(size); }
+void operator delete[](void * ptr) { if (ptr) free(ptr); }
 
 using namespace OpenTroller;
 
 void stack::init() {
-	#ifdef OPENTROLLER_OUTPUTBANKS
-		OpenTroller::OutputBanks.init();
+	#ifdef OPENTROLLER_OUTPUTS
+		OpenTroller::Outputs.init();
 	#endif
 	
 	#if defined OPENTROLLER_LCD4BIT || defined OPENTROLLER_LCDI2C
@@ -31,6 +33,9 @@ void stack::update() {
 
 	#if defined OPENTROLLER_STATUSLED
 		OpenTroller::StatusLED.update();
+	#endif
+	#ifdef OPENTROLLER_OUTPUTS
+		OpenTroller::Outputs.update();
 	#endif
 }
 
