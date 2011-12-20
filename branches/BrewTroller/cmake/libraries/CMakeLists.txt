@@ -9,7 +9,7 @@ generate_arduino_library(DS2482)
 
 set(encoder_SRCS encoder/encoder.cpp)
 set(encoder_HDRS encoder/encoder.h)
-set(encoder_LIBS Pin)
+set(encoder_LIBS pin)
 set(encoder_BOARD ${board})
 generate_arduino_library(encoder)
 

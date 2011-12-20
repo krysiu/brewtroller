@@ -56,7 +56,7 @@ set(${FirmwareName}_LIBS
 	LiquidCrystalFP
 	menu
 	OneWire
-	PID_BEta6
+        PID_Beta6
 )
 
 #====================================================================#
