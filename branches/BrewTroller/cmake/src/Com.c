@@ -24,6 +24,7 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 
 */
+#include "Com.h"
 
 //**********************************************************************************
 //Code Shared by all Schemas

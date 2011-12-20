@@ -36,7 +36,7 @@ Compiled on Arduino-0022 (http://arduino.cc/en/Main/Software)
     FastPin and modified LiquidCrystal with FastPin by CodeRage (http://www.brewtroller.com/forum/showthread.php?t=626)
 */
 
-
+#include "BrewTroller.h"
 
 //*****************************************************************************************************************************
 // BEGIN CODE
