@@ -26,12 +26,23 @@ set(${LibraryName}_HDRS
 	OT_LCD.h
 	OT_LiquidCrystal.h
 	OT_Menu.h
-	OT_Outputs.h
 	OT_Pin.h
 	OT_Stack.h
 	OT_Status.h
 	OT_UI.h
 	OT_Util.h
+
+    outputs/OTOutput.h
+    outputs/OTOutputs.h
+    outputs/OTOutputGroup.h
+    outputs/OTOutputGPIO.h
+    outputs/OTOutputModbus.h
+    outputs/OTOutputMux.h
+    outputs/OTOutputBank.h
+    outputs/OTOutputBankGroups.h
+    outputs/OTOutputBankGPIO.h
+    outputs/OTOutputBankModbus.h
+    outputs/OTOutputBankMux.h
 )
 
 # Source implementation files
@@ -42,12 +53,23 @@ set(${LibraryName}_SRCS
 	OT_LCD.cpp
 	OT_LiquidCrystal.cpp
 	OT_Menu.cpp
-	OT_Outputs.cpp
 	OT_Pin.cpp
 	OT_Stack.cpp
 	OT_Status.cpp
 	OT_UI.cpp
 	OT_Util.cpp
+
+    outputs/OTOutput.cpp
+    outputs/OTOutputs.cpp
+    outputs/OTOutputGroup.cpp
+    outputs/OTOutputGPIO.cpp
+    outputs/OTOutputModbus.cpp
+    outputs/OTOutputMux.cpp
+	outputs/OTOutputBank.cpp
+    outputs/OTOutputBankGroups.cpp
+    outputs/OTOutputBankGPIO.cpp
+    outputs/OTOutputBankModbus.cpp
+    outputs/OTOutputBankMux.cpp
 )
 
 

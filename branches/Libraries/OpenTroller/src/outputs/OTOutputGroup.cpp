@@ -1,0 +1,74 @@
+#include "OTOutputGroup.h"
+
+/*
+    Copyright (C) 2011 Matt Reba (mattreba at oscsys dot com)
+    Copyright (C) 2011 Timothy Reaves (treaves at silverfieldstech dot com)
+
+    This file is part of OpenTroller.
+
+    OpenTroller is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenTroller is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenTroller.  If not, see <http://www.gnu.org/licenses/>.
+
+
+*/
+#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
+using namespace OpenTroller;
+
+OutputGroup::OutputGroup(void) {
+    count = 0;
+    err = 0;
+    value = 0;
+}
+
+OutputGroup::~OutputGroup(void) {
+    if (count) {
+        delete [] outputs;
+    }
+}
+
+void OutputGroup::init(char* theName, uint8_t groupSize) {
+    strlcpy(name, theName, 15);
+    count = groupSize;
+    if (count > 0) {
+        delete [] outputs;
+        outputs = new Output * [count];
+        for (uint8_t i = 0; i < count; i++) {
+            outputs[i] = NULL;
+        }
+    }
+}
+
+void OutputGroup::assignOutput(uint8_t index, Output* output) {
+    if (index < count) {
+        outputs[index] = output;
+    }
+}
+
+void OutputGroup::set(uint8_t value) {
+    err = 0;
+    value = value;
+    for (uint8_t i = 0; i < count; i++) {
+        outputs[i]->set(value);
+        if (outputs[i]->getErr()) {
+            err = 1;
+        }
+    }
+}
+
+char* OutputGroup::getName(void) {
+    char* theName = new char[15];
+    strcpy(theName, name);
+    return theName;
+}
+
+#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
