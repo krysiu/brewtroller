@@ -33,3 +33,16 @@ include_directories(
 
 add_subdirectory(src)
 
+#===================================================================================================
+# Generate API documentation with Doxygen
+#===================================================================================================
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+    configure_file(${PROJECT_SOURCE_DIR}/Doxyfile.in ${CMAKE_SOURCE_DIR}/Doxyfile @ONLY)
+    add_custom_target(
+        doc
+        ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
+endif(DOXYGEN_FOUND)
