@@ -41,8 +41,8 @@ class OutputGroup : public Output {
         virtual ~OutputGroup(void);
         void init(char* theName , uint8_t groupSize);
         void assignOutput(uint8_t index, Output* output);
-        void set(State newState);
-        uint8_t get(void);
+        void setState(State newState);
+        State getState(void);
         uint8_t getErr(void);
         char* getName(void);
 };

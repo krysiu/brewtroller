@@ -34,7 +34,7 @@ void OutputMUX::setup(OutputBankMUX* outputBank, uint8_t theIndex) {
     index = theIndex;
 }
 
-void OutputMUX::set(State newState) {
+void OutputMUX::setState(State newState) {
     if (state != newState) {
         state = newState;
         static_cast<OutputBankMux*>(bank)->doUpdate = 1;

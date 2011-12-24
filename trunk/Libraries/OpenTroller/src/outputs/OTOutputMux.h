@@ -36,8 +36,8 @@ class OutputMUX: public Output {
     public:
         OutputMUX(void);
         void setup(OutputBankMUX* outputBank, uint8_t theIndex);
-        void set(State newState);
-        uint8_t get(void);
+        void setState(State newState);
+        State getState(void);
         uint8_t getErr(void);
         char* getName(void);
 };

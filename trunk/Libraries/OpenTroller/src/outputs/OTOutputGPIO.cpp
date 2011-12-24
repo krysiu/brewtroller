@@ -37,15 +37,15 @@ void OutputGPIO::setup(OutputBankGPIO* outputBank, uint8_t anIndex, uint8_t digi
     err = 0;
 }
 
-void OutputGPIO::set(State newState) {
+void OutputGPIO::setState(State newState) {
     if(state != newState) {
         state = newState;
         outputPin.set(state);
     }
 }
 
-uint8_t OutputGPIO::get(void) {
-    return outputPin.get();
+State OutputGPIO::getState(void) {
+    return outputPin.get() ? State_LOW : State_HIGH;
 }
 
 #endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)

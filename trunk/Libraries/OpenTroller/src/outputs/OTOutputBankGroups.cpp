@@ -68,8 +68,8 @@ OutputBankType OutputBankGroups::getType(void) {
 
 void OutputBankGroups::update(void) {
     for (uint8_t i = 0; i < count; i++) {
-        if(groups[i].get()) {
-            groups[i].set(State_HIGH);
+        if(groups[i].getState() == State_HIGH) {
+            groups[i].setState(State_HIGH);
         }
     }
 }
