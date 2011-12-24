@@ -25,22 +25,35 @@
 #include "OT_HWProfile.h"
 #ifdef OPENTROLLER_OUTPUTS
 
+#include "OpenTroller.h"
+
 namespace OpenTroller{
 
 class OutputBank;
 
+/**
+  * The base class of all output objects, this class is the inteface to an outout source.
+  */
 class Output {
   protected:
     uint8_t err;
     uint8_t index;
-    uint8_t value;
+    /**
+      * The state of the output.
+      */
+    State state;
     OutputBank* bank;
 
   public:
     Output();
     virtual ~Output();
     virtual uint8_t get(void);
-    virtual void set(uint8_t newValue) = 0;
+
+    /**
+      * Set the state of the output.
+      * @param state the new state of the pin.
+      */
+    virtual void set(State newState) = 0;
     virtual uint8_t getErr(void);
     virtual char* getName(void);
 };

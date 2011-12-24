@@ -25,6 +25,7 @@
 
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MODBUS)
 
+#include "OpenTroller.h"
 #include "OTOutput.h"
 
 namespace OpenTroller{
@@ -35,7 +36,7 @@ class OutputMODBUS: public Output {
     public:
         OutputMODBUS(void);
         void setup(OutputBankMODBUS* outputBank, uint8_t bankCount);
-        void set(uint8_t newValue);
+        void set(State newState);
         uint8_t get(void);
         uint8_t getErr(void);
         char* getName(void);

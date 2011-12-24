@@ -34,13 +34,12 @@ void OutputMUX::setup(OutputBankMUX* outputBank, uint8_t theIndex) {
     index = theIndex;
 }
 
-void OutputMUX::set(uint8_t newValue) {
-    if (value == value) {
-        return;
+void OutputMUX::set(State newState) {
+    if (state != newState) {
+        state = newState;
+        static_cast<OutputBankMux*>(bank)->doUpdate = 1;
     }
 
-    bank->doUpdate = 1;
-    value = newValue;
 }
 
 uint8_t OutputMUX::getErr(void) {

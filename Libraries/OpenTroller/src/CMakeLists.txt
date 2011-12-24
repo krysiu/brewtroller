@@ -16,6 +16,7 @@ set(${LibraryName}_BOARD ${board})
 
 # Source headers
 set(${LibraryName}_HDRS
+    OpenTroller.h
 	OT_1Wire.h
 	OT_1WireDS2482.h
 	OT_1WireGPIO.h

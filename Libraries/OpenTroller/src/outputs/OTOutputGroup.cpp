@@ -1,5 +1,3 @@
-#include "OTOutputGroup.h"
-
 /*
     Copyright (C) 2011 Matt Reba (mattreba at oscsys dot com)
     Copyright (C) 2011 Timothy Reaves (treaves at silverfieldstech dot com)
@@ -21,13 +19,17 @@
 
 
 */
+#include "OTOutputGroup.h"
+
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
+#include "OpenTroller.h"
+
 using namespace OpenTroller;
 
 OutputGroup::OutputGroup(void) {
     count = 0;
     err = 0;
-    value = 0;
+    state = State_LOW;
 }
 
 OutputGroup::~OutputGroup(void) {
@@ -54,13 +56,15 @@ void OutputGroup::assignOutput(uint8_t index, Output* output) {
     }
 }
 
-void OutputGroup::set(uint8_t value) {
-    err = 0;
-    value = value;
-    for (uint8_t i = 0; i < count; i++) {
-        outputs[i]->set(value);
-        if (outputs[i]->getErr()) {
-            err = 1;
+void OutputGroup::set(State newState) {
+    if (state != newState) {
+        state = newState;
+        err = 0;
+        for (uint8_t i = 0; i < count; i++) {
+            outputs[i]->set(state);
+            if (outputs[i]->getErr()) {
+                err = 1;
+            }
         }
     }
 }

@@ -26,7 +26,6 @@
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MUX)
 
 #include "OTOutputBank.h"
-//#include "OT_Stack.h"
 #include "OT_Pin.h"
 
 

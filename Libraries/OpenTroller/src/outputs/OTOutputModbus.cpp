@@ -27,7 +27,7 @@
 using namespace OpenTroller;
 
 OutputMODBUS::OutputMODBUS(void) {
-    value = 0;
+    state = State_LOW;
     bank = NULL;
 }
 
@@ -36,12 +36,11 @@ void OutputMODBUS::setup(OutputBankMODBUS* outputBank, uint8_t bankCount) {
     index = bankCount;
 }
 
-void OutputMODBUS::set(uint8_t newValue) {
-    if (value == newValue) {
-        return;
+void OutputMODBUS::set(State newState) {
+    if (state != newState) {
+        state = newState;
+        static_cast<OutputBankMODBUS*>(bank)->doUpdate = 1;
     }
-    static_cast<OutputBankMODBUS*>(bank)->doUpdate = 1;
-    value = newValue;
 }
 
 uint8_t OutputMODBUS::getErr(void) {
