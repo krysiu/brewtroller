@@ -33,6 +33,9 @@ namespace OpenTroller{
 class Output;
 class OutputMODBUS;
 
+/**
+  * A bank of MODBUS outputs.
+  */
 class OutputBankMODBUS: public OutputBank {
     private:
         ModbusMaster slave;

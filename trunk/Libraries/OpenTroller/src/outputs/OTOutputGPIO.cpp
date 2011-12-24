@@ -37,8 +37,11 @@ void OutputGPIO::setup(OutputBankGPIO* outputBank, uint8_t anIndex, uint8_t digi
     err = 0;
 }
 
-void OutputGPIO::set(uint8_t digitalPinNum) {
-    outputPin.set(digitalPinNum);
+void OutputGPIO::set(State newState) {
+    if(state != newState) {
+        state = newState;
+        outputPin.set(state);
+    }
 }
 
 uint8_t OutputGPIO::get(void) {

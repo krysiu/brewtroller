@@ -31,7 +31,7 @@ Output::Output() {
 }
 
 uint8_t Output::get(void) {
-    return value;
+    return state;
 }
 
 uint8_t Output::getErr(void) {

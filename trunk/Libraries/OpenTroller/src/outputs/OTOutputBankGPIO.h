@@ -26,15 +26,15 @@
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)
 
 #include "OTOutputBank.h"
-//#include "OT_Stack.h"
-//#include "OT_Pin.h"
-
 
 namespace OpenTroller{
 
 class Output;
 class OutputGPIO;
 
+/**
+  * This class represents an output bank tied to GPIO (general purpose input output) pins.
+  */
 class OutputBankGPIO: public OutputBank {
     private:
         OutputGPIO* outputs;

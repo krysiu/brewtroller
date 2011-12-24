@@ -36,6 +36,9 @@ typedef enum {
     OUTPUTBANK_TYPE_GROUPS
 } OutputBankType;
 
+/**
+  * A bank out outputs.
+  */
 class OutputBank {
     protected:
         uint8_t count;

@@ -26,7 +26,7 @@
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
 
 #include "OTOutput.h"
-
+#include "OpenTroller.h"
 
 namespace OpenTroller{
 
@@ -41,7 +41,7 @@ class OutputGroup : public Output {
         virtual ~OutputGroup(void);
         void init(char* theName , uint8_t groupSize);
         void assignOutput(uint8_t index, Output* output);
-        void set(uint8_t);
+        void set(State newState);
         uint8_t get(void);
         uint8_t getErr(void);
         char* getName(void);

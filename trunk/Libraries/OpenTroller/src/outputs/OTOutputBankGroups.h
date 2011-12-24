@@ -33,6 +33,9 @@ namespace OpenTroller{
 
 class Output;
 
+/**
+  * A bank of output groups.
+  */
 class OutputBankGroups: public OutputBank {
     private:
         OutputGroup * groups;
