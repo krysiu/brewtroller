@@ -47,13 +47,13 @@ class Output {
   public:
     Output();
     virtual ~Output();
-    virtual uint8_t get(void);
+    virtual State getState(void);
 
     /**
       * Set the state of the output.
       * @param state the new state of the pin.
       */
-    virtual void set(State newState) = 0;
+    virtual void setState(State newState) = 0;
     virtual uint8_t getErr(void);
     virtual char* getName(void);
 };

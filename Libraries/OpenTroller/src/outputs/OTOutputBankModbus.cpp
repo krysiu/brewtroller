@@ -54,18 +54,21 @@ Output* OutputBankMODBUS::getOutput(uint8_t index) {
 }
 
 void OutputBankMODBUS::update(void) {
-    if (!doUpdate) return;
-    for (uint8_t bytePos = 0; bytePos < BIT_TO_BYTE_COUNT(count); bytePos++) {
-        uint8_t byteData = 0;
-        for (uint8_t bitPos = 0; bitPos < 8; bitPos++) {
-            bitWrite(byteData,
-                     bitPos,
-                     ((bytePos * 8 + bitPos < count) ? outputs[bytePos * 8 + bitPos].get() : 0));
+    if (doUpdate) {
+        uint8_t offest = 0;
+        for (uint8_t bytePos = 0; bytePos < BIT_TO_BYTE_COUNT(count); bytePos++) {
+            uint8_t byteData = 0;
+            for (uint8_t bitPos = 0; bitPos < 8; bitPos++) {
+                offest = bytePos * 8 + bitPos;
+                bitWrite(byteData,
+                         bitPos,
+                         ((offest < count) ? outputs[offest].getState() : 0));
+            }
+            slave.setTransmitBuffer(bytePos, byteData);
         }
-        slave.setTransmitBuffer(bytePos, byteData);
+        err = slave.writeMultipleCoils(coilReg, count);
+        doUpdate = 0;
     }
-    err = slave.writeMultipleCoils(coilReg, count);
-    doUpdate = 0;
 }
 
 char* OutputBankMODBUS::getName(void) {

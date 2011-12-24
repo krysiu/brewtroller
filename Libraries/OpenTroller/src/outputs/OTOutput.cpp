@@ -30,7 +30,7 @@ Output::Output() {
 
 }
 
-uint8_t Output::get(void) {
+State Output::getState(void) {
     return state;
 }
 

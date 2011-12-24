@@ -36,7 +36,7 @@ void OutputMODBUS::setup(OutputBankMODBUS* outputBank, uint8_t bankCount) {
     index = bankCount;
 }
 
-void OutputMODBUS::set(State newState) {
+void OutputMODBUS::setState(State newState) {
     if (state != newState) {
         state = newState;
         static_cast<OutputBankMODBUS*>(bank)->doUpdate = 1;

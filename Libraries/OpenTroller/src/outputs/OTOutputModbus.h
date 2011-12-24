@@ -36,8 +36,8 @@ class OutputMODBUS: public Output {
     public:
         OutputMODBUS(void);
         void setup(OutputBankMODBUS* outputBank, uint8_t bankCount);
-        void set(State newState);
-        uint8_t get(void);
+        void setState(State newState);
+        State getState(void);
         uint8_t getErr(void);
         char* getName(void);
 };

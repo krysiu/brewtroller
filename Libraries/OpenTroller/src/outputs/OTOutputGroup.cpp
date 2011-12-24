@@ -56,12 +56,12 @@ void OutputGroup::assignOutput(uint8_t index, Output* output) {
     }
 }
 
-void OutputGroup::set(State newState) {
+void OutputGroup::setState(State newState) {
     if (state != newState) {
         state = newState;
         err = 0;
         for (uint8_t i = 0; i < count; i++) {
-            outputs[i]->set(state);
+            outputs[i]->setState(state);
             if (outputs[i]->getErr()) {
                 err = 1;
             }
