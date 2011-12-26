@@ -20,7 +20,6 @@ set(${LibraryName}_HDRS
 	OT_1Wire.h
 	OT_1WireDS2482.h
 	OT_1WireGPIO.h
-	OT_1WireGPIO.h
 	OT_Encoder.h
 	OT_HWProfile.h
 	OT_InputBank.h
@@ -49,7 +48,8 @@ set(${LibraryName}_HDRS
 # Source implementation files
 set(${LibraryName}_SRCS 
 	OT_1WireDS2482.cpp
-	OT_Encoder.cpp
+    OT_1WireGPIO.cpp
+    OT_Encoder.cpp
 	OT_InputBank.cpp
 	OT_LCD.cpp
 	OT_LiquidCrystal.cpp

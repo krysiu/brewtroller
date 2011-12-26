@@ -29,16 +29,18 @@
 #include "OT_Pin.h"
 #include <ModbusMaster.h>
 
-#define BIT_TO_BYTE_COUNT(x) (x + 7)>>3
-
 namespace OpenTroller{
 class OutputBank;
 class OutputBankGroups;
 
 class outputs {
-    private:
+    protected:
         OutputBank** banks;
-        uint8_t count, max;
+        uint8_t count; /*!< The number of output banks. */
+        uint8_t max; /*!< The maximum number of output banks. */
+        /**
+          * Adds an output bank to banks, as long as the maximum count has not been reached.
+          */
         void addBank(OutputBank* outputBank);
         #ifdef OUTPUTBANK_GROUPS
             OutputBankGroups* groups;
@@ -48,6 +50,11 @@ class outputs {
         outputs(void);
         virtual ~outputs(void);
         void init(void);
+
+        /**
+          * @param the index of the bak of intrest.
+          * @return the output bank at the given index.
+          */
         OutputBank* getBank(uint8_t bankIndex);
         #ifdef OUTPUTBANK_MODBUS
             void newModbusBank(uint8_t slaveAddr, uint16_t coilReg, uint8_t coilCount);
@@ -55,11 +62,19 @@ class outputs {
         #ifdef OUTPUTBANK_GROUPS
             OutputBankGroups* getGroups(void);
         #endif
+
+        /**
+          * @return the count of current output banks.
+          */
         uint8_t getBankCount(void);
         void update(void);
 };
 
+/**
+  * The global reference to the outputs singleton.
+  */
 extern OpenTroller::outputs Outputs;
+
 } //namespace OpenTroller
 #endif //ifdef OPENTROLLER_OUTPUTS
 #endif //ifndef OT_OUTPUTS_H
