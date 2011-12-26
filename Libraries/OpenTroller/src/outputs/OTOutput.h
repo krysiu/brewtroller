@@ -23,18 +23,20 @@
 #define OT_OUTPUT_H
 
 #include "OT_HWProfile.h"
+
 #ifdef OPENTROLLER_OUTPUTS
 
 #include "OpenTroller.h"
+#include "OTDigitalIO.h"
 
 namespace OpenTroller{
 
 class OutputBank;
 
 /**
-  * The base class of all output objects, this class is the inteface to an outout source.
+  * The base class of all output objects, this class is the inteface to an output source.
   */
-class Output {
+class Output : public DigitalIO {
   protected:
     uint8_t err;
     uint8_t index;
