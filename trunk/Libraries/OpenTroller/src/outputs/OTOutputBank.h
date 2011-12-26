@@ -37,11 +37,14 @@ typedef enum {
 } OutputBankType;
 
 /**
-  * A bank out outputs.
+  * An output bank is a type of output that by it's nature is more than a single output; there
+  * are a bank of outputs.
+  * (more needed)
+  * This class is a pure virtual superclass; subclasses must implement full finctionality.
   */
 class OutputBank {
     protected:
-        uint8_t count;
+        uint8_t count; /*<! The number of outputs in this bank. */
 
     public:
         OutputBank(void);
