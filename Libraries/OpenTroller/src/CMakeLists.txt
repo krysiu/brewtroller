@@ -61,6 +61,8 @@ set(${LibraryName}_SRCS
 	OT_Util.cpp
 
     LCD/OT_LCD.cpp
+    LCD/OT_LCD4Bit.cpp
+    LCD/OT_LCDI2C.cpp
 
     outputs/OTOutput.cpp
     outputs/OTOutputs.cpp
