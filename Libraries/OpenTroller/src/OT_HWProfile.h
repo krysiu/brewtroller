@@ -4,7 +4,7 @@ Opentroller BX1 Hardware Configuration
 
 #ifndef OT_HWPROFILE_H
 #define OT_HWPROFILE_H
-  #include "OT_Encoder.h"
+#include <WProgram.h>
 
   #define OPENTROLLER_ENCODER_GPIO
   #define ENCODER_TYPE ALPS

@@ -1,9 +1,24 @@
-// 
-// If wrap is set the encoder value will roll over to 0 if greater than max and 
-// roll to max if less than 0. If wrap is cleared the encoder value will be limited
-// to operate with in the min max constraints with no roll over.
-//
+/*
+    Copyright (C) 2011 Matt Reba (mattreba at oscsys dot com)
+    Copyright (C) 2011 Timothy Reaves (treaves at silverfieldstech dot com)
 
+    This file is part of OpenTroller.
+
+    OpenTroller is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenTroller is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenTroller.  If not, see <http://www.gnu.org/licenses/>.
+
+
+*/
 #ifndef _ENCODER_H
 #define _ENCODER_H
 
@@ -28,12 +43,16 @@ void cuiISR();
 void enterISR();
 
 namespace OpenTroller {
-	class encoder_Generic
-	{
-	public:
+    class encoder_Generic {
+      public:
 		virtual byte getEncoderState() = 0;
 		virtual void setMin(int min) = 0;
 		virtual void setMax(int max) = 0;
+        /**
+         * If set the encoder value will roll over to 0 if greater than max and roll to max if less
+         * than 0. If wrap is cleared the encoder value will be limited to operate with in the min
+         * max constraints with no roll over.
+         */
 		virtual void setWrap(bool wrap) = 0;
 		virtual void setCount(int count) = 0;
 		virtual void clearCount(void) = 0;
@@ -47,9 +66,9 @@ namespace OpenTroller {
 	};
 
 
-	class encoderGPIO : public encoder_Generic
-	{
-		private:
+    #ifdef OPENTROLLER_ENCODER_GPIO
+    class encoderGPIO : public encoder_Generic {
+      private:
 		pin   _aPin;
 		pin   _bPin;
 		pin   _ePin;
@@ -81,7 +100,7 @@ namespace OpenTroller {
 		inline bool isEnterPinPressed(void) { return _activeLow ? !_ePin.get() : _ePin.get(); } 
 		inline bool isTimeElapsed(unsigned long curTime, unsigned long duration) { return (curTime - _enterStartTime) > duration; }  
 		
-		public:
+      public:
 		byte getEncoderState();   // return the Encoder State
 		encoderGPIO(void);
 		void begin(byte type, byte encE, byte encA, byte encB);
@@ -106,8 +125,7 @@ namespace OpenTroller {
 		void cuiHandler(void);
 	};
 
-	#ifdef OPENTROLLER_ENCODER_GPIO
-		extern OpenTroller::encoderGPIO Encoder;
+    extern OpenTroller::encoderGPIO Encoder;
 	#endif
 }
 
