@@ -21,6 +21,7 @@
 */
 
 #include "OT_LCD.h"
+#include "OT_Util.h"
 using namespace OpenTroller;
 
 void LCD_Generic::begin(uint8_t columnCount, uint8_t rowCount) {

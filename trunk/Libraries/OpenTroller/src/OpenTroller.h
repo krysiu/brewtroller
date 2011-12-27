@@ -31,8 +31,10 @@ typedef enum {
     State_HIGH = HIGH /*!< The state is HIGH */
 } State;
 
-#define FALSE 0
-#define TRUE  1
 
+// Used to determine if the text on the LCD should be padded to the left, right, or center.
+#define PAD_RIGHT 0
+#define PAD_CENTER 1
+#define PAD_LEFT 2
 
 #endif // OPENTROLLER_H

@@ -24,18 +24,14 @@
 #define OT_LCD_H
 
 #include "OT_HWProfile.h"
+#import "OpenTroller.h"
 
-#include <Wire.h>
-#include "OT_LiquidCrystal.h"
-#include <avr/pgmspace.h>
-#include "OT_Util.h"
 #include <wiring.h>
-#include "OT_Stack.h"
 #include <stdint.h>
 
-#define PAD_RIGHT 0
-#define PAD_CENTER 1
-#define PAD_LEFT 2
+#ifdef OPENTROLLER_LCD4BIT
+#include "OT_LiquidCrystal.h"
+#endif // OPENTROLLER_LCD4BIT
 
 namespace OpenTroller {
 
