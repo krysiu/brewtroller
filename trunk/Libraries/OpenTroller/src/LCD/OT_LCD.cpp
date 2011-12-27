@@ -135,8 +135,8 @@ void LCD4Bit::init() {
 	TCCR2B = 0x01;
 	pinMode(_brightPin, OUTPUT);
 	pinMode(_contrastPin, OUTPUT);
-	setBright(LCD_DEFAULTBRIGHT);
-	setContrast(LCD_DEFAULTCONTRAST);
+    setBright(LCD_DEFAULTBRIGHT);
+    setContrast(LCD_DEFAULTCONTRAST);
 	_lcd->begin(_cols, _rows);
 }
 

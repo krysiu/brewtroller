@@ -27,8 +27,10 @@ set(board atmega1284)
 # search path
 #===================================================================================================
 include_directories(
-	${CMAKE_SOURCE_DIR}/src
-	${CMAKE_SOURCE_DIR}/libraries/ModbusMaster
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/LCD
+    ${CMAKE_SOURCE_DIR}/src/outputs
+    ${CMAKE_SOURCE_DIR}/libraries/ModbusMaster
 )
 
 add_subdirectory(src)

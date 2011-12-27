@@ -22,25 +22,11 @@
 #include "OT_Stack.h"
 
 #include "OT_HWProfile.h"
+#include "OT_Encoder.h"
+
+#include "LCD/OT_LCD.h"
 #include "outputs/OTOutputs.h"
-
-void* operator new(size_t size) {
-    return malloc(size);
-}
-
-void operator delete(void* ptr) {
-    free(ptr);
-}
-
-void * operator new[](size_t size) {
-    return malloc(size);
-}
-
-void operator delete[](void * ptr) {
-    if (ptr) {
-        free(ptr);
-    }
-}
+#include "OT_Status.h"
 
 using namespace OpenTroller;
 
@@ -51,10 +37,9 @@ void stack::init() {
 	
 	#if defined OPENTROLLER_LCD4BIT || defined OPENTROLLER_LCDI2C
 		OpenTroller::LCD.begin(OPENTROLLER_LCD_COLS, OPENTROLLER_LCD_ROWS);
-		OpenTroller::LCD.init();
 	#endif
 	
-	#if defined OPENTROLLER_ENCODER_GPIO
+    #ifdef OPENTROLLER_ENCODER_GPIO
 		OpenTroller::Encoder.begin(ENCODER_TYPE, ENTER_PIN, ENCA_PIN, ENCB_PIN);
 	#endif
 	

@@ -23,7 +23,6 @@ set(${LibraryName}_HDRS
 	OT_Encoder.h
 	OT_HWProfile.h
 	OT_InputBank.h
-	OT_LCD.h
 	OT_LiquidCrystal.h
 	OT_Menu.h
 	OT_Pin.h
@@ -31,6 +30,8 @@ set(${LibraryName}_HDRS
 	OT_Status.h
 	OT_UI.h
 	OT_Util.h
+
+    LCD/OT_LCD.h
 
     outputs/OTOutput.h
     outputs/OTOutputs.h
@@ -51,7 +52,6 @@ set(${LibraryName}_SRCS
     OT_1WireGPIO.cpp
     OT_Encoder.cpp
 	OT_InputBank.cpp
-	OT_LCD.cpp
 	OT_LiquidCrystal.cpp
 	OT_Menu.cpp
 	OT_Pin.cpp
@@ -59,6 +59,8 @@ set(${LibraryName}_SRCS
 	OT_Status.cpp
 	OT_UI.cpp
 	OT_Util.cpp
+
+    LCD/OT_LCD.cpp
 
     outputs/OTOutput.cpp
     outputs/OTOutputs.cpp

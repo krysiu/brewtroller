@@ -29,6 +29,8 @@ Documentation, Forums and more information available at http://www.oscsys.com
 #ifndef OT_LCD_H
 	#define OT_LCD_H
 
+#include "OT_HWProfile.h"
+
 	#include <Wire.h>
 	#include "OT_LiquidCrystal.h"
 	#include <avr/pgmspace.h>
