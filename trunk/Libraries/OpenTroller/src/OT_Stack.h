@@ -25,13 +25,28 @@
 
 namespace OpenTroller {
 
+    /**
+      * This is the entry point for the OpenTroller framework stack.
+      */
     class stack {
       public:
+        /**
+          * This method needs to be called as early in the application as possible, to initialize
+          * the framework for use.  This method will further initialize any hardware defined for
+          * use by the framework in OT_HWProfile.h.
+          */
         void init();
+
+        /**
+          * Insures the framework is updated.  Should be called once per loop.
+          */
         void update();
 
     };
 
+    /**
+      * The singleton instance of the framework.
+      */
     extern OpenTroller::stack Stack;
 }
 #endif // OT_STACK_H
