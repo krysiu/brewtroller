@@ -33,7 +33,9 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/libraries/ModbusMaster
 )
 
+add_subdirectory(libraries)
 add_subdirectory(src)
+add_subdirectory(test)
 
 #===================================================================================================
 # Generate API documentation with Doxygen
