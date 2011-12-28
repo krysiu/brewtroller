@@ -21,4 +21,16 @@
 #ifndef OT_CONSOLE_H
 #define OT_CONSOLE_H
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+//void init();
+void setup();
+void loop();
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif // OT_CONSOLE_H

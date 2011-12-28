@@ -29,7 +29,6 @@ set(${FirmwareName}_SRCS
 
 set(${FirmwareName}_LIBS
     OpenTroller
-    Wire
 )
 
 
