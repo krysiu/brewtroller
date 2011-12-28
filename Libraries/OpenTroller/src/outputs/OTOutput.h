@@ -26,6 +26,7 @@
 
 #ifdef OPENTROLLER_OUTPUTS
 
+#include <stdint.h>
 #include "OpenTroller.h"
 #include "OTDigitalIO.h"
 

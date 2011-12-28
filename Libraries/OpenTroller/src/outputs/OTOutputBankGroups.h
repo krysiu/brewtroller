@@ -25,6 +25,7 @@
 #include "OT_HWProfile.h"
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
 
+#include <stdint.h>
 #include "OTOutputBank.h"
 #include "OTOutputGroup.h"
 
@@ -47,6 +48,7 @@ class OutputBankGroups: public OutputBank {
         Output* getOutput(uint8_t index);
         OutputGroup* getGroup(uint8_t index);
         char* getName(void);
+        virtual char* getOutputName(uint8_t index);
         OutputBankType getType(void);
         void update(void);
 };

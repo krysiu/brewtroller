@@ -25,6 +25,7 @@
 #include "OT_HWProfile.h"
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)
 
+#include <stdint.h>
 #include "OpenTroller.h"
 #include "OTOutput.h"
 #include "OT_Pin.h"
@@ -45,10 +46,10 @@ class OutputGPIO: public Output {
     public:
         OutputGPIO(void);
         void setup(OutputBankGPIO* outputBank, uint8_t anIndex, uint8_t digitalPinNum);
-        void setState(State newState);
-        State getState(void);
-        uint8_t getErr(void);
-        char* getName(void);
+        virtual void setState(State newState);
+        virtual State getState(void);
+        virtual uint8_t getErr(void);
+        virtual char* getName(void);
 };
 
 } //namespace OpenTroller

@@ -23,22 +23,49 @@
 #include <WProgram.h>
 #include <Wire.h>
 
+#include "OpenTroller.h"
+#include "OT_Stack.h"
+
+using namespace OpenTroller;
+
+void console::init() {
+    Stack.init();
+    //    Wire.begin(); // join i2c bus (address optional for master)
+    //    Serial.begin(9600); // start serial for output
+}
+
+void console::update() {
+    Stack.update();
+    //  Wire.requestFrom(2, 6); // request 6 bytes from slave device #2
+
+    //  while(Wire.available()) // slave may send less than requested
+    //  {
+    //    char c = Wire.receive(); // receive a byte as character
+    //    Serial.print(c); // print the character
+    //  }
+
+      delay(500);
+}
+
+OpenTroller::console OpenTroller::Console;
+
+// The next two methods are needed - at least for the cmake Arduino setup - and are calles
+// whenever a pure virtual function is called.  It should contain whatever error hanleing
+// is needed.
+extern "C" void __cxa_pure_virtual(void);
+void __cxa_pure_virtual(void) { while(0); }
+
+
+// These are the functions that are implemented as per the Arduino source.  They forward
+// to the Console instance.
 //void init() {
 //}
 
 void setup() {
-  Wire.begin(); // join i2c bus (address optional for master)
-  Serial.begin(9600); // start serial for output
+    Console.init();
 }
 
 void loop() {
-  Wire.requestFrom(2, 6); // request 6 bytes from slave device #2
-
-  while(Wire.available()) // slave may send less than requested
-  {
-    char c = Wire.receive(); // receive a byte as character
-    Serial.print(c); // print the character
-  }
-
-  delay(500);
+    Console.update();
 }
+

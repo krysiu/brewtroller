@@ -25,6 +25,7 @@
 #include "OT_HWProfile.h"
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
 
+#include <stdint.h>
 #include "OTOutput.h"
 #include "OpenTroller.h"
 
@@ -33,7 +34,7 @@ namespace OpenTroller{
 class OutputGroup : public Output {
     private:
         Output** outputs;
-        uint8_t count, err;
+        uint8_t count;
         char name[15];
 
     public:
@@ -41,10 +42,10 @@ class OutputGroup : public Output {
         virtual ~OutputGroup(void);
         void init(char* theName , uint8_t groupSize);
         void assignOutput(uint8_t index, Output* output);
-        void setState(State newState);
-        State getState(void);
-        uint8_t getErr(void);
-        char* getName(void);
+        virtual void setState(State newState);
+        virtual State getState(void);
+        virtual uint8_t getErr(void);
+        virtual char* getName(void);
 };
 
 } //namespace OpenTroller

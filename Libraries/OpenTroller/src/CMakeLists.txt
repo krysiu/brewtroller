@@ -48,7 +48,8 @@ set(${LibraryName}_HDRS
 
 # Source implementation files
 set(${LibraryName}_SRCS 
-	OT_1WireDS2482.cpp
+    OpenTroller.cpp
+    OT_1WireDS2482.cpp
     OT_1WireGPIO.cpp
     OT_Encoder.cpp
 	OT_InputBank.cpp

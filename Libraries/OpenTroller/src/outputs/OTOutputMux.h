@@ -25,6 +25,7 @@
 #include "OT_HWProfile.h"
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MUX)
 
+#include <stdint.h>
 #include "OpenTroller.h"
 #include "OTOutputBank.h"
 
@@ -36,10 +37,10 @@ class OutputMUX: public Output {
     public:
         OutputMUX(void);
         void setup(OutputBankMUX* outputBank, uint8_t theIndex);
-        void setState(State newState);
-        State getState(void);
-        uint8_t getErr(void);
-        char* getName(void);
+        virtual void setState(State newState);
+        virtual State getState(void);
+        virtual uint8_t getErr(void);
+        virtual char* getName(void);
 };
 
 } //namespace OpenTroller

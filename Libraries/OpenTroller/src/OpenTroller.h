@@ -21,7 +21,9 @@
 #ifndef OPENTROLLER_H
 #define OPENTROLLER_H
 
-#import <wiring.h>
+#include <wiring.h>
+#include <stdlib.h>
+#include <stdint.h>
 
 /**
   * An enum used to describe the state of a pin. Uses defines from wiring.h
@@ -36,5 +38,21 @@ typedef enum {
 #define PAD_RIGHT 0
 #define PAD_CENTER 1
 #define PAD_LEFT 2
+
+//#ifdef __cplusplus
+//extern "C"{
+//#endif
+
+void* operator new(size_t size);
+
+void operator delete(void* ptr);
+
+void * operator new[](size_t size);
+
+void operator delete[](void * ptr);
+
+//#ifdef __cplusplus
+//} // extern "C"
+//#endif
 
 #endif // OPENTROLLER_H
