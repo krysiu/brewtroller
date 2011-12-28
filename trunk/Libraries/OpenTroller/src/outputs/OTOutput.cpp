@@ -29,6 +29,9 @@ using namespace OpenTroller;
 Output::Output() {
 
 }
+Output::~Output() {
+
+}
 
 State Output::getState(void) {
     return state;
@@ -39,8 +42,9 @@ uint8_t Output::getErr(void) {
 }
 
 char* Output::getName(void) {
-    return bank->getOutputName(index);
-    return NULL;
+    char* theName = new char[8];
+    strcpy(theName, "NOT_SET");
+    return theName;
 }
 
 #endif //#ifdef OPENTROLLER_OUTPUTS

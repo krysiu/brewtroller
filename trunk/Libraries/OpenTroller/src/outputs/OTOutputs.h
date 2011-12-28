@@ -25,6 +25,7 @@
 #include "OT_HWProfile.h"
 #ifdef OPENTROLLER_OUTPUTS
 
+#include <stdint.h>
 #include "OT_Stack.h"
 #include "OT_Pin.h"
 #include <ModbusMaster.h>

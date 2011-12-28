@@ -25,6 +25,7 @@
 #include "OT_HWProfile.h"
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MUX)
 
+#include <stdint.h>
 #include "OTOutputBank.h"
 #include "OT_Pin.h"
 
@@ -46,11 +47,11 @@ public:
                   uint8_t enableLogic,
                   uint8_t count);
     virtual ~OutputBankMUX(void);
-    Output* getOutput(uint8_t index);
-    char* getName(void);
-    char* getOutputName(uint8_t index);
-    OutputBankType getType(void);
-    void update(void);
+    virtual Output* getOutput(uint8_t index);
+    virtual char* getName(void);
+    virtual char* getOutputName(uint8_t index);
+    virtual OutputBankType getType(void);
+    virtual void update(void);
     friend class OutputMUX;
 };
 

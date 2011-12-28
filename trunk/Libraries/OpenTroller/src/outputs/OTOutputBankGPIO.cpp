@@ -56,4 +56,11 @@ OutputBankType OutputBankGPIO::getType(void) {
     return OUTPUTBANK_TYPE_GPIO;
 }
 
+
+//TODO: I should not need these next method, but, withoput them, the app will not link.
+char* OutputBankGPIO::getOutputName(uint8_t index) {
+    Output* output = getOutput(index);
+    return output->getName();
+}
+
 #endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)

@@ -18,38 +18,24 @@
 
 
 */
-#ifndef OT_CONSOLE_H
-#define OT_CONSOLE_H
 
-#include <stdint.h>
+#include "OpenTroller.h"
 
-#ifdef __cplusplus
-extern "C"{
-#endif
-
-//void init();
-void setup();
-void loop();
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-namespace OpenTroller {
-
-    class console {
-      protected:
-
-      public:
-
-        void init();
-
-        void update();
-    };
-
-    /**
-      * The singleton instance of the console.
-      */
-    extern OpenTroller::console Console;
+void* operator new(size_t size) {
+    return malloc(size);
 }
-#endif // OT_CONSOLE_H
+
+void operator delete(void* ptr) {
+    free(ptr);
+}
+
+void * operator new[](size_t size) {
+    return malloc(size);
+}
+
+void operator delete[](void * ptr) {
+    if (ptr) {
+        free(ptr);
+    }
+}
+

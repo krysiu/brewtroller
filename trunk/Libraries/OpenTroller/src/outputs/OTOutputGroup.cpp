@@ -75,4 +75,14 @@ char* OutputGroup::getName(void) {
     return theName;
 }
 
+//TODO: I should not need these next two methods, but, withoput them, the app will not link.
+State OutputGroup::getState(void) {
+    return state;
+}
+
+uint8_t OutputGroup::getErr(void) {
+    return err;
+}
+
+
 #endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)

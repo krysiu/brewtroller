@@ -25,6 +25,7 @@
 #include "OT_HWProfile.h"
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)
 
+#include <stdint.h>
 #include "OTOutputBank.h"
 
 namespace OpenTroller{
@@ -42,12 +43,12 @@ class OutputBankGPIO: public OutputBank {
     public:
         OutputBankGPIO(uint8_t pinCount);
         virtual ~OutputBankGPIO(void);
-        Output* getOutput(uint8_t index);
+        virtual Output* getOutput(uint8_t index);
         void setup(uint8_t index, uint8_t digPinNum);
-        char* getName(void);
-        char* getOutputName(uint8_t index);
-        OutputBankType getType(void);
-        void update(void) { }
+        virtual char* getName(void);
+        virtual char* getOutputName(uint8_t index);
+        virtual OutputBankType getType(void);
+        virtual void update(void) { }
         friend class OutputGPIO;
 };
 
