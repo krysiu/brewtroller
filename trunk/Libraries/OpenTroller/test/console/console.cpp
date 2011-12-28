@@ -23,8 +23,8 @@
 #include <WProgram.h>
 #include <Wire.h>
 
-void init() {
-}
+//void init() {
+//}
 
 void setup() {
   Wire.begin(); // join i2c bus (address optional for master)
