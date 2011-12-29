@@ -24,8 +24,8 @@
 #include "OT_HWProfile.h"
 #include "OT_Encoder.h"
 
-#include "LCD/OT_LCD.h"
-#include "outputs/OTOutputs.h"
+#include "OT_LCD.h"
+#include "OTOutputs.h"
 #include "OT_Status.h"
 
 using namespace OpenTroller;
