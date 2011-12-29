@@ -31,19 +31,19 @@ set(${LibraryName}_HDRS
 	OT_UI.h
 	OT_Util.h
 
-    LCD/OT_LCD.h
+    OT_LCD.h
 
-    outputs/OTOutput.h
-    outputs/OTOutputs.h
-    outputs/OTOutputGroup.h
-    outputs/OTOutputGPIO.h
-    outputs/OTOutputModbus.h
-    outputs/OTOutputMux.h
-    outputs/OTOutputBank.h
-    outputs/OTOutputBankGroups.h
-    outputs/OTOutputBankGPIO.h
-    outputs/OTOutputBankModbus.h
-    outputs/OTOutputBankMux.h
+    OTOutput.h
+    OTOutputs.h
+    OTOutputGroup.h
+    OTOutputGPIO.h
+    OTOutputModbus.h
+    OTOutputMux.h
+    OTOutputBank.h
+    OTOutputBankGroups.h
+    OTOutputBankGPIO.h
+    OTOutputBankModbus.h
+    OTOutputBankMux.h
 )
 
 # Source implementation files
@@ -61,21 +61,21 @@ set(${LibraryName}_SRCS
 	OT_UI.cpp
 	OT_Util.cpp
 
-    LCD/OT_LCD.cpp
-    LCD/OT_LCD4Bit.cpp
-    LCD/OT_LCDI2C.cpp
+    OT_LCD.cpp
+    OT_LCD4Bit.cpp
+    OT_LCDI2C.cpp
 
-    outputs/OTOutput.cpp
-    outputs/OTOutputs.cpp
-    outputs/OTOutputGroup.cpp
-    outputs/OTOutputGPIO.cpp
-    outputs/OTOutputModbus.cpp
-    outputs/OTOutputMux.cpp
-	outputs/OTOutputBank.cpp
-    outputs/OTOutputBankGroups.cpp
-    outputs/OTOutputBankGPIO.cpp
-    outputs/OTOutputBankModbus.cpp
-    outputs/OTOutputBankMux.cpp
+    OTOutput.cpp
+    OTOutputs.cpp
+    OTOutputGroup.cpp
+    OTOutputGPIO.cpp
+    OTOutputModbus.cpp
+    OTOutputMux.cpp
+	OTOutputBank.cpp
+    OTOutputBankGroups.cpp
+    OTOutputBankGPIO.cpp
+    OTOutputBankModbus.cpp
+    OTOutputBankMux.cpp
 )
 
 
