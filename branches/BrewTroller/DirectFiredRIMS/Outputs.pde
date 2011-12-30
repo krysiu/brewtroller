@@ -370,12 +370,10 @@ void processHeatOutoutsPIDEnabled(const byte vessel[]) {
  * Called by processHeatOutputsNonPIDEnabled to process a heat output when heatStatus[vessel] == true.
  */
 void processHeatOutputsNonPIDEnabledWithHeatOn(const byte vessel[]) {
-  if (
-      // determine if setpoint has ben reached, or there is a bad temp reading.
-      // If it either condition, set the pin low (turn it off).
-      #ifndef DIRECT_FIRE_RIMS
-        (vessel[VS] != VS_STEAM && 
-      #endif
+  // determine if setpoint has ben reached, or there is a bad temp reading.
+  // If it either condition, set the pin low (turn it off).
+	// we do not want the RIMS (in DIRECT_FIRED_RIMS) processed here either; it is taken care of in the MASH loop
+  if ((vessel[VS] != VS_STEAM && 
         (temp[vessel[TS]] == BAD_TEMP || temp[vessel[TS]] >= setpoint[vessel[VS]])
       #ifndef DIRECT_FIRE_RIMS
         )|| (vessel[VS] == VS_STEAM && steamPressure >= setpoint[vessel[VS]])
@@ -409,10 +407,8 @@ void processHeatOutputsNonPIDEnabledWithHeatOn(const byte vessel[]) {
           heatPin[VS_STEAM].set(HIGH);
           heatStatus[VS_STEAM] = 1;
         }
-        // Check to insure RIMS is below safe level
-        if (temp[TS_RIMS] >= RIMS_ALARM_TEMP) {
-          alarmPin.set(1); //Sount the alarm.
-        }
+      } else {
+	      heatPin[vessel[VS]].set(HIGH);
       }
     #else
       heatPin[vessel[VS]].set(HIGH);
@@ -424,16 +420,12 @@ void processHeatOutputsNonPIDEnabledWithHeatOn(const byte vessel[]) {
  * Called by processHeatOutputsNonPIDEnabled to process a heat output when heatStatus[vessel] == false.
  */
 void processHeatOutputsNonPIDEnabledWithHeatOff(const byte vessel[]) {
-  if (
-    // Determine is the vessel temperature is below the setpoint, accounting for hysteresis.
+	// Determine is the vessel temperature is below the setpoint, accounting for hysteresis.
+	// we do not want the RIMS (in DIRECT_FIRED_RIMS) processed here either; it is taken care of in the MASH loop
+  if ((vessel[VS] != VS_STEAM && 
+      (temp[vessel[TS]] != BAD_TEMP && (setpoint[vessel[VS]] - temp[vessel[TS]]) >= hysteresis[vessel[VS]] * 10) 
     #ifndef DIRECT_FIRE_RIMS
-      (vessel[VS] != VS_STEAM && 
-    #endif
-      (temp[vessel[TS]] != BAD_TEMP 
-        && (setpoint[vessel[VS]] - temp[vessel[TS]]) >= hysteresis[vessel[VS]] * 10) 
-    #ifndef DIRECT_FIRE_RIMS
-      )|| (vessel[VS] == VS_STEAM 
-            && (setpoint[vessel[VS]] - steamPressure) >= hysteresis[vessel[VS]] * 100)
+      ) || (vessel[VS] == VS_STEAM && (setpoint[vessel[VS]] - steamPressure) >= hysteresis[vessel[VS]] * 100)
     #endif
     ) {
       // The temperature of the vessel is below what we want, so insure the correct pin is tunred on,
@@ -446,7 +438,8 @@ void processHeatOutputsNonPIDEnabledWithHeatOff(const byte vessel[]) {
         if (temp[vessel[TS]] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
           heatPin[VS_MASH].set(LOW);
           heatStatus[VS_MASH] = 0;
-        } else if (temp[TS_MASH] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET)) {
+        } else if (temp[TS_MASH] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET - 2)) {
+			// Added an additional two degree offset when the mash is off before it goes on, to prevent rapid cycleing.
           heatPin[VS_MASH].set(HIGH);
           heatStatus[VS_MASH] = 1;
         }
@@ -459,10 +452,9 @@ void processHeatOutputsNonPIDEnabledWithHeatOff(const byte vessel[]) {
           heatPin[VS_STEAM].set(HIGH);
           heatStatus[VS_STEAM] = 1;
         }
-        // Check to insure RIMS is below safe level
-        if (temp[TS_RIMS] >= RIMS_ALARM_TEMP) {
-          alarmPin.set(1); //Sount the alarm.
-        }
+      } else {
+	      heatPin[vessel[VS]].set(HIGH);
+	      heatStatus[vessel[VS]] = 1;
       }
     #else
       heatPin[vessel[VS]].set(HIGH);
@@ -485,6 +477,13 @@ void processHeatOutputsNonPIDEnabled(const byte vessel[]) {
   } else {
     processHeatOutputsNonPIDEnabledWithHeatOff(vessel);
   }
+  
+#ifdef DIRECT_FIRED_RIMS
+  // Check to insure RIMS is below safe level
+  if (temp[TS_RIMS] >= RIMS_ALARM_TEMP) {
+    alarmPin.set(1); //Sound the alarm.
+  }
+#endif  
 }
 
 void processHeatOutputs() {
