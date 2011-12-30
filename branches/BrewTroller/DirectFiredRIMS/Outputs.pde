@@ -373,7 +373,7 @@ void processHeatOutputsNonPIDEnabledWithHeatOn(const byte vessel[]) {
   // determine if setpoint has ben reached, or there is a bad temp reading.
   // If it either condition, set the pin low (turn it off).
 	// we do not want the RIMS (in DIRECT_FIRED_RIMS) processed here either; it is taken care of in the MASH loop
-  if ((vessel[VS] != VS_STEAM && 
+  if ((vessel[VS] != VS_STEAM &&
         (temp[vessel[TS]] == BAD_TEMP || temp[vessel[TS]] >= setpoint[vessel[VS]])
       #ifndef DIRECT_FIRE_RIMS
         )|| (vessel[VS] == VS_STEAM && steamPressure >= setpoint[vessel[VS]])
@@ -391,27 +391,29 @@ void processHeatOutputsNonPIDEnabledWithHeatOn(const byte vessel[]) {
       // the VS_MASH pint should be set high, and VS_STEAM set low.  If the different
       // is within RIMS_TEMP_OFFSET, then the opposite.
       if (vessel[VS] == VS_MASH) {
-        if (temp[vessel[TS]] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+        if (temp[TS_MASH] >= setpoint[VS_MASH] - (RIMS_TEMP_OFFSET * 100)) {
           heatPin[VS_MASH].set(LOW);
           heatStatus[VS_MASH] = 0;
-        } else if (temp[vessel[TS]] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET)) {
+          if ((temp[TS_MASH] < setpoint[VS_MASH]) && (temp[TS_RIMS] < (RIMS_MAX_TEMP * 100))) {
+            heatPin[VS_STEAM].set(HIGH);
+            heatStatus[VS_STEAM] = 1;
+          } else {
+            heatPin[VS_STEAM].set(LOW);
+            heatStatus[VS_STEAM] = 0;
+          }
+        } else {
           heatPin[VS_MASH].set(HIGH);
           heatStatus[VS_MASH] = 1;
-        }
-      } else if (vessel[VS] == VS_STEAM ) {
-        // Insure that RIMS temperature is in range
-        if ((temp[TS_MASH] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) || (temp[TS_RIMS] >= RIMS_MAX_TEMP)) {
           heatPin[VS_STEAM].set(LOW);
           heatStatus[VS_STEAM] = 0;
-        } else if (temp[TS_RIMS] < RIMS_MAX_TEMP) {
-          heatPin[VS_STEAM].set(HIGH);
-          heatStatus[VS_STEAM] = 1;
         }
       } else {
-	      heatPin[vessel[VS]].set(HIGH);
+        heatPin[vessel[VS]].set(HIGH);
+        heatStatus[vessel[VS]] = 1;
       }
     #else
       heatPin[vessel[VS]].set(HIGH);
+      heatStatus[vessel[VS]] = 1;
     #endif
   }
 }
@@ -420,9 +422,9 @@ void processHeatOutputsNonPIDEnabledWithHeatOn(const byte vessel[]) {
  * Called by processHeatOutputsNonPIDEnabled to process a heat output when heatStatus[vessel] == false.
  */
 void processHeatOutputsNonPIDEnabledWithHeatOff(const byte vessel[]) {
-	// Determine is the vessel temperature is below the setpoint, accounting for hysteresis.
-	// we do not want the RIMS (in DIRECT_FIRED_RIMS) processed here either; it is taken care of in the MASH loop
-  if ((vessel[VS] != VS_STEAM && 
+  // Determine is the vessel temperature is below the setpoint, accounting for hysteresis.
+  // we do not want the RIMS (in DIRECT_FIRED_RIMS) processed here either; it is taken care of in the MASH loop
+  if ((vessel[VS] != VS_STEAM &&
       (temp[vessel[TS]] != BAD_TEMP && (setpoint[vessel[VS]] - temp[vessel[TS]]) >= hysteresis[vessel[VS]] * 10) 
     #ifndef DIRECT_FIRE_RIMS
       ) || (vessel[VS] == VS_STEAM && (setpoint[vessel[VS]] - steamPressure) >= hysteresis[vessel[VS]] * 100)
@@ -435,26 +437,25 @@ void processHeatOutputsNonPIDEnabledWithHeatOff(const byte vessel[]) {
       // the VS_MASH pint should be set high, and VS_STEAM set low.  If the difference
       // is within RIMS_TEMP_OFFSET, then the opposite.
       if (vessel[VS] == VS_MASH) {
-        if (temp[vessel[TS]] >= setpoint[VS_MASH] - RIMS_TEMP_OFFSET) {
+        if (temp[TS_MASH] >= setpoint[VS_MASH] - (RIMS_TEMP_OFFSET * 100)) {
           heatPin[VS_MASH].set(LOW);
           heatStatus[VS_MASH] = 0;
-        } else if (temp[TS_MASH] < (setpoint[VS_MASH] - RIMS_TEMP_OFFSET - 2)) {
-			// Added an additional two degree offset when the mash is off before it goes on, to prevent rapid cycleing.
+          if ((temp[TS_MASH] < setpoint[VS_MASH]) && (temp[TS_RIMS] < (RIMS_MAX_TEMP * 100))) {
+            heatPin[VS_STEAM].set(HIGH);
+            heatStatus[VS_STEAM] = 1;
+          } else {
+            heatPin[VS_STEAM].set(LOW);
+            heatStatus[VS_STEAM] = 0;
+          }
+        } else {
           heatPin[VS_MASH].set(HIGH);
           heatStatus[VS_MASH] = 1;
-        }
-      } else if (vessel[VS] == VS_STEAM ) {
-        // Insure that RIMS temperature is in range
-        if ((temp[vessel[TS]] < setpoint[VS_MASH] - RIMS_TEMP_OFFSET) || (temp[TS_RIMS] >= RIMS_MAX_TEMP)) {
           heatPin[VS_STEAM].set(LOW);
           heatStatus[VS_STEAM] = 0;
-        } else if (temp[TS_RIMS] < RIMS_MAX_TEMP) {
-          heatPin[VS_STEAM].set(HIGH);
-          heatStatus[VS_STEAM] = 1;
         }
       } else {
-	      heatPin[vessel[VS]].set(HIGH);
-	      heatStatus[vessel[VS]] = 1;
+        heatPin[vessel[VS]].set(HIGH);
+        heatStatus[vessel[VS]] = 1;
       }
     #else
       heatPin[vessel[VS]].set(HIGH);
@@ -465,6 +466,16 @@ void processHeatOutputsNonPIDEnabledWithHeatOff(const byte vessel[]) {
     // For DIRECT_FIRED_RIMS, the setpoint for both VS_MASH & VS_STEAM should be the same, 
     // so nothing to do here.
     heatPin[vessel[VS]].set(LOW);
+    heatStatus[vessel[VS]] = 0;
+      if (vessel[VS] == VS_MASH) {
+        if ((temp[TS_MASH] < setpoint[VS_MASH]) && (temp[TS_RIMS] < (RIMS_MAX_TEMP * 100))) {
+          heatPin[VS_STEAM].set(HIGH);
+          heatStatus[VS_STEAM] = 1;
+        } else {
+          heatPin[VS_STEAM].set(LOW);
+          heatStatus[VS_STEAM] = 0;
+        }
+      }
   }
 }
 
@@ -480,8 +491,10 @@ void processHeatOutputsNonPIDEnabled(const byte vessel[]) {
   
 #ifdef DIRECT_FIRED_RIMS
   // Check to insure RIMS is below safe level
-  if (temp[TS_RIMS] >= RIMS_ALARM_TEMP) {
+  if (temp[TS_RIMS] >= (RIMS_ALARM_TEMP * 100)  ) {
     alarmPin.set(1); //Sound the alarm.
+  } else {
+    alarmPin.set(0);
   }
 #endif  
 }
