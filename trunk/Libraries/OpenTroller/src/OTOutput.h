@@ -29,7 +29,6 @@
 #include <stdint.h>
 #include "OpenTroller.h"
 #include "OTDigitalIO.h"
-#include "OTOutputBank.h"
 
 namespace OpenTroller{
 
@@ -49,9 +48,11 @@ class Output : public DigitalIO {
     OutputBank* bank;
 
   public:
-    //Output();
-    //~Output();
-
+	//TODO: These keep throwing errors: undefined reference to `__cxa_pure_virtual'
+	/*
+    Output();
+    ~Output();
+	*/
     /**
       * Accessor for the state of this output.
       * @return the state of the output.

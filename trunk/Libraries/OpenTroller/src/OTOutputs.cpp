@@ -22,6 +22,8 @@
 #include "OTOutputs.h"
 #ifdef OPENTROLLER_OUTPUTS
 
+#include "OTOutputBankGPIO.h"
+#include "OTOutputBankModbus.h"
 using namespace OpenTroller;
 
 outputs::outputs(void) {

@@ -26,15 +26,10 @@
 #ifdef OPENTROLLER_OUTPUTS
 
 #include <stdint.h>
-//#include "OT_Stack.h"
-//#include "OT_Pin.h"
-//#include <ModbusMaster.h>
-#include "OTOutputBank.h"
 #include "OTOutputBankGroups.h"
-#include "OTOutputBankGPIO.h"
-#include "OTOutputBankModbus.h"
 
 namespace OpenTroller{
+class OutputBank;		
 
 class outputs {
     protected:

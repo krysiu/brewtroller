@@ -26,8 +26,8 @@
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
 
 #include <stdint.h>
-#include "OTOutput.h"
 #include "OpenTroller.h"
+#include "OTOutput.h"
 
 namespace OpenTroller{
 
