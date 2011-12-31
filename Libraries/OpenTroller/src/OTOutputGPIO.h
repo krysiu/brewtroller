@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include "OpenTroller.h"
 #include "OTOutput.h"
-#include "OT_Pin.h"
+#include "OT_AVRIO.h"
 
 namespace OpenTroller{
 
@@ -39,7 +39,7 @@ class OutputBankGPIO;
   */
 class OutputGPIO: public Output {
     private:
-        pin outputPin;
+        AVRIO outputPin;
         uint8_t err;
 
     public:
