@@ -27,6 +27,7 @@
 
 #include <stdint.h>
 #include "OTOutputBank.h"
+#include "OTOutputModbus.h"
 #include <ModbusMaster.h>
 
 namespace OpenTroller{

@@ -22,7 +22,6 @@
 #include "OTOutputGroup.h"
 
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
-#include "OpenTroller.h"
 
 using namespace OpenTroller;
 

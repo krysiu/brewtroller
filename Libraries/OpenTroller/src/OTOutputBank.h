@@ -25,6 +25,7 @@
 #include "OT_HWProfile.h"
 #ifdef OPENTROLLER_OUTPUTS
 
+#include "OTOutput.h"
 #include <stdint.h>
 
 namespace OpenTroller{
@@ -49,8 +50,8 @@ class OutputBank {
         uint8_t count; /*<! The number of outputs in this bank. */
 
     public:
-        OutputBank(void);
-        virtual ~OutputBank(void);
+        //OutputBank(void);
+        //~OutputBank(void);
 
         uint8_t getCount(void);
         virtual Output* getOutput(uint8_t index) = 0;

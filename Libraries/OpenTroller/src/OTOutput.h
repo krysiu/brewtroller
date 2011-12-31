@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include "OpenTroller.h"
 #include "OTDigitalIO.h"
+#include "OTOutputBank.h"
 
 namespace OpenTroller{
 
@@ -48,8 +49,8 @@ class Output : public DigitalIO {
     OutputBank* bank;
 
   public:
-    Output();
-    virtual ~Output();
+    //Output();
+    //~Output();
 
     /**
       * Accessor for the state of this output.

@@ -23,16 +23,16 @@
 
 #ifdef OPENTROLLER_OUTPUTS
 
-#include "OTOutput.h"
-
 using namespace OpenTroller;
 
+/*
 OutputBank::OutputBank() {
 
 }
 OutputBank::~OutputBank() {
 
 }
+*/
 
 uint8_t OutputBank::getCount(void) {
     return count;

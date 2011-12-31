@@ -20,8 +20,6 @@
 
 */
 #include "OTOutputModbus.h"
-#include "OTOutputBankModbus.h"
-
 
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MODBUS)
 using namespace OpenTroller;

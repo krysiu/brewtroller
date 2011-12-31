@@ -22,16 +22,15 @@
 #include "OTOutput.h"
 #ifdef OPENTROLLER_OUTPUTS
 
-#include "OTOutputBank.h"
-
 using namespace OpenTroller;
-
+/*
 Output::Output() {
 
 }
 Output::~Output() {
 
 }
+*/
 
 State Output::getState(void) {
     return state;

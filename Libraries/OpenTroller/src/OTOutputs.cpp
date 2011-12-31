@@ -22,10 +22,6 @@
 #include "OTOutputs.h"
 #ifdef OPENTROLLER_OUTPUTS
 
-#include "OTOutputBankGroups.h"
-#include "OTOutputBankGPIO.h"
-#include "OTOutputBankModbus.h"
-
 using namespace OpenTroller;
 
 outputs::outputs(void) {
@@ -35,7 +31,9 @@ outputs::outputs(void) {
     for (uint8_t i = 0; i <max; i++) {
         banks[i] = NULL;
     }
-    groups = NULL;
+	#ifdef OUTPUTBANK_GROUPS
+		groups = NULL;
+	#endif
 }
 
 outputs::~outputs(void) {

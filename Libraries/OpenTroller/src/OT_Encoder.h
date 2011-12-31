@@ -66,8 +66,8 @@ namespace OpenTroller {
 	};
 
 
-    #ifdef OPENTROLLER_ENCODER_GPIO
-    class encoderGPIO : public encoder_Generic {
+    #ifdef ENCODER_AVRIO
+    class encoderAVRIO : public encoder_Generic {
       private:
 		pin   _aPin;
 		pin   _bPin;
@@ -102,7 +102,7 @@ namespace OpenTroller {
 		
       public:
 		byte getEncoderState();   // return the Encoder State
-		encoderGPIO(void);
+		encoderAVRIO(void);
 		void begin(byte type, byte encE, byte encA, byte encB);
 		void end(void);
 		void setMin(int min)      { _min = min; }
@@ -125,8 +125,8 @@ namespace OpenTroller {
 		void cuiHandler(void);
 	};
 
-    extern OpenTroller::encoderGPIO Encoder;
-	#endif
+    extern OpenTroller::encoderAVRIO Encoder;
+	#endif //ifdef ENCODER_AVRIO
 }
 
-#endif
+#endif //ifndef _ENCODER_H
