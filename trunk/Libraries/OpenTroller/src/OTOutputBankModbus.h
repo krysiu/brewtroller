@@ -27,12 +27,12 @@
 
 #include <stdint.h>
 #include "OTOutputBank.h"
+#include "OTOutput.h"
 #include "OTOutputModbus.h"
 #include <ModbusMaster.h>
 
 namespace OpenTroller{
 
-class Output;
 class OutputMODBUS;
 
 /**
@@ -48,10 +48,9 @@ class OutputBankMODBUS: public OutputBank {
 
     public:
         OutputBankMODBUS(uint8_t slaveAddr, unsigned int coilReg, uint8_t coilCount);
-        virtual ~OutputBankMODBUS(void);
+        //virtual ~OutputBankMODBUS(void);
         virtual Output* getOutput(uint8_t index);
         virtual char* getName(void);
-        virtual char* getOutputName(uint8_t index);
         virtual OutputBankType getType(void);
         virtual void update(void);
         friend class OutputMODBUS;

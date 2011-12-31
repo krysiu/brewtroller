@@ -48,8 +48,6 @@ class OutputGPIO: public Output {
         void setup(OutputBankGPIO* outputBank, uint8_t anIndex, uint8_t digitalPinNum);
         virtual void setState(State newState);
         virtual State getState(void);
-        virtual uint8_t getErr(void);
-        virtual char* getName(void);
 };
 
 } //namespace OpenTroller

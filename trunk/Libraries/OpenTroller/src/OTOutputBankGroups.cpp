@@ -74,10 +74,4 @@ void OutputBankGroups::update(void) {
     }
 }
 
-//TODO: I should not need these next method, but, withoput them, the app will not link.
-char* OutputBankGroups::getOutputName(uint8_t index) {
-    Output* output = getOutput(index);
-    return output->getName();
-}
-
 #endif //#ifdef OPENTROLLER_OUTPUTS
