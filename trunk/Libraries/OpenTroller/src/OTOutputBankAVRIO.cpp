@@ -19,22 +19,22 @@
 
 
 */
-#include "OTOutputBankGPIO.h"
-#include "OTOutputGPIO.h"
+#include "OTOutputBankAVRIO.h"
+#include "OTOutputAVRIO.h"
 
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)
+#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_AVRIO)
 using namespace OpenTroller;
 
-OutputBankGPIO::OutputBankGPIO(uint8_t pinCount) {
+OutputBankAVRIO::OutputBankAVRIO(uint8_t pinCount) {
     count = pinCount;
-    outputs = new OutputGPIO[count];
+    outputs = new OutputAVRIO[count];
 }
 
-OutputBankGPIO::~OutputBankGPIO(void) {
+OutputBankAVRIO::~OutputBankAVRIO(void) {
     delete [] outputs;
 }
 
-Output* OutputBankGPIO::getOutput(uint8_t index) {
+Output* OutputBankAVRIO::getOutput(uint8_t index) {
     Output* output = NULL;
     if (index >= 0 && index < count) {
         output =  &outputs[index];
@@ -42,18 +42,18 @@ Output* OutputBankGPIO::getOutput(uint8_t index) {
     return output;
 }
 
-void OutputBankGPIO::setup(uint8_t index, uint8_t digPinNum) {
+void OutputBankAVRIO::setup(uint8_t index, uint8_t digPinNum) {
     outputs[index].setup(this, index, digPinNum);
 }
 
-char* OutputBankGPIO::getName(void) {
-    char* nameCopy = new char[strlen(OUTPUTBANK_GPIO_BANKNAME) + 1];
-    strcpy(nameCopy, OUTPUTBANK_GPIO_BANKNAME);
+char* OutputBankAVRIO::getName(void) {
+    char* nameCopy = new char[strlen(OUTPUTBANK_AVRIO_BANKNAME) + 1];
+    strcpy(nameCopy, OUTPUTBANK_AVRIO_BANKNAME);
     return nameCopy;
 }
 
-OutputBankType OutputBankGPIO::getType(void) {
-    return OUTPUTBANK_TYPE_GPIO;
+OutputBankType OutputBankAVRIO::getType(void) {
+    return OUTPUTBANK_TYPE_AVRIO;
 }
 
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)
+#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_AVRIO)

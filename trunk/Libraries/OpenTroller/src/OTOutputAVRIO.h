@@ -19,38 +19,36 @@
 
 
 */
-#ifndef OT_OUTPUTBANK_GPIO_H
-#define OT_OUTPUTBANK_GPIO_H
+#ifndef OT_OUTPUT_AVRIO_H
+#define OT_OUTPUT_AVRIO_H
 
 #include "OT_HWProfile.h"
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)
+#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_AVRIO)
 
 #include <stdint.h>
-#include "OTOutputBank.h"
+#include "OpenTroller.h"
+#include "OTOutput.h"
+#include "OT_AVRIO.h"
 
 namespace OpenTroller{
 
-class Output;
-class OutputGPIO;
+class OutputBankAVRIO;
 
 /**
-  * This class represents an output bank tied to GPIO (general purpose input output) pins.
+  * An output provided by an AVR microcontroller GPIO (general purpose input/output) pin.
   */
-class OutputBankGPIO: public OutputBank {
+class OutputAVRIO: public Output {
     private:
-        OutputGPIO* outputs;
+        AVRIO outputPin;
+        uint8_t err;
 
     public:
-        OutputBankGPIO(uint8_t pinCount);
-        virtual ~OutputBankGPIO(void);
-        virtual Output* getOutput(uint8_t index);
-        void setup(uint8_t index, uint8_t digPinNum);
-        virtual char* getName(void);
-        virtual OutputBankType getType(void);
-        virtual void update(void) { }
-        friend class OutputGPIO;
+        OutputAVRIO(void);
+        void setup(OutputBankAVRIO* outputBank, uint8_t anIndex, uint8_t digitalPinNum);
+        virtual void setState(State newState);
+        virtual State getState(void);
 };
 
 } //namespace OpenTroller
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)
-#endif //ifndef OT_OUTPUTBANK_GPIO_H
+#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_AVRIO)
+#endif //ifndef OT_OUTPUT_AVRIO_H

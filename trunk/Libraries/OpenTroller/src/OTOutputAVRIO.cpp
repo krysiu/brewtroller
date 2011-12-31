@@ -19,36 +19,33 @@
 
 
 */
-#ifndef OT_OUTPUT_GPIO_H
-#define OT_OUTPUT_GPIO_H
+#include "OTOutputAVRIO.h"
+#include "OTOutputBankAVRIO.h"
 
-#include "OT_HWProfile.h"
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)
+#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_AVRIO)
+using namespace OpenTroller;
 
-#include <stdint.h>
-#include "OpenTroller.h"
-#include "OTOutput.h"
-#include "OT_AVRIO.h"
+OutputAVRIO::OutputAVRIO(void) {
+    bank = NULL;
+}
 
-namespace OpenTroller{
+void OutputAVRIO::setup(OutputBankAVRIO* outputBank, uint8_t anIndex, uint8_t digitalPinNum) {
+    bank = outputBank;
+    index = anIndex;
+    outputPin.setup(digitalPinNum, OUTPUT);
+    outputPin.clear();
+    err = 0;
+}
 
-class OutputBankGPIO;
+void OutputAVRIO::setState(State newState) {
+    if(state != newState) {
+        state = newState;
+        outputPin.set(state);
+    }
+}
 
-/**
-  * A GPIO (general purpose input/output) output.
-  */
-class OutputGPIO: public Output {
-    private:
-        AVRIO outputPin;
-        uint8_t err;
+State OutputAVRIO::getState(void) {
+    return outputPin.get() ? State_LOW : State_HIGH;
+}
 
-    public:
-        OutputGPIO(void);
-        void setup(OutputBankGPIO* outputBank, uint8_t anIndex, uint8_t digitalPinNum);
-        virtual void setState(State newState);
-        virtual State getState(void);
-};
-
-} //namespace OpenTroller
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)
-#endif //ifndef OT_OUTPUT_GPIO_H
+#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_AVRIO)

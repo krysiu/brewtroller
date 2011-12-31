@@ -32,7 +32,7 @@ namespace OpenTroller{
 class Output;
 
 typedef enum {
-    OUTPUTBANK_TYPE_GPIO,
+    OUTPUTBANK_TYPE_AVRIO,
     OUTPUTBANK_TYPE_MUX,
     OUTPUTBANK_TYPE_MODBUS,
     OUTPUTBANK_TYPE_GROUPS

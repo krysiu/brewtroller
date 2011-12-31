@@ -93,7 +93,7 @@ uint8_t LCDI2C::getContrast(void) {
     if (Wire.available()) return Wire.receive();
 }
 
-//Create the appropriate 'LCD' object for the hardware configuration (4-Bit GPIO, I2C)
+//Create the appropriate 'LCD' object for the hardware configuration (4-Bit AVRIO, I2C)
 OpenTroller::LCDI2C OpenTroller::LCD(UI_LCD_I2CADDR);
 #endif
 

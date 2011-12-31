@@ -36,12 +36,12 @@ set(${LibraryName}_HDRS
     OTOutput.h
     OTOutputs.h
     OTOutputGroup.h
-    OTOutputGPIO.h
+    OTOutputAVRIO.h
     OTOutputModbus.h
     OTOutputMux.h
     OTOutputBank.h
     OTOutputBankGroups.h
-    OTOutputBankGPIO.h
+    OTOutputBankAVRIO.h
     OTOutputBankModbus.h
     OTOutputBankMux.h
 )
@@ -68,12 +68,12 @@ set(${LibraryName}_SRCS
     OTOutput.cpp
     OTOutputs.cpp
     OTOutputGroup.cpp
-    OTOutputGPIO.cpp
+    OTOutputAVRIO.cpp
     OTOutputModbus.cpp
     OTOutputMux.cpp
 	OTOutputBank.cpp
     OTOutputBankGroups.cpp
-    OTOutputBankGPIO.cpp
+    OTOutputBankAVRIO.cpp
     OTOutputBankModbus.cpp
     OTOutputBankMux.cpp
 )

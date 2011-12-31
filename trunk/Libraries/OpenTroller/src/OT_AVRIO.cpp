@@ -1,6 +1,6 @@
 /***********************************************************
 
-  FastPin Library
+  AVR Fast Access I/O Class
 
   Copyright (C) 2009-2011 Matt Reba, Jermeiah Dillingham
 
@@ -45,8 +45,8 @@
 // ToDo: remove if else method of get after testing
 
 #include <pins_arduino.h>
-#include "OT_Pin.h"
-
+#include "OT_AVRIO.h"
+#include "OT_HWProfile.h"
 
 // Documentation on the PinChangeInt library indicated that using pointers was faster
 //  and consumed less memory that using arrays and for loops. To compare, a second 
@@ -98,7 +98,7 @@ PCI_Port PCI_Port::s_pcIntPorts[] = {
 
 // pin constructors
 //
-pin::pin(void)
+AVRIO::AVRIO(void)
 {
 	_pinID  = 0;
 	_dir    = INPUT;
@@ -106,13 +106,13 @@ pin::pin(void)
   _port   = NOT_A_PORT;
 }
 
-pin::pin(byte pinID)
+AVRIO::AVRIO(byte pinID)
 {
 	_dir  = INPUT;
 	setup(pinID, INPUT);
 }
 
-pin::pin(byte pinID, byte pinDir)
+AVRIO::AVRIO(byte pinID, byte pinDir)
 {
 	setup(pinID, pinDir);
 }
@@ -121,7 +121,7 @@ pin::pin(byte pinID, byte pinDir)
 // set/change configuration
 //
 
-void pin::setup(byte pinID, byte pinDir)
+void AVRIO::setup(byte pinID, byte pinDir)
 {
   if( pinID > MAX_PIN)
   {
@@ -142,24 +142,24 @@ void pin::setup(byte pinID, byte pinDir)
     *pDDRx &= ~_mask;
 }
 
-void pin::setPin(byte pinID)
+void AVRIO::setPin(byte pinID)
 {
 	_pinID = pinID;
 	setup(_pinID, _dir);
 }
 
-void pin::setDir(byte pinDir)
+void AVRIO::setDir(byte pinDir)
 {
 	_dir = pinDir;
 	setup(_pinID, _dir);
 }
 
 
-// set/get pin value
+// set/get value
 //
 // Original code used large switch statements to select the proper port. Before committing
 //  to this approach for this update, a couple of other methods were tried. One was to 
-//  create a member variable for each pin object that contain a reference to the PIN 
+//  create a member variable for each object that contain a reference to the PIN 
 //  register. The second was to lookup the PIN register each time using the methods defined
 //  in pins_arduino.h. Results:
 //
@@ -174,7 +174,7 @@ void pin::setDir(byte pinDir)
 //  bytes, but the worst case switch time was 38 cycles.
 //
 
-void pin::set(void)
+void AVRIO::set(void)
 {
 	switch(_port)
 	{
@@ -196,7 +196,7 @@ void pin::set(void)
   }
 }
 
-void pin::clear(void)
+void AVRIO::clear(void)
 {
 	switch(_port)
 	{
@@ -218,7 +218,7 @@ void pin::clear(void)
   }
 }
 
-void pin::toggle(void)
+void AVRIO::toggle(void)
 {
 	switch(_port)
 	{
@@ -240,7 +240,7 @@ void pin::toggle(void)
   }
 }
 
-void pin::set(byte state)
+void AVRIO::set(byte state)
 {
 	if(state == HIGH) 
     set();
@@ -248,25 +248,7 @@ void pin::set(byte state)
     clear();
 }
 
-//bool pin::get(void)
-//{
-//  if (_port == PA)       return((PINA & _mask)?0xFF:0x0);
-//  else if (_port == PB)  return((PINB & _mask)?0xFF:0x0);
-//  else if (_port == PC)  return((PINC & _mask)?0xFF:0x0);
-//  else if (_port == PD)  return((PIND & _mask)?0xFF:0x0);  
-//#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-//  else if (_port == PE)  return((PINE & _mask)?0xFF:0x0);
-//  else if (_port == PF)  return((PINF & _mask)?0xFF:0x0);
-//  else if (_port == PG)  return((PING & _mask)?0xFF:0x0);
-//  else if (_port == PH)  return((PINH & _mask)?0xFF:0x0);  
-//  else if (_port == PJ)  return((PINJ & _mask)?0xFF:0x0);
-//  else if (_port == PK)  return((PINK & _mask)?0xFF:0x0);
-//  else if (_port == PL)  return((PINL & _mask)?0xFF:0x0);
-//#endif
-//  return 0;
-//}
-
-bool pin::get(void)
+bool AVRIO::get(void)
 {
 	switch(_port)
 	{
@@ -306,7 +288,7 @@ bool pin::get(void)
 //    -1 - UserFunc is null (bad call)
 //   >=0 - index of s_pcIntPins slot used
 //
-int pin::attachPCInt(int mode, PCIntvoidFuncPtr userFunc)
+int AVRIO::attachPCInt(int mode, PCIntvoidFuncPtr userFunc)
 {
   // NULL function?
   if (userFunc == NULL)
@@ -331,7 +313,7 @@ int pin::attachPCInt(int mode, PCIntvoidFuncPtr userFunc)
 
 // detach a PinChange interrupt
 //
-bool pin::detachPCInt()
+bool AVRIO::detachPCInt()
 {
   byte pciInfo = digitalPinToPCINT(_pinID);
   if (pciInfo == NO_PCINT)
