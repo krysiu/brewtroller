@@ -4,7 +4,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include "WProgram.h"
-#include "OT_pin.h"
+#include "OT_AVRIO.h"
 
 using namespace OpenTroller;
 

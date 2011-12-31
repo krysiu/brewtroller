@@ -6,71 +6,87 @@ Opentroller BX1 Hardware Configuration
 #define OT_HWPROFILE_H
 #include <WProgram.h>
 
-  #define OPENTROLLER_ENCODER
-  #define ENCODER_AVRIO
-  #define ENCODER_TYPE ALPS
-  #define ENCA_PIN 3
-  #define ENCB_PIN 2
-  #define ENTER_PIN 1
-  
-  //Creates OpenTroller::Outputs Container Object and classes for Outputs and OutputBanks
-  #define OPENTROLLER_OUTPUTS
-  #define OUTPUTS_MAXBANKS 16  
-  
-  #define OUTPUTBANK_GPIO
-  #define OUTPUTBANK_GPIO_BANKNAME "BX1 Outputs"
-  #define OUTPUTBANK_GPIO_COUNT 6
-  #define OUTPUTBANK_GPIO_PINS { 22, 21, 20, 19, 18, 15 }
-  
-  #define OUTPUTBANK_MODBUS
-  #define OUTPUTBANK_GROUPS
-  
+#define OPENTROLLER_ENCODER
+#define ENCODER_AVRIO
+#define ENCODER_TYPE ALPS
+#define ENCA_PIN 3
+#define ENCB_PIN 2
+#define ENTER_PIN 1
+
+//Creates OpenTroller::Outputs Container Object and classes for Outputs and OutputBanks
+#define OPENTROLLER_OUTPUTS
+#define OUTPUTS_MAXBANKS 16  
+
+#define OUTPUTBANK_GPIO
+#define OUTPUTBANK_GPIO_BANKNAME "BX1 Outputs"
+#define OUTPUTBANK_GPIO_COUNT 6
+#define OUTPUTBANK_GPIO_PINS { 22, 21, 20, 19, 18, 15 }
+
+#define OUTPUTBANK_MODBUS
+#define OUTPUTBANK_GROUPS
+
 //  #define OPENTROLLER_INPUTBANKS
 //  #define INPUTBANK_MAXBANKS 16
-  
-  //Need Pin Numbers for Input Expansion
-  //#define INPUTBANK_GPIO
-  //#define INPUTBANK_GPIO_BANKNAME "BX1 Inputs"
-  //#define INPUTBANK_GPIO_COUNT 4
-  //#define INPUTBANK_GPIO_PINS { 22, 21, 20, 19 }
-  
-  //#define INPUTBANK_MODBUS
-	
-  #define ANALOGINPUTBANK_GPIO
-  #define ANALOGINPUTBANK_GPIO_BANKNAME "BX1 Analogs"
-  #define ANALOGINPUTBANK_GPIO_COUNT 4
-  #define ANALOGINPUTBANK_GPIO_PINS { 3, 2, 1, 0 }
-  #define ANALOGINPUTBANK_GPIO_PIN1  3
-  #define ANALOGINPUTBANK_GPIO_PIN2  2
-  #define ANALOGINPUTBANK_GPIO_PIN3  1
-  #define ANALOGINPUTBANK_GPIO_PIN4  0
-  
-  #define OPENTROLLER_STATUSLED
-  #define STATUSLED_PIN 0
-  #define STATUSLED_INTERVAL 750
-  #define STATUSLED_BLINKONTIME 250
-  #define STATUSLED_BLINKOFFTIME 1000
-  
-  #define OPENTROLLER_LCD4BIT
-  #define OPENTROLLER_LCD_COLS 20
-  #define OPENTROLLER_LCD_ROWS 4
-  #define LCD_RS_PIN 4
-  #define LCD_ENABLE_PIN 23
-  #define LCD_DATA4_PIN 28
-  #define LCD_DATA5_PIN 29
-  #define LCD_DATA6_PIN 30
-  #define LCD_DATA7_PIN 31
-  #define UI_DISPLAY_SETUP
-  #define LCD_BRIGHT_PIN 13
-  #define LCD_CONTRAST_PIN 14
-  #define LCD_DEFAULTBRIGHT 200
-  #define LCD_DEFAULTCONTRAST 100
 
-  #define RS485_SERIAL_PORT  1
-  #define RS485_RTS_PIN	     12
-  #define RS485_BAUDRATE    76800
-  #define RS485_PARITY  'e' //'e'ven, 'o'dd, 'n'one
- 
+//Need Pin Numbers for Input Expansion
+//#define INPUTBANK_GPIO
+//#define INPUTBANK_GPIO_BANKNAME "BX1 Inputs"
+//#define INPUTBANK_GPIO_COUNT 4
+//#define INPUTBANK_GPIO_PINS { 22, 21, 20, 19 }
+
+//#define INPUTBANK_MODBUS
+
+/**
+  * AVRIO Pin Change Interrupt Optimizations
+  */
+// Uncomment the line below to limit the Pin Change handler to servicing a single interrupt
+//#define	DISABLE_PCINT_MULTI_SERVICE
+
+// Define the value MAX_PIN_CHANGE_PINS to limit the number of pins that may be configured for PCINT
+#define	MAX_PIN_CHANGE_PINS 8
+
+// Declare PCINT ports without pin change interrupts used
+//#define	NO_PCINT0_PINCHANGES 1
+//#define	NO_PCINT1_PINCHANGES 1
+//#define	NO_PBINC2_PINCHANGES 1
+//#define	NO_PCINT3_PINCHANGES 1
+
+
+#define ANALOGINPUTBANK_GPIO
+#define ANALOGINPUTBANK_GPIO_BANKNAME "BX1 Analogs"
+#define ANALOGINPUTBANK_GPIO_COUNT 4
+#define ANALOGINPUTBANK_GPIO_PINS { 3, 2, 1, 0 }
+#define ANALOGINPUTBANK_GPIO_PIN1  3
+#define ANALOGINPUTBANK_GPIO_PIN2  2
+#define ANALOGINPUTBANK_GPIO_PIN3  1
+#define ANALOGINPUTBANK_GPIO_PIN4  0
+
+#define OPENTROLLER_STATUSLED
+#define STATUSLED_PIN 0
+#define STATUSLED_INTERVAL 750
+#define STATUSLED_BLINKONTIME 250
+#define STATUSLED_BLINKOFFTIME 1000
+
+#define OPENTROLLER_LCD4BIT
+#define OPENTROLLER_LCD_COLS 20
+#define OPENTROLLER_LCD_ROWS 4
+#define LCD_RS_PIN 4
+#define LCD_ENABLE_PIN 23
+#define LCD_DATA4_PIN 28
+#define LCD_DATA5_PIN 29
+#define LCD_DATA6_PIN 30
+#define LCD_DATA7_PIN 31
+#define UI_DISPLAY_SETUP
+#define LCD_BRIGHT_PIN 13
+#define LCD_CONTRAST_PIN 14
+#define LCD_DEFAULTBRIGHT 200
+#define LCD_DEFAULTCONTRAST 100
+
+#define RS485_SERIAL_PORT  1
+#define RS485_RTS_PIN	     12
+#define RS485_BAUDRATE    76800
+#define RS485_PARITY  'e' //'e'ven, 'o'dd, 'n'one
+
 //**********************************************************************************
 // OneWire Temperature Sensor Options
 //**********************************************************************************

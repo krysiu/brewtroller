@@ -23,7 +23,7 @@
 #define OT_STATUS_H
 
 #include "OT_HWProfile.h"
-#include "OT_Pin.h"
+#include "OT_AVRIO.h"
 
 
 namespace OpenTroller {
@@ -33,7 +33,7 @@ namespace OpenTroller {
         uint32_t _hbStart;
         uint16_t _interval;
         uint8_t _blinks;
-        pin _hbPin;
+        AVRIO _hbPin;
 
       public:
         void init();

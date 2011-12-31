@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 #include "Print.h"
-#include "OT_Pin.h"
+#include "OT_AVRIO.h"
 
 // commands
 #define LCD_CLEARDISPLAY 0x01
@@ -95,10 +95,10 @@ namespace OpenTroller {
 	  uint8_t _enable_pin; // activated by a HIGH pulse.
 	  uint8_t _data_pins[8];
 	*/
-	  pin _rs_pin;
-	  pin _rw_pin;
-	  pin _enable_pin;
-	  pin _data_pins[8];
+	  AVRIO _rs_pin;
+	  AVRIO _rw_pin;
+	  AVRIO _enable_pin;
+	  AVRIO _data_pins[8];
 
 	  uint8_t _displayfunction;
 	  uint8_t _displaycontrol;

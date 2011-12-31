@@ -34,7 +34,7 @@
 #define ENTER_LONG_PUSH	1000
 
 #include <WProgram.h>
-#include "OT_Pin.h"
+#include "OT_AVRIO.h"
 #include "OT_HWProfile.h"
 
 //ISR wrappers
@@ -69,9 +69,9 @@ namespace OpenTroller {
     #ifdef ENCODER_AVRIO
     class encoderAVRIO : public encoder_Generic {
       private:
-		pin   _aPin;
-		pin   _bPin;
-		pin   _ePin;
+		AVRIO   _aPin;
+		AVRIO   _bPin;
+		AVRIO   _ePin;
 
 		byte  _intA;
 		byte  _intE;
