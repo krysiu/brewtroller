@@ -40,9 +40,14 @@ uint8_t Output::getErr(void) {
     return err;
 }
 
+/**
+  * Default naming of outputs based on index. Some output classes will override this to provide detailed names (eg. outputGroup)
+  */
 char* Output::getName(void) {
-    char* theName = new char[8];
-    strcpy(theName, "NOT_SET");
+    char theIndex[4];
+	char* theName = new char[11];
+    strcpy(theName, "Output ");
+	strcat(theName, itoa(index + 1, theIndex, 10));
     return theName;
 }
 

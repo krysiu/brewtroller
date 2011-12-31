@@ -39,9 +39,7 @@ class OutputMODBUS: public Output {
         OutputMODBUS(void);
         void setup(OutputBankMODBUS* outputBank, uint8_t bankCount);
         virtual void setState(State newState);
-        virtual State getState(void);
         virtual uint8_t getErr(void);
-        virtual char* getName(void);
 };
 
 } //namespace OpenTroller

@@ -56,7 +56,6 @@ class OutputBank {
         uint8_t getCount(void);
         virtual Output* getOutput(uint8_t index) = 0;
         virtual char* getName(void) = 0;
-        virtual char* getOutputName(uint8_t index);
         virtual OutputBankType getType(void) = 0;
         virtual void update(void) = 0;
 };

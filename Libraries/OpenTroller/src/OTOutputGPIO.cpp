@@ -47,15 +47,4 @@ State OutputGPIO::getState(void) {
     return outputPin.get() ? State_LOW : State_HIGH;
 }
 
-//TODO: I should not need these next two methods, but, withoput them, the app will not link.
-uint8_t OutputGPIO::getErr(void) {
-    return err;
-}
-
-char* OutputGPIO::getName(void) {
-    char* theName = new char[8];
-    strcpy(theName, "NOT_SET");
-    return theName;
-}
-
 #endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)

@@ -47,7 +47,6 @@ class OutputBankGPIO: public OutputBank {
         virtual Output* getOutput(uint8_t index);
         void setup(uint8_t index, uint8_t digPinNum);
         virtual char* getName(void);
-        virtual char* getOutputName(uint8_t index);
         virtual OutputBankType getType(void);
         virtual void update(void) { }
         friend class OutputGPIO;
