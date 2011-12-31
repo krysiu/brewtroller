@@ -25,7 +25,7 @@
 #include <stdint.h>
 
 /**
-  * An enum used to describe the state of a pin. Uses defines from wiring.h
+  * An enum used to describe the state of an output.
   */
 typedef enum {
     State_LOW = 0, /*!< The state is LOW */

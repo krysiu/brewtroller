@@ -25,7 +25,6 @@
 #include "OT_HWProfile.h"
 #ifdef OPENTROLLER_OUTPUTS
 
-#include "OTOutput.h"
 #include <stdint.h>
 
 namespace OpenTroller{
@@ -50,9 +49,12 @@ class OutputBank {
         uint8_t count; /*<! The number of outputs in this bank. */
 
     public:
-        //OutputBank(void);
-        //~OutputBank(void);
-
+		//TODO: These keep throwing errors: undefined reference to `__cxa_pure_virtual'
+		/*
+        OutputBank(void);
+        ~OutputBank(void);
+		*/
+		
         uint8_t getCount(void);
         virtual Output* getOutput(uint8_t index) = 0;
         virtual char* getName(void) = 0;

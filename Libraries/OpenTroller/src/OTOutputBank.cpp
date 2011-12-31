@@ -23,8 +23,11 @@
 
 #ifdef OPENTROLLER_OUTPUTS
 
+#include "OTOutput.h"
+
 using namespace OpenTroller;
 
+//TODO: These keep throwing errors: undefined reference to `__cxa_pure_virtual'
 /*
 OutputBank::OutputBank() {
 

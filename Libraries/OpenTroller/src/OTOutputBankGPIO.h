@@ -27,11 +27,10 @@
 
 #include <stdint.h>
 #include "OTOutputBank.h"
-#include "OTOutput.h"
-#include "OTOutputGPIO.h"
 
 namespace OpenTroller{
 
+class Output;
 class OutputGPIO;
 
 /**

@@ -29,7 +29,6 @@
 #include "OpenTroller.h"
 #include "OTOutput.h"
 #include "OT_Pin.h"
-#include "OTOutputBankGPIO.h"
 
 namespace OpenTroller{
 

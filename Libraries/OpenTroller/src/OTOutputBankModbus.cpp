@@ -20,6 +20,7 @@
 
 */
 #include "OTOutputBankModbus.h"
+#include "OTOutputModbus.h"
 
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MODBUS)
 #define BIT_TO_BYTE_COUNT(x) (x + 7)>>3
@@ -42,6 +43,10 @@ OutputBankMODBUS::OutputBankMODBUS(uint8_t slaveAddr, unsigned int coilReg, uint
     for (uint8_t i = 0; i < count; i++) {
         outputs[i].setup(this, i);
     }
+}
+
+OutputBankMODBUS::~OutputBankMODBUS(void){
+	
 }
 
 Output* OutputBankMODBUS::getOutput(uint8_t index) {
