@@ -39,7 +39,7 @@ void stack::init() {
 		OpenTroller::LCD.begin(OPENTROLLER_LCD_COLS, OPENTROLLER_LCD_ROWS);
 	#endif
 	
-    #ifdef OPENTROLLER_ENCODER_GPIO
+    #ifdef OPENTROLLER_ENCODER_AVRIO
 		OpenTroller::Encoder.begin(ENCODER_TYPE, ENTER_PIN, ENCA_PIN, ENCB_PIN);
 	#endif
 	

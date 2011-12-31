@@ -79,7 +79,7 @@ uint8_t LCD4Bit::getBright(void) { return bright; }
 uint8_t LCD4Bit::getContrast(void) { return contrast; }
 
 
-//Create the appropriate 'LCD' object for the hardware configuration (4-Bit GPIO, I2C)
+//Create the appropriate 'LCD' object for the hardware configuration (4-Bit AVRIO, I2C)
   #ifndef UI_DISPLAY_SETUP
     OpenTroller::LCD4Bit OpenTroller::LCD(LCD_RS_PIN,
                                           LCD_ENABLE_PIN,

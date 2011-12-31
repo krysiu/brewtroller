@@ -1,41 +1,44 @@
 /***********************************************************
 
-  FastPin Library
+  AVR Fast Access I/O Class
 
-  Copyright (C) 2009-2011 Matt Reba, Jermeiah Dillingham
+  Copyright (C) 2009-2011 Jason Vreeland, Matt Reba, Tom Harkaway
 
-    This file is part of BrewTroller.
+    This file is part of OpenTroller Framework.
 
-    BrewTroller is free software: you can redistribute it and/or modify
+    OpenTroller Framework is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    BrewTroller is distributed in the hope that it will be useful,
+    OpenTroller Framework is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with BrewTroller.  If not, see <http://www.gnu.org/licenses/>.
+    along with OpenTroller Framework.  If not, see <http://www.gnu.org/licenses/>.
 
-    Documentation, Forums and more information available at http://www.brewtroller.com
+    More information available at https://launchpad.net/opentroller-framework/
 
-    Original Author:
-    Modified By:      Tom Harkaway, Feb, 2011
+    Original Author (FastPin Library):  Jason Vreeland
 
-    Modifications:
+	Modified By:      Tom Harkaway, Feb, 2011
+	Modifications:
+		Generalize FastPin library so that it can be used on Arduino platforms, specifically
+		the Arduino Mega.
 
-      Generalize FastPin library so that it can be used on Arduino platforms, specifically
-      the Arduino Mega.
-
-      Incorporate PinChange interrupt (PCInt) support. On the BrewTroller, all 32 pins can
-      be configured as PCInt pins. That is not true of other Arduino platforms, such as 
-      the Adrunio Mega.
+		Incorporate PinChange interrupt (PCInt) support. On the BrewTroller, all 32 pins can
+		be configured as PCInt pins. That is not true of other Arduino platforms, such as 
+		the Adrunio Mega.
+	
+	Modified By:	Matt Reba, Dec, 2011
+	Modifications:
+		Incorporated into OpenTroller Framework as AVR Fast Access I/O Class (AVRIO)
 */
 
-#ifndef _OT_PIN_H
-#define _OT_PIN_H
+#ifndef _OT_AVRIO_H
+#define _OT_AVRIO_H
 
 // Uncomment to add access to debug routines to Serial debug dump routines
 //#define FASTPIN_DEBUG
@@ -43,6 +46,7 @@
 #include <pins_arduino.h>
 #include <avr/io.h>
 #include <WProgram.h>
+#include "OT_HWProfile.h"
 
 #if defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)   // Sanguino
 #define MAX_PIN 31
@@ -78,21 +82,6 @@ typedef void (*PCIntvoidFuncPtr)(void);
 /********************************************************/
 // PinChange Interrupt Support Classes
 //
-
-// Uncomment the line below to limit the Pin Change handler to servicing a single interrupt
-//#define	DISABLE_PCINT_MULTI_SERVICE
-
-// Define the value MAX_PIN_CHANGE_PINS to limit the number of pins that may be configured for PCINT
-//
-#define	MAX_PIN_CHANGE_PINS 8
-
-// Declare PCINT ports without pin change interrupts used
-//
-//#define	NO_PCINT0_PINCHANGES 1
-//#define	NO_PCINT1_PINCHANGES 1
-//#define	NO_PBINC2_PINCHANGES 1
-//#define	NO_PCINT3_PINCHANGES 1
-
 
 // PCI_Port class 
 //  Manages the collection PinChangeInterrupts (PCI) for a given port. 
@@ -167,41 +156,39 @@ public:
 
 
 /********************************************************/
-// Fast Access I/O Pin Class
+// AVR Fast Access I/O Class
 //
 
-
-class pin
+class AVRIO
 {
-public:
-	pin(void);
-	pin(byte);
-	pin(byte pinID, byte pinDir);
-	void setup(byte pin, byte pinDir);
+	public:
+	AVRIO(void);
+	AVRIO(byte);
+	AVRIO(byte pinID, byte pinDir);
+	void setup(byte pinID, byte pinDir);
 
-  void setPin(byte);
-  void setDir(byte);
+	void setPin(byte);
+	void setDir(byte);
 
 	void set(byte);
 	void set(void);
 	void clear(void);
 	bool get(void);
-        void toggle(void);
-	
-  byte getPin(void)   { return _pinID; }
-  byte getDir(void)   { return _dir; }
-  byte getPort(void)  { return _port; }
-  byte getMask(void)  { return _mask; }
+	void toggle(void);
 
-  int  attachPCInt(int modePC, PCIntvoidFuncPtr userFunc);
-  bool detachPCInt();
+	byte getPin(void)   { return _pinID; }
+	byte getDir(void)   { return _dir; }
+	byte getPort(void)  { return _port; }
+	byte getMask(void)  { return _mask; }
 
-private:
+	int  attachPCInt(int modePC, PCIntvoidFuncPtr userFunc);
+	bool detachPCInt();
+
+	private:
 	byte _pinID;  // pin number
 	byte _dir;    // direction
 	byte _port;   // port ID
 	byte _mask;   // mask
-
 };
 
 

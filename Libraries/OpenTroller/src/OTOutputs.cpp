@@ -22,7 +22,7 @@
 #include "OTOutputs.h"
 #ifdef OPENTROLLER_OUTPUTS
 
-#include "OTOutputBankGPIO.h"
+#include "OTOutputBankAVRIO.h"
 #include "OTOutputBankModbus.h"
 using namespace OpenTroller;
 
@@ -43,18 +43,18 @@ outputs::~outputs(void) {
 }
 
 void outputs::init(void) {
-    //Create the appropriate output bank objects for the hardware configuration (GPIO, MUX)
+    //Create the appropriate output bank objects for the hardware configuration (AVRIO, MUX)
     //If OUTPUTBANK_GROUPS defined, add them first
     #ifdef OUTPUTBANK_GROUPS
         groups = new OutputBankGroups();
         addBank(groups);
     #endif
 
-    #ifdef OUTPUTBANK_GPIO
-        OutputBankGPIO * ptrBank = new OutputBankGPIO (OUTPUTBANK_GPIO_COUNT);
+    #ifdef OUTPUTBANK_AVRIO
+        OutputBankAVRIO * ptrBank = new OutputBankAVRIO (OUTPUTBANK_AVRIO_COUNT);
         addBank(ptrBank);
-        uint8_t pinNums[OUTPUTBANK_GPIO_COUNT] = OUTPUTBANK_GPIO_PINS;
-        for (uint8_t i = 0; i < OUTPUTBANK_GPIO_COUNT; i++) {
+        uint8_t pinNums[OUTPUTBANK_AVRIO_COUNT] = OUTPUTBANK_AVRIO_PINS;
+        for (uint8_t i = 0; i < OUTPUTBANK_AVRIO_COUNT; i++) {
             ptrBank->setup(i, pinNums[i]);
         }
     #endif
