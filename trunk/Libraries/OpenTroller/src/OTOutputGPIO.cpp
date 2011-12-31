@@ -20,7 +20,6 @@
 
 */
 #include "OTOutputGPIO.h"
-#include "OTOutputBankGPIO.h"
 
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GPIO)
 using namespace OpenTroller;

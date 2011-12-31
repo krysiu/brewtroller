@@ -20,7 +20,6 @@
 
 */
 #include "OTOutputBankModbus.h"
-#include "OTOutputModbus.h"
 
 #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MODBUS)
 #define BIT_TO_BYTE_COUNT(x) (x + 7)>>3

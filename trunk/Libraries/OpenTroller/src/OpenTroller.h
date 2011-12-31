@@ -21,7 +21,6 @@
 #ifndef OPENTROLLER_H
 #define OPENTROLLER_H
 
-#include <wiring.h>
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -29,8 +28,8 @@
   * An enum used to describe the state of a pin. Uses defines from wiring.h
   */
 typedef enum {
-    State_LOW = LOW, /*!< The state is LOW */
-    State_HIGH = HIGH /*!< The state is HIGH */
+    State_LOW = 0, /*!< The state is LOW */
+    State_HIGH = 1 /*!< The state is HIGH */
 } State;
 
 

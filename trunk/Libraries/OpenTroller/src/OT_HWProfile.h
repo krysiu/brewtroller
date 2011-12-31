@@ -6,7 +6,8 @@ Opentroller BX1 Hardware Configuration
 #define OT_HWPROFILE_H
 #include <WProgram.h>
 
-  #define OPENTROLLER_ENCODER_GPIO
+  #define OPENTROLLER_ENCODER
+  #define ENCODER_AVRIO
   #define ENCODER_TYPE ALPS
   #define ENCA_PIN 3
   #define ENCB_PIN 2
