@@ -22,6 +22,22 @@
 #ifndef OT_STACK_H
 #define OT_STACK_H
 
+#include "OT_HWProfile.h"
+#ifdef OPENTROLLER_LCD
+	#if defined LCD_4BIT
+		#include "OT_LCD4Bit.h"
+	#elif defined LCD_I2C
+		#include "OT_LCDI2C.h"
+	#endif
+#endif
+
+#ifdef OPENTROLLER_ONEWIRE
+	#if defined ONEWIRE_AVRIO
+		#include "OT_1WireAVRIO.h"
+	#elif defined ONEWIRE_DS2482
+		#include "OT_1WireDS2482.h"
+	#endif
+#endif
 
 namespace OpenTroller {
 
@@ -48,5 +64,28 @@ namespace OpenTroller {
       * The singleton instance of the framework.
       */
     extern OpenTroller::stack Stack;
+
+	#ifdef OPENTROLLER_LCD
+		//Create the appropriate global 'LCD' object depending on configuration in OT_HWProfile.h
+		#if defined LCD_4BIT
+			class LCD4Bit;
+			extern OpenTroller::LCD4Bit LCD;
+		#elif defined LCD_I2C
+			class LCDI2C;
+			extern OpenTroller::LCDI2C LCD;
+		#endif
+	#endif
+	
+	#ifdef OPENTROLLER_ONEWIRE
+		//Create the appropriate global 'LCD' object depending on configuration in OT_HWProfile.h
+		#if defined ONEWIRE_AVRIO
+			class OneWireAVRIO;
+			extern OpenTroller::OneWireAVRIO OneWire;
+		#elif defined ONEWIRE_DS2482
+			class OneWireDS2482;
+			extern OpenTroller::OneWireDS2482 OneWire;
+		#endif
+	#endif
+	
 }
 #endif // OT_STACK_H

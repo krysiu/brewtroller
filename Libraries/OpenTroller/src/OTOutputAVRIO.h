@@ -23,7 +23,7 @@
 #define OT_OUTPUT_AVRIO_H
 
 #include "OT_HWProfile.h"
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_AVRIO)
+#if defined OUTPUTBANK_AVRIO
 
 #include <stdint.h>
 #include "OpenTroller.h"
@@ -50,5 +50,5 @@ class OutputAVRIO: public Output {
 };
 
 } //namespace OpenTroller
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_AVRIO)
+#endif // #if defined OUTPUTBANK_AVRIO
 #endif //ifndef OT_OUTPUT_AVRIO_H

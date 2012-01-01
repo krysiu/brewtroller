@@ -22,7 +22,7 @@
 #include "OTOutputAVRIO.h"
 #include "OTOutputBankAVRIO.h"
 
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_AVRIO)
+#if defined OUTPUTBANK_AVRIO
 using namespace OpenTroller;
 
 OutputAVRIO::OutputAVRIO(void) {
@@ -48,4 +48,4 @@ State OutputAVRIO::getState(void) {
     return outputPin.get() ? State_LOW : State_HIGH;
 }
 
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_AVRIO)
+#endif // #if defined OUTPUTBANK_AVRIO

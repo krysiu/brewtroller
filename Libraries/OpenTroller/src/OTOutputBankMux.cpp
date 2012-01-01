@@ -21,7 +21,7 @@
 */
 #include "OTOutputBankMux.h"
 
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MUX)
+#if defined OUTPUTBANK_MUX
 using namespace OpenTroller;
 
 OutputBankMUX::OutputBankMUX(uint8_t latchPin,
@@ -108,4 +108,4 @@ OutputBankType OutputBankMUX::getType(void) {
 }
 
 
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MUX)
+#endif // #if defined OUTPUTBANK_MUX

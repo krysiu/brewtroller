@@ -20,9 +20,9 @@
 
 */
 
-#include "OT_LCD.h"
+#include "OT_LCD4Bit.h"
 
-#ifdef OPENTROLLER_LCD4BIT
+#if (defined OPENTROLLER_LCD && defined LCD_4BIT)
 
 using namespace OpenTroller;
 
@@ -48,8 +48,8 @@ void LCD4Bit::init() {
     TCCR2B = 0x01;
     pinMode(brightPin, OUTPUT);
     pinMode(contrastPin, OUTPUT);
-    setBright(LCD_DEFAULTBRIGHT);
-    setContrast(LCD_DEFAULTCONTRAST);
+    setBright(LCD4BIT_DEFAULTBRIGHT);
+    setContrast(LCD4BIT_DEFAULTCONTRAST);
     _lcd->begin(columns, rows);
 }
 
@@ -78,25 +78,5 @@ void LCD4Bit::setContrast(uint8_t val) {
 uint8_t LCD4Bit::getBright(void) { return bright; }
 uint8_t LCD4Bit::getContrast(void) { return contrast; }
 
-
-//Create the appropriate 'LCD' object for the hardware configuration (4-Bit AVRIO, I2C)
-  #ifndef UI_DISPLAY_SETUP
-    OpenTroller::LCD4Bit OpenTroller::LCD(LCD_RS_PIN,
-                                          LCD_ENABLE_PIN,
-                                          LCD_DATA4_PIN,
-                                          LCD_DATA5_PIN,
-                                          LCD_DATA6_PIN,
-                                          LCD_DATA7_PIN);
-  #else
-    OpenTroller::LCD4Bit OpenTroller::LCD(LCD_RS_PIN,
-                                          LCD_ENABLE_PIN,
-                                          LCD_DATA4_PIN,
-                                          LCD_DATA5_PIN,
-                                          LCD_DATA6_PIN,
-                                          LCD_DATA7_PIN,
-                                          LCD_BRIGHT_PIN,
-                                          LCD_CONTRAST_PIN);
-  #endif // UI_DISPLAY_SETUP
-
-#endif // OPENTROLLER_LCD4BIT
+#endif //if (defined OPENTROLLER_LCD && defined LCD_4BIT)
 

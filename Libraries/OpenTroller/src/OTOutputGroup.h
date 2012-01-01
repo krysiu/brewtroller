@@ -23,7 +23,7 @@
 #define OT_OUTPUT_GROUP_H
 
 #include "OT_HWProfile.h"
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
+#if defined OUTPUTBANK_GROUPS
 
 #include <stdint.h>
 #include "OpenTroller.h"
@@ -47,5 +47,5 @@ class OutputGroup : public Output {
 };
 
 } //namespace OpenTroller
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
+#endif // #if defined OUTPUTBANK_GROUPS
 #endif //ifndef OT_OUTPUT_GROUP_H

@@ -21,7 +21,7 @@
 */
 #include "OTOutputMux.h"
 
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MUX)
+#if defined OUTPUTBANK_MUX
 using namespace OpenTroller;
 
 OutputMUX::OutputMUX(void) {
@@ -47,4 +47,4 @@ uint8_t OutputMUX::getErr(void) {
 }
 
 
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MUX)
+#endif // #if defined OUTPUTBANK_MUX

@@ -29,21 +29,26 @@
 #define FALSE 0
 #define TRUE  1
 
-class OneWire_Generic
-{
-  public:
-    virtual uint8_t reset(void) = 0;
-    virtual void select( uint8_t rom[8]) = 0;
-    virtual void skip(void) = 0;
-    virtual void write(uint8_t v, uint8_t power = 0) = 0;
-    virtual uint8_t read(void) = 0;
-    //virtual void write_bit(uint8_t v) = 0;
-    virtual uint8_t read_bit(void) = 0;
-    //virtual void depower(void) = 0;
-    virtual void reset_search() = 0;
-    virtual uint8_t search(uint8_t *newAddr) = 0;
-    virtual uint8_t crc8( uint8_t *addr, uint8_t len) = 0;
-    //virtual static unsigned short crc16(unsigned short *data, unsigned short len) = 0;
-};
-
+namespace OpenTroller {
+	/**
+	  * Generic 1-Wire Bus Class provides communication for other 1-Wire device objects
+	  * This class is a pure virtual superclass; subclasses must implement full functionality.
+	  */
+	class OneWire_Generic
+	{
+	  public:
+		virtual uint8_t reset(void) = 0;
+		virtual void select( uint8_t rom[8]) = 0;
+		virtual void skip(void) = 0;
+		virtual void write(uint8_t v, uint8_t power = 0) = 0;
+		virtual uint8_t read(void) = 0;
+		//virtual void write_bit(uint8_t v) = 0;
+		virtual uint8_t read_bit(void) = 0;
+		//virtual void depower(void) = 0;
+		virtual void reset_search() = 0;
+		virtual uint8_t search(uint8_t *newAddr) = 0;
+		virtual uint8_t crc8( uint8_t *addr, uint8_t len) = 0;
+		//virtual static unsigned short crc16(unsigned short *data, unsigned short len) = 0;
+	};
+}
 #endif

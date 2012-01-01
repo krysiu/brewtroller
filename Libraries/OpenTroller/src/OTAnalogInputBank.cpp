@@ -19,21 +19,12 @@
 
 
 */
-#include "OTOutputBank.h"
-#include "OTOutput.h"
+#include "OTAnalogInputBank.h"
+#include "OTAnalogInput.h"
 
 using namespace OpenTroller;
 
-//TODO: These keep throwing errors: undefined reference to `__cxa_pure_virtual'
-/*
-OutputBank::OutputBank() {
-
-}
-OutputBank::~OutputBank() {
-
-}
-*/
-
-uint8_t OutputBank::getCount(void) {
+uint8_t AnalogInputBank::getCount(void) {
     return count;
 }
+

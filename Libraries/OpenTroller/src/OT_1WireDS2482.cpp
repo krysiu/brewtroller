@@ -32,6 +32,7 @@ Updates:
 #define PTR_READ 0xe1
 #define PTR_CONFIG 0xc3
 
+using namespace OpenTroller;
 
 OneWireDS2482::OneWireDS2482(uint8_t addr)
 {

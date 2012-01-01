@@ -20,8 +20,8 @@
 
 */
 
-#include "OT_LCD.h"
-#ifdef OPENTROLLER_LCDI2C
+#include "OT_LCDI2C.h"
+#if (defined OPENTROLLER_LCD && defined LCD_I2C)
 using namespace OpenTroller;
 
 LCDI2C::LCDI2C(uint8_t addr) { i2cLCDAddr = addr; }
@@ -93,7 +93,5 @@ uint8_t LCDI2C::getContrast(void) {
     if (Wire.available()) return Wire.receive();
 }
 
-//Create the appropriate 'LCD' object for the hardware configuration (4-Bit AVRIO, I2C)
-OpenTroller::LCDI2C OpenTroller::LCD(UI_LCD_I2CADDR);
-#endif
+#endif //if (defined OPENTROLLER_LCD && defined LCD_I2C)
 
