@@ -22,7 +22,7 @@
 #include "OTOutputBankModbus.h"
 #include "OTOutputModbus.h"
 
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MODBUS)
+#if defined OUTPUTBANK_MODBUS
 #define BIT_TO_BYTE_COUNT(x) (x + 7)>>3
 
 using namespace OpenTroller;
@@ -88,4 +88,4 @@ OutputBankType OutputBankMODBUS::getType(void) {
     return OUTPUTBANK_TYPE_MODBUS;
 }
 
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MODBUS)
+#endif // #if defined OUTPUTBANK_MODBUS

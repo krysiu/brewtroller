@@ -23,7 +23,7 @@
 #define OT_OUTPUT_MODBUS_H
 #include "OT_HWProfile.h"
 
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MODBUS)
+#if defined OUTPUTBANK_MODBUS
 
 #include <stdint.h>
 #include "OpenTroller.h"
@@ -42,5 +42,5 @@ class OutputMODBUS: public Output {
 };
 
 } //namespace OpenTroller
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MODBUS)
+#endif // #if defined OUTPUTBANK_MODBUS
 #endif //ifndef OT_OUTPUT_MODBUS_H

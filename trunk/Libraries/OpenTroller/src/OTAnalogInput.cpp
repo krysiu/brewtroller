@@ -19,38 +19,27 @@
 
 
 */
-#include "OTOutput.h"
+
+#include "OTAnalogInput.h"
 #include "string.h"
 
 using namespace OpenTroller;
 
-//TODO: These keep throwing errors: undefined reference to `__cxa_pure_virtual'
-/*
-Output::Output() {
-	bank = NULL;
+int32_t AnalogInput::getValue(void) {
+    return value;
 }
 
-
-Output::~Output() {
-
-}
-*/
-
-State Output::getState(void) {
-    return state;
-}
-
-uint8_t Output::getErr(void) {
+uint8_t AnalogInput::getErr(void) {
     return err;
 }
 
 /**
   * Default naming of outputs based on index. Some output classes will override this to provide detailed names (eg. outputGroup)
   */
-char* Output::getName(void) {
+char* AnalogInput::getName(void) {
     char theIndex[4];
-	char* theName = new char[11];
-    strcpy(theName, "Output ");
+	char* theName = new char[17];
+    strcpy(theName, "Analog Input ");
 	strcat(theName, itoa(index + 1, theIndex, 10));
     return theName;
 }

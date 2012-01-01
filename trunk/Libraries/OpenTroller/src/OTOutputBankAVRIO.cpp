@@ -22,7 +22,7 @@
 #include "OTOutputBankAVRIO.h"
 #include "OTOutputAVRIO.h"
 
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_AVRIO)
+#if defined OUTPUTBANK_AVRIO
 using namespace OpenTroller;
 
 OutputBankAVRIO::OutputBankAVRIO(uint8_t pinCount) {
@@ -56,4 +56,4 @@ OutputBankType OutputBankAVRIO::getType(void) {
     return OUTPUTBANK_TYPE_AVRIO;
 }
 
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_AVRIO)
+#endif // #if defined OUTPUTBANK_AVRIO

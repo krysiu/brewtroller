@@ -47,69 +47,74 @@
 #define DS2482_STATUS_TSB	(1<<6)
 #define DS2482_STATUS_DIR	(1<<7)
 
-class OneWireDS2482 : public OneWire_Generic
-{
-public:
-	//Address is 0-3
-	OneWireDS2482(uint8_t address);
-	
-	uint8_t configure(uint8_t config);
-	void resetMaster();
-	
-	//DS2482-800 only
-	uint8_t selectChannel(uint8_t channel);
-	
-	uint8_t reset(); // return true if presence pulse is detected
-	uint8_t wireReadStatus(uint8_t setPtr=false);
-	
-	void write(uint8_t b, uint8_t power = 0);
-	uint8_t read();
-	
-	void wireWriteBit(uint8_t bit);
-	uint8_t read_bit();
-    // Issue a 1-Wire rom select command, you do the reset first.
-    void select( uint8_t rom[8]);
-	// Issue skip rom
-	void skip();
-	
-	uint8_t hasTimeout() { return mTimeout; }
-#if ONEWIRE_SEARCH
-    // Clear the search state so that if will start from the beginning again.
-    void reset_search();
+namespace OpenTroller {
 
-    // Look for the next device. Returns 1 if a new address has been
-    // returned. A zero might mean that the bus is shorted, there are
-    // no devices, or you have already retrieved all of them.  It
-    // might be a good idea to check the CRC to make sure you didn't
-    // get garbage.  The order is deterministic. You will always get
-    // the same devices in the same order.
-    uint8_t search(uint8_t *newAddr);
-#endif
-#if ONEWIRE_CRC
-    // Compute a Dallas Semiconductor 8 bit CRC, these are used in the
-    // ROM and scratchpad registers.
-    uint8_t crc8( uint8_t *addr, uint8_t len);
-#endif
+	/**
+	  * 1-Wire Bus using Dallas/Maxim DS2482 I2C 1-Wire Bus Master
+	  */
+	class OneWireDS2482 : public OneWire_Generic
+	{
+	public:
+		//Address is 0-3
+		OneWireDS2482(uint8_t address);
+		
+		uint8_t configure(uint8_t config);
+		void resetMaster();
+		
+		//DS2482-800 only
+		uint8_t selectChannel(uint8_t channel);
+		
+		uint8_t reset(); // return true if presence pulse is detected
+		uint8_t wireReadStatus(uint8_t setPtr=false);
+		
+		void write(uint8_t b, uint8_t power = 0);
+		uint8_t read();
+		
+		void wireWriteBit(uint8_t bit);
+		uint8_t read_bit();
+		// Issue a 1-Wire rom select command, you do the reset first.
+		void select( uint8_t rom[8]);
+		// Issue skip rom
+		void skip();
+		
+		uint8_t hasTimeout() { return mTimeout; }
+	#if ONEWIRE_SEARCH
+		// Clear the search state so that if will start from the beginning again.
+		void reset_search();
 
-private:
-	
-	uint8_t mAddress;
-	uint8_t mTimeout;
-	uint8_t readByte();
-	void setReadPtr(uint8_t readPtr);
-	
-	uint8_t busyWait(uint8_t setReadPtr=false); //blocks until
-	void begin();
-	void end();
-	
-#if ONEWIRE_SEARCH
-	uint8_t searchAddress[8];
-	int8_t searchLastDisrepancy;
-	uint8_t searchExhausted;
-#endif
-	
-};
+		// Look for the next device. Returns 1 if a new address has been
+		// returned. A zero might mean that the bus is shorted, there are
+		// no devices, or you have already retrieved all of them.  It
+		// might be a good idea to check the CRC to make sure you didn't
+		// get garbage.  The order is deterministic. You will always get
+		// the same devices in the same order.
+		uint8_t search(uint8_t *newAddr);
+	#endif
+	#if ONEWIRE_CRC
+		// Compute a Dallas Semiconductor 8 bit CRC, these are used in the
+		// ROM and scratchpad registers.
+		uint8_t crc8( uint8_t *addr, uint8_t len);
+	#endif
 
+	private:
+		
+		uint8_t mAddress;
+		uint8_t mTimeout;
+		uint8_t readByte();
+		void setReadPtr(uint8_t readPtr);
+		
+		uint8_t busyWait(uint8_t setReadPtr=false); //blocks until
+		void begin();
+		void end();
+		
+	#if ONEWIRE_SEARCH
+		uint8_t searchAddress[8];
+		int8_t searchLastDisrepancy;
+		uint8_t searchExhausted;
+	#endif
+		
+	};
 
+} //namespace OpenTroller
 
-#endif
+#endif //ifndef OT_1WIRE_DS2482_H

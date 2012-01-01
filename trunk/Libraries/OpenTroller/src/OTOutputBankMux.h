@@ -23,7 +23,7 @@
 #define OT_OUTPUT_BANK_MUX_H
 
 #include "OT_HWProfile.h"
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MUX)
+#if defined OUTPUTBANK_MUX
 
 #include <stdint.h>
 #include "OTOutputBank.h"
@@ -56,5 +56,5 @@ public:
 };
 
 } //namespace OpenTroller
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MUX)
+#endif // #if defined OUTPUTBANK_MUX
 #endif //ifndef OT_OUTPUT_BANK_MUX_H

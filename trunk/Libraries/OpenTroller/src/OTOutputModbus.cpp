@@ -22,7 +22,7 @@
 #include "OTOutputModbus.h"
 #include "OTOutputBankModbus.h"
 
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MODBUS)
+#if defined OUTPUTBANK_MODBUS
 using namespace OpenTroller;
 
 OutputMODBUS::OutputMODBUS(void) {
@@ -46,4 +46,4 @@ uint8_t OutputMODBUS::getErr(void) {
     return static_cast<OutputBankMODBUS*>(bank)->err;
 }
 
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_MODBUS)
+#endif // #if defined OUTPUTBANK_MODBUS

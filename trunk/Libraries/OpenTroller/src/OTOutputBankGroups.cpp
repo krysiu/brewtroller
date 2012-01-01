@@ -20,8 +20,9 @@
 
 */
 #include "OTOutputBankGroups.h"
+#include "string.h"
 
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
+#if defined OUTPUTBANK_GROUPS
 using namespace OpenTroller;
 
 OutputBankGroups::OutputBankGroups(void) {
@@ -74,4 +75,4 @@ void OutputBankGroups::update(void) {
     }
 }
 
-#endif //#ifdef OPENTROLLER_OUTPUTS
+#endif //#if defined OUTPUTBANK_GROUPS

@@ -22,6 +22,7 @@
 
 #include "OT_LCD.h"
 #include "OT_Util.h"
+#include <avr/pgmspace.h>
 using namespace OpenTroller;
 
 void LCD_Generic::begin(uint8_t columnCount, uint8_t rowCount) {
@@ -140,4 +141,3 @@ void LCD_Generic::getScreen(uint8_t * retString) {
 void LCD_Generic::getCustChars(uint8_t * retString) {
     memcpy(retString, characters, 64);
 }
-

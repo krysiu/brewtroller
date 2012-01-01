@@ -24,14 +24,11 @@
 #define OT_LCD_H
 
 #include "OT_HWProfile.h"
+#ifdef OPENTROLLER_LCD
 #import "OpenTroller.h"
 
 #include <wiring.h>
 #include <stdint.h>
-
-#ifdef OPENTROLLER_LCD4BIT
-#include "OT_LiquidCrystal.h"
-#endif // OPENTROLLER_LCD4BIT
 
 namespace OpenTroller {
 
@@ -100,83 +97,7 @@ namespace OpenTroller {
         void getScreen(uint8_t * retString);
         void getCustChars(uint8_t * retString);
     };
-
-
-    #ifdef OPENTROLLER_LCD4BIT
-
-    //**********************************************************************************
-    // LCD Timing Fix
-    //**********************************************************************************
-    // Some LCDs seem to have issues with displaying garbled characters but introducing
-    // a delay seems to help or resolve completely. You may comment out the following
-    // lines to remove this delay between a print of each character.
-    //
-    //#define LCD_DELAY_CURSOR 60
-    //#define LCD_DELAY_CHAR 60
-    //**********************************************************************************
-
-    class LCD4Bit : public LCD_Generic {
-      private:
-        LiquidCrystal * _lcd;
-
-        uint8_t brightPin;
-        uint8_t contrastPin;
-        uint8_t bright;
-        uint8_t contrast;
-        uint8_t bcControl;
-
-        void saveLCDBright(uint8_t val);
-        void saveLCDContrast(uint8_t val);
-        uint8_t loadLCDBright();
-        uint8_t loadLCDContrast();
-
-      public:
-        LCD4Bit(uint8_t rs, uint8_t enable, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7);
-        LCD4Bit(uint8_t rs,
-                uint8_t enable,
-                uint8_t d4,
-                uint8_t d5,
-                uint8_t d6,
-                uint8_t d7,
-                uint8_t b,
-                uint8_t c);
-
-        void init();
-        void update();
-        void setBright(uint8_t);
-        void setContrast(uint8_t);
-        void saveConfig(void);
-        uint8_t getBright();
-        uint8_t getContrast();
-    };
-    #endif // OPENTROLLER_LCD4BIT
-
-    #ifdef OPENTROLLER_LCDI2C
-
-    class LCDI2C : public LCD_Generic {
-      private:
-        uint8_t i2cLCDAddr;
-
-      public:
-        LCDI2C(uint8_t addr);
-        void init();
-        void update();
-        void setBright(uint8_t);
-        void setContrast(uint8_t);
-        void saveConfig(void);
-        uint8_t getBright();
-        uint8_t getContrast();
-    };
-
-    #endif // OPENTROLLER_LCDI2C
-
-
-
-    #if defined OPENTROLLER_LCD4BIT
-    extern OpenTroller::LCD4Bit LCD;
-    #elif defined OPENTROLLER_LCDI2C
-    extern OpenTroller::LCDI2C LCD;
-    #endif
 }
 
-#endif // OT_LCD_H
+#endif //ifdef OPENTROLLER_LCD
+#endif //ifndef OT_LCD_H

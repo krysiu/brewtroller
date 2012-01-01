@@ -21,7 +21,8 @@
 */
 #include "OTOutputGroup.h"
 
-#if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
+#if defined OUTPUTBANK_GROUPS
+#include "string.h"
 #include "OpenTroller.h"
 using namespace OpenTroller;
 
@@ -74,4 +75,4 @@ char* OutputGroup::getName(void) {
     return theName;
 }
 
-#endif // #if (defined OPENTROLLER_OUTPUTS && defined OUTPUTBANK_GROUPS)
+#endif // #if defined OUTPUTBANK_GROUPS
