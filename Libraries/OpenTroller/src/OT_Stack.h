@@ -39,6 +39,10 @@
 	#endif
 #endif
 
+#ifdef OPENTROLLER_OUTPUTS
+	#include "OTOutputs.h"
+#endif
+
 namespace OpenTroller {
 
     /**
@@ -69,9 +73,15 @@ namespace OpenTroller {
 		//Create the appropriate global 'LCD' object depending on configuration in OT_HWProfile.h
 		#if defined LCD_4BIT
 			class LCD4Bit;
+			/**
+			  * The global reference to the LCD singleton based on LCD4Bit.
+			  */
 			extern OpenTroller::LCD4Bit LCD;
 		#elif defined LCD_I2C
 			class LCDI2C;
+			/**
+			  * The global reference to the LCD singleton based on LCDI2C.
+			  */
 			extern OpenTroller::LCDI2C LCD;
 		#endif
 	#endif
@@ -80,12 +90,24 @@ namespace OpenTroller {
 		//Create the appropriate global 'LCD' object depending on configuration in OT_HWProfile.h
 		#if defined ONEWIRE_AVRIO
 			class OneWireAVRIO;
+			/**
+			  * The global reference to the OneWire singleton based on OneWireAVRIO.
+			  */
 			extern OpenTroller::OneWireAVRIO OneWire;
 		#elif defined ONEWIRE_DS2482
 			class OneWireDS2482;
+			/**
+			  * The global reference to the OneWire singleton based on OneWireDS2482.
+			  */
 			extern OpenTroller::OneWireDS2482 OneWire;
 		#endif
 	#endif
-	
+
+	#ifdef OPENTROLLER_OUTPUTS
+		/**
+		  * The global reference to the Outputs singleton.
+		  */
+		extern OpenTroller::outputs Outputs;
+	#endif
 }
 #endif // OT_STACK_H

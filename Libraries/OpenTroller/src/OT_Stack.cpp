@@ -34,11 +34,6 @@
 	#include "OT_1Wire.h"
 #endif
 
-
-#ifdef OPENTROLLER_OUTPUTS
-	#include "OTOutputs.h"
-#endif
-
 #ifdef OPENTROLLER_STATUSLED
 	#include "OT_Status.h"
 #endif
@@ -110,4 +105,9 @@ OpenTroller::stack OpenTroller::Stack;
 	#elif defined ONEWIRE_DS2482
 		OpenTroller::OneWireDS2482 OpenTroller::OneWire(DS2482_ADDR);
 	#endif
+#endif
+
+#ifdef OPENTROLLER_OUTPUTS
+	//Create Global Outputs Object
+	OpenTroller::outputs OpenTroller::Outputs;
 #endif

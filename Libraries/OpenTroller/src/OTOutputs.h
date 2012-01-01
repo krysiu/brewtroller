@@ -68,11 +68,6 @@ class outputs {
         void update(void);
 };
 
-/**
-  * The global reference to the outputs singleton.
-  */
-extern OpenTroller::outputs Outputs;
-
 } //namespace OpenTroller
 #endif //ifdef OPENTROLLER_OUTPUTS
 #endif //ifndef OT_OUTPUTS_H
