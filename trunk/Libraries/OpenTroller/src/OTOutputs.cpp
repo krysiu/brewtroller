@@ -99,7 +99,4 @@ void outputs::update(void) {
     }
 }
 
-//Create Global Outputs Object
-OpenTroller::outputs OpenTroller::Outputs;
-
 #endif //#ifdef OPENTROLLER_OUTPUTS
