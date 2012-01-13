@@ -1,4 +1,4 @@
-#define BUILD 677
+#define BUILD 892
 /*  
   Copyright (C) 2010 Jason von Nieda
 
@@ -32,29 +32,55 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #include <util/atomic.h>
 #include <pin.h>
 
-#define LCDRS_PIN 3
-#define LCDENABLE_PIN 4
-#define LCDDATA1_PIN 5
-#define LCDDATA2_PIN 6
-#define LCDDATA3_PIN 7
-#define LCDDATA4_PIN 8
-#define LCDDATA5_PIN 9
-#define LCDDATA6_PIN 14
-#define LCDDATA7_PIN 15
-#define LCDDATA8_PIN 16
-#define LCDBRIGHT_PIN 10
-#define LCDCONTRAST_PIN 11
-#define DEBUG_PIN 13
+//#define I2CLCD_VERSION 1
+#define I2CLCD_VERSION 2
+
+#if I2CLCD_VERSION == 1
+  #define LCD_8BIT
+  #define LCDRS_PIN 3
+  #define LCDENABLE_PIN 4
+  #define LCDDATA1_PIN 5
+  #define LCDDATA2_PIN 6
+  #define LCDDATA3_PIN 7
+  #define LCDDATA4_PIN 8
+  #define LCDDATA5_PIN 9
+  #define LCDDATA6_PIN 14
+  #define LCDDATA7_PIN 15
+  #define LCDDATA8_PIN 16
+  #define LCDBRIGHT_PIN 10
+  #define LCDCONTRAST_PIN 11
+  #define DEBUG_PIN 13
+#elif I2CLCD_VERSION == 2
+  #define LCD_4BIT
+  #define LCDRS_PIN 3
+  #define LCDENABLE_PIN 4
+  #define LCDDATA5_PIN 5
+  #define LCDDATA6_PIN 6
+  #define LCDDATA7_PIN 7
+  #define LCDDATA8_PIN 8
+  #define LCDBRIGHT_PIN 10
+  #define LCDCONTRAST_PIN 11
+  #define DEBUG_PIN 13
+  #define ENCODER_SUPPORT
+  #define ENCODER_TYPE ALPS
+  #define ENCA_PIN 14
+  #define ENCB_PIN 15
+  #define ENTER_PIN 16
+#endif
 
 #define REQ_BRIGHT 0
 #define REQ_CONTRAST 1
-#define REQ_ENCCOUNT 2
-#define REQ_ENCCHANGE 3
-#define REQ_ENCDELTA 4
-#define REQ_ENCENTERSTATE 5
-#define REQ_ENCOK 6
-#define REQ_ENCCANCEL 7
-#define NUM_REQ 8
+#ifndef ENCODER_SUPPORT
+  #define NUM_REQ 2
+#else
+  #define REQ_ENCCOUNT 2
+  #define REQ_ENCCHANGE 3
+  #define REQ_ENCDELTA 4
+  #define REQ_ENCENTERSTATE 5
+  #define REQ_ENCOK 6
+  #define REQ_ENCCANCEL 7
+  #define NUM_REQ 8
+#endif
 
 #define EEPROM_FINGERPRINT0 0
 #define EEPROM_FINGERPRINT1 1
@@ -70,17 +96,15 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #define DEFAULT_ROWS 4
 #define DEFAULT_COLS 20
 
-#define ENCODER_SUPPORT
-#define ENCODER_TYPE ALPS
-#define ENCA_PIN 2
-#define ENCB_PIN 4
-#define ENTER_PIN 5
-
 #ifdef ENCODER_SUPPORT
   #include <encoder.h>
 #endif
 
-LiquidCrystal lcd(LCDRS_PIN, LCDENABLE_PIN, LCDDATA1_PIN, LCDDATA2_PIN, LCDDATA3_PIN, LCDDATA4_PIN, LCDDATA5_PIN, LCDDATA6_PIN, LCDDATA7_PIN, LCDDATA8_PIN);
+#if defined LCD_8BIT
+  LiquidCrystal lcd(LCDRS_PIN, LCDENABLE_PIN, LCDDATA1_PIN, LCDDATA2_PIN, LCDDATA3_PIN, LCDDATA4_PIN, LCDDATA5_PIN, LCDDATA6_PIN, LCDDATA7_PIN, LCDDATA8_PIN);
+#elif defined LCD_4BIT
+  LiquidCrystal lcd(LCDRS_PIN, LCDENABLE_PIN, LCDDATA5_PIN, LCDDATA6_PIN, LCDDATA7_PIN, LCDDATA8_PIN);
+#endif
 
 byte i2cAddr = 0x01;
 byte brightness = 0;
@@ -89,6 +113,74 @@ byte rows = 4;
 byte cols = 20;
 byte reqField = REQ_BRIGHT;
 ByteBuffer i2cBuffer;
+
+void onReceive(int numBytes) {
+  for (byte i = 0; i < numBytes; i++) {
+    i2cBuffer.put(Wire.receive());
+  }
+}
+
+void onRequest() {
+  if (reqField == REQ_BRIGHT) Wire.send(brightness);
+  else if (reqField == REQ_CONTRAST) Wire.send(contrast);
+#ifdef ENCODER_SUPPORT
+  else if (reqField == REQ_ENCCOUNT) Wire.send(Encoder.getCount());
+  else if (reqField == REQ_ENCCHANGE) Wire.send(Encoder.change());
+  else if (reqField == REQ_ENCDELTA) Wire.send(Encoder.getDelta());
+  else if (reqField == REQ_ENCENTERSTATE) Wire.send(Encoder.getEnterState());
+  else if (reqField == REQ_ENCOK) Wire.send(Encoder.ok());
+  else if (reqField == REQ_ENCCANCEL) Wire.send(Encoder.cancel());
+#endif
+  else Wire.send(1);
+  reqField++;
+  if (reqField >= NUM_REQ) reqField = 0;
+}
+
+void panAnalog(byte pin, byte startValue, byte endValue, int delayValue) {
+  if (startValue < endValue) for (int i = startValue; i <= endValue; i++) { analogWrite(pin, i); delay(delayValue); }
+  else if (startValue > endValue) for (int i = startValue; i >= endValue; i--) { analogWrite(pin, i); delay(delayValue); }
+  else analogWrite(pin, startValue);
+}
+
+void setBright(byte value) {
+  panAnalog(LCDBRIGHT_PIN, brightness, value, 2);
+  brightness = value;
+}
+
+void setContrast(byte value) {
+  panAnalog(LCDCONTRAST_PIN, contrast, value, 2);
+  contrast = value;
+}
+
+void saveEEPROM() {
+  EEPROM.write(EEPROM_BRIGHT, brightness);
+  EEPROM.write(EEPROM_CONTRAST, contrast);
+  EEPROM.write(EEPROM_ROWS, rows);
+  EEPROM.write(EEPROM_COLS, cols);
+}
+
+void loadEEPROM() {
+  //Look for I2CLCD "fingerprint"
+  if (EEPROM.read(EEPROM_FINGERPRINT0) == FINGER0 && EEPROM.read(EEPROM_FINGERPRINT1) == FINGER1)  {
+    setBright(EEPROM.read(EEPROM_BRIGHT));
+    setContrast(EEPROM.read(EEPROM_CONTRAST));
+    rows = EEPROM.read(EEPROM_ROWS);
+    cols = EEPROM.read(EEPROM_COLS);
+  }
+  else {
+    //Set initial EEPROM values
+    EEPROM.write(EEPROM_FINGERPRINT0, FINGER0);
+    EEPROM.write(EEPROM_FINGERPRINT1, FINGER1);
+    EEPROM.write(EEPROM_BRIGHT, DEFAULT_BRIGHT); //Max
+    setBright(DEFAULT_BRIGHT);
+    EEPROM.write(EEPROM_CONTRAST, DEFAULT_CONTRAST); //Max
+    setContrast(DEFAULT_CONTRAST);
+    EEPROM.write(EEPROM_ROWS, DEFAULT_ROWS);
+    rows = DEFAULT_ROWS;
+    EEPROM.write(EEPROM_COLS, DEFAULT_COLS);
+    cols = DEFAULT_COLS;
+  }
+}
 
 void setup() {
   pinMode(LCDBRIGHT_PIN, OUTPUT);
@@ -99,8 +191,9 @@ void setup() {
   TCCR1B = 0x01;   // Timer 1: PWM 9 & 10 @ 32 kHz
   TCCR2B = 0x01;   // Timer 2: PWM 3 & 11 @ 32 kHz
 
+#ifdef ENCODER_SUPPORT
   Encoder.begin(ENCODER_TYPE, ENTER_PIN, ENCA_PIN, ENCB_PIN);
-
+#endif
   loadEEPROM();
   
   //Serial.begin(115200);
@@ -212,7 +305,7 @@ void loop() {
       for (byte i = 0; i < len; i++) lcd.write(p[4 + i]);
       p += p[3] + 3;
     }
-
+#ifdef ENCODER_SUPPORT
     else if (p[0] == 0x40) //Encoder.setMin
     {
       int val = 0;
@@ -279,76 +372,9 @@ void loop() {
       reqField = REQ_ENCCANCEL;
       delay(10);
     }
+#endif
     // increment for the command byte that was read
     p++;
     digitalWrite(DEBUG_PIN, LOW);
   }
 }
-
-void onReceive(int numBytes) {
-  for (byte i = 0; i < numBytes; i++) {
-    i2cBuffer.put(Wire.receive());
-  }
-}
-
-void onRequest() {
-  if (reqField == REQ_BRIGHT) Wire.send(brightness);
-  else if (reqField == REQ_CONTRAST) Wire.send(contrast);
-  else if (reqField == REQ_ENCCOUNT) Wire.send(Encoder.getCount());
-  else if (reqField == REQ_ENCCHANGE) Wire.send(Encoder.change());
-  else if (reqField == REQ_ENCDELTA) Wire.send(Encoder.getDelta());
-  else if (reqField == REQ_ENCENTERSTATE) Wire.send(Encoder.getEnterState());
-  else if (reqField == REQ_ENCOK) Wire.send(Encoder.ok());
-  else if (reqField == REQ_ENCCANCEL) Wire.send(Encoder.cancel());
-  else Wire.send(1);
-  reqField++;
-  if (reqField >= NUM_REQ) reqField = 0;
-}
-
-void panAnalog(byte pin, byte startValue, byte endValue, int delayValue) {
-  if (startValue < endValue) for (int i = startValue; i <= endValue; i++) { analogWrite(pin, i); delay(delayValue); }
-  else if (startValue > endValue) for (int i = startValue; i >= endValue; i--) { analogWrite(pin, i); delay(delayValue); }
-  else analogWrite(pin, startValue);
-}
-
-void setBright(byte value) {
-  panAnalog(LCDBRIGHT_PIN, brightness, value, 2);
-  brightness = value;
-}
-
-void setContrast(byte value) {
-  panAnalog(LCDCONTRAST_PIN, contrast, value, 2);
-  contrast = value;
-}
-
-void saveEEPROM() {
-  EEPROM.write(EEPROM_BRIGHT, brightness);
-  EEPROM.write(EEPROM_CONTRAST, contrast);
-  EEPROM.write(EEPROM_ROWS, rows);
-  EEPROM.write(EEPROM_COLS, cols);
-}
-
-void loadEEPROM() {
-  //Look for I2CLCD "fingerprint"
-  if (EEPROM.read(EEPROM_FINGERPRINT0) == FINGER0 && EEPROM.read(EEPROM_FINGERPRINT1) == FINGER1)  {
-    setBright(EEPROM.read(EEPROM_BRIGHT));
-    setContrast(EEPROM.read(EEPROM_CONTRAST));
-    rows = EEPROM.read(EEPROM_ROWS);
-    cols = EEPROM.read(EEPROM_COLS);
-  }
-  else {
-    //Set initial EEPROM values
-    EEPROM.write(EEPROM_FINGERPRINT0, FINGER0);
-    EEPROM.write(EEPROM_FINGERPRINT1, FINGER1);
-    EEPROM.write(EEPROM_BRIGHT, DEFAULT_BRIGHT); //Max
-    setBright(DEFAULT_BRIGHT);
-    EEPROM.write(EEPROM_CONTRAST, DEFAULT_CONTRAST); //Max
-    setContrast(DEFAULT_CONTRAST);
-    EEPROM.write(EEPROM_ROWS, DEFAULT_ROWS);
-    rows = DEFAULT_ROWS;
-    EEPROM.write(EEPROM_COLS, DEFAULT_COLS);
-    cols = DEFAULT_COLS;
-  }
-}
-
-
