@@ -30,6 +30,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #include <EEPROM.h>
 #include "ByteBuffer.h"
 #include <util/atomic.h>
+#include <pin.h>
 
 #define LCDRS_PIN 3
 #define LCDENABLE_PIN 4
@@ -47,7 +48,13 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 
 #define REQ_BRIGHT 0
 #define REQ_CONTRAST 1
-#define NUM_REQ 2
+#define REQ_ENCCOUNT 2
+#define REQ_ENCCHANGE 3
+#define REQ_ENCDELTA 4
+#define REQ_ENCENTERSTATE 5
+#define REQ_ENCOK 6
+#define REQ_ENCCANCEL 7
+#define NUM_REQ 8
 
 #define EEPROM_FINGERPRINT0 0
 #define EEPROM_FINGERPRINT1 1
@@ -62,6 +69,16 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 #define DEFAULT_CONTRAST 64
 #define DEFAULT_ROWS 4
 #define DEFAULT_COLS 20
+
+#define ENCODER_SUPPORT
+#define ENCODER_TYPE ALPS
+#define ENCA_PIN 2
+#define ENCB_PIN 4
+#define ENTER_PIN 5
+
+#ifdef ENCODER_SUPPORT
+  #include <encoder.h>
+#endif
 
 LiquidCrystal lcd(LCDRS_PIN, LCDENABLE_PIN, LCDDATA1_PIN, LCDDATA2_PIN, LCDDATA3_PIN, LCDDATA4_PIN, LCDDATA5_PIN, LCDDATA6_PIN, LCDDATA7_PIN, LCDDATA8_PIN);
 
@@ -81,6 +98,8 @@ void setup() {
   //Change PWM Freq for smooth contrast/brightness
   TCCR1B = 0x01;   // Timer 1: PWM 9 & 10 @ 32 kHz
   TCCR2B = 0x01;   // Timer 2: PWM 3 & 11 @ 32 kHz
+
+  Encoder.begin(ENCODER_TYPE, ENTER_PIN, ENCA_PIN, ENCB_PIN);
 
   loadEEPROM();
   
@@ -194,6 +213,72 @@ void loop() {
       p += p[3] + 3;
     }
 
+    else if (p[0] == 0x40) //Encoder.setMin
+    {
+      int val = 0;
+      p++;
+      val = ((*p++)<<8) + *p;
+      Encoder.setMin(val);
+    }
+    else if (p[0] == 0x41) //Encoder.setMax
+    {
+      int val = 0;
+      p++;
+      val = ((*p++)<<8) + *p;
+      Encoder.setMax(val);
+    }
+    else if (p[0] == 0x42) //Encoder.setWrap
+    {
+      p++;
+      Encoder.setWrap((bool)*p);
+    }
+    else if (p[0] == 0x43) //Encoder.setCount
+    {
+      int val = 0;
+      p++;
+      val = ((*p++)<<8) + *p;
+      Encoder.setCount(val);
+    }
+    else if (p[0] == 0x44) //Encoder.clearCount
+    {
+      p++;
+      Encoder.clearCount();
+    }
+    else if (p[0] == 0x45) //Encoder.clearEnterState
+    {
+      p++;
+      Encoder.clearEnterState();
+    }
+    else if (p[0] == 0x46) // Encoder.getCount
+    {
+      reqField = REQ_ENCCOUNT;
+      delay(10);
+    }
+    else if (p[0] == 0x47) // Encoder.change
+    {
+      reqField = REQ_ENCCHANGE;
+      delay(10);
+    }
+    else if (p[0] == 0x48) // Encoder.getDelta
+    {
+      reqField = REQ_ENCDELTA;
+      delay(10);
+    }
+    else if (p[0] == 0x49) // Encoder.getEnterState
+    {
+      reqField = REQ_ENCENTERSTATE;
+      delay(10);
+    }
+    else if (p[0] == 0x4A) // Encoder.ok
+    {
+      reqField = REQ_ENCOK;
+      delay(10);
+    }
+    else if (p[0] == 0x4B) // Encoder.cancel
+    {
+      reqField = REQ_ENCCANCEL;
+      delay(10);
+    }
     // increment for the command byte that was read
     p++;
     digitalWrite(DEBUG_PIN, LOW);
@@ -209,6 +294,12 @@ void onReceive(int numBytes) {
 void onRequest() {
   if (reqField == REQ_BRIGHT) Wire.send(brightness);
   else if (reqField == REQ_CONTRAST) Wire.send(contrast);
+  else if (reqField == REQ_ENCCOUNT) Wire.send(Encoder.getCount());
+  else if (reqField == REQ_ENCCHANGE) Wire.send(Encoder.change());
+  else if (reqField == REQ_ENCDELTA) Wire.send(Encoder.getDelta());
+  else if (reqField == REQ_ENCENTERSTATE) Wire.send(Encoder.getEnterState());
+  else if (reqField == REQ_ENCOK) Wire.send(Encoder.ok());
+  else if (reqField == REQ_ENCCANCEL) Wire.send(Encoder.cancel());
   else Wire.send(1);
   reqField++;
   if (reqField >= NUM_REQ) reqField = 0;
