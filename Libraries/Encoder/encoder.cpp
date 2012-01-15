@@ -64,10 +64,8 @@ encoder::encoder(void)
 	_min = 0;
 	_max = 0;
 	_wrap = 0;
+	i2cAddress = 0;
 }
-
-
-
 
 // initialize encoder using External Interrupt method
 //  encType - ALPS or CUI
@@ -149,6 +147,10 @@ void encoder::begin(byte encA, byte encB, byte encE, byte enterInt, byte encType
   begin(encType, encE, encA, encB, enterInt, encA);
 }
 
+//Begin for I2C Encoder
+void encoderI2C::begin(uint8_t i2cAddr) {
+	i2cAddress = i2cAddr;
+}
 
 //Detaches the Encoder ISRs
 void encoder::end(void)
@@ -166,6 +168,47 @@ void encoder::end(void)
   }
   interrupts();
 }
+
+void encoder::setMin(int min) {
+	if(i2cAddress) return i2cSetMin(min);
+	_min = min; 
+}
+
+void encoder::setMax(int max) {
+	if(i2cAddress) return i2cSetMax(max);
+	_max = max;
+}
+
+void encoder::setWrap(bool wrap) {
+	if(i2cAddress) return i2cSetWrap(wrap);
+	_wrap = wrap;
+}
+
+void encoder::setCount(int count)  {
+	if(i2cAddress) return i2cSetCount(count);
+	_count = _lastCount = count;
+}
+
+void encoder::clearCount(void) {
+	if(i2cAddress) return i2cClearCount();
+	_count = _min;
+}
+
+int  encoder::getCount(void) {
+	if(i2cAddress) return i2cGetCount();
+	return _count;
+}
+
+byte encoder::getEnterState(void) {
+	if(i2cAddress) return i2cGetEnterState();
+	return _enterState;
+}
+
+void encoder::clearEnterState(void)  {
+	if(i2cAddress) return i2cClearEnterState();
+	_enterState = 0;
+}
+
 
 // set activeLow state
 //
@@ -195,13 +238,13 @@ void encoder::setActiveLow(bool state)
 //
 byte  encoder::getEncoderState()
 {
-  byte btVal = 0;
-  if (_ePin.get()) btVal |= 0x01;
-  if (_aPin.get()) btVal |= 0x02;
-  if (_bPin.get()) btVal |= 0x04;
-  if (isEnterPinPressed()) btVal |= 0x08;
-  btVal |= _enterState << 4;
-  return btVal;
+	byte btVal = 0;
+	if (_ePin.get()) btVal |= 0x01;
+	if (_aPin.get()) btVal |= 0x02;
+	if (_bPin.get()) btVal |= 0x04;
+	if (isEnterPinPressed()) btVal |= 0x08;
+	btVal |= _enterState << 4;
+	return btVal;
 }
 
 
@@ -213,6 +256,7 @@ byte  encoder::getEncoderState()
 //
 int encoder::getDelta(void)
 {
+	if(i2cAddress) return i2cGetDelta();
 	int delta,
 		count;
 
@@ -233,7 +277,8 @@ int encoder::getDelta(void)
 //
 int encoder::change(void)
 {
-  return (getDelta()==0) ? -1 : _count;
+	if(i2cAddress) return i2cChange);
+	return (getDelta()==0) ? -1 : _count;
 }
 
 
@@ -242,10 +287,10 @@ int encoder::change(void)
 //
 bool encoder::ok(void)
 {
-  bool okActive = (_enterState == 1);
-  if (okActive)
-    _enterState = 0;
-  return okActive;
+	if(i2cAddress) return i2cOk();
+	bool okActive = (_enterState == 1);
+	if (okActive) _enterState = 0;
+	return okActive;
 }
 
 
@@ -254,26 +299,27 @@ bool encoder::ok(void)
 //
 bool encoder::cancel(void)
 {
-  // check if cancel has already been detected and reported
-  if (_enterState == 3)
-    return false;
+	if(i2cAddress) return i2cCancel();
+	// check if cancel has already been detected and reported
+	if (_enterState == 3)
+	return false;
 
-  noInterrupts();
+	noInterrupts();
 
-  bool cancelState = (_enterState == 2);
-  if (cancelState)
-  {
-    // enter ISR has detected cancel condition
-    _enterState = 0;
-  }
-  else if (isEnterPinPressed() && isTimeElapsed(millis(), ENTER_LONG_PUSH))
-  {
-    // cancel condition detected
-    cancelState = true;
-    _enterState = 3;  // 3=cancel detected prior to release (used by ISR)
-  }
-  interrupts();
-  return cancelState;
+	bool cancelState = (_enterState == 2);
+	if (cancelState)
+	{
+		// enter ISR has detected cancel condition
+		_enterState = 0;
+	}
+	else if (isEnterPinPressed() && isTimeElapsed(millis(), ENTER_LONG_PUSH))
+	{
+		// cancel condition detected
+		cancelState = true;
+		_enterState = 3;  // 3=cancel detected prior to release (used by ISR)
+	}
+	interrupts();
+	return cancelState;
 }
 
 // ALPS phaseA change handler
@@ -340,6 +386,124 @@ void encoder::enterHandler(void)
       _enterState = 1;
 		}
   }
+}
+
+void encoderI2C::i2cSetMin(int val) {
+	Wire.beginTransmission(i2cAddress);
+	Wire.send(0x40);
+	Wire.send(val>>8);
+	Wire.send(val&255);
+	Wire.endTransmission();
+}
+
+void encoderI2C::i2cSetMax(int val) {
+	Wire.beginTransmission(i2cAddress);
+	Wire.send(0x41);
+	Wire.send(val>>8);
+	Wire.send(val&255);
+	Wire.endTransmission();
+}
+
+void encoderI2C::i2cSetWrap(bool val) {
+	Wire.beginTransmission(i2cAddress);
+	Wire.send(0x42);
+	Wire.send(val);
+	Wire.endTransmission();
+}
+
+void encoderI2C::i2cSetCount(int val) {
+	Wire.beginTransmission(i2cAddress);
+	Wire.send(0x43);
+	Wire.send(val>>8);
+	Wire.send(val&255);
+	Wire.endTransmission();
+}
+
+void encoderI2C::i2cClearCount(void) {
+	Wire.beginTransmission(i2cAddress);
+	Wire.send(0x44);
+	Wire.endTransmission();
+}
+
+void encoderI2C::i2cClearEnterState(void) {
+	Wire.beginTransmission(i2cAddress);
+	Wire.send(0x45);
+	Wire.endTransmission();
+}
+
+int  encoderI2C::i2cGetCount(void) {
+	int retValue = 0;
+	Wire.beginTransmission(i2cAddress);
+	Wire.send(0x46);
+	Wire.endTransmission();
+	Wire.requestFrom((int)i2cAddress, (int)2);
+	while(Wire.available())
+	{
+		retValue = retValue << 8;
+		retValue &= Wire.receive();
+	}
+	return retValue;
+}
+
+int  encoderI2C::i2cChange(void) {
+	int retValue = 0;
+	Wire.beginTransmission(i2cAddress);
+	Wire.send(0x47);
+	Wire.endTransmission();
+	Wire.requestFrom((int)i2cAddress, (int)2);
+	while(Wire.available())
+	{
+		retValue = retValue << 8;
+		retValue &= Wire.receive();
+	}
+	return retValue;
+}
+
+int  encoderI2C::i2cGetDelta(void) {
+	int retValue = 0;
+	Wire.beginTransmission(i2cAddress);
+	Wire.send(0x48);
+	Wire.endTransmission();
+	Wire.requestFrom((int)i2cAddress, (int)2);
+	while(Wire.available())
+	{
+		retValue = retValue << 8;
+		retValue &= Wire.receive();
+	}
+	return retValue;
+}
+
+uint8_t encoderI2C::i2cGetEnterState(void) {
+	Wire.beginTransmission(i2cAddress);
+	Wire.send(0x49);
+	Wire.endTransmission();
+	Wire.requestFrom((int)i2cAddress, (int)1);
+	while(Wire.available())
+	{
+		return Wire.receive();
+	}
+}
+
+bool encoderI2C::i2cOk(void) {
+	Wire.beginTransmission(i2cAddress);
+	Wire.send(0x4A);
+	Wire.endTransmission();
+	Wire.requestFrom((int)i2cAddress, (int)1);
+	while(Wire.available())
+	{
+		return Wire.receive();
+	}
+}
+
+bool encoderI2C::i2cCancel(void) {
+	Wire.beginTransmission(i2cAddress);
+	Wire.send(0x4B);
+	Wire.endTransmission();
+	Wire.requestFrom((int)i2cAddress, (int)1);
+	while(Wire.available())
+	{
+		return Wire.receive();
+	}
 }
 
 
