@@ -208,7 +208,9 @@ int main(void) {
 				softReset();
     		}
     	}
-  		#endif		
+  		#endif
+  		
+		tlc5947_update();
     }
 }
 
@@ -239,7 +241,6 @@ void twi_data_received(uint8_t* buf, int length) {
 			((rgb >> 8) & 0x0f) * 16,
 			((rgb >> 4) & 0x0f) * 16,
 			((rgb >> 0) & 0x0f) * 16);
-		tlc5947_update();
 	}
 	else if (buf[0] == 0xfd) {
 		restart_requested = TRUE;
@@ -348,7 +349,6 @@ eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegi
 					((usRegHoldingBuf[usAddress - REG_HOLDING_LEDS_START] >> 8) & 0x0f) * 16,
 					((usRegHoldingBuf[usAddress - REG_HOLDING_LEDS_START] >> 4) & 0x0f) * 16,
 					((usRegHoldingBuf[usAddress - REG_HOLDING_LEDS_START] >> 0) & 0x0f) * 16);
-				tlc5947_update();
 			}
 		    else {
 		        eStatus = MB_ENOREG;
