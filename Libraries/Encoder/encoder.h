@@ -7,8 +7,6 @@
 #ifndef _ENCODER_H
 #define _ENCODER_H
 
-#ifndef ENCODER_I2C
-
 	#define ALPS		0
 	#define CUI			1
 
@@ -27,7 +25,7 @@
 	void alpsISR();
 	void cuiISR();
 	void enterISR();
-
+	
 	class encoder
 	{
 	private:
@@ -65,7 +63,7 @@
 		void begin(byte type, byte encE, byte encA, byte encB, byte intE, byte intA);
 		void begin(byte type, byte encE, byte encA, byte encB);
 		void begin(byte encA, byte encB, byte encE, byte enterInt, byte encType);
-		void begin(uint8_t i2cAddr);
+		void begin(byte i2cAddr);
 		void end(void);
 
 		void setMin(int min);
@@ -96,7 +94,7 @@
 		int  i2cGetCount(void);
 		int  i2cChange(void);
 		int  i2cGetDelta(void);
-		uint8_t i2cGetEnterState(void);
+		byte i2cGetEnterState(void);
 		bool i2cOk(void);
 		bool i2cCancel(void);
 		
