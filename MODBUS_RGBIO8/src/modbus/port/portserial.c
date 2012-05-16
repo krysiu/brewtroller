@@ -25,7 +25,6 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <avr/signal.h>
 
 #include "port.h"
 
@@ -138,18 +137,18 @@ xMBPortSerialGetByte( CHAR * pucByte )
     return TRUE;
 }
 
-SIGNAL( SIG_USART_DATA )
+ISR( USART_UDRE_vect )
 {
     pxMBFrameCBTransmitterEmpty(  );
 }
 
-SIGNAL( SIG_USART_RECV )
+ISR( USART_RX_vect )
 {
     pxMBFrameCBByteReceived(  );
 }
 
 #ifdef RTS_ENABLE
-SIGNAL( SIG_UART_TRANS )
+ISR( SIG_UART_TRANS )
 {
     RTS_LOW;
 }
