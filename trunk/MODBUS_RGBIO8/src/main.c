@@ -86,6 +86,8 @@ volatile uint32_t timer0_millis;
 uint8_t blinkCount = 0;
 uint8_t actMode = ACTIVITY_NONE;
 uint32_t ledUpdateTime;
+uint32_t rgbTestUpdateTime;
+uint8_t rgbTestColor;
 
 uint32_t millis(void);
 
@@ -106,6 +108,9 @@ void twi_data_received(uint8_t* buf, int length);
 void twi_data_requested();
 
 uint8_t crc8(uint8_t inCrc, uint8_t inData );
+
+void rgbTestMode();
+
 
 int main(void) {
 	// Enable the button
@@ -147,6 +152,7 @@ int main(void) {
 	if (slave_address == DEFAULT_DEVADDR && twi_address == TWI_ADDRESS_DEFAULT) {
     	while(!button_is_pressed()) {
     		ledBlinkPattern(LEDCOUNT_INIT, LEDBLINK_OFFTIME);
+    		rgbTestMode();
     	}
   	}
   	
@@ -424,6 +430,37 @@ void ledEvent() {
     debug_led_set(FALSE);
     ledUpdateTime = millis() - LEDTIME_ACT / 2; //Half Off time
   }
+}
+
+// Cycles through the LED colors every 500ms for visual testing
+void rgbTestMode() {
+	if (millis() - rgbTestUpdateTime > 500) {
+		uint8_t r = 0, g = 0, b = 0;
+		if (rgbTestColor == 0) {
+			r = 0xff;
+			g = 0;
+			b = 0;
+		}
+		else if (rgbTestColor == 1) {
+			r = 0;
+			g = 0xff;
+			b = 0;
+		}
+		else if (rgbTestColor == 2) {
+			r = 0;
+			g = 0;
+			b = 0xff;
+		}
+		rgbTestColor++;
+		if (rgbTestColor == 3) {
+			rgbTestColor = 0;
+		}
+		for (int i = 0; i < 8; i++) {
+			tlc5947_set_rgb(i, r, g, b);
+		}
+		tlc5947_update();
+		rgbTestUpdateTime = millis();
+	}
 }
 
 void ledBlinkPattern(uint8_t count, int offTime) {

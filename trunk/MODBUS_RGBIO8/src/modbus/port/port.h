@@ -77,7 +77,7 @@ typedef long    LONG;
 #define UCSZ0           UCSZ00
 #define UCSZ1           UCSZ01
 #define UDR             UDR0
-#define SIG_UART_TRANS  SIG_USART_TRANS
+#define SIG_UART_TRANS  USART_TX_vect
 
 #elif defined (__AVR_ATmega169__)
 
