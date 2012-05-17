@@ -433,8 +433,11 @@ void ledEvent() {
 }
 
 // Cycles through the LED colors every 500ms for visual testing
+// If the input corresponding to the output is set the color for that
+// output will stay set to yellow for auto, purple for manual.
 void rgbTestMode() {
 	if (millis() - rgbTestUpdateTime > 500) {
+		input_refresh();
 		uint8_t r = 0, g = 0, b = 0;
 		if (rgbTestColor == 0) {
 			r = 0xff;
@@ -452,11 +455,19 @@ void rgbTestMode() {
 			b = 0xff;
 		}
 		rgbTestColor++;
-		if (rgbTestColor == 3) {
+		if (rgbTestColor > 2) {
 			rgbTestColor = 0;
 		}
 		for (int i = 0; i < 8; i++) {
-			tlc5947_set_rgb(i, r, g, b);
+			if (input_is_set(i, INPUT_A)) {
+				tlc5947_set_rgb(i, 0xff, 0xff, 0);
+			}
+			else if (input_is_set(i, INPUT_M)) {
+				tlc5947_set_rgb(i, 0xff, 0, 0xff);
+			}
+			else {
+				tlc5947_set_rgb(i, r, g, b);
+			}
 		}
 		tlc5947_update();
 		rgbTestUpdateTime = millis();

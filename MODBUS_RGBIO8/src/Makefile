@@ -74,7 +74,7 @@ all:	hex size
 .c.s:
 	$(COMPILE) -S $< -o $@
 
-flash:	all
+flash:	all fuse
 	$(AVRDUDE) -U flash:w:$(TARGET).hex:i
 
 fuse:
