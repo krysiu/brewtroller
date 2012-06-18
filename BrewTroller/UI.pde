@@ -246,6 +246,9 @@ void uiInit() {
     #else
       Encoder.begin(ENCODER_TYPE, ENTER_PIN, ENCA_PIN, ENCB_PIN, ENTER_INT, ENCA_INT);
     #endif
+    #ifdef ENCODER_ACTIVELOW
+      Encoder.setActiveLow(1);
+    #endif
   #else
      Encoder.begin(ENCODER_I2CADDR);
   #endif
