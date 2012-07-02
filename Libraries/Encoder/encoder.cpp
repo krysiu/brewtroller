@@ -457,6 +457,7 @@ int  encoder::i2cChange(void) {
 		retValue = Wire.receive();
 		retValue |= (((int)(Wire.receive())) << 8);
 	}
+	else return -1; //Call failed so return 'No Change'
 	return retValue;
 }
 
