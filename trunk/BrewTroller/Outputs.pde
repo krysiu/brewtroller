@@ -317,6 +317,11 @@ void processPID_FLOW_CONTROL(byte vessel) {
 
 /**
  * Called by processHeatOutputs to process a PID-enabled heat output.
+ * Main things that happen here are updates to the PIDOutput and PIDInput arrays
+ *   before calling compute() for the PID.
+ * Once the PID has been computed we check if it results in heat being needed
+ *   and we call either heatPin[vessel[VS]].set(HIGH); or heatPin[vessel[VS]].set(LOW);
+ * NOTE: If PID is being processed by timer that happens elsewhere.
  */
 void processHeatOutputsPIDEnabled(const byte vessel[]) {
   unsigned long millistemp;
@@ -382,22 +387,22 @@ void processHeatOutputsPIDEnabled(const byte vessel[]) {
  * Called by processHeatOutputsNonPIDEnabled to process a heat output when heatStatus[vessel] == true.
  */
 void processHeatOutputsNonPIDEnabledWithHeatOn(const byte vessel[]) {
-  // see if softswitches needs to override the data
-  
   // determine if setpoint has ben reached, or there is a bad temp reading.
   // If it either condition, set the pin low (turn it off).
-	// we do not want the RIMS (in DIRECT_FIRED_RIMS) processed here either; it is taken care of in the MASH loop
+  // we do not want the RIMS (in DIRECT_FIRED_RIMS) processed here either; it is taken care of in the MASH loop
 
   //Indicates if the minimum volume has been reached (defaults to true in case trigger is not used)
   boolean vesselMinTrig = 1;
   if (vesselMinTrigger(vessel[VS]) != NULL) vesselMinTrig = (vesselMinTrigger(vessel[VS])->get());
-  
-  if (estop || (!vesselMinTrig) || ((vessel[VS] != VS_STEAM &&
-        (temp[vessel[TS]] == BAD_TEMP || temp[vessel[TS]] >= setpoint[vessel[VS]])
-      #ifndef DIRECT_FIRE_RIMS
-        )|| (vessel[VS] == VS_STEAM && steamPressure >= setpoint[vessel[VS]])
-      #endif
-  )) { 
+
+  if (
+    estop 
+    || (!vesselMinTrig) 
+    || (vessel[VS] != VS_STEAM && (temp[vessel[TS]] == BAD_TEMP || temp[vessel[TS]] >= setpoint[vessel[VS]]))
+    #ifndef DIRECT_FIRE_RIMS
+      || (vessel[VS] == VS_STEAM && steamPressure >= setpoint[vessel[VS]])
+    #endif
+  ) { 
     // For DIRECT_FIRED_RIMS, the setpoint for both VS_MASH & VS_STEAM should be the same, 
     // so nothing to do here.
     heatPin[vessel[VS]].set(LOW);
@@ -448,12 +453,16 @@ void processHeatOutputsNonPIDEnabledWithHeatOff(const byte vessel[]) {
   boolean vesselMinTrig = 1;
   if (vesselMinTrigger(vessel[VS]) != NULL) vesselMinTrig = (vesselMinTrigger(vessel[VS])->get());
 
-  if (!estop && vesselMinTrig && (vessel[VS] != VS_STEAM &&
-      (temp[vessel[TS]] != BAD_TEMP && (setpoint[vessel[VS]] - temp[vessel[TS]]) >= hysteresis[vessel[VS]] * 10) 
+  if (
+    !estop 
+    && vesselMinTrig 
+    && (
+      (vessel[VS] != VS_STEAM && temp[vessel[TS]] != BAD_TEMP && (setpoint[vessel[VS]] - temp[vessel[TS]]) >= hysteresis[vessel[VS]] * 10) 
     #ifndef DIRECT_FIRE_RIMS
-      ) || (vessel[VS] == VS_STEAM && (setpoint[vessel[VS]] - steamPressure) >= hysteresis[vessel[VS]] * 100)
+      || (vessel[VS] == VS_STEAM && (setpoint[vessel[VS]] - steamPressure) >= hysteresis[vessel[VS]] * 100)
     #endif
-    ) {
+       )
+  ) {
       // The temperature of the vessel is below what we want, so insure the correct pin is tunred on,
       // and the heatStatus is updated.
     #ifdef DIRECT_FIRED_RIMS
@@ -510,7 +519,6 @@ void processHeatOutputsNonPIDEnabledWithHeatOff(const byte vessel[]) {
  */
 void processHeatOutputsNonPIDEnabled(const byte vessel[]) {
   if (heatStatus[vessel[VS]]) {
-    // SoftSwitch
     processHeatOutputsNonPIDEnabledWithHeatOn(vessel);
   } else {
     processHeatOutputsNonPIDEnabledWithHeatOff(vessel);
@@ -526,6 +534,19 @@ void processHeatOutputsNonPIDEnabled(const byte vessel[]) {
 #endif  
 }
 
+/*
+ * Things get a little complex here, so let's break it down.
+ * processHeatOutputs() is called by the main brewCore() loop.
+ *    Processes the RIMS_MLT_SETPOINT_DELAY, which waits a number of
+ *      milliseconds before enabling the setpoint for RIMS.
+ *    Calls boilController() which manages the auto boil process. If
+ *      auto boil is active it may set PIDOutput[VS_KETTLE]
+ *    Then it loops through all of the vessels (using HEAT_OUTPUTS_COUNT
+ *      as a maximum) and:
+ *      Skips various vessels depending on certain conditions.
+ *      If the PID for the vessel is enabled it calls processHeatOutputsPIDEnabled
+ *        otherwise it calls processHeatOutputsNonPIDEnabled.
+ */       
 void processHeatOutputs() {
   //Process Heat Outputs
   #ifdef RIMS_MLT_SETPOINT_DELAY
@@ -536,16 +557,45 @@ void processHeatOutputs() {
     }
   #endif
   
-  for (int vesselIndex = 0; vesselIndex <= HEAT_OUTPUTS_COUNT; vesselIndex++) {
+  //Process Auto Boil Control Logic
+  boilController();
+  
+  for (int vesselIndex = 0; vesselIndex < HEAT_OUTPUTS_COUNT; vesselIndex++) {
     #ifdef HLT_AS_KETTLE
-      if (HEAT_OUTPUTS[vesselIndex][VS] == VS_KETTLE && setpoint[VS_HLT]) continue;
+      if (
+        (vesselIndex == VS_KETTLE && setpoint[VS_HLT]) //Skip kettle heat if HLT setpoint is active
+        || (vesselIndex == VS_HLT && !setpoint[VS_HLT] && setpoint[VS_KETTLE]) //Skip HLT if HLT setpoint is inactive and Kettle setpoint is active
+      ) continue;
+    #elif defined SINGLE_VESSEL_SUPPORT
+      if (
+        (!setpoint[vesselIndex] && (setpoint[VS_HLT] || setpoint[VS_MASH] || setpoint[VS_KETTLE]))
+        || (setpoint[VS_MASH] && vesselIndex != VS_MASH)
+        || (setpoint[VS_KETTLE] && vesselIndex == VS_HLT)
+      ) continue;
     #endif
-    if (PIDEnabled[HEAT_OUTPUTS[vesselIndex][VS]]) {
-      processHeatOutputsPIDEnabled(HEAT_OUTPUTS[vesselIndex]);
-    } else {
-      // SoftSwitch
-      processHeatOutputsNonPIDEnabled(HEAT_OUTPUTS[vesselIndex]);
+    
+    #ifdef RGBIO8_ENABLE
+    if (softSwitchHeat[vesselIndex] == SOFTSWITCH_AUTO) {
+      // Auto
+    #endif
+      if (PIDEnabled[HEAT_OUTPUTS[vesselIndex][VS]]) {
+        processHeatOutputsPIDEnabled(HEAT_OUTPUTS[vesselIndex]);
+      } else {
+        processHeatOutputsNonPIDEnabled(HEAT_OUTPUTS[vesselIndex]);
+      }
+    #ifdef RGBIO8_ENABLE
     }
+    else if (!estop && softSwitchHeat[vesselIndex] == SOFTSWITCH_ON) {
+      // On
+      heatPin[vesselIndex].set(HIGH);
+      heatStatus[vesselIndex] = 1;
+    }
+    else {
+      // Off, or invalid, which is as good as Off
+      heatPin[vesselIndex].set(LOW);
+      heatStatus[vesselIndex] = 0;
+    }
+    #endif
   }
 }
 
@@ -695,6 +745,12 @@ boolean vlvConfigIsActive(byte profile) {
   return bitRead(actProfiles, profile);
 }
 
+void boilController () {
+  if (boilControlState == CONTROLSTATE_AUTO) {
+    if(temp[TS_KETTLE] < setpoint[TS_KETTLE]) PIDOutput[VS_KETTLE] = PIDCycle[VS_KETTLE] * PIDLIMIT_KETTLE;
+    else PIDOutput[VS_KETTLE] = PIDCycle[VS_KETTLE] * min(boilPwr, PIDLIMIT_KETTLE);
+  }
+}
 
 //Map AutoValve Profiles to Vessels
 byte vesselAV(byte vessel) {

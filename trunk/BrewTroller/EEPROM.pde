@@ -32,6 +32,9 @@ void loadSetup() {
   EEPROMreadBytes(0, *tSensor, 72);
   #ifdef HLT_AS_KETTLE
     EEPROMreadBytes(0, tSensor[TS_KETTLE], 8);
+  #elif defined SINGLE_VESSEL_SUPPORT
+    EEPROMreadBytes(0, tSensor[TS_MASH], 8);
+    EEPROMreadBytes(0, tSensor[TS_KETTLE], 8);
   #endif
  
   //**********************************************************************************
@@ -73,6 +76,11 @@ void loadSetup() {
 
   //Load HLT calibrations to kettle
   #ifdef HLT_AS_KETTLE
+    eeprom_read_block(&calibVols[VS_KETTLE], (unsigned char *) 119, 40);
+    eeprom_read_block(&calibVals[VS_KETTLE], (unsigned char *) 239, 20);
+  #elif defined SINGLE_VESSEL_SUPPORT
+    eeprom_read_block(&calibVols[VS_MASH], (unsigned char *) 119, 40);
+    eeprom_read_block(&calibVals[VS_MASH], (unsigned char *) 239, 20);
     eeprom_read_block(&calibVols[VS_KETTLE], (unsigned char *) 119, 40);
     eeprom_read_block(&calibVals[VS_KETTLE], (unsigned char *) 239, 20);
   #endif
@@ -269,21 +277,23 @@ void setSteamPSens(unsigned int value) {
 //calibVals HLT (239-258), Mash (259-278), Kettle (279-298)
 //**********************************************************************************
 void setVolCalib(byte vessel, byte slot, unsigned int value, unsigned long vol) {
-  calibVols[vessel][slot] = vol;
-  calibVals[vessel][slot] = value;
   #ifdef HLT_AS_KETTLE
-    if (vessel == VS_HLT) {
+    if (vessel == VS_HLT || vessel == VS_KETTLE) {
       //Also copy HLT setting to Kettle
       calibVols[VS_KETTLE][slot] = vol;
-      calibVals[VS_KETTLE][slot] = value;  
+      calibVals[VS_KETTLE][slot] = value;
+      vessel = VS_HLT; //Set vessel for EEPROM write
     }
-    if (vessel == VS_KETTLE) {
-      //Store actual calibration in HLT EEPROM Table
-      vessel = VS_HLT;
-      calibVols[vessel][slot] = vol;
-      calibVals[vessel][slot] = value;  
-    } 
+  #elif defined SINGLE_VESSEL_SUPPORT
+    calibVols[VS_MASH][slot] = vol;
+    calibVals[VS_MASH][slot] = value;  
+    calibVols[VS_KETTLE][slot] = vol;
+    calibVals[VS_KETTLE][slot] = value;
+    vessel = VS_HLT; //Set vessel for EEPROM write
   #endif
+  
+  calibVols[vessel][slot] = vol;
+  calibVals[vessel][slot] = value;
   EEPROMwriteLong(119 + vessel * 40 + slot * 4, vol);
   EEPROMwriteInt(239 + vessel * 20 + slot * 2, value);
 }
@@ -510,7 +520,7 @@ unsigned long getProgGrain(byte preset) { return EEPROMreadLong(PROGRAM_START_AD
 //**********************************************************************************
 
 //**********************************************************************************
-//Trigger Piins (2050-2054) ATMEGA1284P Only
+//Trigger Pins (2050-2054) ATMEGA1284P Only
 //**********************************************************************************
 #ifdef DIGITAL_INPUTS
   byte getTriggerPin(byte triggerIndex) {
@@ -555,13 +565,21 @@ boolean checkConfig() {
       for (byte vessel = VS_HLT; vessel <= VS_STEAM; vessel++) EEPROM.write(76 + vessel * 5, EEPROM.read(76 + vessel * 5) * 10);
       //Set cfgVersion = 1
       EEPROM.write(2047, 1);
+    case 1:
+      //Set triggers to disabled by default
+      for (byte trig = 0; trig < NUM_TRIGGERS; trig++) EEPROM.write(2050 + trig, 0);
+      EEPROM.write(2047, 2);
   }
   return 0;
 }
 
 void initEEPROM() {
   //Format EEPROM to 0's
-  for (int i=0; i<2048; i++) EEPROM.write(i, 0);
+#if defined(__AVR_ATmega1284P__) || defined(__AVR_ATmega1284__)
+  for (int i = 0; i < 4096; i++) EEPROM.write(i, 0);
+#else
+  for (int i = 0; i < 2048; i++) EEPROM.write(i, 0);
+#endif
 
   //Set BT 1.3 Fingerprint (252)
   EEPROM.write(2046, 252);

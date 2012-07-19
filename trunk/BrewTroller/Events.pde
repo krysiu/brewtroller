@@ -55,7 +55,10 @@ void eventHandler(byte eventID, int eventParam) {
 
 #ifdef DIGITAL_INPUTS
   void triggerSetup() {
-    for (byte i = 0; i < 5; i++) {
+    //If EEPROM is not initialized skip trigger init
+    if (checkConfig()) return;
+    //For each logical trigger type see what the assigned trigger pin is (if any)
+    for (byte i = 0; i < NUM_TRIGGERS; i++) {
       if (TriggerPin[i] != NULL) TriggerPin[i]->detachPCInt();
       if (getTriggerPin(i)) {
         TriggerPin[i] = &digInPin[getTriggerPin(i) - 1];
@@ -89,13 +92,13 @@ void eventHandler(byte eventID, int eventParam) {
   
   void hltMinISR() {
     heatPin[VS_HLT].set(LOW);
-    heatStatus[VS_HLT] = 1;
+    heatStatus[VS_HLT] = 0;
     bitClear(actProfiles, VLV_HLTHEAT);
   }
   
   void mashMinISR() {
     heatPin[VS_MASH].set(LOW);
-    heatStatus[VS_MASH] = 1;
+    heatStatus[VS_MASH] = 0;
     bitClear(actProfiles, VLV_MASHHEAT);
     #ifdef DIRECT_FIRED_RIMS
       heatPin[VS_STEAM].set(LOW);
@@ -105,7 +108,7 @@ void eventHandler(byte eventID, int eventParam) {
   
   void kettleMinISR() {
     heatPin[VS_KETTLE].set(LOW);
-    heatStatus[VS_KETTLE] = 1;    
+    heatStatus[VS_KETTLE] = 0;    
     bitClear(actProfiles, VLV_KETTLEHEAT);
   }
 #endif
