@@ -319,7 +319,7 @@ boolean stepInit(byte pgm, byte brewStep) {
     #ifdef PID_FLOW_CONTROL
     resetHeatOutput(VS_PUMP); // turn off the pump if we are moving to boil. 
     #endif
-    setSetpoint(VS_KETTLE, getBoilTemp());
+        setSetpoint(VS_KETTLE, getBoilTemp());
     preheated[VS_KETTLE] = 0;
     boilAdds = getProgAdds(pgm);
     
@@ -336,7 +336,7 @@ boolean stepInit(byte pgm, byte brewStep) {
     //Leave timer paused until preheated
     timerStatus[TIMER_BOIL] = 0;
     lastHop = 0;
-    doAutoBoil = 1;
+    boilControlState = CONTROLSTATE_AUTO;
     
   } else if (brewStep == STEP_CHILL) {
   //Step Init: Chill
@@ -404,10 +404,6 @@ void stepCore() {
   }
   
   if (stepIsActive(STEP_BOIL)) {
-    if (doAutoBoil) {
-      if(temp[TS_KETTLE] < setpoint[TS_KETTLE]) PIDOutput[VS_KETTLE] = PIDCycle[VS_KETTLE] * PIDLIMIT_KETTLE;
-      else PIDOutput[VS_KETTLE] = PIDCycle[VS_KETTLE] * min(boilPwr, PIDLIMIT_KETTLE);
-    }
     #ifdef PREBOIL_ALARM
       if (!(triggered & 32768) && temp[TS_KETTLE] >= PREBOIL_ALARM) {
         setAlarm(1);
@@ -669,9 +665,9 @@ unsigned long calcPreboilVol(byte pgm) {
   // It is (((batch volume + kettle loss) / thermo shrinkage factor ) / evap loss factor )
   //unsigned long retValue = (getProgBatchVol(pgm) / (1.0 - getEvapRate() / 100.0 * getProgBoil(pgm) / 60.0)) + getVolLoss(TS_KETTLE); // old logic 
   #ifdef BOIL_OFF_GALLONS
-    unsigned long retValue = (((getProgBatchVol(pgm) + getVolLoss(TS_KETTLE)) / .96) + (((unsigned long)getEvapRate() * EvapRateConversion) * getProgBoil(pgm) / 60.0));
+    unsigned long retValue = (((getProgBatchVol(pgm) + getVolLoss(TS_KETTLE)) / VOL_SHRINKAGE) + (((unsigned long)getEvapRate() * EvapRateConversion) * getProgBoil(pgm) / 60.0));
   #else
-    unsigned long retValue = (((getProgBatchVol(pgm) + getVolLoss(TS_KETTLE)) / .96) / (1.0 - getEvapRate() / 100.0 * getProgBoil(pgm) / 60.0));
+    unsigned long retValue = (((getProgBatchVol(pgm) + getVolLoss(TS_KETTLE)) / VOL_SHRINKAGE) / (1.0 - getEvapRate() / 100.0 * getProgBoil(pgm) / 60.0));
   #endif
   
   #ifdef DEBUG_PROG_CALC_VOLS

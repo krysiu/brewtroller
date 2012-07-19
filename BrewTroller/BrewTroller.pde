@@ -1,4 +1,4 @@
-#define BUILD 956
+#define BUILD 958
 /*  
   Copyright (C) 2009, 2010 Matt Reba, Jeremiah Dillingham
 
@@ -125,6 +125,8 @@ boolean estop = 0;
 //Volume Sensor Pin Array
 #ifdef HLT_AS_KETTLE
   byte vSensor[3] = { HLTVOL_APIN, MASHVOL_APIN, HLTVOL_APIN};
+#elif defined SINGLE_VESSEL_SUPPORT
+  byte vSensor[3] = { HLTVOL_APIN, HLTVOL_APIN, HLTVOL_APIN};
 #else
   byte vSensor[3] = { HLTVOL_APIN, MASHVOL_APIN, KETTLEVOL_APIN};
 #endif
@@ -254,7 +256,8 @@ boolean logData = LOG_INITSTATUS;
 //Active program for each brew step
 #define PROGRAM_IDLE 255
 byte stepProgram[NUM_BREW_STEPS];
-boolean preheated[4], doAutoBoil;
+boolean preheated[4];
+ControlState boilControlState = CONTROLSTATE_OFF;
 
 //Bit 1 = Boil; Bit 2-11 (See Below); Bit 12 = End of Boil; Bit 13-15 (Open); Bit 16 = Preboil (If Compile Option Enabled)
 unsigned int hoptimes[10] = { 105, 90, 75, 60, 45, 30, 20, 15, 10, 5 };
@@ -290,6 +293,7 @@ void setup() {
 
   //Pin initialization (Outputs.pde)
   pinInit();
+
 
 #ifdef PVOUT
   #if defined PVOUT_TYPE_GPIO
@@ -349,6 +353,7 @@ void setup() {
   
   //Check for cfgVersion variable and update EEPROM if necessary (EEPROM.pde)
   checkConfig();
+
   
   //Load global variable values stored in EEPROM (EEPROM.pde)
   loadSetup();
