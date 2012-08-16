@@ -1,4 +1,4 @@
-#define BUILD 941
+#define BUILD 968
 /*  
   Copyright (C) 2010 Jason von Nieda
 
@@ -62,6 +62,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   #define DEBUG_PIN 13
   #define ENCODER_SUPPORT
   #define ENCODER_TYPE 0
+  #define ENCODER_ACTIVELOW
   #define ENCA_PIN 14
   #define ENCB_PIN 15
   #define ENTER_PIN 16
@@ -115,7 +116,7 @@ byte reqField = REQ_BRIGHT;
 
 void onReceive(int numBytes) {
 #ifdef DEBUG_PIN
-  //debug.toggle();
+  debug.set();
 #endif
   switch (Wire.receive()) {
     case 0x01: // begin(cols, rows)
@@ -194,6 +195,9 @@ void onReceive(int numBytes) {
         for (byte i = 0; i < len; i++) lcd.write(Wire.receive());
       }
       break;
+    case 0x15: // write(char c)
+      lcd.write(Wire.receive());
+      break;
 #ifdef ENCODER_SUPPORT
     case 0x40: //Encoder.setMin
       {
@@ -243,10 +247,11 @@ void onReceive(int numBytes) {
     case 0x4B: // Encoder.cancel
       reqField = REQ_ENCCANCEL;
       break;
-  }
 #endif
-  // increment for the command byte that was read
-  //debug.clear();
+  }
+#ifdef DEBUG_PIN
+  debug.clear();
+#endif
 }
 
 void onRequest() {
@@ -357,7 +362,9 @@ void setup() {
 
 #ifdef ENCODER_SUPPORT
   Encoder.begin(ENCODER_TYPE, ENTER_PIN, ENCA_PIN, ENCB_PIN);
-  Encoder.setActiveLow(1);
+  #ifdef ENCODER_ACTIVELOW
+    Encoder.setActiveLow(1);
+  #endif
 #endif
   loadEEPROM();
   
@@ -374,8 +381,8 @@ void setup() {
   Wire.onReceive(onReceive);
   Wire.onRequest(onRequest);
   Wire.begin(i2cAddr);
-  }
+}
 
 void loop() {
-
+ 
 }
