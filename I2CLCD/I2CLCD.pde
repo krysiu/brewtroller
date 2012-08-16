@@ -1,4 +1,4 @@
-#define BUILD 968
+#define BUILD 969
 /*  
   Copyright (C) 2010 Jason von Nieda
 
@@ -71,6 +71,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
 typedef enum {
   REQ_BRIGHT,
   REQ_CONTRAST,
+  REQ_VERSION,
 #ifdef ENCODER_SUPPORT
   REQ_ENCCOUNT,
   REQ_ENCCHANGE,
@@ -198,6 +199,9 @@ void onReceive(int numBytes) {
     case 0x15: // write(char c)
       lcd.write(Wire.receive());
       break;
+    case 0x16: // getVersion()
+      reqField = REQ_VERSION;
+      break;
 #ifdef ENCODER_SUPPORT
     case 0x40: //Encoder.setMin
       {
@@ -262,7 +266,13 @@ void onRequest() {
     case REQ_CONTRAST:
       Wire.send(contrast);
       break;
-    
+    case REQ_VERSION:
+      {
+        int value = BUILD;
+        uint8_t * p = (uint8_t *) &value;
+        Wire.send(p, 2);
+      }
+      break;
 #ifdef ENCODER_SUPPORT
     case REQ_ENCCOUNT:
       {
