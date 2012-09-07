@@ -1,4 +1,5 @@
 set mbp_baud=76800
+set mbp_parity=even
 set mbp_com=com7
 
 set mbp_slaveaddr=10
