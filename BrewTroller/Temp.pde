@@ -24,94 +24,160 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
 
-#ifdef TS_ONEWIRE
-  #ifdef TS_ONEWIRE_GPIO
-    #include <OneWire.h>
-    OneWire ds(TEMP_PIN);
-  #endif
-  #ifdef TS_ONEWIRE_I2C
-    #include <DS2482.h>
-    DS2482 ds(DS2482_ADDR);
-  #endif
-  //One Wire Bus on 
+typedef struct tSensorCfg_t {
+  typedef enum {
+    tSensorType_None,
+    tSensorType_1Wire,
+    tSensorType_Modbus
+  } tSensorType;
+  union {
+    struct tSensorCfg_1Wire_t {
+      byte addr[8];
+    } tSensorCfg_1Wire;
+    struct tSensorCfg_Modbus_t {
+      byte slaveAddr;
+      unsigned int reg;
+    } tSensorCfg_Modbus;
+  } implementation;
+};
+
+typedef struct oneWireBusCfg_t {
+  boolean parasite;
+  boolean crcCheck;
+  boolean resLow;
+  boolean resHigh;
+};
+
+class tSensor {
+  private:
+  int temperature;
+  static boolean unitMetric;
   
-  void tempInit() {
-    for (byte i = 0; i < NUM_TS; i++) temp[i] = BAD_TEMP;
-    #ifdef TS_ONEWIRE_I2C
-      ds.configure(DS2482_CONFIG_APU | DS2482_CONFIG_SPU);
-    #endif
-    ds.reset();
-    ds.skip();
-    ds.write(0x4E, TS_ONEWIRE_PPWR); //Write to scratchpad
-    ds.write(0x4B, TS_ONEWIRE_PPWR); //Default value of TH reg (user byte 1)
-    ds.write(0x46, TS_ONEWIRE_PPWR); //Default value of TL reg (user byte 2)
-  
-    #if TS_ONEWIRE_RES == 12
-      ds.write(0x7F, TS_ONEWIRE_PPWR); //Config Reg (12-bit)
-    #elif TS_ONEWIRE_RES == 11
-      ds.write(0x5F, TS_ONEWIRE_PPWR); //Config Reg (11-bit)
-    #elif TS_ONEWIRE_RES == 10
-      ds.write(0x3F, TS_ONEWIRE_PPWR); //Config Reg (10-bit)
-    #else //Default to 9-bit
-      ds.write(0x1F, TS_ONEWIRE_PPWR); //Config Reg (9-bit)
-    #endif
-  
-    ds.reset();
-    ds.skip();
-    ds.write(0x48, TS_ONEWIRE_PPWR); //Copy scratchpad to EEPROM
+  public:
+  tSensor(void) {
+    temperature = BAD_TEMP;
   }
-
-
-  unsigned long convStart;
   
-  #if TS_ONEWIRE_RES == 12
-    #define CONV_DELAY 750
-  #elif TS_ONEWIRE_RES == 11
-    #define CONV_DELAY 375
-  #elif TS_ONEWIRE_RES == 10
-    #define CONV_DELAY 188
-  #else //Default to 9-bit
-    #define CONV_DELAY 94
-  #endif
+  static tSensor* create(tSensorCfg_t cfg) {
+    if (cfg.tSensorType == tSensorType_1Wire) return new tSensor_1Wire(cfg.implementation.tSensorCfg_1Wire.addr);
+    //else if (cfg.tSensorType == tSensorType_Modbus) return new tSensor_Modbus(cfg.implementation.tSensorCfg_Modbus.slaveAddr, cfg.implementation.tSensorCfg_Modbus.reg);
+    else return NULL;
+  }
+  
+  int getValue() {
+    if (tSensor::unitMetric) return temperature;
+    else return (temperature * 9 / 5 + 32);
+  }
+  
+  void setUnit(boolean unit) { tSensor::unitMetric = unit; }
+  
+  virtual void init(void) { };
+  virtual void update(void) = 0;
+};
 
-  void updateTemps() {
-    if (convStart == 0) {
+#ifdef TS_ONEWIRE
+
+  #define DS18B20_DELAY { 94, 188, 375, 750 } //9Bit - 12Bit
+
+  class tSensor_1Wire : public tSensor {
+    private:
+    byte addr[8];
+    static unsigned long convStart;
+    static unsigned int convDelay;
+    static byte resolution, devCount, readCount;
+    static boolean parasitePwr, crcCheck;
+    
+    public:
+    tSensor_1Wire(byte tsAddr[8]) {
+      memcpy(addr, tsAddr, 8);
+      devCount++;
+    }
+    
+    void setBusCfg(oneWireBusCfg_t busCfg) {
+      tSensor_1Wire::parasitePwr = busCfg.parasite;
+      tSensor_1Wire::crcCheck = busCfg.crcCheck;
+      tSensor_1Wire::resolution = (busCfg.resHigh << 1 | busCfg.resLow);
+      unsigned int  resDelay[] = DS18B20_DELAY;
+      tSensor_1Wire::convDelay = resDelay[tSensor_1Wire::resolution];
+    }
+    
+    void init() {
+      ds.reset();
+      ds.select(addr);
+      ds.write(0x4E, tSensor_1Wire::parasitePwr); //Write to scratchpad
+      ds.write(0x4B, tSensor_1Wire::parasitePwr); //Default value of TH reg (user byte 1)
+      ds.write(0x46, tSensor_1Wire::parasitePwr); //Default value of TL reg (user byte 2)
+      
+      ds.write((tSensor_1Wire::resolution << 5) | B00011111, tSensor_1Wire::parasitePwr); //Config Reg (12-bit)
       ds.reset();
       ds.skip();
-      ds.write(0x44, TS_ONEWIRE_PPWR); //Start conversion
-      convStart = millis();   
-    } else if (tsReady() || millis() - convStart >= CONV_DELAY) {
-      #ifdef DEBUG_TEMP_CONV_T
-        convStart = millis() - convStart;
-        logStart_P(LOGDEBUG);
-        logField_P(PSTR("TEMP_CONV_T"));
-        logFieldI(convStart);
-        logEnd();
-      #endif
-      for (byte i = 0; i < NUM_TS; i++) if (validAddr(tSensor[i])) temp[i] = read_temp(tSensor[i]); else temp[i] = BAD_TEMP;
-      convStart = 0;
-      
-      #if defined MASH_AVG
-        mashAvg();
-      #endif
+      ds.write(0x48, tSensor_1Wire::parasitePwr); //Copy scratchpad to EEPROM
+    }
+  };
+  
+  void update() {
+    if (tSensor_1Wire::readCount == 0) {
+      ds.reset();
+      ds.skip();
+      ds.write(0x44, tSensor_1Wire::parasitePwr); //Start conversion
+      tSensor_1Wire::convStart = millis();
+      tSensor_1Wire::readCount = tSensor_1Wire::devCount;
+    } else if (isReady()) {
+      if (validAddr()) temperature = read_temp(); else temperature = BAD_TEMP;
+      tSensor_1Wire::readCount--;
     }
   }
 
-  boolean tsReady() {
-    #if TS_ONEWIRE_PPWR == 0 //Poll if parasite power is disabled
+  boolean isReady() {
+    if (tSensor_1Wire::parasitePwr == 0) { //Poll if parasite power is disabled
       if (ds.read() == 0xFF) return 1;
-    #endif
+    }
+    if (millis() - tSensor_1Wire::convStart >= tSensor_1Wire::convDelay) return 1;
     return 0;
   }
   
   boolean validAddr(byte* addr) {
-    for (byte i = 0; i < 8; i++) if (addr[i]) return 1;
-    return 0;
+    if (addr[0] != 0x28 && addr[0] != 0x10) return 0; //Verify the family code
+    //Could do a CRC check on the Address
+    return 1;
   }
   
-  //This function search for an address that is not currently assigned!
-  void getDSAddr(byte addrRet[8]){
-  //Leaving stub for external functions (serial and setup) that use this function
+//Returns Int representing hundreths of degree
+  int read_temp() {
+    long tempOut;
+    byte data[9];
+    ds.reset();
+    ds.select(addr);   
+    ds.write(0xBE, tSensor_1Wire::parasitePwr); //Read Scratchpad
+    if (tSensor_1Wire::crcCheck) {
+      for (byte i = 0; i < 2; i++) data[i] = ds.read();
+    }
+    else {
+      for (byte i = 0; i < 9; i++) data[i] = ds.read();
+      if (ds.crc8( data, 8) != data[8]) return BAD_TEMP;
+    }
+
+    tempOut = (data[1] << 8) + data[0];
+    
+    if ( addr[0] == 0x10) tempOut = tempOut * 50; //9-bit DS18S20
+    else tempOut = tempOut * 25 / 4; //12-bit DS18B20, etc.
+    return int(tempOut);  
+  }
+#endif
+
+
+
+
+
+
+
+
+
+
+
+//TODO scan function update
+
+  void getDSAddr(addrRet[8]){
     byte scanAddr[8];
     ds.reset_search();
     byte limit = 0;
@@ -150,37 +216,8 @@ Documentation, Forums and more information available at http://www.brewtroller.c
       limit++;
     }      
   }
-  
-//Returns Int representing hundreths of degree
-  int read_temp(byte* addr) {
-    long tempOut;
-    byte data[9];
-    ds.reset();
-    ds.select(addr);   
-    ds.write(0xBE, TS_ONEWIRE_PPWR); //Read Scratchpad
-    #ifdef TS_ONEWIRE_FASTREAD
-      for (byte i = 0; i < 2; i++) data[i] = ds.read();
-    #else
-      for (byte i = 0; i < 9; i++) data[i] = ds.read();
-      if (ds.crc8( data, 8) != data[8]) return BAD_TEMP;
-    #endif
 
-    tempOut = (data[1] << 8) + data[0];
-    
-    if ( addr[0] == 0x10) tempOut = tempOut * 50; //9-bit DS18S20
-    else tempOut = tempOut * 25 / 4; //12-bit DS18B20, etc.
-      
-    #ifdef USEMETRIC
-      return int(tempOut);  
-    #else
-      return int((tempOut * 9 / 5) + 3200);
-    #endif
-  }
-#else
-  void tempInit() {}
-  void updateTemps() {}
-  void getDSAddr(byte addrRet[8]){};
-#endif
+//TO DO implement averaging logic
 
 #if defined MASH_AVG
 void mashAvg() {

@@ -46,111 +46,51 @@ Compiled on Arduino-0022 (http://arduino.cc/en/Main/Software)
 #include <PID_Beta6.h>
 #include <pin.h>
 #include <menu.h>
+#include <avr/eeprom.h>
+#include <ModbusMaster.h>
 
 #include "HWProfile.h"
 #include "Config.h"
-#include "Enum.h"
-#include "PVOut.h"
+#include "Global.h"
+#include "Outputs.cpp"
+
 #include "UI_LCD.h"
-#include <avr/eeprom.h>
-#include <EEPROM.h>
 #include "wiring_private.h"
 #include <encoder.h>
 #include "Com_RGBIO8.h"
 
 void(* softReset) (void) = 0;
 
-const char BT[] PROGMEM = "BrewTroller";
-const char BTVER[] PROGMEM = "2.5";
-
-//**********************************************************************************
-// Compile Time Logic
-//**********************************************************************************
-
-//Enable Mash Avergaing Logic if any Mash_AVG_AUXx options were enabled
-#if defined MASH_AVG_AUX1 || defined MASH_AVG_AUX2 || defined MASH_AVG_AUX3
-  #define MASH_AVG
-#endif
-
-#ifdef USEMETRIC
-  #define SETPOINT_MULT 50
-  #define SETPOINT_DIV 2
-#else
-  #define SETPOINT_MULT 100
-  #define SETPOINT_DIV 1
-#endif
-
-#ifndef STRIKE_TEMP_OFFSET
-  #define STRIKE_TEMP_OFFSET 0
-#endif
-
-#if COM_SERIAL0 == BTNIC || defined BTNIC_EMBEDDED
-  #define BTNIC_PROTOCOL
-#endif
-
-#if defined BTPD_SUPPORT || defined UI_LCD_I2C || defined TS_ONEWIRE_I2C || defined BTNIC_EMBEDDED || defined RGBIO8_ENABLE
-  #define USE_I2C
-#endif
-
-#ifdef BOIL_OFF_GALLONS
-  #ifdef USEMETRIC
-    #define EvapRateConversion 1000
-  #else
-    #define EvapRateConversion 100
-  #endif
-#endif
-
-#ifdef USE_I2C
+#ifdef I2C_SUPPORT
   #include <Wire.h>
 #endif
+
+const char BT[] PROGMEM = "BrewTroller";
+const char BTVER[] PROGMEM = "3.0";
 
 //**********************************************************************************
 // Globals
 //**********************************************************************************
 
-//Heat Output Pin Array
-pin heatPin[4], alarmPin;
-
-#ifdef DIGITAL_INPUTS
-  pin digInPin[DIGIN_COUNT];
+//Define 1-Wire Bus Object
+#ifdef TS_ONEWIRE
+  #if defined TS_ONEWIRE_GPIO
+    #include <OneWire.h>
+    OneWire ds(TEMP_PIN);
+  #elif defined TS_ONEWIRE_I2C
+    #include <DS2482.h>
+    DS2482 ds(DS2482_ADDR);
+  #endif
 #endif
 
-pin * TriggerPin[5] = { NULL, NULL, NULL, NULL, NULL };
-boolean estop = 0;
+
+btConfig_t Configuration EEMEM;
+
+outputs Outputs;
 
 #ifdef HEARTBEAT
-  pin hbPin;
+  heartBeat HeartBeat(HEARTBEAT_PIN);
 #endif
-
-//Volume Sensor Pin Array
-#ifdef HLT_AS_KETTLE
-  byte vSensor[3] = { HLTVOL_APIN, MASHVOL_APIN, HLTVOL_APIN};
-#elif defined SINGLE_VESSEL_SUPPORT
-  byte vSensor[3] = { HLTVOL_APIN, HLTVOL_APIN, HLTVOL_APIN};
-#else
-  byte vSensor[3] = { HLTVOL_APIN, MASHVOL_APIN, KETTLEVOL_APIN};
-#endif
-
-//8-byte Temperature Sensor Address x9 Sensors
-byte tSensor[9][8];
-int temp[9];
-
-//Volume in (thousandths of gal/l)
-unsigned long tgtVol[3], volAvg[3], calibVols[3][10];
-unsigned int calibVals[3][10];
-#ifdef SPARGE_IN_PUMP_CONTROL
-unsigned long prevSpargeVol[2] = {0,0};
-#endif
-
-#ifdef HLT_MIN_REFILL
-unsigned long SpargeVol = 0;
-#endif
-
-#ifdef FLOWRATE_CALCS
-//Flowrate in thousandths of gal/l per minute
-long flowRate[3] = {0,0,0};
-#endif
-
 
 //Create the appropriate 'LCD' object for the hardware configuration (4-Bit GPIO, I2C)
 #if defined UI_LCD_4BIT
@@ -166,103 +106,6 @@ long flowRate[3] = {0,0,0};
   LCDI2C LCD(UI_LCD_I2CADDR);
 #endif
 
-
- 
-//Valve Variables
-unsigned long vlvConfig[NUM_VLVCFGS], actProfiles;
-boolean autoValve[NUM_AV];
-
-//Create the appropriate 'Valves' object for the hardware configuration (GPIO, MUX, MODBUS)
-#if defined PVOUT_TYPE_GPIO
-  #define PVOUT
-  PVOutGPIO Valves(PVOUT_COUNT);
-
-#elif defined PVOUT_TYPE_MUX
-  #define PVOUT
-  PVOutMUX Valves( 
-    MUX_LATCH_PIN,
-    MUX_DATA_PIN,
-    MUX_CLOCK_PIN,
-    MUX_ENABLE_PIN,
-    MUX_ENABLE_LOGIC
-  );
-  
-#elif defined PVOUT_TYPE_MODBUS
-  #define PVOUT
-  PVOutMODBUS Valves();
-
-#endif
-
-//Shared buffers
-char buf[20];
-
-//Output Globals
-double PIDInput[4], PIDOutput[4], setpoint[4];
-#ifdef PID_FEED_FORWARD
-double FFBias;
-#endif
-byte PIDCycle[4], hysteresis[4];
-#ifdef PWM_BY_TIMER
-unsigned int cycleStart[4] = {0,0,0,0};
-#else
-unsigned long cycleStart[4] = {0,0,0,0};
-#endif
-boolean heatStatus[4], PIDEnabled[4];
-unsigned int steamPSens, steamZero;
-
-byte pidLimits[4] = { PIDLIMIT_HLT, PIDLIMIT_MASH, PIDLIMIT_KETTLE, PIDLIMIT_STEAM };
-  
-//Steam Pressure in thousandths
-unsigned long steamPressure;
-byte boilPwr;
-
-PID pid[4] = {
-  PID(&PIDInput[VS_HLT], &PIDOutput[VS_HLT], &setpoint[VS_HLT], 3, 4, 1),
-
-  #ifdef PID_FEED_FORWARD
-    PID(&PIDInput[VS_MASH], &PIDOutput[VS_MASH], &setpoint[VS_MASH], &FFBias, 3, 4, 1),
-  #else
-    PID(&PIDInput[VS_MASH], &PIDOutput[VS_MASH], &setpoint[VS_MASH], 3, 4, 1),
-  #endif
-
-  PID(&PIDInput[VS_KETTLE], &PIDOutput[VS_KETTLE], &setpoint[VS_KETTLE], 3, 4, 1),
-
-  #ifdef PID_FLOW_CONTROL
-    PID(&PIDInput[VS_PUMP], &PIDOutput[VS_PUMP], &setpoint[VS_PUMP], 3, 4, 1)
-  #else
-    PID(&PIDInput[VS_STEAM], &PIDOutput[VS_STEAM], &setpoint[VS_STEAM], 3, 4, 1)
-  #endif
-};
-#if defined PID_FLOW_CONTROL && defined PID_CONTROL_MANUAL
-  unsigned long nextcompute;
-  byte additioncount[2];
-#endif
-
-#ifdef RIMS_MLT_SETPOINT_DELAY
-  byte steptoset = 0;
-  byte RIMStimeExpired = 0;
-  unsigned long starttime = 0;
-  unsigned long timetoset = 0;
-#endif
-
-//Timer Globals
-unsigned long timerValue[2], lastTime[2];
-boolean timerStatus[2], alarmStatus;
-
-//Log Globals
-boolean logData = LOG_INITSTATUS;
-
-//Brew Step Logic Globals
-//Active program for each brew step
-#define PROGRAM_IDLE 255
-byte stepProgram[NUM_BREW_STEPS];
-boolean preheated[4];
-ControlState boilControlState = CONTROLSTATE_OFF;
-
-//Bit 1 = Boil; Bit 2-11 (See Below); Bit 12 = End of Boil; Bit 13-15 (Open); Bit 16 = Preboil (If Compile Option Enabled)
-unsigned int hoptimes[10] = { 105, 90, 75, 60, 45, 30, 20, 15, 10, 5 };
-byte pitchTemp;
-
 //Log Strings
 const char LOGCMD[] PROGMEM = "CMD";
 const char LOGDEBUG[] PROGMEM = "DEBUG";
@@ -270,20 +113,29 @@ const char LOGSYS[] PROGMEM = "SYS";
 const char LOGCFG[] PROGMEM = "CFG";
 const char LOGDATA[] PROGMEM = "DATA";
 
-//PWM by timer globals
-#ifdef PWM_BY_TIMER
-unsigned int timer1_overflow_count = 0;
-unsigned int PIDOutputCountEquivalent[4][2] = {{0,0},{0,0},{0,0},{0,0}};
-#endif
 
 //**********************************************************************************
 // Setup
 //**********************************************************************************
 
+void setUnit(boolean unitMetric) {
+  tSensor::setUnit(unitMetric);
+}
+
 void setup() {
-  #ifdef USE_I2C
+  #ifdef I2C_SUPPORT
     Wire.begin(BT_I2C_ADDR);
+    #ifdef TS_ONEWIRE_I2C
+      ds.configure(DS2482_CONFIG_APU | DS2482_CONFIG_SPU);
+    #endif
   #endif
+  
+
+
+  
+  
+  
+  
   
   //Initialize Brew Steps to 'Idle'
   for(byte brewStep = 0; brewStep < NUM_BREW_STEPS; brewStep++) stepProgram[brewStep] = PROGRAM_IDLE;
@@ -294,60 +146,6 @@ void setup() {
   //Pin initialization (Outputs.pde)
   pinInit();
 
-
-#ifdef PVOUT
-  #if defined PVOUT_TYPE_GPIO
-    #if PVOUT_COUNT >= 1
-      Valves.setup(0, VALVE1_PIN);
-    #endif
-    #if PVOUT_COUNT >= 2
-      Valves.setup(1, VALVE2_PIN);
-    #endif
-    #if PVOUT_COUNT >= 3
-      Valves.setup(2, VALVE3_PIN);
-    #endif
-    #if PVOUT_COUNT >= 4
-      Valves.setup(3, VALVE4_PIN);
-    #endif
-    #if PVOUT_COUNT >= 5
-      Valves.setup(4, VALVE5_PIN);
-    #endif
-    #if PVOUT_COUNT >= 6
-      Valves.setup(5, VALVE6_PIN);
-    #endif
-    #if PVOUT_COUNT >= 7
-      Valves.setup(6, VALVE7_PIN);
-    #endif
-    #if PVOUT_COUNT >= 8
-      Valves.setup(7, VALVE8_PIN);
-    #endif
-    #if PVOUT_COUNT >= 9
-      Valves.setup(8, VALVE9_PIN);
-    #endif
-    #if PVOUT_COUNT >= 10
-      Valves.setup(9, VALVEA_PIN);
-    #endif
-    #if PVOUT_COUNT >= 11
-      Valves.setup(10, VALVEB_PIN);
-    #endif
-    #if PVOUT_COUNT >= 12
-      Valves.setup(11, VALVEC_PIN);
-    #endif
-    #if PVOUT_COUNT >= 13
-      Valves.setup(12, VALVED_PIN);
-    #endif
-    #if PVOUT_COUNT >= 14
-      Valves.setup(13, VALVEE_PIN);
-    #endif
-    #if PVOUT_COUNT >= 15
-      Valves.setup(14, VALVEF_PIN);
-    #endif
-    #if PVOUT_COUNT >= 16
-      Valves.setup(15, VALVEG_PIN);
-    #endif
-  #endif
-  Valves.init();
-#endif
 
   tempInit();
   
@@ -392,3 +190,10 @@ void loop() {
   brewCore();
 }
 
+boolean loadConfig() {
+
+}
+
+void initConfig() {
+  
+}

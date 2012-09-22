@@ -75,8 +75,8 @@ Documentation, Forums and more information available at http://www.brewtroller.c
           TCCR2B = 0x01;
           pinMode(brightPin, OUTPUT);
           pinMode(contrastPin, OUTPUT);
-          setBright(loadLCDBright());
-          setContrast(loadLCDContrast());
+          setBright(LCD_DEFAULT_BRIGHTNESS);
+          setContrast(LCD_DEFAULT_CONTRAST);
         #endif
       }
       
@@ -207,11 +207,6 @@ Documentation, Forums and more information available at http://www.brewtroller.c
           contrast = val;
         }
 
-        void saveConfig(void) {
-          saveLCDBright(bright);
-          saveLCDContrast(contrast);
-        }
-        
         byte getBright(void) {
           return bright;
         }
@@ -226,20 +221,6 @@ Documentation, Forums and more information available at http://www.brewtroller.c
       #ifdef UI_DISPLAY_SETUP
         byte brightPin, contrastPin;
         byte bright, contrast;
-
-        #if defined(__AVR_ATmega1284P__) || defined(__AVR_ATmega1284__)
-          void saveLCDBright(byte val) { EEPROM.write(2048, val); }
-          void saveLCDContrast(byte val) { EEPROM.write(2049, val); }
-          byte loadLCDBright() { return EEPROM.read(2048); }
-          byte loadLCDContrast() { return EEPROM.read(2049); }
-        #else
-          //Fake It: 644P Only Supports 0-2047
-          void saveLCDBright(byte val) {  }
-          void saveLCDContrast(byte val) {  }
-          byte loadLCDBright() {  }
-          byte loadLCDContrast() {  }
-        #endif
-      
       #endif
   };
 
@@ -331,10 +312,6 @@ Documentation, Forums and more information available at http://www.brewtroller.c
       
       void setContrast(byte val) {
         i2cSetContrast(val);
-      }
-      
-      void saveConfig(void) {
-        i2cSaveConfig();
       }
       
       byte getBright(void) {
@@ -454,18 +431,6 @@ Documentation, Forums and more information available at http://www.brewtroller.c
         {
           return Wire.receive();
         }
-      }
-      
-      uint8_t i2cSaveConfig(void) {
-        Wire.beginTransmission(i2cLCDAddr);
-        Wire.send(0x0B);
-        return Wire.endTransmission();
-      }
-      
-      uint8_t i2cLoadConfig(void) {
-        Wire.beginTransmission(i2cLCDAddr);
-        Wire.send(0x0C);
-        return Wire.endTransmission();
       }
       
       int i2cLcdGetVersion(void) {
