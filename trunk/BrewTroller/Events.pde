@@ -53,62 +53,120 @@ void eventHandler(byte eventID, int eventParam) {
 
 }
 
-#ifdef DIGITAL_INPUTS
-  void triggerSetup() {
-    //If EEPROM is not initialized skip trigger init
-    if (checkConfig()) return;
-    //For each logical trigger type see what the assigned trigger pin is (if any)
-    for (byte i = 0; i < NUM_TRIGGERS; i++) {
-      if (TriggerPin[i] != NULL) TriggerPin[i]->detachPCInt();
-      if (getTriggerPin(i)) {
-        TriggerPin[i] = &digInPin[getTriggerPin(i) - 1];
-        if (i == TRIGGER_ESTOP) TriggerPin[i]->attachPCInt(CHANGE, eStopISR);
-        else if (i == TRIGGER_SPARGEMAX) TriggerPin[i]->attachPCInt(RISING, spargeMaxISR);
-        else if (i == TRIGGER_HLTMIN) TriggerPin[i]->attachPCInt(FALLING, hltMinISR);
-        else if (i == TRIGGER_MASHMIN) TriggerPin[i]->attachPCInt(FALLING, mashMinISR);
-        else if (i == TRIGGER_KETTLEMIN) TriggerPin[i]->attachPCInt(FALLING, kettleMinISR);
-      }
-    }
-  }
+typedef enum {
+  TRANSITION_CHANGE = CHANGE,
+  TRANSITION_FALLING = FALLING,
+  TRANSITION_RISING = RISING
+} transitionType;
 
-  void eStopISR() {
-    //Either clear E-Stop condition if e-Stop trigger goes high
-    //or perform E-Stop actions on trigger low
-    if (TriggerPin[TRIGGER_ESTOP]->get()) estop = 0;
-    else {
-      estop = 1;
-      setAlarm(1);
-      processHeatOutputs();
-      #ifdef PVOUT
-        updateValves();
-      #endif
-      updateTimers();
+typedef struct triggerCfg_t {
+  typedef enum {
+    triggerType_None,
+    triggerType_GPIO,
+    triggerType_Modbus
+  } triggerType;
+  union {
+    struct triggerCfg_GPIO_t {
+      byte pin;
+      transitionType mode;
+    } triggerCfg_GPIO;
+    struct triggerCfg_Modbus_t {
+      byte slaveAddr;
+      unsigned int dataAddr;
+      transitionType mode;
+    } triggerCfg_Modbus;
+  } implementation;
+};
+
+
+
+class trigger {
+  private:
+  transitionType mode;
+  boolean value, lastValue;
+  
+  public:
+  static trigger* create(triggerCfg_t cfg) {
+    if(cfg.triggerType == triggerType_GPIO) return new trigger_GPIO(cfg.implementation.triggerCfg_GPIO.pin, cfg.implementation.triggerCfg_GPIO.mode);
+    else return NULL;
+  }
+  virtual boolean getState() {
+    boolean retValue = 0;
+    switch (mode) {
+      case TRANSITION_CHANGE:
+        if (lastValue != value) retValue = 1;
+        break;
+      case TRANSITION_FALLING:
+        retValue = ~value;
+        break;
+      case TRANSITION_RISING:
+        retValue = value;
+        break
     }
+    lastValue = value;
+    return retValue;
   }
+  virtual void init() {}
+  virtual void update() {}
+};
+
+
+
+class trigger_GPIO : public trigger {
+  private:
+  pin trigPin;
   
-  void spargeMaxISR() {
-    bitClear(actProfiles, VLV_SPARGEIN);
+  public:
+  trigger_GPIO(byte pinNum, transitionType m) {
+    mode = m;
+    trigPin.setup(pinNum, INPUT);
   }
-  
-  void hltMinISR() {
-    heatPin[VS_HLT].set(LOW);
-    heatStatus[VS_HLT] = 0;
-    bitClear(actProfiles, VLV_HLTHEAT);
-  }
-  
-  void mashMinISR() {
-    heatPin[VS_MASH].set(LOW);
-    heatStatus[VS_MASH] = 0;
-    bitClear(actProfiles, VLV_MASHHEAT);
-    #ifdef DIRECT_FIRED_RIMS
-      heatPin[VS_STEAM].set(LOW);
-      heatStatus[VS_STEAM] = 0;
+  void update() { value = trigPin.get(); }
+};
+
+
+class trigger_Modbus : public trigger {
+  private:
+  ModbusMaster slave;
+  unsigned int dataAddr;
+    
+  public:
+  trigger_Modbus(byte sAddr, unsigned int dAddr, transitionType m) {
+    slave = ModbusMaster(RS485_SERIAL_PORT, sAddr);
+    #ifdef RS485_RTS_PIN
+      slave.setupRTS(RS485_RTS_PIN);
     #endif
+    slave.begin(RS485_BAUDRATE, RS485_PARITY);
+    //Modbus Coil Register index starts at 1 but is transmitted with a 0 index
+    dataAddr = dAddr - 1;
   }
-  
-  void kettleMinISR() {
-    heatPin[VS_KETTLE].set(LOW);
-    heatStatus[VS_KETTLE] = 0;    
-    bitClear(actProfiles, VLV_KETTLEHEAT);
+  void update() {
+    slave.readDiscreetInputs(dAddr, 1);
+    value = (slave.getResponseBuffer(0) & 1);
   }
-#endif
+};
+
+
+void eStopISR() {
+  //Either clear E-Stop condition if e-Stop trigger goes high
+  //or perform E-Stop actions on trigger low
+  if (TriggerPin[TRIGGER_ESTOP]->get()) estop = 0;
+  else {
+    estop = 1;
+    setAlarm(1);
+    processHeatOutputs();
+    #ifdef PVOUT
+      updateValves();
+    #endif
+    updateTimers();
+  }
+}
+
+void spargeMaxISR() {
+  bitClear(actProfiles, VLV_SPARGEIN);
+}
+
+void boilAddISR() {
+  bitClear(actProfiles, VLV_BOILADD);
+}
+

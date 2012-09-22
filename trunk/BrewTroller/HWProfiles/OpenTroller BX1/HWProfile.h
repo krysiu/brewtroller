@@ -1,51 +1,48 @@
 /*
-OpenTroller EX1 Hardware Configuration
-  RIMS / Direct Fired: Three Heat Outputs + 2 Pump/Valve Outputs + Alarm
+OpenTroller BX1 Hardware Configuration
 */
 
 #ifndef BT_HWPROFILE
 #define BT_HWPROFILE
-  #include "Config.h"
-  
-  #define ENCA_PIN 3
-  #define ENCB_PIN 2
-  #define ENTER_PIN 1
-  #define ENCODER_ACTIVELOW
-  
-  #define ALARM_PIN 27 //EX1 Alarm
-  
-  #define PVOUT_TYPE_GPIO
-  #define PVOUT_COUNT 3 //2 Outputs
-  
-  #define VALVE1_PIN 19 //OUT4
-  #define VALVE2_PIN 18 //OUT5
-  #define VALVE3_PIN 15 //OUT6
+	#include "Config.h"
 
-  #define HLTHEAT_PIN 22 //OUT1
-  #define MASHHEAT_PIN 21//OUT2
-  #define KETTLEHEAT_PIN 20 //OUT3
-  
-  #define HLTVOL_APIN 3
-  #define MASHVOL_APIN 2
-  #define KETTLEVOL_APIN 1
-  #define STEAMPRESS_APIN 0
-  
-  #define HEARTBEAT
-  #define HEARTBEAT_PIN 0
-  
-  #define UI_LCD_4BIT
-  #define LCD_RS_PIN 4
-  #define LCD_ENABLE_PIN 23
-  #define LCD_DATA4_PIN 28
-  #define LCD_DATA5_PIN 29
-  #define LCD_DATA6_PIN 30
-  #define LCD_DATA7_PIN 31
-  
-  #define UI_DISPLAY_SETUP
-  #define LCD_BRIGHT_PIN 13
-  #define LCD_CONTRAST_PIN 14
-  #define LCD_DEFAULT_CONTRAST 100
-  #define LCD_DEFAULT_BRIGHTNESS 255
+	#define ENCA_PIN 3
+	#define ENCB_PIN 2
+	#define ENTER_PIN 1
+
+	#define OUTPUTBANK_GPIO
+	#define OUTPUTBANK_GPIO_BANKNAME "BX1 Outputs"
+	#define OUTPUTBANK_GPIO_COUNT 6
+	#define OUTPUTBANK_GPIO_PINS {22, 21, 20, 19, 18, 15}
+	#define OUTPUTBANK_GPIO_OUTPUTNAMES "Output 1\0Output 2\0Output 3\0Output 4\0Output 5\0Output 6"
+
+	#define OUTPUTBANK_MODBUS
+	
+	#define RS485_SERIAL_PORT 1
+	#define RS485_RXTX_PIN    12
+	#define RS485_BAUDRATE    76800
+	#define RS485_PARITY      'e'     //'e'ven, 'o'dd, 'n'one
+	
+	#define ANALOGINPUTS_GPIO
+	#define ANALOGINPUTS_GPIO_COUNT 4
+	#define ANALOGINPUTS_GPIO_PINS {7, 6, 5, 4}
+
+	#define HEARTBEAT
+	#define HEARTBEAT_PIN 0
+
+	#define UI_LCD_4BIT
+	#define LCD_RS_PIN 4
+	#define LCD_ENABLE_PIN 23
+	#define LCD_DATA4_PIN 28
+	#define LCD_DATA5_PIN 29
+	#define LCD_DATA6_PIN 30
+	#define LCD_DATA7_PIN 31
+
+	#define UI_DISPLAY_SETUP
+	#define LCD_BRIGHT_PIN 13
+	#define LCD_CONTRAST_PIN 14
+	#define LCD_DEFAULT_CONTRAST 100
+	#define LCD_DEFAULT_BRIGHTNESS 255
   
 //**********************************************************************************
 // OneWire Temperature Sensor Options

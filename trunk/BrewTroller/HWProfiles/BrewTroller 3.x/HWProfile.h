@@ -13,27 +13,24 @@ BrewTroller 3.x Hardware Configuration
   #define ENTER_INT 1
   #define ENCA_INT 2
   
-  #define HLTHEAT_PIN 0
-  #define MASHHEAT_PIN 1
-  #define KETTLEHEAT_PIN 3
-  #define STEAMHEAT_PIN 6
-  #define PWMPUMP_PIN 6
+  #define OUTPUTBANK_GPIO
+  #define OUTPUTBANK_GPIO_BANKNAME "BT 3.3 Outputs"
+  #define OUTPUTBANK_GPIO_COUNT 5
+  #define OUTPUTBANK_GPIO_PINS {0, 1, 3, 6, 15}
+  #define OUTPUTBANK_GPIO_OUTPUTNAMES "HLT Heat\0Mash Heat\0Kettle Heat\0Steam Heat\0Buzzer"
   
-  #define ALARM_PIN 15
-  
-  #define PVOUT_TYPE_MUX
-  #define PVOUT_COUNT 16 //16 Outputs
+  #define OUTPUTBANK_MUX
+  #define OUTPUTBANK_MUX_BANKNAME "P/V Outputs"
+  #define OUTPUTBANK_MUX_COUNT 16
     
-  #define MUX_LATCH_PIN 12
-  #define MUX_CLOCK_PIN 13
-  #define MUX_DATA_PIN 14
-  #define MUX_ENABLE_PIN 10
-  #define MUX_ENABLE_LOGIC 0
+  #define OUTPUTBANK_MUX_LATCHPIN 12
+  #define OUTPUTBANK_MUX_CLOCKPIN 13
+  #define OUTPUTBANK_MUX_DATAPIN 14
+  #define OUTPUTBANK_MUX_ENABLEPIN 10
   
-  #define HLTVOL_APIN 0
-  #define MASHVOL_APIN 1
-  #define KETTLEVOL_APIN 2
-  #define STEAMPRESS_APIN 3
+  #define ANALOGINPUTS_GPIO
+  #define ANALOGINPUTS_GPIO_COUNT 4
+  #define ANALOGINPUTS_GPIO_PINS {0, 1, 2, 3}
   
 //**********************************************************************************
 // OneWire Temperature Sensor Options
