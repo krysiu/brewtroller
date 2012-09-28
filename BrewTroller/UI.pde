@@ -24,30 +24,217 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
 
-#ifndef NOUI
-//*****************************************************************************************************************************
-// UI COMPILE OPTIONS
-//*****************************************************************************************************************************
+class ScreenGPIO : public Screen {
+  private:
+    LiquidCrystal lcd;
+    
+  public:
+    ScreenGPIO(byte cols, byte rows, byte rs, byte enable, byte d4, byte d5, byte d6, byte d7, byte encType, byte encA, byte encB, byte encEnter) : Screen(cols, rows) {
+      lcd = LiquidCrystal(rs, enable, d4, d5, d6, d7);
+      lcd.begin(cols, rows);
+      Encoder.begin(encType, encEnter, encA, encB);
+      Encoder.setWrap(true);
+      Encoder.setMin(-10000);
+      Encoder.setMax(10000);
+      Encoder.setCount(0);
+    }
+    
+    void getInputDeltas(int *x, int *y, bool *selected, bool *cancelled) {
+      *x = 0;
+      *y = Encoder.getDelta();
+      *selected = Encoder.ok();
+      *cancelled = Encoder.cancel();
+      Encoder.setCount(0);
+    }
+    
+  void clear() { lcd.clear(); }  
+  void createCustomChar(uint8_t slot, uint8_t *data) { lcd.createChar(slot, data); }
 
-//**********************************************************************************
-// ENCODER TYPE
-//**********************************************************************************
-// You must uncomment one and only one of the following ENCODER_ definitions
-// Use ENCODER_ALPS for ALPS and Panasonic Encoders
-// Use ENCODER_CUI for older CUI encoders
-//
-#define ENCODER_TYPE ALPS
-//#define ENCODER_TYPE CUI
-//**********************************************************************************
+  void draw(uint8_t x, uint8_t y, const char *text) {
+    lcd.setCursor(x, y);
+    lcd.print(text);
+  }
+  
+  void draw(uint8_t x, uint8_t y, uint8_t customChar) {
+    lcd.setCursor(x, y);
+    lcd.write(customChar);
+  }
 
-//*****************************************************************************************************************************
-// Begin UI Code
-//*****************************************************************************************************************************
+  void setCursorVisible(bool visible) { visible ? lcd.cursor() : lcd.noCursor(); }
+  void moveCursor(uint8_t x, uint8_t y) { lcd.setCursor(x, y); }
+  void setBlink(bool blink) { blink ? lcd.blink() : lcd.noBlink(); }
+};
+
+#define I2C_SEND_INT(x) { int value = x; Wire.send((byte)(value >> 8)); Wire.send((byte)value); }
+
+class ScreenI2Cv2 : public Screen {
+  private:
+  byte i2cLCDAddr;
+  
+  public:
+  ScreenI2Cv2(byte cols, byte rows, byte addr) : Screen(cols, rows) {
+    int value;
+    i2cLCDAddr = addr;
+    Wire.beginTransmission(i2cLCDAddr); Wire.send(0x01); Wire.send(cols); Wire.send(rows); Wire.endTransmission();
+    Wire.beginTransmission(i2cLCDAddr); Wire.send(0x42); Wire.send(1); Wire.endTransmission(); //setWrap(1)
+    Wire.beginTransmission(i2cLCDAddr); Wire.send(0x40); I2C_SEND_INT(-10000) Wire.endTransmission(); //setMin(-10000)
+    Wire.beginTransmission(i2cLCDAddr); Wire.send(0x41); I2C_SEND_INT(10000) Wire.endTransmission(); //setMax(10000)
+    Wire.beginTransmission(i2cLCDAddr); Wire.send(0x43); I2C_SEND_INT(0) Wire.endTransmission(); //setCount(0)
+  }
+  
+  virtual void getInputDeltas(int *x, int *y, bool *selected, bool *cancelled) {
+    *x = 0;
+    
+    Wire.beginTransmission(i2cLCDAddr);
+    Wire.send(0x48); //getDelta()
+    Wire.endTransmission();
+    Wire.requestFrom(i2cLCDAddr, (uint8_t) 2);
+    if (Wire.available() == 2) {
+      *y = Wire.receive();
+      *y |= (((int)(Wire.receive())) << 8);
+    }
+
+    Wire.beginTransmission(i2cLCDAddr);
+    Wire.send(0x4A); //ok()
+    Wire.endTransmission();
+    Wire.requestFrom(i2cLCDAddr, (uint8_t) 1);
+    if (Wire.available() == 1) { *selected = Wire.receive(); }
+
+    Wire.beginTransmission(i2cLCDAddr);
+    Wire.send(0x4B); //cancel()
+    Wire.endTransmission();
+    Wire.requestFrom(i2cLCDAddr, (uint8_t) 1);
+    if (Wire.available() == 1) { *cancelled = Wire.receive(); }
+    Wire.beginTransmission(i2cLCDAddr); Wire.send(0x43); I2C_SEND_INT(0) Wire.endTransmission(); //setCount(0)
+  }
+    
+  void clear() {
+    Wire.beginTransmission(i2cLCDAddr);
+    Wire.send(0x02);
+    Wire.endTransmission();
+  }  
+  
+  void createCustomChar(uint8_t slot, uint8_t *data) {
+    Wire.beginTransmission(i2cLCDAddr);
+    Wire.send(0x05);
+    Wire.send(slot);
+    for (byte i = 0; i < 8; i++) { Wire.send(*data++); }
+    Wire.endTransmission();
+  }
+
+  void draw(uint8_t x, uint8_t y, const char *text) {
+    Wire.beginTransmission(i2cLCDAddr);
+    Wire.send(0x04);
+    Wire.send(x);
+    Wire.send(y);
+    char *p = text;
+    while (*p) {
+      Wire.send(*p++);
+    }
+    Wire.endTransmission();
+  }
+  
+  void draw(uint8_t x, uint8_t y, uint8_t customChar) {
+    Wire.beginTransmission(i2cLCDAddr);
+    Wire.send(0x06);
+    Wire.send(x);
+    Wire.send(y);
+    Wire.send(customChar);
+    Wire.endTransmission();
+  }
+
+  void setCursorVisible(bool visible) {  }
+  
+  void moveCursor(uint8_t x, uint8_t y) { 
+    Wire.beginTransmission(i2cLCDAddr);
+    Wire.send(0x03);
+    Wire.send(x);
+    Wire.send(y);
+    Wire.endTransmission();
+  }
+  
+  void setBlink(bool blink) {  }
+};
+
+class ScreenI2Cv1 : public ScreenI2Cv2 {
+  private:
+  
+  public:
+  ScreenI2Cv1(byte cols, byte rows, byte addr, byte encType, byte encA, byte encB, byte encEnter) : Screen(cols, rows) {
+    i2cLCDAddr = addr;
+    Wire.beginTransmission(i2cLCDAddr);
+    Wire.send(0x01);
+    Wire.send(cols);
+    Wire.send(rows);
+    Wire.endTransmission();
+    Encoder.begin(encType, encEnter, encA, encB);
+    Encoder.setWrap(true);
+    Encoder.setMin(-10000);
+    Encoder.setMax(10000);
+    Encoder.setCount(0);
+  }
+  
+  void getInputDeltas(int *x, int *y, bool *selected, bool *cancelled) {
+    *x = 0;
+    *y = Encoder.getDelta();
+    *selected = Encoder.ok();
+    *cancelled = Encoder.cancel();
+    Encoder.setCount(0);
+  }
+};
+
+/*
+class ScreenModbus : public Screen {
+  private:
+  ModbusMaster slave;
+  
+  public:
+    ScreenModbus(byte cols, byte rows, byte addr) : Screen(cols, rows) {
+      slave = ModbusMaster(RS485_SERIAL_PORT, slaveAddr);
+      #ifdef RS485_RTS_PIN
+        slave.setupRTS(RS485_RTS_PIN);
+      #endif
+      slave.begin(RS485_BAUDRATE, RS485_PARITY);
+      
+    //LCD begin
+    //Encoder setWrap(1)
+    //Encoder setMin(-10000)
+    //Encoder setMax(10000)
+    //Encoder setCount(0)
+    }
+    
+    void getInputDeltas(int *x, int *y, bool *selected, bool *cancelled) {
+      *x = 0;
+      *y = //Encoder.getDelta();
+      *selected = //Encoder.ok();
+      *cancelled = //Encoder.cancel();
+      //Encoder.setCount(0);
+    }
+    
+  void clear() { //lcd.clear(); }  
+  void createCustomChar(uint8_t slot, uint8_t *data) { //lcd.createChar(slot, data); }
+
+  void draw(uint8_t x, uint8_t y, const char *text) {
+    //lcd.print(x, y, text);
+  }
+  
+  void draw(uint8_t x, uint8_t y, uint8_t customChar) {
+    //lcd.write(x, y, customChar);
+  }
+
+  void setCursorVisible(bool visible) {
+    //lcd.cursor(0:1);
+  }
+  void moveCursor(uint8_t x, uint8_t y) {
+    //lcd.setCursor(x, y);
+  }
+  void setBlink(bool blink) {
+    //lcd.blink(0:1); 
+  }
+};
+*/
 
 
-//**********************************************************************************
-// UI Definitions
-//**********************************************************************************
 #define SCREEN_HOME 0
 #define SCREEN_FILL 1
 #define SCREEN_MASH 2
@@ -159,17 +346,6 @@ const char CHILLNORM[] PROGMEM = "Chill Both";
   const char PIDCYCLE[] PROGMEM = " PID Cycle";
   const char PIDGAIN[] PROGMEM = " PID Gain";
   const char HYSTERESIS[] PROGMEM = " Hysteresis";
-  
-  #ifdef PID_FLOW_CONTROL
-    const char PUMPFLOW[] PROGMEM = "Pump Flow Rate";
-  #elif defined USESTEAM
-    const char STEAMPRESS[] PROGMEM = "Steam Target";
-    const char STEAMSENSOR[] PROGMEM = "Steam Sensor Sens";
-    const char STEAMZERO[] PROGMEM = "Steam Zero Calib";
-  #endif
-
-
-
   const char CAPACITY[] PROGMEM = " Capacity";
   const char DEADSPACE[] PROGMEM = " Dead Space";
   const char CALIBRATION[] PROGMEM = " Calibration";
@@ -2281,23 +2457,6 @@ void cfgOutputs() {
     } else if ((lastOption & B00001111) == OPT_HYSTERESIS) {
       strcat_P(title, HYSTERESIS);
       setHysteresis(vessel, getValue(title, hysteresis[vessel], 10, 255, TUNIT));
-#if defined USESTEAM || defined PID_FLOW_CONTROL      
-    } else if ((lastOption & B00001111) == OPT_PRESS) {
-      #ifdef PID_FLOW_CONTROL
-        setSteamTgt(getValue_P(PUMPFLOW, getSteamTgt(), 1, 255, PUNIT));
-      #else
-        setSteamTgt(getValue_P(STEAMPRESS, getSteamTgt(), 1, 255, PUNIT));
-      #endif      
-#endif
-#ifdef USESTEAM
-    } else if ((lastOption & B00001111) == OPT_SENSOR) {
-      setSteamPSens(getValue_P(STEAMSENSOR, steamPSens, 10, 9999, PSTR("mV/kPa")));
-    } else if ((lastOption & B00001111) == OPT_ZERO) {
-      LCD.clear();
-      LCD.print_P(0, 0, STEAMZERO);
-      LCD.print_P(1,2,PSTR("Calibrate Zero?"));
-      if (confirmChoice(CONTINUE, 3)) setSteamZero(analogRead(STEAMPRESS_APIN));
-#endif
     } else if ((lastOption & B00001111) == OPT_BOILTEMP) {
       setBoilTemp(getValue_P(PSTR("Boil Temp"), getBoilTemp(), SETPOINT_DIV, 255, TUNIT));
     } else if ((lastOption & B00001111) == OPT_BOILPWR) {
@@ -2768,6 +2927,4 @@ void volCalibEntryMenu(byte vessel, byte entry) {
   }
 #endif
 
-#endif //#ifndef UI_NO_SETUP
 
-#endif //#ifndef NOUI
