@@ -48,11 +48,13 @@ Compiled on Arduino-0022 (http://arduino.cc/en/Main/Software)
 #include <menu.h>
 #include <avr/eeprom.h>
 #include <ModbusMaster.h>
+#include <NewDelete.h>
 
 #include "HWProfile.h"
 #include "Config.h"
 #include "Global.h"
-#include "Outputs.cpp"
+#include "OT_Outputs.cpp"
+#include "OT_AnalogIn.cpp"
 
 #include "UI_LCD.h"
 #include "wiring_private.h"
