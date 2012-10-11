@@ -1,41 +1,48 @@
 /*
-BrewTroller 4.0 Lite Hardware Configuration
+OpenTroller DX1 Hardware Configuration
 */
 
 #ifndef BT_HWPROFILE
 #define BT_HWPROFILE
-  #include "Config.h"
-  
-  #define ENCA_PIN 3
-  #define ENCB_PIN 2
-  #define ENTER_PIN 1
-  
-  #define PVOUT_TYPE_GPIO
-  #define PVOUT_COUNT 6 //6 Outputs
 
-  #define VALVE1_PIN 22 //OUT1
-  #define VALVE2_PIN 21 //OUT2
-  #define VALVE3_PIN 20 //OUT3
-  #define VALVE4_PIN 19 //OUT4
-  #define VALVE5_PIN 18 //OUT5
-  #define VALVE6_PIN 15 //OUT6
+  #define ENCODER_I2C
+  #define ENCODER_I2CADDR 0x01
+    
+  #define PVOUT_TYPE_GPIO
+  #define PVOUT_COUNT 14 //14 Outputs
+
+  #define VALVE1_PIN 28	//OUT1
+  #define VALVE2_PIN 29	//OUT2
+  #define VALVE3_PIN 30	//OUT3
+  #define VALVE4_PIN 31	//OUT4
+  #define VALVE5_PIN 7	//OUT5
+  #define VALVE6_PIN 6	//OUT6
+  #define VALVE7_PIN 3	//OUT7
+  #define VALVE8_PIN 4	//OUT8
+  #define VALVE9_PIN 12	//OUT9
+  #define VALVEA_PIN 15	//OUT10
+  #define VALVEB_PIN 14	//OUT11
+  #define VALVEC_PIN 13	//OUT12
+  #define VALVED_PIN 1	 //OUT13
+  #define VALVEE_PIN 2	//OUT14
+  
+  #define DIGITAL_INPUTS
+  #define DIGIN_COUNT 6
+  #define DIGIN1_PIN 21
+  #define DIGIN2_PIN 20
+  #define DIGIN3_PIN 19
+  #define DIGIN4_PIN 18
+  #define DIGIN5_PIN 5
+  #define DIGIN6_PIN 22
+  
+  #define UI_LCD_I2C
+  #define UI_LCD_I2CADDR 0x01
+  #define UI_DISPLAY_SETUP
+  #define LCD_DEFAULT_CONTRAST 100
+  #define LCD_DEFAULT_BRIGHTNESS 255
   
   #define HEARTBEAT
   #define HEARTBEAT_PIN 0
-  
-  #define UI_LCD_4BIT
-  #define LCD_RS_PIN 4
-  #define LCD_ENABLE_PIN 23
-  #define LCD_DATA4_PIN 28
-  #define LCD_DATA5_PIN 29
-  #define LCD_DATA6_PIN 30
-  #define LCD_DATA7_PIN 31
-  
-  #define UI_DISPLAY_SETUP
-  #define LCD_BRIGHT_PIN 13
-  #define LCD_CONTRAST_PIN 14
-
-  
 //**********************************************************************************
 // OneWire Temperature Sensor Options
 //**********************************************************************************
