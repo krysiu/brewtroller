@@ -52,7 +52,6 @@
 								  // 2 - "cancel" detected in ISR
 								  // 3 - "cancel" detected in cancel() method
 
-		volatile unsigned long	_lastUpdate;         // mSec of last update
 		volatile unsigned long	_enterStartTime;  // mSec when enter active
 		uint8_t i2cAddress;
 		
