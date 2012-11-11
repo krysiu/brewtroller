@@ -129,7 +129,7 @@ void encoder::begin(byte encType, byte encE, byte encA, byte encB)
   if (encType == ALPS)
     _aPin.attachPCInt(CHANGE, alpsISR);
   else
-    _aPin.attachPCInt(CHANGE, cuiISR);
+    _aPin.attachPCInt(RISING, cuiISR);
   interrupts();
 }
 
@@ -338,25 +338,11 @@ void encoder::alpsHandler(void)
 //
 void encoder::cuiHandler(void) 
 {
-	volatile long time;
-
-	time = millis();
-
-	//if adequate time has not elapsed, bail
-	if (time - _lastUpdate < CUI_DEBOUNCE) 
-	{
-		interrupts();
-		return;
-	}
-
 	//Read EncB
 	if(_bPin.get() == LOW)
 		incCount();
 	else
 		decCount();
-
-	//update the last Encoder interrupt time stamp;
-	_lastUpdate = time;
 } 
 
 void encoder::enterHandler(void) 
