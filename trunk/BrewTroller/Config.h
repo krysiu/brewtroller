@@ -86,8 +86,6 @@
       boolean heatStrike; //Heat strike while sparging
       triggerCfg_t maxSpargeVolTrig;
       unsigned int hysteresis; //Fly sparge hysteresis
-      flowMeterCfg_t spargeInFlowMeter;
-      flowMeterCfg_t spargeOutFlowMeter;
     } sparge;
     
     struct boilControl_t {

@@ -23,8 +23,8 @@ Hardware Lead: Jeremiah Dillingham (jeremiah_AT_brewtroller_DOT_com)
 
 Documentation, Forums and more information available at http://www.brewtroller.com
 */
-#ifndef OT_AnalogIn_h
-#define  OT_AnalogIn_h
+#ifndef OT_Inputs_h
+#define OT_Inputs_h
 
 #include <stdint.h>
 #include <string.h>
@@ -97,20 +97,21 @@ class averagedValue {
 class analogIn {
   protected:
   long value;
-  calibratedValue * cValue;
-  averagedValue * aValue;
+  calibratedValue* cValue;
+  averagedValue* aValue;
   
   public:
   analogIn(void);
-  ~analogIn();  
+  ~analogIn();
   static analogIn* create(analogInCfg_t cfg);
   virtual long getValue();
   virtual void setupCalibration(calibratedValue * c);
   virtual void setupAverages(averagedValue * a);
   virtual void init(void);
-  virtual void update(void) = 0;
+  virtual void update(void) {}
 };
 
+#ifdef ANALOGINPUTS_GPIO
 class analogIn_GPIO : public analogIn {
   private:
   uint8_t pin;
@@ -123,6 +124,7 @@ class analogIn_GPIO : public analogIn {
   static uint8_t getPin(uint8_t index);
   static char* getName(uint8_t index, char* retString);  
 };
+#endif
 
 typedef enum {
   tSensorType_None,
@@ -155,14 +157,16 @@ typedef struct oneWireBusCfg_t {
 class tSensor : public analogIn {
   protected:
   static bool unitMetric;
-  
+    
   public:
   tSensor(void);
+  ~tSensor(void) {}
   static tSensor* create(tSensorCfg_t cfg);
   long getValue();
   static void setUnit(bool unit);
+  static bool getUnit() { return unitMetric; }
   virtual void init(void) { };
-  virtual void update(void) = 0;
+  virtual void update(void) {}
 };
 
 #ifdef TS_ONEWIRE
@@ -171,100 +175,44 @@ class tSensor : public analogIn {
 
   class tSensor_1Wire : public tSensor {
     private:
-    byte addr[8];
     static unsigned long convStart;
     static unsigned int convDelay;
-    static byte resolution, devCount, readCount;
+    static byte resolution;
     static boolean parasitePwr, crcCheck;
     static tSensor_1Wire* sensorHead;
-    tSensor_1Wire* sensorNext;
     #if defined TS_ONEWIRE_GPIO
       static OneWire *ds;
     #elif defined TS_ONEWIRE_I2C
       static DS2482 *ds;
     #endif
-    
-    public:
-    tSensor_1Wire(byte tsAddr[8]);    
-    void setBusCfg(oneWireBusCfg_t busCfg);
-    void init();  
-    void update();
-    boolean isReady();
-    boolean validAddr();
-    int read_temp();
-    void scanBus(byte* addrRet);
-    void scanBus(byte* addrRet, byte limit);
-    bool matchAddr(byte* scanAddr);
+    byte addr[8];
+    tSensor_1Wire* sensorNext;
+
     void attach(tSensor_1Wire* tsMe);
     void detach(tSensor_1Wire* tsMe, tSensor_1Wire* tsNext);
-    #if defined TS_ONEWIRE_GPIO
-      static void setup(OneWire *bus);
-    #elif defined TS_ONEWIRE_I2C
-      static void setup(DS2482 *bus);
-    #endif
+    boolean validAddr();
+    void readTemp();
+    static boolean isReady();
+    bool matchAddr(byte* scanAddr);
+   
+    public:
+    tSensor_1Wire(byte *tsAddr);
+    ~tSensor_1Wire();
+    void init();  
+    void update();
+
+
     
+    //Utility (static) functions
+    #if defined TS_ONEWIRE_GPIO
+      static void setup(OneWire *bus, bool parasite, bool crc, byte res);
+    #elif defined TS_ONEWIRE_I2C
+      static void setup(DS2482 *bus, bool parasite, bool crc, byte res);
+    #endif
+
+    static void scanBus(byte* addrRet, byte limit = 0, bool skipAssigned = true);
   };
 #endif
-
-
-//********************************************************************
-// RateMeter classes
-//********************************************************************
-// Report a rate based on pulse counts (local or Modbus) or by  
-// monitoring a value for change
-//********************************************************************
-
-typedef enum {
-  rateMeterType_None,
-  rateMeterType_Value,
-  rateMeterType_Trig,
-  rateMeterType_Modbus
-} rateMeterType;
-
-typedef struct rateMeterCfg_t {
-  rateMeterType type;
-  union {
-    //rateMeterType_Value has no configuration
-    struct rateMeterCfg_Trig_t {
-      uint8_t pin;
-      unsigned int pulseUnit;
-    } rateMeterCfg_Trig;    
-    struct rateMeterCfg_Modbus_t {
-      uint8_t slaveAddr;
-      unsigned int reg;
-      unsigned int pulseUnit;
-    } rateMeterCfg_Modbus;
-  } implementation;
-};
-
-class rateMeter {
-  private:
-  long flowRate;
-  static unsigned int sampleRate;
-  
-  public:
-  long getValue();
-  void setSampleRate(unsigned int rate);
-  static rateMeter* create(rateMeterCfg_t cfg);
-  virtual void init();
-  virtual void update() = 0;
-};
-
-
-#define MS_TO_MIN(x) 60000*(x);
-class rateMeter_Value : public rateMeter {
-  private:
-  long *sample;
-  long lastSample, lastEvalTime;
-  
-  public:
-  rateMeter_Value(void);
-  void update();
-  void attach(long* pSamp);
-};
-
-#endif
-
 
 typedef enum {
   TRANSITION_CHANGE = CHANGE,
@@ -327,3 +275,5 @@ class trigger_Modbus : public trigger {
   trigger_Modbus(byte sAddr, unsigned int dAddr, transitionType m);
   void update();
 };
+
+#endif

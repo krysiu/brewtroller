@@ -1,5 +1,6 @@
 #ifndef OT_UI_h
 #define OT_UI_h
+
 #include <ScreenUi.h>
 #include <LiquidCrystalFP.h>
 #include <pin.h>
@@ -8,13 +9,15 @@
 #include "HWProfile.h"
 #include <NewDelete.h>
 #include "OT_Outputs.h"
+#include "OT_Inputs.h"
 
 #define I2C_SEND_INT(x) { int value = x; Wire.send((uint8_t)(value >> 8));  Wire.send((uint8_t) value); }
 #define I2C_RECV_INT(x) { }
 
 class ScreenGPIO : public Screen {
   private:
-    LiquidCrystal* lcd;
+    static LiquidCrystal* lcd;
+    static bool encoderInit;
     
   public:
     ScreenGPIO(byte cols, byte rows, byte rs, byte enable, byte d4, byte d5, byte d6, byte d7, byte encType, byte encA, byte encB, byte encEnter);
@@ -73,10 +76,15 @@ class screenUI {
   boolean detectI2Cv2(byte i2cLCDAddr);
   boolean detectI2Cv1(byte i2cLCDAddr);  
   boolean detectModbus(byte mbAddr);
+  void wait(void);
   
+  bool dlgYesNo(char *title, char *message);
   byte dlgSelectOutput(char * title, outputs* Outputs, byte initValue);
   unsigned long dlgCfgOutputProfile(char * title, outputs* Outputs, unsigned long initValue);
-  
+  void dlgCfgTSensor(char * title, tSensorCfg_t* cfg);
+  tSensorType dlgCfgTSensor_None(char*, tSensorCfg_t*);
+  tSensorType dlgCfgTSensor_1Wire(char*, tSensorCfg_t*);
+  tSensorType dlgCfgTSensor_Modbus(char*, tSensorCfg_t*);
   
 };
 #endif

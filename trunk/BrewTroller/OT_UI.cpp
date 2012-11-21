@@ -1,14 +1,23 @@
 #include "OT_UI.h"
 
-
+    LiquidCrystal* ScreenGPIO::lcd;
+    bool ScreenGPIO::encoderInit = 0;
     ScreenGPIO::ScreenGPIO(byte cols, byte rows, byte rs, byte enable, byte d4, byte d5, byte d6, byte d7, byte encType, byte encA, byte encB, byte encEnter) : Screen(cols, rows) {
-      lcd = new LiquidCrystal(rs, enable, d4, d5, d6, d7);
-      lcd->begin(cols, rows);
-      Encoder.begin(encType, encEnter, encA, encB);
-      Encoder.setWrap(true);
-      Encoder.setMin(-10000);
-      Encoder.setMax(10000);
-      Encoder.setCount(0);
+      if (!ScreenGPIO::lcd) {
+        ScreenGPIO::lcd = new LiquidCrystal(rs, enable, d4, d5, d6, d7);
+        ScreenGPIO::lcd->begin(cols, rows);
+      }
+      if(!ScreenGPIO::encoderInit) {
+        Encoder.begin(encType, encEnter, encA, encB);
+        #ifdef ENCODER_ACTIVELOW
+          Encoder.setActiveLow(1);
+        #endif
+        Encoder.setWrap(true);
+        Encoder.setMin(-10000);
+        Encoder.setMax(10000);
+        Encoder.setCount(0);
+        ScreenGPIO::encoderInit = 1;
+      }
     }
     
     void ScreenGPIO::getInputDeltas(int *x, int *y, bool *selected, bool *cancelled) {
@@ -19,22 +28,22 @@
       Encoder.setCount(0);
     }
     
-  void ScreenGPIO::clear() { lcd->clear(); }  
-  void ScreenGPIO::createCustomChar(uint8_t slot, uint8_t *data) { lcd->createChar(slot, data); }
+  void ScreenGPIO::clear() { ScreenGPIO::lcd->clear(); }  
+  void ScreenGPIO::createCustomChar(uint8_t slot, uint8_t *data) { ScreenGPIO::lcd->createChar(slot, data); }
 
   void ScreenGPIO::draw(uint8_t x, uint8_t y, const char *text) {
-    lcd->setCursor(x, y);
-    lcd->print(text);
+    ScreenGPIO::lcd->setCursor(x, y);
+    ScreenGPIO::lcd->print(text);
   }
   
   void ScreenGPIO::draw(uint8_t x, uint8_t y, uint8_t customChar) {
-    lcd->setCursor(x, y);
-    lcd->write(customChar);
+    ScreenGPIO::lcd->setCursor(x, y);
+    ScreenGPIO::lcd->write(customChar);
   }
 
-  void ScreenGPIO::setCursorVisible(bool visible) { visible ? lcd->cursor() : lcd->noCursor(); }
-  void ScreenGPIO::moveCursor(uint8_t x, uint8_t y) { lcd->setCursor(x, y); }
-  void ScreenGPIO::setBlink(bool blink) { blink ? lcd->blink() : lcd->noBlink(); }
+  void ScreenGPIO::setCursorVisible(bool visible) { visible ? ScreenGPIO::lcd->cursor() : ScreenGPIO::lcd->noCursor(); }
+  void ScreenGPIO::moveCursor(uint8_t x, uint8_t y) { ScreenGPIO::lcd->setCursor(x, y); }
+  void ScreenGPIO::setBlink(bool blink) { blink ? ScreenGPIO::lcd->blink() : ScreenGPIO::lcd->noBlink(); }
 
 
   ScreenI2Cv2::ScreenI2Cv2(byte cols, byte rows) : Screen(cols, rows) { }
@@ -128,6 +137,9 @@
     Wire.send(rows);
     Wire.endTransmission();
     Encoder.begin(encType, encEnter, encA, encB);
+    #ifdef ENCODER_ACTIVELOW
+      Encoder.setActiveLow(1);
+    #endif
     Encoder.setWrap(true);
     Encoder.setMin(-10000);
     Encoder.setMax(10000);
@@ -214,8 +226,36 @@
   }
   
   boolean screenUI::detectModbus(byte mbAddr) { return 0; }
+  void screenUI::wait(void) { (*waitFunc)(); }
+
+
+////////////////////////////////////////////////////////////////////////////////
+// dlgYesNo
+////////////////////////////////////////////////////////////////////////////////
+
+  bool screenUI::dlgYesNo(char *title, char *message) {
+    bool returnCode = 0;
+    Screen * screen = create(20, 4);
+    Label titleLabel(title);
+    screen->add(&titleLabel, 0, 0);
+    
+    Button noButton("No");    
+    screen->add(&noButton, 0, 1);
+    Button yesButton("Yes");
+    screen->add(&yesButton, 15, 1);
+    while (1) {
+      screen->update();
+      if (yesButton.pressed()) { returnCode = 1; break; }
+      else if (noButton.pressed()) { break; }
+      //Call worker process
+      wait();
+    }
+    delete screen;
+    return returnCode;
+  }
 
   byte screenUI::dlgSelectOutput(char * title, outputs* Outputs, byte initValue){
+    byte returnValue = initValue;
     Screen * screen = create(20, 4);
     Label titleLabel(title);
     Button cancelButton("Cancel");
@@ -265,19 +305,29 @@
     
     while (1) {
       screen->update();
-      for (byte i = 0; i < btnCount; i++) { if (btnInfo[i].btn.pressed()) return i; }
-      if (cancelButton.pressed()) { return initValue; }
+      for (byte i = 0; i < btnCount; i++) {
+        if (btnInfo[i].btn.pressed()) {
+          delete screen;
+          return i;
+        }
+      }
+      if (cancelButton.pressed()) {
+        delete screen;
+        return initValue;
+      }
       //Call worker process
-      (*waitFunc)();
+      wait();
     }
   }
   
   unsigned long screenUI::dlgCfgOutputProfile(char * title, outputs* Outputs, unsigned long initValue) {
+    unsigned long returnValue = initValue;
     Screen * screen = create(20, 4);
     Label titleLabel(title);
     Button okButton("OK");
     Button cancelButton("Cancel");
-  
+    ScrollContainer scrollContainer(screen, screen->width(), 3);
+    
     struct {
       Label lbl;
       char name[OUTPUTBANK_NAME_MAXLEN];
@@ -289,7 +339,7 @@
       Label lbl;
     } outInfo[32];
     
-    ScrollContainer scrollContainer(screen, screen->width(), 3);
+
     byte rowPos = 0;
     byte chkCount = 0;
     
@@ -323,17 +373,244 @@
     while (1) {
       screen->update();
       if (okButton.pressed()) {
-        unsigned long retValue = 0;
+        returnValue = 0;
         for (byte i = 0; i < chkCount; i++) { 
-          if (outInfo[i].chk.checked()) { retValue |= ((unsigned long)1 << i); }
+          if (outInfo[i].chk.checked()) { returnValue |= ((unsigned long)1 << i); }
         }
-        return retValue;
+        break;
       }
-      if (cancelButton.pressed()) { return initValue; }
+      if (cancelButton.pressed()) { break; }
       //Call worker process
-      (*waitFunc)();
+      wait();
     }
+    delete screen;
+    return returnValue;
   }
   
 
+  void screenUI::dlgCfgTSensor(char * title, tSensorCfg_t *cfg){
+    tSensorType currentType = cfg->type;
+    tSensorType returnType;
+    
+    while (1) {
+      switch (currentType) {
+        case tSensorType_None:
+          returnType = dlgCfgTSensor_None(title, cfg);
+          break;
+        case tSensorType_1Wire:
+          returnType = dlgCfgTSensor_1Wire(title, cfg);
+          break;        
+        case tSensorType_Modbus:
+          returnType = dlgCfgTSensor_Modbus(title, cfg);
+          break;        
+      }
+      if (returnType == currentType) break;
+      currentType = returnType;
+    } //End Mode Loop
+  }
+  
+  tSensorType screenUI::dlgCfgTSensor_None(char *title, tSensorCfg_t *cfg) {
+    tSensorType returnType = tSensorType_None;
+    Screen * screen = create(20, 4);
+    Label titleLabel(title);
+    screen->add(&titleLabel, 0, 0);
 
+    Label typeLabel("Type:");
+    List typeList(3);
+    typeList.addItem("None");
+    typeList.addItem("1-Wire");
+    typeList.addItem("Modbus");
+    typeList.setSelectedIndex(0);
+    
+    screen->add(&typeLabel, 0, 1);
+    screen->add(&typeList, 6, 1);
+    
+    Button okButton("OK");
+    Button cancelButton("Cancel");
+    screen->add(&cancelButton, 0, 3);
+    screen->add(&okButton, 16, 3);
+    screen->setFocusHolder(&typeList);
+    
+    while (1) {
+      screen->update();
+      if (!typeList.captured() && typeList.selectedIndex() != 0) {
+        if (typeList.selectedIndex() == 1) returnType = tSensorType_1Wire;
+        else if (typeList.selectedIndex() == 2) returnType = tSensorType_Modbus;
+        break;
+      }
+      if (okButton.pressed()) {
+        cfg->type = tSensorType_None;
+        break;
+      }
+      if (cancelButton.pressed()) {
+        break;
+      }
+      //Call worker process
+      wait();
+    }
+    delete screen;
+    return returnType;
+  }
+  
+  tSensorType screenUI::dlgCfgTSensor_1Wire(char *title, tSensorCfg_t *cfg) {
+    tSensorType returnType = tSensorType_1Wire;
+
+    byte newAddr[8] = {0,0,0,0,0,0,0,0};
+    if (cfg->type == tSensorType_1Wire) { memcpy(newAddr, cfg->implementation.tSensorCfg_1Wire.addr, 8); }
+    tSensor_1Wire* newSensor = NULL;
+    bool addrDirty = 1;
+    bool addrCaptured = 0;
+    
+    Screen * screen = create(20, 4);
+    Label titleLabel(title);
+    screen->add(&titleLabel, 0, 0);
+
+    ScrollContainer scrollContainer(screen, screen->width(), 3);
+    
+    Label typeLabel("Type:");
+    List typeList(3);
+    typeList.addItem("None");
+    typeList.addItem("1-Wire");
+    typeList.addItem("Modbus");
+    typeList.setSelectedIndex(1);
+    scrollContainer.add(&typeLabel, 0, 0);
+    scrollContainer.add(&typeList, 6, 0);
+
+    char addrTxt[17] = "FFFFFFFFFFFFFFFF";
+    Input addrInput(addrTxt);
+    addrInput.setCharSet(&hexCharSet);
+    scrollContainer.add(&addrInput, 1, 1);
+    
+    Label tTitleLbl("Temperature:");
+    char tempTxt[8] = "-------";
+    Label tempLbl(tempTxt);
+    scrollContainer.add(&tTitleLbl, 0, 2);
+    scrollContainer.add(&tempLbl, 13, 2);
+
+    Checkbox scanNewChk;
+    scanNewChk.setChecked(1);
+    Label scanNewLbl("Scan Only New");
+    scrollContainer.add(&scanNewChk, 1, 3);
+    scrollContainer.add(&scanNewLbl, 5, 3);        
+ 
+    Button scanBtn("Scan");
+    Button cancelButton("Cancel");
+    Button okButton("OK");
+    scrollContainer.add(&scanBtn, 0, 4);
+    scrollContainer.add(&cancelButton, 7, 4);
+    scrollContainer.add(&okButton, 16, 4);
+    screen->add(&scrollContainer, 0, 1);
+
+    while (1) {
+      if(addrCaptured != addrInput.captured()) {
+        if (!addrInput.captured()) {
+          //Transition from captured to uncaptured
+          for (byte i = 0; i < 8; i++) {
+            char hexByte[3];
+            strlcpy(hexByte, addrTxt + i * 2, 3);
+            newAddr[i] = (byte)strtol(hexByte, NULL, 16);
+          }
+          addrDirty = 1;
+        }
+        addrCaptured = addrInput.captured();
+      }
+      
+      if(addrDirty) {
+        delete newSensor;
+        newSensor = new tSensor_1Wire(newAddr);
+        newSensor->init();
+        sprintf(addrTxt, "%02X%02X%02X%02X%02X%02X%02X%02X", newAddr[0], newAddr[1], newAddr[2], newAddr[3], newAddr[4], newAddr[5], newAddr[6], newAddr[7]);
+        addrDirty = 0;
+      }
+      
+      if (newSensor) {
+        newSensor->update();
+        long sensorValue = newSensor->getValue();
+        if(sensorValue != BAD_TEMP) { sprintf(tempTxt, "%3ld.%02ld%c", sensorValue / 100, sensorValue % 100, tSensor::getUnit() ? 'C' : 'F'); }
+        else { strcpy(tempTxt, "N/A"); }
+        tempLbl.setText(tempTxt);
+      }
+
+      screen->update();
+      if (!typeList.captured() && typeList.selectedIndex() != 1) {
+        if (dlgYesNo("Change Type?", "All changes will be lost.")) {
+          if (typeList.selectedIndex() == 0) returnType = tSensorType_None;
+          else if (typeList.selectedIndex() == 2) returnType = tSensorType_Modbus;
+          break;
+        }
+        else {
+          typeList.setSelectedIndex(1);
+          screen->clear();
+          screen->repaint();
+        }
+      }
+      else if (scanBtn.pressed()) {
+        tSensor_1Wire::scanBus(newAddr, 0, scanNewChk.checked());
+        addrDirty = 1;
+      }   
+      else if (okButton.pressed()) {
+        cfg->type = tSensorType_1Wire;
+        memcpy(cfg->implementation.tSensorCfg_1Wire.addr, newAddr, 8);
+        break;
+      }
+      else if (cancelButton.pressed()) {
+        break;
+      }
+      //Call worker process
+      wait();
+    }
+    delete screen;
+    return returnType;
+  }
+  
+  tSensorType screenUI::dlgCfgTSensor_Modbus(char *title, tSensorCfg_t *cfg) {
+    tSensorType returnType = tSensorType_Modbus;
+    Screen * screen = create(20, 4);
+    Label titleLabel(title);
+    screen->add(&titleLabel, 0, 0);
+
+    ScrollContainer scrollContainer(screen, screen->width(), 5);
+    
+    Label typeLabel("Type:");
+    List typeList(3);
+    typeList.addItem("None");
+    typeList.addItem("1-Wire");
+    typeList.addItem("Modbus");
+    typeList.setSelectedIndex(2);
+    scrollContainer.add(&typeLabel, 0, 0);
+    scrollContainer.add(&typeList, 6, 0);
+    
+    Button okButton("OK");
+    Button cancelButton("Cancel");
+    scrollContainer.add(&cancelButton, 0, 4);
+    scrollContainer.add(&okButton, 16, 4);
+    screen->add(&scrollContainer, 0, 1);
+    
+    while (1) {
+      screen->update();
+      if (!typeList.captured() && typeList.selectedIndex() != 2) {
+        if (dlgYesNo("Change Type?", "All changes will be lost.")) {
+          if (typeList.selectedIndex() == 0) returnType = tSensorType_None;
+          else if (typeList.selectedIndex() == 1) returnType = tSensorType_1Wire;
+          break;
+        }
+        else {
+          typeList.setSelectedIndex(2);
+          screen->clear();
+          screen->repaint();
+        }
+      }
+      else if (okButton.pressed()) {
+        cfg->type = tSensorType_Modbus;
+        break;
+      }
+      else if (cancelButton.pressed()) {
+        break;
+      }
+      //Call worker process
+      wait();
+    }
+    delete screen;
+    return returnType;
+  }
+  

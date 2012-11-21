@@ -30,7 +30,7 @@ typedef struct vesselCfg_t {
   byte hysteresis;
   unsigned long heatProfile, idleProfile;
   int PIDp, PIDi, PIDd;
-  analogOutCfg_t pidOutput;
+  analogOutCfg_t pwmOutput;
   byte pwmDelay;
   unsigned long capacity;
   unsigned long volLoss;
