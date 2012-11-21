@@ -1,4 +1,4 @@
-#define BUILD 969
+#define BUILD 988
 /*  
   Copyright (C) 2010 Jason von Nieda
 
@@ -202,6 +202,14 @@ void onReceive(int numBytes) {
     case 0x16: // getVersion()
       reqField = REQ_VERSION;
       break;
+    case 0x17: //cursor/no cursor
+      { Wire.receive() ? lcd.cursor() : lcd.noCursor(); }
+      break;
+    case 0x18: //blink/no blink
+      { Wire.receive() ? lcd.blink() : lcd.noBlink(); }
+      break;
+      
+      
 #ifdef ENCODER_SUPPORT
     case 0x40: //Encoder.setMin
       {
