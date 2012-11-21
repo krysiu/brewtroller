@@ -93,7 +93,11 @@ averagedValue::~averagedValue() { delete values; }
    return retValue / count;
  }
 
-analogIn::analogIn(void) {  }
+analogIn::analogIn(void) {
+  cValue = NULL;
+  aValue = NULL;
+}
+
 analogIn::~analogIn() { 
   if (cValue) delete cValue; 
   if (aValue) delete aValue;
@@ -101,7 +105,13 @@ analogIn::~analogIn() {
 
 static analogIn::analogIn* create(analogInCfg_t cfg) {
   analogIn* retObj;
+  #ifdef ANALOGINPUTS_GPIO
   if (cfg.type == analogInType_GPIO) { retObj = new analogIn_GPIO(cfg.implementation.analogInCfg_GPIO.pin); }
+  #else
+  //Temporary placeholder until other objects exist
+  //Force to false
+  if (0) {}
+  #endif
   //else if (cfg.type ==  analogInType_Modbus) { retObj = new analogIn_Modbus(cfg.implementation.analogInCfg_Modbus.slaveAddr, cfg.implementation.analogInCfg_Modbus.reg); }
   else { retObj = NULL; }
 
@@ -118,7 +128,7 @@ void analogIn::setupCalibration(calibratedValue * c) { cValue = c; }
 void analogIn::setupAverages(averagedValue * a) { aValue = a; }
 void analogIn::init(void) { }
 
-
+#ifdef ANALOGINPUTS_GPIO
 analogIn_GPIO::analogIn_GPIO(uint8_t pinNum) { pin = pinNum; }
 
 void analogIn_GPIO::update() {
@@ -150,6 +160,7 @@ char* analogIn_GPIO::getName(uint8_t index, char* retString) {
   else retString[0] = '\0';
   return retString;
 }
+#endif
 
 tSensor::tSensor(void) { value = BAD_TEMP; }
 
@@ -159,23 +170,20 @@ tSensor* tSensor::create(tSensorCfg_t cfg) {
   else return NULL;
 }
 
-long tSensor::getValue() { return (tSensor::unitMetric ? value : (value * 9 / 5 + 32)); }
+long tSensor::getValue() { return ((tSensor::unitMetric || value == BAD_TEMP) ? value : (value * 9 / 5 + 3200)); }
 void tSensor::setUnit(bool unit) { tSensor::unitMetric = unit; }
 bool tSensor::unitMetric = 0;
 
-tSensor_1Wire::tSensor_1Wire(byte tsAddr[8]) {
+tSensor_1Wire::tSensor_1Wire(byte *tsAddr) {
+  sensorNext = NULL;
   memcpy(addr, tsAddr, 8);
-  devCount++;
   if (tSensor_1Wire::sensorHead) { tSensor_1Wire::sensorHead->attach(this); }
   else { tSensor_1Wire::sensorHead = this; }
 }
-  
-void tSensor_1Wire::setBusCfg(oneWireBusCfg_t busCfg) {
-  tSensor_1Wire::parasitePwr = busCfg.parasite;
-  tSensor_1Wire::crcCheck = busCfg.crcCheck;
-  tSensor_1Wire::resolution = (busCfg.resHigh << 1 | busCfg.resLow);
-  unsigned int  resDelay[] = DS18B20_DELAY;
-  tSensor_1Wire::convDelay = resDelay[tSensor_1Wire::resolution];
+
+tSensor_1Wire::~tSensor_1Wire() {
+  if (tSensor_1Wire::sensorHead == this) {  tSensor_1Wire::sensorHead = sensorNext; }
+  else { tSensor_1Wire::sensorHead->detach(this, sensorNext); }
 }
   
 void tSensor_1Wire::init() {
@@ -187,21 +195,22 @@ void tSensor_1Wire::init() {
   
   ds->write((tSensor_1Wire::resolution << 5) | B00011111, tSensor_1Wire::parasitePwr); //Config Reg (12-bit)
   ds->reset();
-  ds->skip();
+  ds->select(addr);
   ds->write(0x48, tSensor_1Wire::parasitePwr); //Copy scratchpad to EEPROM
 }
 
 void tSensor_1Wire::update() {
-  if (tSensor_1Wire::readCount == 0) {
-    ds->reset();
-    ds->skip();
-    ds->write(0x44, tSensor_1Wire::parasitePwr); //Start conversion
-    tSensor_1Wire::convStart = millis();
-    tSensor_1Wire::readCount = tSensor_1Wire::devCount;
-  } else if (isReady()) {
-    if (validAddr()) value = read_temp(); else value = BAD_TEMP;
-    tSensor_1Wire::readCount--;
+  if (!tSensor_1Wire::sensorHead) { return; }
+  if (tSensor_1Wire::convStart) {
+    if (!tSensor_1Wire::isReady()) { return; }
+    //Update Sensor Chain
+    tSensor_1Wire::sensorHead->readTemp();
   }
+  //Initialize Conversion
+  ds->reset();
+  ds->skip();
+  ds->write(0x44, tSensor_1Wire::parasitePwr); //Start conversion
+  tSensor_1Wire::convStart = millis();
 }
 
 boolean tSensor_1Wire::isReady() {
@@ -214,34 +223,42 @@ boolean tSensor_1Wire::isReady() {
 
 boolean tSensor_1Wire::validAddr() {
   if (addr[0] != 0x28 && addr[0] != 0x10) return 0; //Verify the family code
-  //Could do a CRC check on the Address
+  if(ds->crc8(addr, 7) != addr[7]) return 0; //CRC Error
   return 1;
 }
 
 //Returns Int representing hundreths of degree
-int tSensor_1Wire::read_temp() {
-  long tempOut;
-  byte data[9];
-  ds->reset();
-  ds->select(addr);   
-  ds->write(0xBE, tSensor_1Wire::parasitePwr); //Read Scratchpad
-  if (tSensor_1Wire::crcCheck) {
-    for (byte i = 0; i < 2; i++) data[i] = ds->read();
+void tSensor_1Wire::readTemp() {
+  long tempOut = 0;
+  if (!validAddr()) {
+    tempOut = BAD_TEMP;
   }
   else {
-    for (byte i = 0; i < 9; i++) data[i] = ds->read();
-    if (ds->crc8( data, 8) != data[8]) return BAD_TEMP;
+    byte data[9];
+    ds->reset();
+    ds->select(addr);
+    ds->write(0xBE, tSensor_1Wire::parasitePwr); //Read Scratchpad
+    if (tSensor_1Wire::crcCheck) {
+      for (byte i = 0; i < 9; i++) data[i] = ds->read();
+      if (ds->crc8(data, 8) != data[8]) {
+        tempOut = BAD_TEMP;
+      }
+    }
+    else {
+      for (byte i = 0; i < 2; i++) data[i] = ds->read();
+    }
+    if (tempOut != BAD_TEMP) {
+      tempOut = (data[1] << 8) + data[0];
+      if ( addr[0] == 0x10) tempOut = tempOut * 50; //9-bit DS18S20
+      else tempOut = tempOut * 25 / 4; //12-bit DS18B20, etc.
+    }
   }
-
-  tempOut = (data[1] << 8) + data[0];
-  
-  if ( addr[0] == 0x10) tempOut = tempOut * 50; //9-bit DS18S20
-  else tempOut = tempOut * 25 / 4; //12-bit DS18B20, etc.
-  return int(tempOut);  
+  //Dallas/Maxim takes Brooks law literally, throw out the first reading
+  if (value != BAD_TEMP || tempOut != 8500) value = tempOut;
+  if (sensorNext) sensorNext->readTemp();
 }
 
-void  tSensor_1Wire::scanBus(byte* addrRet){ scanBus(addrRet, 0); }
-void  tSensor_1Wire::scanBus(byte* addrRet, byte limit){
+void  tSensor_1Wire::scanBus(byte* addrRet, byte limit, bool skipAssigned){
   byte scanAddr[8];
   ds->reset_search();
   byte count = 0;
@@ -250,7 +267,7 @@ void  tSensor_1Wire::scanBus(byte* addrRet, byte limit){
     if (limit) count++;
     if (!ds->search(scanAddr)) { break; } //No more sensors
     if (scanAddr[0] != 0x28 && scanAddr[0] != 0x10) { continue; } //Skip if not !DS18B20 && !DS18S20
-    if (sensorHead) { if (sensorHead->matchAddr(scanAddr)) { continue; } } //Skip if already in use
+    if (skipAssigned) { if (sensorHead) { if (sensorHead->matchAddr(scanAddr)) { continue; } } } //Skip if already in use
     //Passed all tests
     memcpy(addrRet, scanAddr, 8);
     break;
@@ -270,40 +287,39 @@ void tSensor_1Wire::attach(tSensor_1Wire* tsNew) {
 }
 
 void tSensor_1Wire::detach(tSensor_1Wire* tsDel, tSensor_1Wire* tsNext) {
-  if (!sensorNext) { } //Tried to delete a sensor not in the chain
-  else if (!memcmp(sensorNext, tsDel, 8)) { sensorNext = tsNext; } //Matched next link in chain so replace
+  if (!sensorNext) {  } //Tried to delete a sensor not in the chain
+  else if (sensorNext == tsDel) { sensorNext = tsNext; } //Matched next link in chain so replace
   else { sensorNext->detach(tsDel, tsNext); }
 }
 
 #if defined TS_ONEWIRE_GPIO
-  void tSensor_1Wire::setup(OneWire *bus) {
+  void tSensor_1Wire::setup(OneWire *bus, bool parasite, bool crc, byte res) {
     tSensor_1Wire::ds = bus;
+    tSensor_1Wire::parasitePwr = parasite;
+    tSensor_1Wire::crcCheck = crc;
+    tSensor_1Wire::resolution = res;
+    unsigned int  resDelay[] = DS18B20_DELAY;
+    tSensor_1Wire::convDelay = resDelay[tSensor_1Wire::resolution];
   }
-  OneWire * tSensor_1Wire::ds;
+  OneWire *tSensor_1Wire::ds = NULL;
 #elif defined TS_ONEWIRE_I2C
-  void tSensor_1Wire::setup(DS2482 *bus) {
+  void tSensor_1Wire::setup(DS2482 *bus, bool parasite, bool crc, byte res) {
     tSensor_1Wire::ds = bus;
+    tSensor_1Wire::parasitePwr = parasite;
+    tSensor_1Wire::crcCheck = crc;
+    tSensor_1Wire::resolution = res;
+    unsigned int  resDelay[] = DS18B20_DELAY;
+    tSensor_1Wire::convDelay = resDelay[tSensor_1Wire::resolution];
   }
-  DS2482 * tSensor_1Wire::ds;
+  DS2482 *tSensor_1Wire::ds = NULL;
 #endif
 
-long rateMeter::getValue() { return flowRate; }
-void rateMeter::setSampleRate(unsigned int rate) { rateMeter::sampleRate = rate; }
-
-rateMeter* rateMeter::create(rateMeterCfg_t cfg) {
-  if (cfg.type == rateMeterType_Value) return new rateMeter_Value();
-  else return NULL;
-}
-
-void rateMeter::init() { }
-
-//To Do
-rateMeter_Value::rateMeter_Value(void) {}
-void rateMeter_Value::update() {}
-void rateMeter_Value::attach(long* pSamp) {}
-
-
-
+unsigned long tSensor_1Wire::convStart = 0;
+unsigned int tSensor_1Wire::convDelay = 0;
+byte tSensor_1Wire::resolution = 0;
+boolean tSensor_1Wire::parasitePwr = 0;
+boolean tSensor_1Wire::crcCheck = 0;
+tSensor_1Wire* tSensor_1Wire::sensorHead = NULL;
 
 trigger* trigger::create(triggerCfg_t cfg) {
   if(cfg.type == triggerType_GPIO) return new trigger_GPIO(cfg.implementation.triggerCfg_GPIO.pin, cfg.implementation.triggerCfg_GPIO.mode);
