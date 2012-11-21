@@ -57,6 +57,7 @@
 #define RESTART_DELAY  100 //100ms delay to allow restart command response
 
 #define MODBUS_BAUDRATE 76800 //16MHz XTAL doesn't like 115200
+#define MODBUS_PARITY MB_PAR_EVEN
 
 #define EEPROM_SLAVEADDR 0
 #define EEPROM_FINGERPRINT 511
@@ -69,7 +70,7 @@
 const UCHAR slaveIDExt[] = { 0x4F, 0x08, 0x01 }; //'O' for OSCSYS, 8 for 8-Port, 1 for v1
 
 byte ucRegCoilsBuf[REG_COILS_SIZE / 8];
-boolean idMode = 0;
+byte idMode = 0;
 boolean restart = 0;
 byte blinkCount = 0;
 byte actMode = ACTIVITY_NONE;
@@ -101,7 +102,7 @@ void setup() {
   }
   
   eMBErrorCode    eStatus;
-  eStatus = eMBInit( MB_RTU, EEPROM.read(EEPROM_SLAVEADDR), 0, MODBUS_BAUDRATE, MB_PAR_EVEN );
+  eStatus = eMBInit( MB_RTU, EEPROM.read(EEPROM_SLAVEADDR), 0, MODBUS_BAUDRATE, MODBUS_PARITY );
   eStatus = eMBSetSlaveID( SLAVE_ID, TRUE, slaveIDExt, SLAVEID_EXTLEN );
   sei();
 
@@ -110,7 +111,8 @@ void setup() {
 }
 
 void loop() {
-  eMBPoll();
+  byte mbResult = eMBPoll();
+  if (mbResult) idMode = mbResult + 3;
   updateLED();
   if (restart) {
     unsigned long restartTime = millis() + RESTART_DELAY;
@@ -153,8 +155,8 @@ eMBErrorCode eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usN
         {
             switch(usAddress + iNRegs - 1) {
               case REG_HOLD_IDMODE:
-                *pucRegBuffer++ = ( unsigned char ) 0;  //Dummy High Byte
-                *pucRegBuffer++ = ( unsigned char ) idMode;
+                *pucRegBuffer++ = (unsigned char) 0;  //Dummy High Byte
+                *pucRegBuffer++ = (unsigned char) ((idMode == LEDCOUNT_ID) ? 1 : 0);
                 break;
               case REG_HOLD_SLAVEADDR:
                 *pucRegBuffer++ = ( unsigned char ) 0;  //Dummy High Byte
@@ -177,7 +179,7 @@ eMBErrorCode eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usN
           switch(usAddress + iNRegs - 1) {
             case REG_HOLD_IDMODE:
               *pucRegBuffer++;  //Dummy High Byte
-              idMode = (boolean) *pucRegBuffer++;
+              idMode = ((*pucRegBuffer++) ? LEDCOUNT_ID : 0);
               break;
             case REG_HOLD_SLAVEADDR:
               *pucRegBuffer++;  //Dummy High Byte
@@ -247,7 +249,7 @@ eMBErrorCode eMBRegDiscreteCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT us
 }
 
 void updateLED() {
-  if (idMode) ledBlinkPattern(LEDCOUNT_ID, LEDBLINK_OFFTIME);
+  if (idMode) ledBlinkPattern(idMode, LEDBLINK_OFFTIME);
   else {
     if (millis() - ledUpdateTime > (actMode?LEDTIME_ACT:LEDTIME_OK)) {
       ledPin.toggle();
