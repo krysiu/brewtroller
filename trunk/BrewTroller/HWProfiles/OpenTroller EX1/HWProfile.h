@@ -23,7 +23,9 @@ OpenTroller EX1 Hardware Configuration
 	#define RS485_RXTX_PIN    12
 	#define RS485_BAUDRATE    76800
 	#define RS485_PARITY      'e'     //'e'ven, 'o'dd, 'n'one
-            
+
+	#define ANALOGINPUTS_MODBUS
+	
 	#define ANALOGOUTPUTS_HWPWM
 	#define ANALOGOUTPUTS_HWPWM_PINCOUNT 1
 	#define ANALOGOUTPUTS_HWPWM_PINS {15}

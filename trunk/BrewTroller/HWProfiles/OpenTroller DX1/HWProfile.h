@@ -29,6 +29,8 @@ OpenTroller DX1 Hardware Configuration
 	#define ANALOGINPUTS_GPIO
 	#define ANALOGINPUTS_GPIO_COUNT 4
 	#define ANALOGINPUTS_GPIO_PINS {7, 6, 5, 4}
+	
+	#define ANALOGINPUTS_MODBUS
 
 	#define UI_LCD_I2C
 	#define UI_LCD_I2CADDR 0x01
