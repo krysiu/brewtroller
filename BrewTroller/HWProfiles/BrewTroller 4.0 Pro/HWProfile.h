@@ -8,7 +8,7 @@ BrewTroller 4.0 Pro Hardware Configuration
 	#define ENCA_PIN 2
 	#define ENCB_PIN 4
 	#define ENTER_PIN 5
-
+        
 	#define OUTPUTBANK_GPIO
 	#define OUTPUTBANK_GPIO_BANKNAME "BT 4.0 Pro Outputs"
 	#define OUTPUTBANK_GPIO_COUNT 5
@@ -25,7 +25,7 @@ BrewTroller 4.0 Pro Hardware Configuration
 	#define OUTPUTBANK_MUX_ENABLEPIN 6
 	#define OUTPUTBANK_MUX_ENABLELOGIC
 
-   	#define OUTPUTBANK_MODBUS
+  	#define OUTPUTBANK_MODBUS
 	
 	#define RS485_SERIAL_PORT 1
 	#define RS485_RXTX_PIN    24
@@ -39,6 +39,15 @@ BrewTroller 4.0 Pro Hardware Configuration
 	#define ANALOGINPUTS_GPIO
 	#define ANALOGINPUTS_GPIO_COUNT 4
 	#define ANALOGINPUTS_GPIO_PINS {3, 2, 1, 0}
+	#define ANALOGINPUTS_GPIO_NAMES "HLT Pressure\0MLT Pressure\0KET Pressure\0STEA Pressure""
+
+	#define ANALOGINPUTS_MODBUS
+	
+	#define ANALOGOUTPUTS_HWPWM
+	#define ANALOGOUTPUTS_HWPWM_PINCOUNT 1
+	#define ANALOGOUTPUTS_HWPWM_PINS {15}
+	#define ANALOGOUTPUTS_HWPWM_TIMERS {2}
+	#define ANALOGOUTPUTS_HWPWM_NAMES "Buzzer"
 
 	#define UI_LCD_I2C
 	#define UI_LCD_I2CADDR 0x01
@@ -83,3 +92,4 @@ BrewTroller 4.0 Pro Hardware Configuration
 //**********************************************************************************
 
 #endif
+
