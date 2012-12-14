@@ -129,28 +129,6 @@
 #define BTPD_INTERVAL 1000
 //**********************************************************************************
 
-//**********************************************************************************
-
-//**********************************************************************************
-// UI Support
-//**********************************************************************************
-// NOUI: Disable built-in user interface 
-// UI_LCD_I2C: Enables the I2C LCD interface instead of the 4 bit interface
-//
-//#define NOUI
-//#define UI_LCD_I2C
-//**********************************************************************************
-
-//**********************************************************************************
-// UI: ENCODER TYPE
-//**********************************************************************************
-// You must uncomment one and only one of the following ENCODER_ definitions
-// Use ENCODER_ALPS for ALPS and Panasonic Encoders
-// Use ENCODER_CUI for older CUI encoders
-//
-#define ENCODER_TYPE ALPS
-//#define ENCODER_TYPE CUI
-//**********************************************************************************
 
 #endif
 
