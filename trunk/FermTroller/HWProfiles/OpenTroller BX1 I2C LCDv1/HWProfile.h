@@ -37,7 +37,8 @@ OpenTroller BX1 Hardware Configuration
   #define UI_LCD_I2C
   #define UI_LCD_I2CADDR 0x01
   #define UI_DISPLAY_SETUP
-
+  #define LCD_DEFAULT_CONTRAST 100
+  #define LCD_DEFAULT_BRIGHTNESS 255
   
 //**********************************************************************************
 // OneWire Temperature Sensor Options

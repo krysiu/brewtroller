@@ -47,6 +47,8 @@ OpenTroller EX1 Hardware Configuration
   #define UI_DISPLAY_SETUP
   #define LCD_BRIGHT_PIN 13
   #define LCD_CONTRAST_PIN 14
+  #define LCD_DEFAULT_CONTRAST 100
+  #define LCD_DEFAULT_BRIGHTNESS 255
 
   
 //**********************************************************************************
