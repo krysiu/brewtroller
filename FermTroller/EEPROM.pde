@@ -199,8 +199,8 @@ boolean checkConfig() {
   //If the fingerprint is missing force a init of EEPROM
   if (BTFinger != 253 || cfgVersion == 255 || cfgVersion < 7) {
     #if (defined __AVR_ATmega1284P__ || defined __AVR_ATmega1284__) && defined UI_DISPLAY_SETUP && defined UI_LCD_4BIT
-      EEPROM.write(2048, 240);
-      EEPROM.write(2049, 10);
+      EEPROM.write(2048, LCD_DEFAULT_BRIGHTNESS);
+      EEPROM.write(2049, LCD_DEFAULT_CONTRAST);
     #endif
     return 1;
   }
@@ -243,8 +243,8 @@ void initEEPROM() {
   
   //Set default LCD Bright/Contrast
   #if defined(__AVR_ATmega1284P__) || defined(__AVR_ATmega1284__)
-    EEPROM.write(2048, 240);
-    EEPROM.write(2049, 10);
+    EEPROM.write(2048, LCD_DEFAULT_BRIGHTNESS);
+    EEPROM.write(2049, LCD_DEFAULT_CONTRAST);
   #endif
   
   //Set cfgVersion = 7
