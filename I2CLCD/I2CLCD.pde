@@ -1,4 +1,4 @@
-#define BUILD 988
+#define BUILD 1007
 /*  
   Copyright (C) 2010 Jason von Nieda
 
@@ -61,7 +61,7 @@ Documentation, Forums and more information available at http://www.brewtroller.c
   #define LCDCONTRAST_PIN 11
   #define DEBUG_PIN 13
   #define ENCODER_SUPPORT
-  #define ENCODER_TYPE 0
+  #define ENCODER_TYPE CUI
   #define ENCODER_ACTIVELOW
   #define ENCA_PIN 14
   #define ENCB_PIN 15
@@ -93,8 +93,8 @@ typedef enum {
 
 #define FINGER0 123
 #define FINGER1 46
-#define DEFAULT_BRIGHT 192
-#define DEFAULT_CONTRAST 64
+#define DEFAULT_BRIGHT 100
+#define DEFAULT_CONTRAST 100
 #define DEFAULT_ROWS 4
 #define DEFAULT_COLS 20
 
