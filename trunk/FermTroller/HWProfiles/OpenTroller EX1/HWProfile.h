@@ -26,12 +26,13 @@ OpenTroller EX1 Hardware Configuration
   #define PVOUT_COUNT 7 //7 Outputs
 
   #define VALVE1_PIN 22 //OUT1
-  #define VALVE2_PIN 21 //OUT2
-  #define VALVE3_PIN 20 //OUT3
-  #define VALVE4_PIN 19 //OUT4
-  #define VALVE5_PIN 18 //OUT5
-  #define VALVE6_PIN 15 //OUT6
+  #define VALVE2_PIN 15 //OUT2
+  #define VALVE3_PIN 21 //OUT3
+  #define VALVE4_PIN 18 //OUT4
+  #define VALVE5_PIN 20 //OUT5
+  #define VALVE6_PIN 19 //OUT6
   #define VALVE7_PIN 27 //ALARM
+
   
   #define HEARTBEAT
   #define HEARTBEAT_PIN 0
