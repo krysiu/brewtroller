@@ -42,6 +42,9 @@ OpenTroller DX1 HERMS Hardware Configuration
   #define KETTLEVOL_APIN 5
   #define STEAMPRESS_APIN 4
   
+  #define DX1_ANALOG_RIPPLE
+  #define DX1_ANALOG_RIPPLECOUNT 20
+
   #define UI_LCD_I2C
   #define UI_LCD_I2CADDR 0x01
   #define UI_DISPLAY_SETUP

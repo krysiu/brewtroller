@@ -67,7 +67,14 @@ void updateFlowRates() {
 #endif
 
 unsigned long readVolume( byte pin, unsigned long calibrationVols[10], unsigned int calibrationValues[10] ) {
-  unsigned int aValue = analogRead(pin);
+  #ifdef DX1_ANALOG_RIPPLE
+    unsigned int aValue = 0;
+    for (byte i = 0; i < DX1_ANALOG_RIPPLECOUNT; i++) {
+      aValue = max (aValue, analogRead(pin));
+    }
+  #else
+    unsigned int aValue = analogRead(pin);
+  #endif
   unsigned long retValue;
   #ifdef DEBUG_VOL_READ
     logStart_P(LOGDEBUG);
