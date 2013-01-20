@@ -157,7 +157,15 @@ unsigned int GetCalibrationValue(byte vessel){
   unsigned int newSensorValueAverage = 0;
   
   for(byte i = 0; i < VOLUME_READ_COUNT; i++){
+#ifdef DX1_ANALOG_RIPPLE
+    unsigned int aValue = 0;
+    for (byte j = 0; j < DX1_ANALOG_RIPPLECOUNT; j++) {
+      aValue = max (aValue, analogRead(vSensor[vessel]));
+    }
+    newSensorValueAverage += aValue;
+#else
     newSensorValueAverage += analogRead(vSensor[vessel]);
+#endif
     delay(VOLUME_READ_INTERVAL); // wait inbetween each read the length of the read interval so the calibration value is the same as what is really being read
   }
   
